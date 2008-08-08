@@ -1,0 +1,9 @@
+Unihan.db provides a Unihan character database in fifth normal form.
+The original Unihan textual data is not normalized, and further parsing 
+effort is needed to obtain data from compound values of Unihan "tags".
+This database splits those tag value into atom fields, thus in most case
+further parsing is not required. 
+
+The Unihan.db is
+released under Unicode Terms of Use (UCD, see
+http://www.unicode.org/copyright.html for details).

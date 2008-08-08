@@ -1,5 +1,11 @@
+====== 2008-08-08 libUnihan 0.4.1 released ====
+Shows support fields and tables for unihan_query
+Header files have moved to {include}/libUnihan.
+Completed description: UnihanTable enumeration and str_functions.h
+Completed the description of str_functions.h
+Uhihan_enum.h and str_functions.h are now in API.
+
 ====== 2008-07-01 libUnihan initial public release ====
 libUnihan is a Unihan character database in fifth normal form,
 as well as corresponding C API.
-
 

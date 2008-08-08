@@ -34,10 +34,10 @@ RM = /usr/bin/cmake -E remove -f
 CMAKE_EDIT_COMMAND = /usr/bin/ccmake
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/dchen/libUnihan
+CMAKE_SOURCE_DIR = /home/dchen/devel/SourceForge/libUnihan
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/dchen/libUnihan
+CMAKE_BINARY_DIR = /home/dchen/devel/SourceForge/libUnihan
 
 # Include the progress variables for this target.
 include CMakeFiles/progress.make
@@ -81,7 +81,7 @@ list_install_components/fast: list_install_components
 # Special rule for the target package
 package: preinstall
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Run CPack packaging tool..."
-	/usr/bin/cpack --config /home/dchen/libUnihan/CPackConfig.cmake
+	/usr/bin/cpack --config /home/dchen/devel/SourceForge/libUnihan/CPackConfig.cmake
 
 # Special rule for the target package
 package/fast: package
@@ -89,7 +89,7 @@ package/fast: package
 # Special rule for the target package_source
 package_source:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Run CPack packaging tool for source..."
-	/usr/bin/cpack --config /home/dchen/libUnihan/CPackSourceConfig.cmake
+	/usr/bin/cpack --config /home/dchen/devel/SourceForge/libUnihan/CPackSourceConfig.cmake
 
 # Special rule for the target package_source
 package_source/fast: package_source
@@ -104,9 +104,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/dchen/libUnihan/CMakeFiles $(CMAKE_ALL_PROGRESS)
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/dchen/devel/SourceForge/libUnihan/CMakeFiles $(CMAKE_ALL_PROGRESS)
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/dchen/libUnihan/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/dchen/devel/SourceForge/libUnihan/CMakeFiles 0
 
 # The main clean target
 clean:

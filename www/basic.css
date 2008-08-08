@@ -1,0 +1,21 @@
+body {font-size:12pt; font-weight:300; color:black; background-color:white}
+h1 {font-size:22pt; font-weight:bold; color:silver; background-color:blue}
+h2 {font-size:18pt; font-weight:bold; font-style:italic}
+h3 {font-size:16pt; font-weight:bold; }
+h4 {font-size:14pt; font-weight:bold; }
+dt {font-size:14pt; font-weight:bold;}
+
+a:link,a:active {color: blue; background-color:white; text-decoration:underline}
+a:visited {color:teal; background-color:white; text-decoration:underline}
+a:hover {color: purple; background-color:white; text-decoration:underline}
+
+a.img:link,a.img:active,a.img:visited {color: white; background-color:white;}
+a.normal:link,a.normal:visited {color: white; background-color:green; text-decoration:underline;}
+a.normal:active,a.normal:hover {color: #333333; background-color:green; text-decoration:underline;}
+table.normal,th.normal {font-size:14pt; color:white; background-color:green; text-decoration:none;}
+td.normal {font-size:12pt; color:black; background-color:white; text-decoration:none;}
+
+table.codeblock,th.codeblock,td.codeblock {font-family:monospace; color:black; background-color:gray; text-decoration:none;}
+
+table.example,th.example,td.example {color:black; background-color:#CCCCFF; text-decoration:none;}
+

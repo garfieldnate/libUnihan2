@@ -1,0 +1,9 @@
+table.title,th.title {font-size:28pt; color:white; background-color:green; text-decoration:none;}
+td.title {font-size:12pt; color:white; background-color:green; text-decoration:none;}
+a.menu:link,a.menu:visited {color: white; background-color:green; text-decoration:none;}
+a.menu:active,a.menu:hover {color: silver; background-color:red; text-decoration:none;}
+a.submenu:link {color: black; background-color:silver; text-decoration:none;}
+a.submenu:visited {color: black; background-color:silver; text-decoration:none;}
+a.submenu:active {color: blue; background-color:yellow; text-decoration:none;}
+a.submenu:hover {color: blue; background-color:yellow; text-decoration:none;}
+
