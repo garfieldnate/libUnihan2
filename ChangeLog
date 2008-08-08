@@ -1,0 +1,26 @@
+* Fri Aug 08 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.4.1-0
+- Shows support fields and tables for unihan_query
+- Header files have moved to {include}/libUnihan
+- Completed the description of UnihanTable enumeration.
+- Completed the description of str_functions.h
+- In str_functions.h: unsignedStr_to_signedStr and signedStr_to_unsignedStr
+clones the inputs now, while _buffer postfix for the circumstances that the buffer is given.
+Addressing C#6 [Bug 453520] Review Request: libUnihan 
+- rpmlint undefined-non-weak-symbol problems solved.
+- Moved the include statement of private header files to Unihan_SQL_gen.c files.
+- Move the doc/{name} files  to doc/{name}-{version}.
+- Uhihan_enum.h and str_functions.h are now in API.
+
+* Mon Aug 04 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.4.0-0
+- unihan_test now became unihan_field_vaildation
+- Split the enumeration definition of Unihan.h to Unihan_enum.h
+- Add unihanDb_get_tableNames() and  unihanTable_get_db_fields()
+- Parameter arraySize in unihanField_array_index() is discarded.
+
+
+* Fri Jul 03 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.3.1-0
+- Add kMandarin frequency rank support.
+
+* Tue Jul 01 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.3
+- Initial public release.
+

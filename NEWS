@@ -1,0 +1,5 @@
+====== 2008-07-01 libUnihan initial public release ====
+libUnihan is a Unihan character database in fifth normal form,
+as well as corresponding C API.
+
+

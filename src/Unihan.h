@@ -1,0 +1,665 @@
+/** 
+ * @file Unihan.h
+ * @brief API for libUnihan.
+ *
+ *
+ */
+
+/*
+ * Copyright © 2008  Red Hat, Inc. All rights reserved.
+ * Copyright © 2008  Ding-Yi Chen <dchen at redhat dot com>
+ *
+ * This file is part of the libUnihan Project.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place, Suite 330,
+ * Boston, MA  02111-1307  USA
+ */ 
+#ifndef UNIHAN_H_
+#define UNIHAN_H_
+#include "Unihan_enum.h"
+#include "str_functions.h"
+
+
+/**
+ * IRG source data.
+ *
+ * This struct contains a short source name and the corresponding description.
+ *
+ * @see unihanIRG_SourceData_get()
+ */
+typedef struct {
+    const char *name; //!< short source name in string. (e.g. "G0").
+    const char *description; //!< full description of the IRG source. (e.g. "GB2310-80").
+} UnihanIRG_SourceData;
+
+/**
+ * IRG source rec.
+ *
+ * This struct stores an IRG source ID for a character and 
+ * the mapping/inner code/index
+ *
+ */
+typedef struct {
+    UnihanIRG_SourceId sourceId; //!< a IRG source ID.
+    const char *sourceMapping;   //!< the mapping of the character in the source.
+} UnihanIRG_SourceRec;
+
+
+/**
+ * Prototype of callback function for SQL execution.
+ */
+typedef int (*UnihanCallback)(void* userOption,int col_num,char** results,char** col_names);
+
+/**
+ * Find all matched results, given a field and its value.
+ *
+ * This function is a convenient wrapper of unihanSql_get_result_table().
+ *
+ * Put the known field as <code>givenFiled</code> and its value as <code>givenValue</code>.
+ * The values of field specified in <code>queryField</code> will be put in the result table.
+ *
+ *
+ * Use sqlite3_table_free() to free the pResults after the finish using result table.
+ *
+ * @param givenField the given (input) field.
+ * @param givenValue the given value of the field.
+ * @param queryField the result field.
+ * @param pResults   result table.
+ * @param nrow	     number of result rows written here.
+ * @param ncolumn    number of result columns written here.
+ * @param errmsg     Error msg written here.
+ * @param likeMode   TRUE for using SQL LIKE in WHERE expression; FALSE for use '=' instead.
+ * @param showScalarString TRUE to show code point as string "U+xxxx"; FALSE for show code point as integer.
+ * @return SQLite result code, SQLITE_OK (value 0) if the query execute successfully, 
+ *         while non-zero value indicate error. 
+ *
+ * @see unihan_find_firstMatched()
+ * @see unihanSql_get_result_table()
+ * @see <a href="http://www.sqlite.org/c3ref/free_table.html">SQlite function: sqlite3_get_table()</a>
+ * @see <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite result codes</a>
+ */
+int unihan_find_all_matched(UnihanField givenField, char *givenValue,
+       	UnihanField queryField,	char ***pResults,int *nrow, int *ncolumn,
+       	char **errmsg, gboolean likeMode,gboolean showScalarString);
+
+/**
+ * Find the first matched result, given a field and its value.
+ *
+ * This is a simplified version of unihan_find_all_matched().
+ * Instead of returning whole result table, it only returns the first matched result as string.
+ *
+ * Use g_free() to free the returned result.
+ *
+ * @param givenField the given (input) field.
+ * @param givenValue the given value of the field.
+ * @param queryField the result field.
+ * @param likeMode   TRUE for using SQL LIKE in WHERE expression; FALSE for use '=' instead.
+ * @param showScalarString TRUE to show code point as string "U+xxxx"; FALSE for show code point as integer.
+ * @return the first matched result string. NULL if nothing matched.
+ *
+ * @see unihan_find_all_matched()
+ */
+char* unihan_find_firstMatched(UnihanField givenField, char* givenValue, 
+	UnihanField queryField, gboolean likeMode,gboolean showScalarString);
+
+/**
+ * Count number of matched records in a table.
+ *
+ * Also useful to avoid the duplication record.
+ * For example, use 
+ * <code>unihan_count_matched_record(UNIHAN_TABLE_KRSADOBE_JAPAN_1_6, valueArray)</code>
+ * to check whether the kRSAdobe_Japan_1_6Table has the record (13317,"C",15387,"3",1,1)
+ * before insertion,
+ * where the valueArray[]={ "13317", "C","15387","3","1","1", NULL};
+ * 
+ * @param table		the database table to be looked at.
+ * @param valueArray	array of char array, follow by a NULL as terminator.
+ * @return number of matched record.
+ */
+int unihan_count_matched_record(UnihanTable table,char **valueArray);
+
+/**
+ * Insert a record to table.
+ * 
+ * The value to be insert should be in string representation, 
+ * followed by a NULL as end of the value array.
+ *
+ * For example, convert the values for kRSAdobe_Japan_1_6Table (13317,"C",15387,"3",1,1)
+ * to char *valueArray[]={ "13317", "C","15387","3","1","1", NULL}
+ * before insertion.
+ *
+ * @param table		the database table to be looked at.
+ * @param valueArray	array of char array, follow by a NULL as terminator.
+ * @return SQLite result code, SQLITE_OK (value 0) if the query executed successfully, 
+ *         while non-zero value indicate error. 
+ *
+ * @see <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite result codes</a>
+ * @see unihan_insert_no_duplicate()
+ * @see unihan_insert_value()
+ */
+int unihan_insert(UnihanTable table,char **valueArray);
+
+/**
+ * Insert a record to table with duplication check.
+ *
+ * It will check the duplication before insertion, otherwise is same with
+ * unihan_insert(). Return negative value if the duplication is found.
+ *
+ * @param table		the database table to be looked at.
+ * @param valueArray	array of char array, follow by a NULL as terminator.
+ * @return Negative value is duplication is found.  SQLITE_OK (value 0) if inserted successfully, 
+ *         while positive value indicate error. 
+ */
+int unihan_insert_no_duplicate(UnihanTable table,char **valueArray);
+
+/**
+ * Insert a Unihan textual formated record to corresponding tables.
+ * 
+ * This function deals with the insertion of Unihan textual formated records (as shown in Unihan.txt),
+ * which have 3 fields:
+ * <ol>
+ *   <li>code scalar value (e.g. U+5231)</li>
+ *   <li>Unihan tag (e.g. kSemanticVariant)</li>
+ *   <li>The corresponding value  (e.g. U+5275<kHanYu:TZ,kMeyerWempe)</li>
+ * </ol>  
+ *
+ * This function will parse the value and insert the parsed result to corresponding tables.
+ *
+ * Before using this function,
+ * convert first field to UCS4 (gunichar) format (using unihanChar_parse());
+ * second to UnihanField (using unihanField_parse()).
+ *
+ * @param code		character in UCS4 (gunichar)
+ * @param field         the UnihanField
+ * @param value		the value in as in Unihan.txt.
+ * @return Negative value is duplication is found.  SQLITE_OK (value 0) if inserted successfully, 
+ *         while positive value indicate error. 
+ */
+int unihan_insert_value(gunichar code, UnihanField field, const char *value);
+
+/**
+ * Whether the character is associate with the given field.
+ *
+ * @param code		character in UCS4 (gunichar)
+ * @param field		the UnihanField
+ * @return TRUE if an non-NULL value is associate with the field, FALSE otherwise.
+ */
+gboolean unihanChar_has_property(gunichar code, UnihanField field);
+
+/**
+ * Whether the character appeared in given source.
+ *
+ * @param code		character in UCS4 (gunichar)
+ * @param source 	IRG Source ID
+ * @return TRUE if character appeared in source, FALSE otherwise.
+ */
+gboolean unihanChar_is_in_source(gunichar code, UnihanIRG_SourceId source);
+
+/**
+ * Find the first source which the character appears in.
+ *
+ * This function will return the first matched source, or until it reaches the end of
+ * 
+ * @param code		character in UCS4 (gunichar)
+ * @param source 	IRG Source ID, use UNIHAN_INVALID_SOURCEID as indefinite value terminator.
+ * @return the matched source id, or UNIHAN_INVALID_SOURCEID if none matched.
+ */
+UnihanIRG_SourceId unihanChar_is_in_sources(gunichar code, UnihanIRG_SourceId source, ...);
+
+/**
+ * Whether the character is common in the specified locale.
+ *
+ * "Common" characters are the ones which appear in the well-known source,
+ * such as GB-2312 and JIS X 0208:1990. 
+ * See <a href="#CommonLocale">Common sources for a locale</a> for exact sources.
+ *
+ * @param code		character in UCS4 (gunichar)
+ * @param locale 	the locale.
+ * @return TRUE if the character is common, FALSE otherwise.
+ * @see <a href="#CommonLocale">Common sources for a locale</a>
+ */
+gboolean unihanChar_is_common_in_locale(gunichar code, UnihanLocale locale);
+
+/**
+ * Return the range which the character belong to.
+ *
+ * @param code		character in UCS4 (gunichar)
+ * @return the range which the character belong to.
+ * @see #UnihanRange
+ */
+UnihanRange unihanChar_in_range(gunichar code);
+
+/**
+ * Parses the string argument as a UCS4 (gunichar) character.
+ *
+ * @param str		the string to be parsed.
+ * @return		the character represented by the str in UCS4.
+ */
+gunichar unihanChar_parse(const char *str);
+
+/**
+ * Returns a string representing a UCS4 character.
+ *
+ * @param code		the UCS4 character.
+ * @return		a string representing the UCS4 character.
+ */
+char *unihanChar_to_scalar_string(gunichar code);
+
+
+/**
+ * Returns the db which libUnihan is using.
+ *
+ * Normally this function is not needed,
+ * except to get additional control beyond SQL.
+ * @return the db which libUnihan is using.
+ */
+sqlite3 *unihanDb_get();
+
+
+/**
+ * Returns the tables in database.
+ *
+ * This function will get the names from database.
+ *
+ * Use stringList_free() to free it.
+ * @return the tables in database.
+ */
+StringList *unihanDb_get_tableNames();
+
+/**
+ * Open a Unihan db.
+ *
+ * @param filename name of db file to be open.
+ * @return SQLite result code, SQLITE_OK (value 0) if the query executed successfully, 
+ *         while non-zero value indicate error. 
+ *
+ * @see <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite result codes</a>
+ */
+int unihanDb_open(const char *filename);
+
+/**
+ * Open the system default Unihan db.
+ *
+ * @return SQLite result code, SQLITE_OK (value 0) if the query executed successfully, 
+ *         while non-zero value indicate error. 
+ *
+ * @see <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite result codes</a>
+ */
+int unihanDb_open_default();
+
+/**
+ * Close Unihan db.
+ *
+ * @return SQLite result code, SQLITE_OK (value 0) if the query executed successfully, 
+ *         while non-zero value indicate error. 
+ *
+ * @see <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite result codes</a>
+ */
+int unihanDb_close();
+
+/**
+ * Return the index of a UnihanField in array.
+ *
+ * @param field Field to be found
+ * @param fieldArray the array of UnihanFields.
+ * @return index of the #UnihanField, -1 if the field is not found.
+ */
+int unihanField_array_index(UnihanField field,  const UnihanField* fieldArray);
+
+/**
+ * Return the corresponding IRG source if the field is IRG source field.
+ *
+ * @param field  the UnihanField.
+ * @return corresponding IRG source if the field is IRG source field; 
+ * #UNIHAN_INVALID_IRG_SOURCE if the field is not an IRG source field.
+ */
+UnihanIRG_Source unihanField_get_IRG_source(UnihanField field);
+
+/**
+ * Return the table that contains the key.
+ *
+ * This function only returns one table.
+ * If the field is in more than one table, then returns #UNIHAN_AMBIGUOUS_TABLE.
+ * Returns #UNIHAN_INVALID_TABLE if invalid field is given.
+ *
+ * Use unihanField_get_allTables() to obtain all the table that the field belongs to.
+ *
+ * @param field  the UnihanField.
+ * @return corresponding table if the field only appears in that table;
+ *    #UNIHAN_AMBIGUOUS_TABLE if the field appears in multiple tables;
+ *    #UNIHAN_INVALID_TABLE if invalid field is given.
+ * @see unihanField_get_all_tables()
+ * @see unihanField_get_extra_table()
+ */
+UnihanTable unihanField_get_table(UnihanField field);
+
+/**
+ * Return all the tables that contains the key.
+ *
+ * This function returns an array of tables, terminated by #UNIHAN_INVALID_TABLE.
+ * Use unihanField_get_allTables() to obtain all the table that the field belongs to.
+ *
+ * @param field  the UnihanField.
+ * @return arrays of UnihanTables; NULL if the field is invalid.
+ * @see unihanField_get_table()
+ * @see unihanField_get_extra_table()
+ */
+UnihanTable *unihanField_get_all_tables(UnihanField field);
+
+/**
+ * Return the corresponding extra table if the field needs one.
+ *
+ * A extra table is a table that provide additional information for pseudo field.
+ * For example, kSemanticVariant is a pseudo field which combines fields in
+ * kSemanticVariantTable and kSemanticVariantTableExtra.
+ *
+ * unihanFIeld_get_table(UNIHAN_KSEMANTIC_VARIANT) returns kSemanticVariantTable
+ * while unihanFIeld_get_extra_table returns the extra table kSemanticVariantTableExtra.
+ *
+  * Pseudo fields usually associate with extra tables, 
+ * see unihanField_is_pseudo() for details.
+ * 
+ * @param field  the UnihanField.
+ * @return the extra table if exist, UNIHAN_INVALID_TABLE otherwise.
+ * @see unihanField_is_pseudo().
+ */
+UnihanTable unihanField_get_extra_table(UnihanField field);
+
+/**
+ * Whether the field is IRG_Source.
+ *
+ * It is a convenient wrapper of unihanField_get_IRG_source().
+ * @param field  the UnihanField.
+ * @return TRUE if the field is IRG_Source; FALSE otherwise.
+ */
+gboolean unihanField_is_IRG_Source(UnihanField field);
+
+
+/**
+ * Whether the field is indexed.
+ *
+ * Indexed field are non-pseudo fields which are indexed in database.
+ * Note that UNIHAN_FIELD_KDEFITION is not indexed as well.
+ *
+ * @param field the UnihanField
+ * @return TRUE if the field is indexed; FALSE otherwise.
+ * @see unihanField_is_pseudo()
+ */
+gboolean unihanField_is_indexed(UnihanField field);
+
+/**
+ * Whether the field is an integer field.
+ *
+ * @param field the UnihanField
+ * @return TRUE if the field is integer; FALSE otherwise.
+ */
+gboolean unihanField_is_integer(UnihanField field);
+
+/**
+ * Whether the field is a pseudo field.
+ *
+ * A pseudo field is a compound of attributes from one or more tables.
+ * It is also represent a Unihan.txt tag whose value is not normalized.
+ * Pseudo fields usually associate with extra tables, 
+ * see unihanField_get_extra_table() for details.
+ *
+ * For example, kSemanticVariant is a pseudo field which combines:
+ * kSemanticVariantTable.varinatCode, kSemanticVariantTableExtra.fromDict,
+ * kSemanticVariantTableExtra.semanticT, kSemanticVariantTableExtra.semanticB and
+ * kSemanticVariantTableExtra.semanticZ
+ *
+ *
+ * @param field the UnihanField
+ * @return TRUE if the field is a pseudo field; FALSE otherwise.
+ */
+gboolean unihanField_is_pseudo(UnihanField field);
+
+/**
+ * Whether the field is a pseudo field.
+ *
+ * A pseudo field is a compound of attributes from one or more tables.
+ * It is also represent a Unihan.txt tag whose value is not normalized.
+ * Pseudo fields usually associate with extra tables, 
+ * see unihanField_get_extra_table() for details.
+ *
+ * For example, kSemanticVariant is a pseudo field which combines:
+ * kSemanticVariantTable.varinatCode, kSemanticVariantTableExtra.fromDict,
+ * kSemanticVariantTableExtra.semanticT, kSemanticVariantTableExtra.semanticB and
+ * kSemanticVariantTableExtra.semanticZ
+ *
+ * @param field the UnihanField 
+ * @return TRUE if the field is a pseudo field; FALSE otherwise.
+ */
+gboolean unihanField_is_scalar_value(UnihanField field);
+
+/**
+ * Whether the field is a singleton field.
+ *
+ * A singleton field is a field whose value cannot be further split, and 
+ * is functional dependent to the UNIHAN_FIELD_CODE.
+ *
+ * Most of tag value in Unihan.txt is delimited by space, however
+ * kDefinition, for example, should not be split in this way.
+ *
+ *
+ *
+ * @param field the UnihanField 
+ * @return TRUE if the field is a singleton field; FALSE otherwise.
+ */
+gboolean unihanField_is_singleton(UnihanField field);
+
+/**
+ * Parses the string argument as a UnihanField.
+ *
+ * @param str		the string to be parsed.
+ * @return		the UnihanField represented by the str in UCS4.
+ */
+UnihanField unihanField_parse(char *str);
+
+/**
+ * Returns a string representing a UnihanField.
+ *
+ * @param field		the UnihanField.
+ * @return		a string representing the #UnihanField.
+ */
+const char* unihanField_to_string(UnihanField field);
+
+/**
+ * Whether the SourceId has mapping.
+ *
+ * Some IRG sources (such as UNIHAN_SOURCE_GKX, UNIHAN_SOURCE_G4K) does not 
+ * have mapping index (inner code). This function tells whether a 
+ * Source ID has mapping.
+ *
+ * @param sourceId the IRG source ID.
+ * @return TRUE if the source ID has no mapping; FALSE otherwise.
+ */
+gboolean unihanIRG_Source_has_no_mapping(UnihanIRG_SourceId sourceId);
+
+/**
+ * Return the Unihan IRG_Source Data.
+ *
+ * Note: the returned data is static, not need to be freed.
+ * @param sourceId Unihan IRG source ID.
+ * @return the Unihan IRG_Source Data.  
+ */
+const UnihanIRG_SourceData *unihanIRG_SourceData_get(UnihanIRG_SourceId sourceId);
+
+/**
+ * Parse the string argument as Unihan IRG Source ID.
+ *
+ * @param sourceShortName	the string to be parsed.
+ * @return 			the UnihanIRG_SourceID.
+ */
+UnihanIRG_SourceId unihanIRG_SourceId_parse(const char *sourceShortName);
+
+/**
+ * Parse the string argument as Unihan IRG Source Rec.
+ *
+ * Note: Use unihanIRG_SourceRec_free() to free the return rec.
+ * @param field 	the UnihanField 
+ * @param value		the string to be parsed.
+ * @return 		the UnihanIRG_SourceRec.
+ */
+UnihanIRG_SourceRec* unihanIRG_SourceRec_parse(UnihanField field,const char *value);
+
+/**
+ * Free the UnihanIRG_SourceRec.
+ *
+ * @param rec			the unihanIRG_SourceRec
+ */
+void unihanIRG_SourceRec_free(UnihanIRG_SourceRec *rec);
+
+/**
+ * Count the number of matches.
+ *
+ * @param sqlClause SQL command to be passed to Unihan db.
+ * @return Negative number if the command does not execute successfully, 
+ * ( -1 * <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite_result_code</a>);
+ *  Non-negative number is the number of matches.
+ */
+int unihanSql_count_matches(const char * sqlClause);
+
+/**
+ * Execute the SQL to Unihan db.
+ *
+ * A convenient wrapper of <a href="http://www.sqlite.org/c3ref/exec.html">sqlite3_exec()</a>.
+ * @param sqlClause SQL command to be passed to Unihan db.
+ * @param callback callback function for each match record, can be NULL.
+ * @param callbackOption option for callback function, can be NULL.
+ * @param errmsg pointer for error message.
+ * @return <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite result codes</a>
+ * @see <a href="http://www.sqlite.org/c3ref/exec.html">sqlite3_exec()</a>
+ */
+int unihanSql_exec(char *sqlClause, UnihanCallback callback, 
+	void *callbackOption,  char **errmsg);
+
+/**
+ * Obtains a result table of SQL command.
+ *
+ * A convenient wrapper of <a href="http://www.sqlite.org/c3ref/free_table.html">sqlite3_get_table()</a>.
+ *
+ * A result table is memory data structure that stores the complete query results from one or more queries.
+ * The <code>nrow</code> and <code>ncolumn</code> are the row and column of the results.
+ * 
+ * The return value is also identical to sqlite3_get_table(). 
+ * SQLITE_OK (value 0) if the query execute successfully, 
+ *         while non-zero value indicate error. 
+ * See <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite result codes</a> for detail.
+ *
+ * Use sqlite3_table_free() to free the pResults after the finish using result table.
+ *
+ *
+ * @param sqlClause SQL command to be passed to Unihan db.
+ * @param pResult    result table.
+ * @param nrow	     number of result rows written here.
+ * @param ncolumn    number of result columns written here.
+ * @param errmsg pointer for error message.
+ * @return <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite result codes</a>
+ * @see <a href="http://www.sqlite.org/c3ref/free_table.html">SQlite function: sqlite3_get_table()</a>
+ * @see unihan_find_all_matched()
+ */
+int unihanSql_get_result_table(const char *sqlClause,char ***pResult, int *nrow, int *ncolumn, char **errmsg);
+
+
+/**
+ * Parse the string argument as Unihan Locale.
+ *
+ * @param str 			the string to be parsed.
+ * @return 			the UnihanLocate.
+ */
+UnihanLocale unihanLocale_parse(char *str);
+
+/**
+ * Returns a string representing a UnihanLocale.
+ *
+ * Note: the return string is static, not need to free it.
+ *
+ * @param locale		the UnihanLocale.
+ * @return		a string representing the #UnihanLocale.
+ */
+const char *unihanLocale_to_string(UnihanLocale locale);
+
+/**
+ * Returns a string representing a UnihanLocale.
+ *
+ * Note: the return string is static, not need to free it.
+ *
+ * @param uRange		the UnihanRange.
+ * @return		a string representing the #UnihanRange.
+ */
+const char *unihanRange_to_string(UnihanRange uRange);
+
+/**
+ * Parse the string argument as UnihanTable.
+ *
+ * @param tableName		the string to be parsed.
+ * @return 			the UnihanTable.
+ */
+UnihanTable unihanTable_parse(const char * tableName);
+
+/**
+ * Returns a string representing a UnihanTable.
+ *
+ * Note: the return string is static, not need to free it.
+ *
+ * @param table		the UnihanTable.
+ * @return		a string representing the #UnihanTable.
+ */
+const char *unihanTable_to_string(UnihanTable table);
+
+
+/**
+ * Returns the actual data table fields in an UnihanField array.
+ *
+ * Unlike unihanTable_get_fields(), this function will retrieves the actual fields
+ * from the database. Hence, it is slower than unihanTable_get_fields().
+ *
+ * The returned UnihanField array is terminated by UNIHAN_INVALID_FIELD.
+ * Note: use g_free to free the UnihanField array.
+ *
+ * @param table		the UnihanTable.
+ * @return		all fields of the table in an UnihanField array.
+ */
+UnihanField* unihanTable_get_db_fields(UnihanTable table);
+
+/**
+ * Returns all fields of the table in an UnihanField array.
+ *
+ * Unlike unihanTable_get_db_fields(), this function returns the fields that
+ * supposedly in the given data table.
+ * It will not check the database, therefore it is faster than
+ * unihanTable_get_db_fields();
+ *
+ * The returned UnihanField array is terminated by UNIHAN_INVALID_FIELD.
+ * Note: use g_free to free the UnihanField array.
+ *
+ * @param table		the UnihanTable.
+ * @return		all fields of the table in an UnihanField array.
+ */
+UnihanField* unihanTable_get_fields(UnihanTable table);
+
+/**
+ * Returns all primary key fields of the given table in an UnihanField array.
+ *
+ * The returned UnihanField array is terminated by UNIHAN_INVALID_FIELD.
+ * Note: use g_free to free the UnihanField array.
+ *
+ * @param table		the UnihanTable.
+ * @return		all primary key fields of the given table in an UnihanField array.
+ */
+UnihanField* unihanTable_get_primary_key_fields(UnihanTable table);
+
+#endif /* UNIHAN_H */
