@@ -1,3 +1,5 @@
+- Changed CMakefile.txt to reflects the version scheme change of UnihanDb
+
 * Fri Aug 08 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.4.1-0
 - Shows support fields and tables for unihan_query
 - Header files have moved to {include}/libUnihan

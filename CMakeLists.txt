@@ -5,8 +5,8 @@ SET(PRJ_VER_MAJOR "0")
 SET(PRJ_VER_MINOR "4")
 SET(PRJ_VER_PATCH "1")
 SET(PRJ_VER ${PRJ_VER_MAJOR}.${PRJ_VER_MINOR}.${PRJ_VER_PATCH})
-SET(DB_VER "5.1")
-SET(DB_PATCH_LEVEL "2")
+SET(DB_VER "5.1.0")
+SET(DB_PATCH_LEVEL "4")
 SET(DB_PRJ_NAME  "UnihanDb")
 SET(DB_NAME "Unihan.db")
 
@@ -56,7 +56,7 @@ INSTALL(FILES ${MAIN_DOCS}
 SET(DB_DOCS README-db ChangeLog-db)
 
 ADD_CUSTOM_TARGET(package_db_doc
-    COMMAND /bin/tar czvf "${DB_PRJ_NAME}-doc-${DB_VER}-${DB_PATCH_LEVEL}.tar.gz" ${DB_DOCS}
+    COMMAND /bin/tar czvf "${DB_PRJ_NAME}-doc-${DB_VER}.tar.gz" ${DB_DOCS}
 )
 
 ADD_CUSTOM_TARGET(package_db
