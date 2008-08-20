@@ -70,7 +70,7 @@ char *cmdSqlClause=NULL;
 char *givenFieldStr=NULL;
 char *givenValueStr=NULL;
 char *queryFieldStr=NULL;
-int verboseLevel=0;
+int verboseLevel=VERBOSE_MSG_ERROR;
 
 
 static void printUsage(){

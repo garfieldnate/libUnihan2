@@ -33,10 +33,14 @@ themeStart(getLanguageObject("title",getLanguageIndex(preferredLanguage)));
 //-->
   </script>
   <div id="contentEn" style="position: relative; ">
-      <p><b>The project libUnihan  provide a 
+      <p><b>The project libUnihan provides a 
 	  <a href="http://en.wikipedia.org/wiki/Database_normalization">normalized</a>
 	  SQLite Unihan database and corresponding C
 	  library. All tables in this database are in fifth normal form.</b></p>
+      <p>The database and its corresponding database benefits in many areas, such as 
+      Chinese character (Hanzi) standard query, variant character research, and input method development.
+      The Hanzi can be searched by its unicode (decimal and hexadecimal), pronunciation, radical-strokes index,
+      major standard, and so on.</p>
       <p>Indeed, there are many similar projects that convert Unihan.txt to SQLite format;
       some even claimed themselves as "normalized". 
       To test whether the database is normalized, query on the tag kSemanticVariant
@@ -55,6 +59,8 @@ themeStart(getLanguageObject("title",getLanguageIndex(preferredLanguage)));
   </div>
   <div id="featureEn" style="position: relative; ">
       <h1>Features</h1>
+      <p>The project has two parts, one is the Unihan character database and another is the C
+         library that produces and operates the database.</p>
       <h2>Database</h2>
       <ul>
 	  <li>All tables are in 5NF: no duplication, no NULL field, no multivalued field, no partial functional dependency,...</li>
@@ -96,6 +102,11 @@ themeStart(getLanguageObject("title",getLanguageIndex(preferredLanguage)));
 	  Normally, 3) is preferable as if avoid the confusion like U+8AAA(說)/U+8AAC(説) and U+52FB(勻)/U+5300(匀),
 	  unless input of rare characters is needed.
 
+	  </dd>
+	  <dt>Can we use Python or other language to access the database?</dt>
+	  <dd>Yes, the libUnihan database is based on SQLite, so it can be accessed by any languages that 
+	  provide SQLite binding. See the <a href="api/Unihan_8h.html#482d204b9220c7394b44e6bf1196e401">table</a> and <a href="api/Unihan_8h.html#369221e7c16046dd6bd43a7423b96b84">field</a> description for details.
+	      Nevertheless, the libUnihan provide various C functions for convenient.
 	  </dd>
       </dl>
 
