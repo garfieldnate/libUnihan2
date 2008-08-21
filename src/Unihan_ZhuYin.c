@@ -25,7 +25,7 @@
  * Boston, MA  02111-1307  USA
  */ 
 
-const ZhuYin_Symbol ZHUYIN_SYMBOL_LIST[ZHUYIN_COUNT]={
+const ZhuYin_Symbol ZHUYIN_SYMBOL_LIST[ZHUYIN_SYMBOL_COUNT]={
     'ㄅ',
     'ㄆ',
     'ㄇ',
@@ -69,4 +69,74 @@ const ZhuYin_Symbol ZHUYIN_SYMBOL_LIST[ZHUYIN_COUNT]={
     '˙'
 };
 
-const char
+const PinYin PINYIN_PHONEME_LIST[ZHUYIN_SYMBOL_COUNT]={
+   "B",       
+   "P",      
+   "M",      
+   "F",      
+   "D",      
+   "T",      
+   "N",      
+   "L",      
+   "G",      
+   "K",      
+   "H",      
+   "J",      
+   "Q",      
+   "X",      
+   "ZH",     
+   "CH",     
+   "SH",     
+   "R",      
+   "Z",      
+   "C",      
+   "S",      
+   "I",      
+   "U",      
+   "V",      
+   "A",      
+   "O",      
+   "E",      
+   "E",  
+   "AI",     
+   "EI",     
+   "AO",     
+   "OU",     
+   "AN",     
+   "EN",     
+   "ANG",    
+   "ENG",    
+   "ER",     
+   "2",      
+   "3",      
+   "4",      
+   "5"
+};
+
+PinYin *pinYin_new(){
+    return NEW_ARRAY_INSTANCE(PINYIN_MAX_LENGTH_MAX,char);
+}
+
+PinYin *pinYin_convert_accent(PinYin* pinYin, PinYin_Accent_Mode toMode){
+    PinYin *outBuf=pinYin_new();
+    pinYin_convert_accent_buffer(pinYin, toMode, outBuf);
+    return outBuf;
+}
+
+void pinYin_convert_accent_buffer(PinYin *pinYin, PinYin_Accent_Mode toMode, PinYin *outBuf){
+    int len=strlen(pinYin);
+    int wIndex=0;
+    for(i=0;i<len;i++){
+	switch(toMode){
+	    case PINYIN_ACCENT_ORIGINAL:
+		break;
+	    case PINYIN_ACCENT_TRAILING:
+		break;
+	    case PINYIN_ACCENT_CONVERT:
+		break;
+	    case PINYIN_ACCENT_NONE:
+		break;
+	}    
+    }
+
+}

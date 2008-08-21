@@ -34,16 +34,32 @@
 #define UNIHAN_ZHUYIN_H_
 
 /**
- * Maxinum spaces that pinyin requires.
+ * Maximum space that pinyin requires.
  * 
- * Six pinyin alphabets (zhuang), one tone mark, and one for EOL.
  */
-#define PINYIN_MAX_LENGTH_MAX 8
+#define PINYIN_MAX_LENGTH_MAX 9
+
+/**
+ * Maximum space that pinyin requires.
+ * 
+ */
+
+#define ZHUYIN_MAX_LENGTH_MAX 9
 
 /**
  * ZhuYin symbol.
  */
 typedef gunichar  ZhuYin_Symbol;
+
+
+/**
+ * Pronunciation in ZhuYin UTF-8 string.
+ */
+typedef char[ZHUYIN_MAX_LENGTH_MAX] ZhuYin;
+
+/**
+ * Pronunciation in PinYin UTF-8 string.
+ */
 typedef char[PINYIN_MAX_LENGTH_MAX] PinYin;
 
 /**
@@ -95,12 +111,149 @@ typedef enum {
 } ZhuYin_Symbol_Id;
 #define ZHUYIN_SYMBOL_COUNT 37 + 4 
 
+/**
+ * Enumeration of PinYin accent (not tone mark) handling modes.
+ *
+ * There are two PinYin symbols with accents, Umlaut U (ü), and E hat ê .
+ * Original form, ü and ê are suitable for pronunciation learning.
+ * However, these symbols cannot be typed intuitively with popular (US-American)
+ * keyboard layout, so ü is often substituted with u or v, and ê is substituted by e.
+ *
+ * Note the accent-like tone marks are not discussed here.
+ * In libUnihan, tone marks are always represented as trailing number.
+ */
+typedef enum{
+    PINYIN_ACCENT_ORIGINAL, //!< ü is represented as ü, ê is represented as ê.
+    PINYIN_ACCENT_TRAILING, //!< ü is represented as U:, ê is represented as E.
+    PINYIN_ACCENT_CONVERT,  //!< ü is represented as V, ê is represented as E.
+    PINYIN_ACCENT_NONE      //!< ü is represented as U, ê is represented as E.
+} PinYin_Accent_Mode;
 
+/**
+ * An array of ZhuYin symbols.
+ */
 extern const ZhuYin_Symbol ZHUYIN_SYMBOL_LIST[];
-extern const PinYin 
 
- 
+/**
+ * An array of PinYin phoneme.
+ */
+extern const PinYin  PINYIN_PHONEME_LIST[];
+
+/**
+ * New a PinYin instance.
+ *
+ * @return new PinYin instances.
+ */
+PinYin *pinYin_new();
+
+/**
+ * Convert PinYin accents and return a newly allocated converted PinYin.
+ *
+ * @param pinYin the PinYin to be converted.
+ * @param toMode the PinYin accent mode to be converted to.
+ * @return a newly located PinYin instance.
+ */
+PinYin *pinYin_convert_accent(PinYin *pinYin, PinYin_Accent_Mode toMode);
+
+/**
+ * Convert PinYin accents and put the output to a given buffer.
+ *
+ * @param pinYin the PinYin to be converted.
+ * @param toMode the PinYin accent mode to be converted to.
+ * @param outBuf the buffer that hold the converted PinYin.
+ */
+void pinYin_convert_accent_buffer(PinYin *pinYin, PinYin_Accent_Mode toMode, PinYin *outBuf);
+
+/**
+ * PinYin to ZhuYin
+ *
+ * @param pinYin the PinYin to be converted.
+ * @return a newly located ZhuYin instance.
+ */
+ZhuYin *pinYin_to_zhuYin(PinYin* pinYin);
 
 
+/**
+ * PinYin to ZhuYin
+ *
+ * @param pinYin the PinYin to be converted.
+ * @param zhuYin the resulting ZhuYin.
+ */
+ZhuYin *pinYin_to_zhuYin_buffer(PinYin *pinYin, ZhuYin *zhuYin);
+
+
+/*----------------------------------------
+ * PinYin phoneme functions.
+ */
+
+/**
+ * Return the ZhuYin symbol by its Id.
+ * 
+ *
+ * @param id ZhuYin symbol Id.
+ * @return the corresponding symbol, or 0 if the id is negative.
+ */
+ZhuYin_Symbol zhuYin_Symbol_from_id(ZhuYin_Symbol_Id id);
+
+
+/**
+ * Return the Id of a ZhuYin symbol
+ * 
+ * @param zSym  ZhuYin symbol.
+ * @return the corresponding Id.
+ */
+ZhuYin_Symbol_Id zhuYin_Symbol_to_id(ZhuYin_Symbol zSym);
+
+/*========================================
+ * ZhuYin functions.
+ */
+
+/**
+ * New a ZhuYin instance.
+ *
+ * @return new ZhuYin instances.
+ */
+ZhuYin *zhuYin_new();
+
+
+/**
+ * ZhuYin to PinYin
+ *
+ * @param zhuYin the ZhuYin to be converted.
+ * @return a newly located PinYin instance.
+ */
+PinYin *zhuYin_to_pinYin(ZhuYin* zhuYin);
+
+
+/**
+ * ZhuYin to PinYin
+ *
+ * @param zhuYin the ZhuYin to be converted.
+ * @param pinYin the resulting PinYin.
+ */
+PinYin *zhuYin_to_pinYin_buffer(ZhuYin* zhuYin, PinYin *pinYin);
+
+
+/*----------------------------------------
+ * ZhuYin symbol functions.
+ */
+
+/**
+ * Return the ZhuYin symbol by its Id.
+ * 
+ *
+ * @param id ZhuYin symbol Id.
+ * @return the corresponding symbol, or 0 if the id is negative.
+ */
+ZhuYin_Symbol zhuYin_Symbol_from_id(ZhuYin_Symbol_Id id);
+
+
+/**
+ * Return the Id of a ZhuYin symbol
+ * 
+ * @param zSym  ZhuYin symbol.
+ * @return the corresponding Id.
+ */
+ZhuYin_Symbol_Id zhuYin_Symbol_to_id(ZhuYin_Symbol zSym);
 
 #endif /* UNIHANZHUYIN_H_ */
