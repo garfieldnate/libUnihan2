@@ -1,9 +1,9 @@
 /** 
- * @file Unihan_ZhuYin.h
- * @brief ZhuYin (BoPoMoFo) processing functions.
+ * @file Unihan_Phonetic.h
+ * @brief Phonetic symbols (PinYin and ZhuYin) processing functions.
  * 
- * This header file list the ZhuYin processing functions,
- * such as HanYu pinyin conversion C functions, and
+ * This header file lists the functions for PinYin and ZhuYin processing,
+ * such as conversion between HanYu pinyin conversion C functions, and
  * corresponding SQL scalar functions.
  *
  */
@@ -30,8 +30,8 @@
  * Boston, MA  02111-1307  USA
  */ 
 
-#ifndef UNIHAN_ZHUYIN_H_
-#define UNIHAN_ZHUYIN_H_
+#ifndef UNIHAN_PHONETIC_H_
+#define UNIHAN_PHONETIC_H_
 
 /**
  * Maximum space that pinyin requires.
@@ -51,19 +51,27 @@
  */
 typedef gunichar  ZhuYin_Symbol;
 
-
 /**
  * Pronunciation in ZhuYin UTF-8 string.
  */
-typedef char[ZHUYIN_MAX_LENGTH_MAX] ZhuYin;
+typedef char* ZhuYin*;
 
 /**
  * Pronunciation in PinYin UTF-8 string.
  */
-typedef char[PINYIN_MAX_LENGTH_MAX] PinYin;
+typedef char* PinYin*;
 
 /**
- * ID of ZhuYin symbol.
+ * Enumeration of ZhuYin symbols.
+ *
+ * This enumeration lists the ZhuYin symbols, including the symbols for tone mark.
+ * Corresponding PinYin phonemes can also be located using these Ids.
+ *
+ * @see pinYin_phoneme_from_id()
+ * @see pinYin_phoneme_get_id()
+ * @see zhuYin_Symbol_from_id()
+ * @see zhuYin_Symbol_get_id()
+ *
  */
 typedef enum {
     ZHUYIN_INVALID_SYMBOL= -1, //!< Invalid ZhuYin Symbol.
@@ -125,7 +133,7 @@ typedef enum {
 typedef enum{
     PINYIN_ACCENT_ORIGINAL, //!< ü is represented as ü, ê is represented as ê.
     PINYIN_ACCENT_TRAILING, //!< ü is represented as U:, ê is represented as E.
-    PINYIN_ACCENT_CONVERT,  //!< ü is represented as V, ê is represented as E.
+    PINYIN_ACCENT_INPUT_METHOD,  //!< ü is represented as V, ê is represented as E.
     PINYIN_ACCENT_NONE      //!< ü is represented as U, ê is represented as E.
 } PinYin_Accent_Mode;
 
@@ -187,22 +195,22 @@ ZhuYin *pinYin_to_zhuYin_buffer(PinYin *pinYin, ZhuYin *zhuYin);
  */
 
 /**
- * Return the ZhuYin symbol by its Id.
+ * Return the PinYin phoneme by its Id.
  * 
  *
  * @param id ZhuYin symbol Id.
- * @return the corresponding symbol, or 0 if the id is negative.
+ * @return the PinYin phoneme, or NULL if the id is negative.
  */
-ZhuYin_Symbol zhuYin_Symbol_from_id(ZhuYin_Symbol_Id id);
+PinYin *pinYin_phoneme_from_id(ZhuYin_Symbol_Id id);
 
 
 /**
- * Return the Id of a ZhuYin symbol
+ * Return the Id of a ZhuYin s
  * 
- * @param zSym  ZhuYin symbol.
+ * @param pym  ZhuYin symbol.
  * @return the corresponding Id.
  */
-ZhuYin_Symbol_Id zhuYin_Symbol_to_id(ZhuYin_Symbol zSym);
+ZhuYin_Symbol_Id pinYin_phoneme_get_id(PinYin *pSym);
 
 /*========================================
  * ZhuYin functions.
@@ -254,6 +262,6 @@ ZhuYin_Symbol zhuYin_Symbol_from_id(ZhuYin_Symbol_Id id);
  * @param zSym  ZhuYin symbol.
  * @return the corresponding Id.
  */
-ZhuYin_Symbol_Id zhuYin_Symbol_to_id(ZhuYin_Symbol zSym);
+ZhuYin_Symbol_Id zhuYin_Symbol_get_id(ZhuYin_Symbol zSym);
 
-#endif /* UNIHANZHUYIN_H_ */
+#endif /* UNIHAN_PHONETIC_H_ */

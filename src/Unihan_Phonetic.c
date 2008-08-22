@@ -1,5 +1,5 @@
 /** 
- * @file Unihan_ZhuYin.c
+ * @file Unihan_Phonetic.c
  *
  */
 
@@ -124,9 +124,14 @@ PinYin *pinYin_convert_accent(PinYin* pinYin, PinYin_Accent_Mode toMode){
 }
 
 void pinYin_convert_accent_buffer(PinYin *pinYin, PinYin_Accent_Mode toMode, PinYin *outBuf){
-    int len=strlen(pinYin);
-    int wIndex=0;
-    for(i=0;i<len;i++){
+    glong i=0,toIndex=0,srcLen=0;
+    gchar *p=pinYin;
+    gunichar srcChar;
+    gunichar *ucs4str=g_utf8_to_ucs4_fast(pinYin, -1, &srcLen);
+    while ((srcChar=g_utf8_next_char(pinYin))g_unichar_isdefined(g_
+    for(i=0;i<srcLen;i++){
+	gunichar srcChar=ucs4str[i];
+
 	switch(toMode){
 	    case PINYIN_ACCENT_ORIGINAL:
 		break;
