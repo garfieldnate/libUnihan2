@@ -122,16 +122,17 @@ typedef enum {
 /**
  * Enumeration of PinYin accent (not tone mark) handling modes.
  *
- * There are two PinYin symbols with accents, Umlaut U (ü), and E hat ê .
+ * There are two PinYin symbols with accents, diaeresis U (ü), and circumflex E (ê) .
  * Original form, ü and ê are suitable for pronunciation learning.
  * However, these symbols cannot be typed intuitively with popular (US-American)
- * keyboard layout, so ü is often substituted with u or v, and ê is substituted by e.
+ * keyboard layout, so ü is often substituted with U or V, and ê is substituted by E.
  *
  * Note the accent-like tone marks are not discussed here.
  * In libUnihan, tone marks are always represented as trailing number.
  */
 typedef enum{
     PINYIN_ACCENT_ORIGINAL, //!< ü is represented as ü, ê is represented as ê.
+    PINYIN_ACCENT_UNIHAN,   //!< ü is represented as Ü, ê is represented as E.
     PINYIN_ACCENT_TRAILING, //!< ü is represented as U:, ê is represented as E.
     PINYIN_ACCENT_INPUT_METHOD,  //!< ü is represented as V, ê is represented as E.
     PINYIN_ACCENT_NONE      //!< ü is represented as U, ê is represented as E.
@@ -169,8 +170,9 @@ PinYin *pinYin_convert_accent(PinYin *pinYin, PinYin_Accent_Mode toMode);
  * @param pinYin the PinYin to be converted.
  * @param toMode the PinYin accent mode to be converted to.
  * @param outBuf the buffer that hold the converted PinYin.
+ * @return Number of bytes written.
  */
-void pinYin_convert_accent_buffer(PinYin *pinYin, PinYin_Accent_Mode toMode, PinYin *outBuf);
+glong pinYin_convert_accent_buffer(PinYin *pinYin, PinYin_Accent_Mode toMode, PinYin *outBuf);
 
 /**
  * PinYin to ZhuYin
