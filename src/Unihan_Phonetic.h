@@ -157,16 +157,27 @@ extern const PinYin  PINYIN_PHONEME_LIST[];
  * New a PinYin instance.
  *
  * This function allocate a new PinYin instance.
- * Non-NULL pinYinStr will be copied to the new PinYin instance and lowercase 
- * English characters will be converted to upper case.
+ * Non-NULL pinYinStr will be copied to the new PinYin instance and 
+ * converted to uppercase.
  * Note that the PinYin instance only hold #PINYIN_MAX_LENGTH bytes, 
  * including the EOL ('\0') character. Longer pinYin will be truncated.
  *
  * @param pinYinStr the PinYin in string, NULL for allocate new PinYin instance.
  * @return new PinYin instances.
  */
-PinYin *pinYin_new(char *pinYinStr);
+PinYin *pinYin_new(const char *pinYinStr);
 
+/**
+ * PinYin contains character diaeresis U.
+ *
+ * This function detects the existence of character diaeresis U (Ü),
+ * or JU, QU, XU, YU where Ü is simplified as U.
+ *
+ * @param pinYin the PinYin to be converted.
+ * @return TRUE if Ü exists or U should can be substituted as Ü; FALSE otherwise.
+ */
+gboolean pinYin_has_diaeresis_u(const PinYin *pinYin);
+gboolean pinYin_has_circumflex_e(const PinYin *pinYin);
 
 /**
  * Convert PinYin accents and return a newly allocated converted PinYin.

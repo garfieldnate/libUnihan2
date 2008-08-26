@@ -113,23 +113,14 @@ const PinYin PINYIN_PHONEME_LIST[ZHUYIN_SYMBOL_COUNT]={
    "5"
 };
 
-PinYin *pinYin_new(char *pinYinStr){
-    PinYin *pinYin=NEW_ARRAY_INSTANCE(PINYIN_MAX_LENGTH,char);
-    if (!isEmptyString(pinYinStr)){
-	glong i,items_written;
-	gunichar *uniStr=g_utf8_to_ucs4_fast(pinYin, -1 , &items_written);
-	for(i=0;i<items_written;i++){
-	    
-	}
-
+PinYin *pinYin_new(const char *pinYinStr){
+    PinYin *pinYin;
+    if (isEmptyString(pinYinStr)){
+	pinYin=NEW_ARRAY_INSTANCE(PINYIN_MAX_LENGTH,char);
+    }else{
+	pinYin=g_utf8_strup(pinYinStr,PINYIN_MAX_LENGTH);
     }
     return pinYin;
-}
-
-PinYin *pinYin_convert_accent(PinYin* pinYin, PinYin_Accent_Mode toMode,GError **error){
-    PinYin *outBuf=pinYin_new(NULL);
-    pinYin_convert_accent_buffer(pinYin, toMode, outBuf,error);
-    return outBuf;
 }
 
 static gboolean is_diaeresis_u(gunichar *uniStr, guint *index){
@@ -142,6 +133,7 @@ static gboolean is_diaeresis_u(gunichar *uniStr, guint *index){
     }
     if (g_unichar_isdefined(uniStr[*index+1])){
 	if ((uniStr[*index]=='U') && (uniStr[*index+]==':')){
+	    index++;
 	    return TRUE;
 	}
     }
@@ -163,7 +155,7 @@ static gboolean is_diaeresis_u(gunichar *uniStr, guint *index){
     return FALSE;
 }
 
-static gboolean is_circumflex_e(gunichar *uniStr, guint *index){
+gboolean is_circumflex_e(gunichar *uniStr, guint *index){
     switch(uniStr[*index]){
 	case 'Ê':
 	    return TRUE;
@@ -186,6 +178,43 @@ static gboolean is_circumflex_e(gunichar *uniStr, guint *index){
 
 }
 
+
+gboolean pinYin_has_diaeresis_u(const PinYin *pinYin){
+    glong i,items_written;
+    gunichar *uniStr=g_utf8_to_ucs4_fast(pinYin, -1 , &items_written);
+    gboolean result=FALSE;
+    for(i=0;i<items_written;i++){
+	if (is_diaeresis_u(uniStr,&i)){
+	    result=TRUE;
+	    break;
+	}
+    }
+    g_free(uniStr);
+    return result;
+}
+
+gboolean pinYin_has_circumflex_e(const PinYin *pinYin){
+    glong i,items_written;
+    gunichar *uniStr=g_utf8_to_ucs4_fast(pinYin, -1 , &items_written);
+    gboolean result=FALSE;
+    for(i=0;i<items_written;i++){
+	if (is_circumflex_e(uniStr,&i)){
+	    result=TRUE;
+	    break;
+	}
+    }
+    g_free(uniStr);
+    return result;
+}
+
+
+PinYin *pinYin_convert_accent(const PinYin* pinYin, PinYin_Accent_Mode toMode,GError **error){
+    PinYin *outBuf=pinYin_new(NULL);
+    pinYin_convert_accent_buffer(pinYin, toMode, outBuf,error);
+    return outBuf;
+}
+
+
 glong pinYin_convert_accent_buffer(PinYin *pinYin, PinYin_Accent_Mode toMode, PinYin *outBuf,GError **error){
     glong i=0,toIndex=0,srcLen=0;
     gchar *p=pinYin;
@@ -195,7 +224,7 @@ glong pinYin_convert_accent_buffer(PinYin *pinYin, PinYin_Accent_Mode toMode, Pi
 
     GArray *outputArray=g_array_new(TRUE, FALSE, sizeof(gunichar));
     for(i=0;i<items_written;i++){
-	if (is_diaeresis_u(uniStr,&i)){
+	if (pinYin_has_diaeresis_u(uniStr,&i)){
 	    switch(toMode){
 		case PINYIN_ACCENT_ORIGINAL:
 		    g_array_append_val(outputArray,'Ü');
@@ -213,7 +242,7 @@ glong pinYin_convert_accent_buffer(PinYin *pinYin, PinYin_Accent_Mode toMode, Pi
 		    g_array_append_val(outputArray,'U');
 		    break;
 	    }
-	}else if(is_circumflex_e(uniStr,&i)){
+	}else if(pinYin_has_circumflex_e(uniStr,&i)){
 	    switch(toMode){
 		case PINYIN_ACCENT_ORIGINAL:
 		    g_array_append_val(outputArray,'Ê');
