@@ -116,7 +116,11 @@ const PinYin PINYIN_PHONEME_LIST[ZHUYIN_SYMBOL_COUNT]={
 PinYin *pinYin_new(char *pinYinStr){
     PinYin *pinYin=NEW_ARRAY_INSTANCE(PINYIN_MAX_LENGTH,char);
     if (!isEmptyString(pinYinStr)){
+	glong i,items_written;
 	gunichar *uniStr=g_utf8_to_ucs4_fast(pinYin, -1 , &items_written);
+	for(i=0;i<items_written;i++){
+	    
+	}
 
     }
     return pinYin;
