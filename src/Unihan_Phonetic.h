@@ -6,6 +6,8 @@
  * such as conversion between HanYu pinyin conversion C functions, and
  * corresponding SQL scalar functions.
  *
+ * Note that PinYin is represented as uppercase, which is same with kMandarin 
+ * in Unihan.
  */
 
 /*
@@ -37,14 +39,14 @@
  * Maximum space that pinyin requires.
  * 
  */
-#define PINYIN_MAX_LENGTH_MAX 9
+#define PINYIN_MAX_LENGTH 9
 
 /**
  * Maximum space that pinyin requires.
  * 
  */
 
-#define ZHUYIN_MAX_LENGTH_MAX 9
+#define ZHUYIN_MAX_LENGTH 9
 
 /**
  * ZhuYin symbol.
@@ -98,7 +100,7 @@ typedef enum {
     ZHUYIN_SYMBOL_S,         //!< ZhuYin symbol 'ㄙ'
     ZHUYIN_SYMBOL_I,        //!< ZhuYin symbol 'ㄧ'
     ZHUYIN_SYMBOL_U,        //!< ZhuYin symbol 'ㄨ'
-    ZHUYIN_SYMBOL_V,        //!< ZhuYin symbol 'ㄩ'
+    ZHUYIN_SYMBOL_U_,        //!< ZhuYin symbol 'ㄩ'
     ZHUYIN_SYMBOL_A,         //!< ZhuYin symbol 'ㄚ'
     ZHUYIN_SYMBOL_O,         //!< ZhuYin symbol 'ㄛ'
     ZHUYIN_SYMBOL_E,         //!< ZhuYin symbol 'ㄜ'
@@ -122,20 +124,23 @@ typedef enum {
 /**
  * Enumeration of PinYin accent (not tone mark) handling modes.
  *
- * There are two PinYin symbols with accents, diaeresis U (ü), and circumflex E (ê) .
- * Original form, ü and ê are suitable for pronunciation learning.
+ * There are two PinYin symbols with accents, diaeresis U (Ü,ㄩ), and circumflex E (Ê) .
+ * As the their pronunciations are different from u and e.
+ *
+ * Original form, Ü and Ê are suitable for pronunciation learning.
  * However, these symbols cannot be typed intuitively with popular (US-American)
- * keyboard layout, so ü is often substituted with U or V, and ê is substituted by E.
+ * keyboard layout, so Ü is often substituted with U or V, and Ê is substituted by E.
  *
  * Note the accent-like tone marks are not discussed here.
  * In libUnihan, tone marks are always represented as trailing number.
  */
 typedef enum{
-    PINYIN_ACCENT_ORIGINAL, //!< ü is represented as ü, ê is represented as ê.
-    PINYIN_ACCENT_UNIHAN,   //!< ü is represented as Ü, ê is represented as E.
-    PINYIN_ACCENT_TRAILING, //!< ü is represented as U:, ê is represented as E.
-    PINYIN_ACCENT_INPUT_METHOD,  //!< ü is represented as V, ê is represented as E.
-    PINYIN_ACCENT_NONE      //!< ü is represented as U, ê is represented as E.
+    PINYIN_ACCENT_ALWAYS,   //!< Ü is always represented as Ü, Ê is always represented as Ê. 
+    PINYIN_ACCENT_ORIGINAL, //!< Ü is represented as Ü, Ê is represented as Ê.
+    PINYIN_ACCENT_UNIHAN,   //!< Ü is represented as Ü, Ê is represented as E.
+    PINYIN_ACCENT_TRAILING, //!< Ü is represented as U:, Ê is represented as E.
+    PINYIN_ACCENT_INPUT_METHOD,  //!< Ü is represented as V, Ê is represented as E.
+    PINYIN_ACCENT_NONE      //!< Ü is represented as U, Ê is represented as E.
 } PinYin_Accent_Mode;
 
 /**
@@ -151,9 +156,17 @@ extern const PinYin  PINYIN_PHONEME_LIST[];
 /**
  * New a PinYin instance.
  *
+ * This function allocate a new PinYin instance.
+ * Non-NULL pinYinStr will be copied to the new PinYin instance and lowercase 
+ * English characters will be converted to upper case.
+ * Note that the PinYin instance only hold #PINYIN_MAX_LENGTH bytes, 
+ * including the EOL ('\0') character. Longer pinYin will be truncated.
+ *
+ * @param pinYinStr the PinYin in string, NULL for allocate new PinYin instance.
  * @return new PinYin instances.
  */
-PinYin *pinYin_new();
+PinYin *pinYin_new(char *pinYinStr);
+
 
 /**
  * Convert PinYin accents and return a newly allocated converted PinYin.

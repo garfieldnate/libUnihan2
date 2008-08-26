@@ -93,11 +93,11 @@ const PinYin PINYIN_PHONEME_LIST[ZHUYIN_SYMBOL_COUNT]={
    "S",      
    "I",      
    "U",      
-   "V",      
+   "Ü",      
    "A",      
    "O",      
    "E",      
-   "E",  
+   "Ê",  
    "AI",     
    "EI",     
    "AO",     
@@ -113,19 +113,24 @@ const PinYin PINYIN_PHONEME_LIST[ZHUYIN_SYMBOL_COUNT]={
    "5"
 };
 
-PinYin *pinYin_new(){
-    return NEW_ARRAY_INSTANCE(PINYIN_MAX_LENGTH_MAX,char);
+PinYin *pinYin_new(char *pinYinStr){
+    PinYin *pinYin=NEW_ARRAY_INSTANCE(PINYIN_MAX_LENGTH,char);
+    if (!isEmptyString(pinYinStr)){
+	gunichar *uniStr=g_utf8_to_ucs4_fast(pinYin, -1 , &items_written);
+
+    }
+    return pinYin;
 }
 
 PinYin *pinYin_convert_accent(PinYin* pinYin, PinYin_Accent_Mode toMode,GError **error){
-    PinYin *outBuf=pinYin_new();
+    PinYin *outBuf=pinYin_new(NULL);
     pinYin_convert_accent_buffer(pinYin, toMode, outBuf,error);
     return outBuf;
 }
 
 static gboolean is_diaeresis_u(gunichar *uniStr, guint *index){
     switch(uniStr[*index]){
-	case 'ü':
+	case 'Ü':
 	case 'Ü':
 	    return TRUE;
 	default:
@@ -156,7 +161,7 @@ static gboolean is_diaeresis_u(gunichar *uniStr, guint *index){
 
 static gboolean is_circumflex_e(gunichar *uniStr, guint *index){
     switch(uniStr[*index]){
-	case 'ê':
+	case 'Ê':
 	    return TRUE;
 	default:
 	    break;
@@ -189,7 +194,7 @@ glong pinYin_convert_accent_buffer(PinYin *pinYin, PinYin_Accent_Mode toMode, Pi
 	if (is_diaeresis_u(uniStr,&i)){
 	    switch(toMode){
 		case PINYIN_ACCENT_ORIGINAL:
-		    g_array_append_val(outputArray,'ü');
+		    g_array_append_val(outputArray,'Ü');
 		case PINYIN_ACCENT_UNIHAN:
 		    g_array_append_val(outputArray,'Ü');
 		    break;
@@ -207,7 +212,7 @@ glong pinYin_convert_accent_buffer(PinYin *pinYin, PinYin_Accent_Mode toMode, Pi
 	}else if(is_circumflex_e(uniStr,&i)){
 	    switch(toMode){
 		case PINYIN_ACCENT_ORIGINAL:
-		    g_array_append_val(outputArray,'ê');
+		    g_array_append_val(outputArray,'Ê');
 		    break;
 		case PINYIN_ACCENT_UNIHAN:
 		case PINYIN_ACCENT_TRAILING:
@@ -222,7 +227,7 @@ glong pinYin_convert_accent_buffer(PinYin *pinYin, PinYin_Accent_Mode toMode, Pi
     }
     GError **error;
     gchar* tempStr=g_ucs4_to_utf8 (outputArray->data,outputArray->len,&items_read,&items_written,error);
-    g_strlcpy(outBuf,tempStr, PINYIN_MAX_LENGTH_MAX);
+    g_strlcpy(outBuf,tempStr, PINYIN_MAX_LENGTH);
     g_free(tempStr);
     g_array_free(outputArray,TRUE);
     return items_read;
