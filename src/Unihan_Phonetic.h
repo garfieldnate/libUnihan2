@@ -100,11 +100,11 @@ typedef enum {
     ZHUYIN_SYMBOL_S,         //!< ZhuYin symbol 'ㄙ'
     ZHUYIN_SYMBOL_I,        //!< ZhuYin symbol 'ㄧ'
     ZHUYIN_SYMBOL_U,        //!< ZhuYin symbol 'ㄨ'
-    ZHUYIN_SYMBOL_U_,        //!< ZhuYin symbol 'ㄩ'
+    ZHUYIN_SYMBOL_U_DIAERESIS,       //!< ZhuYin symbol 'ㄩ'
     ZHUYIN_SYMBOL_A,         //!< ZhuYin symbol 'ㄚ'
     ZHUYIN_SYMBOL_O,         //!< ZhuYin symbol 'ㄛ'
     ZHUYIN_SYMBOL_E,         //!< ZhuYin symbol 'ㄜ'
-    ZHUYIN_SYMBOL_E_HAT,     //!< ZhuYin symbol 'ㄝ'
+    ZHUYIN_SYMBOL_E_CIRCUMFLEX,     //!< ZhuYin symbol 'ㄝ'
     ZHUYIN_SYMBOL_AI,        //!< ZhuYin symbol 'ㄞ'
     ZHUYIN_SYMBOL_EI,        //!< ZhuYin symbol 'ㄟ'
     ZHUYIN_SYMBOL_AO,        //!< ZhuYin symbol 'ㄠ'
@@ -124,19 +124,32 @@ typedef enum {
 /**
  * Enumeration of PinYin accent (not tone mark) handling modes.
  *
- * There are two PinYin symbols with accents, diaeresis U (Ü,ㄩ), and circumflex E (Ê) .
- * As the their pronunciations are different from u and e.
+ * There are two PinYin symbols with accents, diaeresis U (Ü,ㄩ), and circumflex E (Ê,ㄝ) .
+ * As the their pronunciations are different from U and E.
  *
- * Original form, Ü and Ê are suitable for pronunciation learning.
- * However, these symbols cannot be typed intuitively with popular (US-American)
- * keyboard layout, so Ü is often substituted with U or V, and Ê is substituted by E.
+ * In Romanization of Chinese (ISO 7098:1991), under certain circumstances,
+ * accents can be omitted, such as JÜ -&gt; JU , QÜ -&gt;QU. This is adopted in PRC education system.
+ * Use PINYIN_ACCENT_ORIGINAL for this purpose.
  *
- * Note the accent-like tone marks are not discussed here.
+ * Unihan project does not have circumflex E (Ê), the other is same with ISO 7098.
+ * Use PINYIN_ACCENT_UNIHAN for Unihan project.
+ *
+ * Because Ü is not on most of the keyboards, there are various ways to represent Ü.
+ * For example, CEDICT use U: (PINYIN_ACCENT_TRAILING); while most of Chinese
+ * input method use V as substitute (PINYIN_ACCENT_INPUT_METHOD).
+ *
+ * In English documents such as passport, the accent are usually ignores, use 
+ * PINYIN_ACCENT_NONE for this purpose. 
+ *
+ * Preserving accents unconditionally makes conversion and education easier, 
+ * use PINYIN_ACCENT_ALWAYS for this purpose.
+ *
+ * Note that tone marks are not discussed here.
  * In libUnihan, tone marks are always represented as trailing number.
  */
 typedef enum{
     PINYIN_ACCENT_ALWAYS,   //!< Ü is always represented as Ü, Ê is always represented as Ê. 
-    PINYIN_ACCENT_ORIGINAL, //!< Ü is represented as Ü, Ê is represented as Ê.
+    PINYIN_ACCENT_ORIGINAL, //!< MOE CN standard ISO 7098:1991.
     PINYIN_ACCENT_UNIHAN,   //!< Ü is represented as Ü, Ê is represented as E.
     PINYIN_ACCENT_TRAILING, //!< Ü is represented as U:, Ê is represented as E.
     PINYIN_ACCENT_INPUT_METHOD,  //!< Ü is represented as V, Ê is represented as E.
@@ -162,7 +175,7 @@ extern const PinYin  PINYIN_PHONEME_LIST[];
  * Note that the PinYin instance only hold #PINYIN_MAX_LENGTH bytes, 
  * including the EOL ('\0') character. Longer pinYin will be truncated.
  *
- * @param pinYinStr the PinYin in string, NULL for allocate new PinYin instance.
+ * @param pinYinStr the PinYin in string, NULL for blank instance.
  * @return new PinYin instances.
  */
 PinYin *pinYin_new(const char *pinYinStr);
@@ -174,9 +187,19 @@ PinYin *pinYin_new(const char *pinYinStr);
  * or JU, QU, XU, YU where Ü is simplified as U.
  *
  * @param pinYin the PinYin to be converted.
- * @return TRUE if Ü exists or U should can be substituted as Ü; FALSE otherwise.
+ * @return TRUE if Ü exists or U can be substituted with Ü; FALSE otherwise.
  */
 gboolean pinYin_has_diaeresis_u(const PinYin *pinYin);
+
+/**
+ * PinYin contains character circumflex E.
+ *
+ * This function detects the existence of character circumflex E (Ê),
+ * or IE, UE, ÜE where Ê is simplified as E.
+ *
+ * @param pinYin the PinYin to be converted.
+ * @return TRUE if Ê exists or E can be substituted with Ê; FALSE otherwise.
+ */
 gboolean pinYin_has_circumflex_e(const PinYin *pinYin);
 
 /**
@@ -186,7 +209,7 @@ gboolean pinYin_has_circumflex_e(const PinYin *pinYin);
  * @param toMode the PinYin accent mode to be converted to.
  * @return a newly located PinYin instance.
  */
-PinYin *pinYin_convert_accent(PinYin *pinYin, PinYin_Accent_Mode toMode);
+PinYin *pinYin_convert_accent(const PinYin *pinYin, PinYin_Accent_Mode toMode);
 
 /**
  * Convert PinYin accents and put the output to a given buffer.
@@ -194,9 +217,10 @@ PinYin *pinYin_convert_accent(PinYin *pinYin, PinYin_Accent_Mode toMode);
  * @param pinYin the PinYin to be converted.
  * @param toMode the PinYin accent mode to be converted to.
  * @param outBuf the buffer that hold the converted PinYin.
+ * @param error	 location to store the error occuring, or NULL to ignore errors. Any of the errors in GConvertError other than G_CONVERT_ERROR_NO_CONVERSION may occur.
  * @return Number of bytes written.
  */
-glong pinYin_convert_accent_buffer(PinYin *pinYin, PinYin_Accent_Mode toMode, PinYin *outBuf);
+glong pinYin_convert_accent_buffer(const PinYin *pinYin, PinYin_Accent_Mode toMode, PinYin *outBuf, GError **error);
 
 /**
  * PinYin to ZhuYin
@@ -204,16 +228,8 @@ glong pinYin_convert_accent_buffer(PinYin *pinYin, PinYin_Accent_Mode toMode, Pi
  * @param pinYin the PinYin to be converted.
  * @return a newly located ZhuYin instance.
  */
-ZhuYin *pinYin_to_zhuYin(PinYin* pinYin);
+ZhuYin *pinYin_to_zhuYin(const PinYin* pinYin);
 
-
-/**
- * PinYin to ZhuYin
- *
- * @param pinYin the PinYin to be converted.
- * @param zhuYin the resulting ZhuYin.
- */
-ZhuYin *pinYin_to_zhuYin_buffer(PinYin *pinYin, ZhuYin *zhuYin);
 
 
 /*----------------------------------------
@@ -227,7 +243,7 @@ ZhuYin *pinYin_to_zhuYin_buffer(PinYin *pinYin, ZhuYin *zhuYin);
  * @param id ZhuYin symbol Id.
  * @return the PinYin phoneme, or NULL if the id is negative.
  */
-PinYin *pinYin_phoneme_from_id(ZhuYin_Symbol_Id id);
+const PinYin *pinYin_phoneme_from_id(ZhuYin_Symbol_Id id);
 
 
 /**
@@ -236,7 +252,7 @@ PinYin *pinYin_phoneme_from_id(ZhuYin_Symbol_Id id);
  * @param pym  ZhuYin symbol.
  * @return the corresponding Id.
  */
-ZhuYin_Symbol_Id pinYin_phoneme_get_id(PinYin *pSym);
+ZhuYin_Symbol_Id pinYin_phoneme_get_id(const PinYin *pSym);
 
 /*========================================
  * ZhuYin functions.
@@ -245,9 +261,15 @@ ZhuYin_Symbol_Id pinYin_phoneme_get_id(PinYin *pSym);
 /**
  * New a ZhuYin instance.
  *
+ * This function allocate a new ZhuYin instance.
+ * Non-NULL zhuYinStr will be copied to the new ZhuYin instance and 
+ * converted to uppercase.
+ * Note that the ZhuYin instance only hold #ZHUYIN_MAX_LENGTH bytes, 
+ * including the EOL ('\0') character. Longer zhuYin will be truncated.
+ * @param zhuYinStr the ZhuYin in string, NULL for blank instance.
  * @return new ZhuYin instances.
  */
-ZhuYin *zhuYin_new();
+ZhuYin *zhuYin_new(char *zhuYinStr);
 
 
 /**
@@ -257,15 +279,6 @@ ZhuYin *zhuYin_new();
  * @return a newly located PinYin instance.
  */
 PinYin *zhuYin_to_pinYin(ZhuYin* zhuYin);
-
-
-/**
- * ZhuYin to PinYin
- *
- * @param zhuYin the ZhuYin to be converted.
- * @param pinYin the resulting PinYin.
- */
-PinYin *zhuYin_to_pinYin_buffer(ZhuYin* zhuYin, PinYin *pinYin);
 
 
 /*----------------------------------------
