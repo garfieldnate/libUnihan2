@@ -207,20 +207,22 @@ gboolean pinYin_has_circumflex_e(const PinYin *pinYin);
  *
  * @param pinYin the PinYin to be converted.
  * @param toMode the PinYin accent mode to be converted to.
+ * @param toneMark TRUE if tone mark is preferred, FALSE to use trailing number.
  * @return a newly located PinYin instance.
  */
-PinYin *pinYin_convert_accent(const PinYin *pinYin, PinYin_Accent_Mode toMode);
+PinYin *pinYin_convert_accent(const PinYin *pinYin, PinYin_Accent_Mode toMode, gboolean toneMark);
 
 /**
  * Convert PinYin accents and put the output to a given buffer.
  *
  * @param pinYin the PinYin to be converted.
  * @param toMode the PinYin accent mode to be converted to.
+ * @param toneMark TRUE if tone mark is preferred, FALSE to use trailing number.
  * @param outBuf the buffer that hold the converted PinYin.
  * @param error	 location to store the error occuring, or NULL to ignore errors. Any of the errors in GConvertError other than G_CONVERT_ERROR_NO_CONVERSION may occur.
  * @return Number of bytes written.
  */
-glong pinYin_convert_accent_buffer(const PinYin *pinYin, PinYin_Accent_Mode toMode, PinYin *outBuf, GError **error);
+glong pinYin_convert_accent_buffer(const PinYin *pinYin, PinYin_Accent_Mode toMode, , gboolean toneMark, PinYin *outBuf, GError **error);
 
 /**
  * PinYin to ZhuYin
@@ -269,7 +271,7 @@ ZhuYin_Symbol_Id pinYin_phoneme_get_id(const PinYin *pSym);
  * @param zhuYinStr the ZhuYin in string, NULL for blank instance.
  * @return new ZhuYin instances.
  */
-ZhuYin *zhuYin_new(char *zhuYinStr);
+ZhuYin *zhuYin_new(const char *zhuYinStr);
 
 
 /**
@@ -278,7 +280,7 @@ ZhuYin *zhuYin_new(char *zhuYinStr);
  * @param zhuYin the ZhuYin to be converted.
  * @return a newly located PinYin instance.
  */
-PinYin *zhuYin_to_pinYin(ZhuYin* zhuYin);
+PinYin *zhuYin_to_pinYin(const ZhuYin* zhuYin);
 
 
 /*----------------------------------------

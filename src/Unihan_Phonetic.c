@@ -25,49 +25,131 @@
  * Boston, MA  02111-1307  USA
  */ 
 
+
 const ZhuYin_Symbol ZHUYIN_SYMBOL_LIST[ZHUYIN_SYMBOL_COUNT]={
-    'ㄅ',
-    'ㄆ',
-    'ㄇ',
-    'ㄈ',
-    'ㄉ',
-    'ㄊ',
-    'ㄋ',
-    'ㄌ',
-    'ㄍ',
-    'ㄎ',
-    'ㄏ',
-    'ㄐ',
-    'ㄑ',
-    'ㄒ',
-    'ㄓ',
-    'ㄔ',
-    'ㄕ',
-    'ㄖ',
-    'ㄗ',
-    'ㄘ',
-    'ㄙ',
-    'ㄧ',
-    'ㄨ',
-    'ㄩ',
-    'ㄚ',
-    'ㄛ',
-    'ㄜ',
-    'ㄝ',
-    'ㄞ',
-    'ㄟ',
-    'ㄠ',
-    'ㄡ',
-    'ㄢ',
-    'ㄣ',
-    'ㄤ',
-    'ㄥ',
-    'ㄦ',
-    'ˊ',
-    'ˇ',
-    'ˋ',
-    '˙'
+    0x3105,   // "ㄅ"
+    0x3106,   // "ㄆ"
+    0x3107,   // "ㄇ"
+    0x3108,   // "ㄈ"
+    0x3109,   // "ㄉ"
+    0x310A,   // "ㄊ"
+    0x310B,   // "ㄋ"
+    0x310C,   // "ㄌ"
+    0x310D,   // "ㄍ"
+    0x310E,   // "ㄎ"
+    0x310F,   // "ㄏ"
+    0x3110,   // "ㄐ"
+    0x3111,   // "ㄑ"
+    0x3112,   // "ㄒ"
+    0x3113,   // "ㄓ"
+    0x3114,   // "ㄔ"
+    0x3115,   // "ㄕ"
+    0x3116,   // "ㄖ"
+    0x3117,   // "ㄗ"
+    0x3118,   // "ㄘ"
+    0x3119,   // "ㄙ"
+    0x3127,   // "ㄧ"
+    0x3128,   // "ㄨ"
+    0x3129,   // "ㄩ"
+    0x311A,   // "ㄚ"
+    0x311B,   // "ㄛ"
+    0x311C,   // "ㄜ"
+    0x311D,   // "ㄝ"
+    0x311E,   // "ㄞ"
+    0x311F,   // "ㄟ"
+    0x3120,   // "ㄠ"
+    0x3121,   // "ㄡ"
+    0x3122,   // "ㄢ"
+    0x3123,   // "ㄣ"
+    0x3124,   // "ㄤ"
+    0x3125,   // "ㄥ"
+    0x3126,   // "ㄦ"
+    0x02C9,   // "ˉ"
+    0x02CA,   // "ˊ"
+    0x02C7,   // "ˇ"
+    0x02CB,   // "ˋ"
+    0x02D9,   // "˙"
 };
+
+
+
+typedef struct {
+    char  pinYin_phoneme[5];
+    char  pinYin_phoneme[5];
+    ZhuYin_Symbol  zSym;
+} Phoneme_Record;
+
+const ZhuYin_Record INITIAL_PHONEMES[]={
+    {"B",   "ㄅ"},
+    {"P",   "ㄆ"},
+    {"M",   "ㄇ"},
+    {"F",   "ㄈ"},
+    {"D",   "ㄉ"},
+    {"T",   "ㄊ"},
+    {"N",   "ㄋ"},
+    {"L",   "ㄌ"},
+    {"G",   "ㄍ"},
+    {"K",   "ㄎ"},
+    {"H",   "ㄏ"},
+    {"J",   "ㄐ"},
+    {"Q",   "ㄑ"},
+    {"X",   "ㄒ"},
+    {"ZH",  "ㄓ"},
+    {"CH",  "ㄔ"},
+    {"SH",  "ㄕ"},
+    {"R",   "ㄖ"},
+    {"Z",   "ㄗ"},
+    {"C",   "ㄘ"},
+    {"S",   "ㄙ"},
+    NULL
+};
+
+const ZhuYin_Record MEDIAL_PHONEMES[]={
+    {"IO",   "ㄩ"},
+    {"I",  "ㄧ"},
+    {"U",   "ㄨ"},
+    NULL
+};
+
+const ZhuYin_Record MEDIAL_PHONEMES_NO_INITIAL[]={
+    {"YI",  "ㄧ"},
+    {"WU",   "ㄨ"},
+    {"YU",   "ㄩ"},
+    {"YO",   "ㄩ"},
+    {"Y",  "ㄧ"},
+    {"W",   "ㄨ"},
+    NULL
+};
+
+const ZhuYin_Record FINAL_PHONEMES_NORMAL[]={
+    {"ANG", "ㄤ"},
+    {"AI",  "ㄞ"},
+    {"AO",  "ㄠ"},
+    {"AN",  "ㄢ"},
+    {"EI",  "ㄟ"},
+    {"ER",  "ㄦ"},
+    {"OU",  "ㄡ"},
+    {"A",   "ㄚ"},   
+    {"O",   "ㄛ"},
+    {"Ê",   "ㄝ"},
+    NULL
+}
+
+const ZhuYin_Record FINAL_PHONEMES_WITHOUT_MEDIAL[]={
+    {"ENG", "ㄥ"},
+    {"EN",  "ㄣ"},
+    {"E",   "ㄜ"},
+    {"I", ""},
+    NULL
+}
+
+const ZhuYin_Record FINAL_PHONEMES_WITH_MEDIAL[]={
+    {"NG", "ㄥ"},
+    {"N",  "ㄣ"},
+    {"E",   "ㄝ"},
+    NULL
+}
+
 
 const PinYin PINYIN_PHONEME_LIST[ZHUYIN_SYMBOL_COUNT]={
    "B",       
@@ -214,14 +296,28 @@ gboolean pinYin_has_circumflex_e(const PinYin *pinYin){
     return result;
 }
 
-PinYin *pinYin_convert_accent(const PinYin* pinYin, PinYin_Accent_Mode toMode){
+gboolean pinYin_has_toneMark(const PinYin* pinYin){
+    glong i,items_read,items_written;
+    gunichar *uniStr=g_utf8_to_ucs4_fast(pinYin, -1 , &items_written);
+    gboolean result=FALSE;
+    for (i=0;i<items_written;i++){
+	if (!g_unichar_isalpha(uniStr[i]) && !g_unichar_isdigit(uniStr[i])){
+	    result=TRUE;
+	    break;
+	}
+    }
+    g_free(uniStr);
+    return result;
+}
+
+PinYin *pinYin_convert_accent(const PinYin* pinYin, PinYin_Accent_Mode toMode,gboolean toneMark){
     PinYin *outBuf=pinYin_new(NULL);
     pinYin_convert_accent_buffer(pinYin, toMode, outBuf,NULL);
     return outBuf;
 }
 
 
-glong pinYin_convert_accent_buffer(const PinYin *pinYin, PinYin_Accent_Mode toMode, PinYin *outBuf,GError **error){
+glong pinYin_convert_accent_buffer(const PinYin *pinYin, PinYin_Accent_Mode toMode, gboolean toneMark, PinYin *outBuf,GError **error){
     glong i=0,toIndex=0,srcLen=0;
     gchar *p=pinYin;
     gunichar srcChar;
@@ -320,11 +416,12 @@ ZhuYin_Symbol_Id pinYin_phoneme_get_id(const PinYin *pSym){
     PinYin *pS=pinYin_convert_accent(pinYin, PINYIN_ACCENT_ALWAYS);
     int j;
     for (j=ZHUYIN_SYMBOL_COUNT-1;j>=0;j--){
-	if (strcmp(p,PINYIN_PHONEME_LIST[j])!=0){
-	    continue;
+	if (strcmp(p,PINYIN_PHONEME_LIST[j])==0){
+	    g_free(pS);
+	    return j;
 	}
-	return j;
     }
+    g_free(pS);
     return ZHUYIN_INVALID_SYMBOL;
 }
 
@@ -342,3 +439,23 @@ ZhuYin *zhuYin_new(char *zhuYinStr){
     return zhuYin;
 }
 
+PinYin *zhuYin_to_pinYin(ZhuYin* zhuYin){
+
+    
+}
+
+ZhuYin_Symbol zhuYin_Symbol_from_id(ZhuYin_Symbol_Id id){
+    if (id<0 || id >= ZHUYIN_SYMBOL_COUNT )
+	return 0;
+    return ZHUYIN_SYMBOL_LIST[j];
+}
+
+ZhuYin_Symbol_Id zhuYin_Symbol_get_id(ZhuYin_Symbol zSym){
+    int j;
+    for (j=ZHUYIN_SYMBOL_COUNT-1;j>=0;j--){
+	if (ZHUYIN_SYMBOL_LIST[j]==zSym){
+	    return j;
+	}
+    }
+    return ZHUYIN_INVALID_SYMBOL;
+}
