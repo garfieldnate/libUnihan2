@@ -114,10 +114,11 @@ typedef enum {
     ZHUYIN_SYMBOL_ANG,       //!< ZhuYin symbol 'ㄤ'
     ZHUYIN_SYMBOL_ENG,       //!< ZhuYin symbol 'ㄥ'
     ZHUYIN_SYMBOL_ER,        //!< ZhuYin symbol 'ㄦ'
+    ZHUYIN_SYMBOL_1,         //!< ZhuYin 1st tone mark 'ˉ'
     ZHUYIN_SYMBOL_2,         //!< ZhuYin 2nd tone mark 'ˊ'
     ZHUYIN_SYMBOL_3,         //!< ZhuYin 3rd tone mark 'ˇ'
     ZHUYIN_SYMBOL_4,         //!< ZhuYin 4th tone mark 'ˋ'
-    ZHUYIN_SYMBOL_NETURAL,   //!< ZhuYin neutral (5th) tone mark '˙'
+    ZHUYIN_SYMBOL_NEUTRAL,   //!< ZhuYin neutral (5th) tone mark '˙'
 } ZhuYin_Symbol_Id;
 #define ZHUYIN_SYMBOL_COUNT 37 + 4 
 
@@ -156,15 +157,84 @@ typedef enum{
     PINYIN_ACCENT_NONE      //!< Ü is represented as U, Ê is represented as E.
 } PinYin_Accent_Mode;
 
+
+/**
+ * Enumeration of pinyin phoneme type.
+ *
+ * Four types of elements has been used in Chinese phonetic notation such as pinYin or zhuyin:
+ * <ol>
+ *  <li>initials (I) - are always in the front (but not vice versa, see below), 
+ *      usually contain consonants.</li>
+ *  <li>medials (M) - symbols like ㄓ(zh) can be in the front, following initials,
+ *      but not following finals.  Some literatures regard them as finals.</li>
+ *  <li>finals (F) - are either standalone, or in the end.</li>
+ *  <li>tone marks - marking the tones. They are either in the end (after finals and other elements), 
+ *      or on the top of medials and finals.</li>
+ * </ol>
+ *
+ * Valid formats of elements: I, IM, IF, IMF, M, MF, F.
+ * 
+ * Zhuyin symbols do not change by other elements, however, the pinyin phonemes 
+ * do have different forms according to the presents of other elements.
+ * For example 翁( zhuyin: ㄩㄥ, pinyin: weng), 兄 ( zhuyin: ㄒㄩㄥ, pinyin: xiong).
+ * Thus, the -ong and -eng are files as different type of finals.
+ *
+ * 
+ */
+typedef enum{
+    PINYIN_PHONEME_INVALID_TYPE=-1,  //!< Invalid phoneme type.
+
+    PINYIN_PHONEME_TYPE_INITIAL_ONLY, //!< Only initial present, no others.
+    PINYIN_PHONEME_TYPE_INITIAL,      //!< Normal Initials.       
+
+    PINYIN_PHONEME_TYPE_SPECIAL_NO_INITIAL, //!< Special cases for no initial.
+    PINYIN_PHONEME_TYPE_SPECIAL,            //!< Special cases.
+
+    PINYIN_PHONEME_TYPE_MEDIAL_NO_INITIAL, //!< No initial in the front.
+    PINYIN_PHONEME_TYPE_MEDIAL,            //!< Normal medials.
+
+    PINYIN_PHONEME_TYPE_FINAL_ONLY,        //!< Only finals, no others
+    PINYIN_PHONEME_TYPE_FINAL_WITH_MEDIAL, //!< Finals with medial
+    PINYIN_PHONEME_TYPE_FINAL_WITHOUT_MEDIAL, //!< Finals without medial
+    PINYIN_PHONEME_TYPE_FINAL,             //!< Normal finals (which do not change form).
+
+    PINYIN_PHONEME_TYPE_TONEMARK
+} PinYin_Phoneme_Type;
+
+/**
+ * Number of PinYin phoneme type.
+ */
+#define PINYIN_PHONEME_TYPES_COUNT PINYIN_PHONEME_TYPE_TONEMARK+1
+
+
+/**
+ * Struct of PinYin-ZhuYin conversion property.
+ *
+ * This struct shows a conversion rule between ZhuYin_Symbol
+ * and PinYin Phoneme.
+ *
+ */
+typedef struct {
+    char  pinYin_phoneme[5]; //<! PinYin phoneme.
+    char  zhuYin[5];     //<! ZhuYin.
+    PinYin_Phoneme_Type pType;	//<! Type of PinYin Phoneme.
+} PinYin_ZhuYin_Properties;
+
+/**
+ * Conversion property Tables.
+ *
+ * Example: To get the table of PINYIN_PHONEME_TYPE_INITIAL,
+ * use PHONEMES[PINYIN_PHONEME_TYPE_INITIAL].
+ *
+ */
+extern PinYin_ZhuYin_Properties PHONEMES[PINYIN_PHONEME_TYPES_COUNT][];
+
+
 /**
  * An array of ZhuYin symbols.
  */
 extern const ZhuYin_Symbol ZHUYIN_SYMBOL_LIST[];
 
-/**
- * An array of PinYin phoneme.
- */
-extern const PinYin  PINYIN_PHONEME_LIST[];
 
 /**
  * New a PinYin instance.
@@ -178,7 +248,7 @@ extern const PinYin  PINYIN_PHONEME_LIST[];
  * @param pinYinStr the PinYin in string, NULL for blank instance.
  * @return new PinYin instances.
  */
-PinYin *pinYin_new(const char *pinYinStr);
+PinYin *pinYin_new(const char *pinYin_str);
 
 /**
  * PinYin contains character diaeresis U.
@@ -237,6 +307,7 @@ ZhuYin *pinYin_to_zhuYin(const PinYin* pinYin);
 /*----------------------------------------
  * PinYin phoneme functions.
  */
+
 
 /**
  * Return the PinYin phoneme by its Id.
@@ -304,5 +375,21 @@ ZhuYin_Symbol zhuYin_Symbol_from_id(ZhuYin_Symbol_Id id);
  * @return the corresponding Id.
  */
 ZhuYin_Symbol_Id zhuYin_Symbol_get_id(ZhuYin_Symbol zSym);
+
+
+gboolean zhuYin_Symbol_is_initial(ZhuYin_Symbol zSym);
+
+gboolean zhuYin_Symbol_is_medial(ZhuYin_Symbol zSym);
+
+gboolean zhuYin_Symbol_is_final(ZhuYin_Symbol zSym);
+
+gboolean zhuYin_Symbol_is_tonemark(ZhuYin_Symbol zSym);
+
+guint zhuYin_get_phoneme_flags(ZhuYin *zhuYin);
+
+const pinYin_ZhuYin_Properties *pzProperties_from_pinyin_prefix(const char *pinYin_str, PinYin_Phoneme_Type pType);
+const pinYin_ZhuYin_Properties *pzProperties_from_zhuyin_prefix(const char *zhuYin_str, PinYin_Phoneme_Type pType);
+const pinYin_ZhuYin_Properties *pzProperties_from_zhuyin_symbol(ZhuYin_Symbol zSym, PinYin_Phoneme_Type pType);
+
 
 #endif /* UNIHAN_PHONETIC_H_ */
