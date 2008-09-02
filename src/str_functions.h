@@ -180,18 +180,29 @@ subString(char *buf,const char *str,int beginIndex, int length);
 /**
  * Convert UCS-4 to UTF-8 string.
  *
- * @param ucs4Code the UCS-4 to be converted.
+ * @param ucs4_code the UCS-4 to be converted.
  * @return UTF-8 string that converted from the UCS-4 Code. Use g_free() after use.
  */
-char* ucs4_to_utf8(gunichar ucs4Code);
+char* ucs4_to_utf8(gunichar ucs4_code);
 
 /**
  * Convert UTF-8 string to UCS-4 (gunichar).
  *
- * @param utf8Code the UTF-8 string  to be converted.
+ * @param utf8_str the UTF-8 string  to be converted.
  * @return UCS-4 representation of the UTF-8 string.
  */
-gunichar* utf8_to_ucs4(const char* utf8Code);
+gunichar* utf8_to_ucs4(const char* utf8_str);
+
+/**
+ * Concatenate a UCS-4 (gunichar) to an UTF-8 string
+ *
+ * @param utf8_str the UTF-8 string.
+ * @param ucs4_code the UCS-4 to be appended.
+ * @return a pointer to utf8_str;
+ */
+char* utf8_concat_ucs4(const char* utf8_str,gunichar ucs4_code);
+
+
 
 /**
  * Compare between signed and unsigned char arrays.

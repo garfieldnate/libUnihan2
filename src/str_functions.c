@@ -143,26 +143,40 @@ subString(char *buf, const char *str,int beginIndex,int length){
     return buf;
 }
 
-gunichar* utf8_to_ucs4(const char* utf8Code){
+gunichar* utf8_to_ucs4(const char* utf8_str){
     glong items_read;
     glong items_written;
     GError *err = NULL;
-    gunichar*   ucs4Str=g_utf8_to_ucs4(utf8Code, -1,&items_read, &items_written, &err);
+    gunichar*   ucs4Str=g_utf8_to_ucs4(utf8_str, -1,&items_read, &items_written, &err);
     if (err!=NULL){
-	verboseMsg_print(VERBOSE_MSG_CRITICAL,"UTF-8 to UCS-4 conversion error: on char %ld in \"%s\"\n",items_read,utf8Code);
+	verboseMsg_print(VERBOSE_MSG_CRITICAL,"UTF-8 to UCS-4 conversion error: on char %ld in \"%s\"\n",items_read,utf8_str);
 	verboseMsg_print(VERBOSE_MSG_CRITICAL,"Error message:  \"%s\"\n",err->message);
 	exit(1);
     }
     return ucs4Str;
 }
 
-char* ucs4_to_utf8(gunichar ucs4Code){
-    gchar *utf8Code;
-    gint len=g_unichar_to_utf8(ucs4Code,NULL);
-    utf8Code=NEW_ARRAY_INSTANCE(MAX(len+1,6),gchar);
-    g_unichar_to_utf8(ucs4Code,utf8Code);
-    utf8Code[len]='\0';
-    return utf8Code;
+char* ucs4_to_utf8(gunichar ucs4_code){
+    gchar *utf8_str;
+    gint len=g_unichar_to_utf8(ucs4_code,NULL);
+    utf8_str=NEW_ARRAY_INSTANCE(MAX(len+1,6),gchar);
+    g_unichar_to_utf8(ucs4_code,utf8_str);
+    utf8_str[len]='\0';
+    return utf8_str;
+}
+
+char* utf8_concat_ucs4(const char* utf8_str,gunichar ucs4_code){
+    char *ucs4_str=ucs4_to_utf8(ucs4_code);
+    strcat(utf8_str,ucs4_str);
+    g_free(ucs4_str);
+    return utf8_str;
+}
+
+char* utf8_concat_ucs4(const char* utf8_str,gunichar ucs4_code){
+    char *ucs4_str=ucs4_to_utf8(ucs4_code);
+    strcat(utf8_str,ucs4_str);
+    g_free(ucs4_str);
+    return utf8_str;
 }
 
 int strcmp_unsigned_signed(const unsigned char *str1, const char *str2){

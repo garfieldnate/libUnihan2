@@ -56,12 +56,12 @@ typedef gunichar  ZhuYin_Symbol;
 /**
  * Pronunciation in ZhuYin UTF-8 string.
  */
-typedef char* ZhuYin*;
+typedef char ZhuYin;
 
 /**
  * Pronunciation in PinYin UTF-8 string.
  */
-typedef char* PinYin*;
+typedef char PinYin;
 
 /**
  * Enumeration of ZhuYin symbols.
@@ -120,7 +120,7 @@ typedef enum {
     ZHUYIN_SYMBOL_4,         //!< ZhuYin 4th tone mark 'ˋ'
     ZHUYIN_SYMBOL_NEUTRAL,   //!< ZhuYin neutral (5th) tone mark '˙'
 } ZhuYin_Symbol_Id;
-#define ZHUYIN_SYMBOL_COUNT 37 + 4 
+#define ZHUYIN_SYMBOL_COUNT ZHUYIN_SYMBOL_NEUTRAL + 1 
 
 /**
  * Enumeration of PinYin accent (not tone mark) handling modes.
@@ -172,14 +172,23 @@ typedef enum{
  *      or on the top of medials and finals.</li>
  * </ol>
  *
- * Valid formats of elements: I, IM, IF, IMF, M, MF, F.
- * 
  * Zhuyin symbols do not change by other elements, however, the pinyin phonemes 
  * do have different forms according to the presents of other elements.
- * For example 翁( zhuyin: ㄩㄥ, pinyin: weng), 兄 ( zhuyin: ㄒㄩㄥ, pinyin: xiong).
- * Thus, the -ong and -eng are files as different type of finals.
  *
- * 
+ * For example 弯 (meaning: band/twist, zhuyin: ㄨㄢ, pinyin: wan), 
+ * 欢 (meaning: happy zhuyin: ㄏㄨㄢ, pinyin: huan).
+ * In zhuyin the part ㄨㄢ are same, but in pinyin, 'u' is replaced by 'w'
+ * if the initial does not exist.
+ *
+ * Sometimes, special conversion rules are required for  following case:
+ * 擁( zhuyin: ㄩㄥ, pinyin: yong), 兄 ( zhuyin: ㄒㄩㄥ, pinyin: xiong),
+ * 翁( zhuyin: ㄨㄥ, pinyin: weng), 哄 ( zhuyin: ㄏㄨㄥ, pinyin: hong).
+ * -ong cannot be simply converted to ㄩㄥ, as it might be ㄨㄥ;
+ * ㄨㄥ cannot be simply converted to -ong, as it might be -eng.
+ * Thus we also have element special (S) to handle this kind of conversion. 
+ * It has either one medial or one medial and one final, and is in the end.
+ *
+ * Valid formats of elements: I, IM, IF, IS, IMF, S, M, MF, F.
  */
 typedef enum{
     PINYIN_PHONEME_INVALID_TYPE=-1,  //!< Invalid phoneme type.
@@ -187,7 +196,7 @@ typedef enum{
     PINYIN_PHONEME_TYPE_INITIAL_ONLY, //!< Only initial present, no others.
     PINYIN_PHONEME_TYPE_INITIAL,      //!< Normal Initials.       
 
-    PINYIN_PHONEME_TYPE_SPECIAL_NO_INITIAL, //!< Special cases for no initial.
+    PINYIN_PHONEME_TYPE_SPECIAL_NO_INITIAL, //!< No Initial (leading) Special case.
     PINYIN_PHONEME_TYPE_SPECIAL,            //!< Special cases.
 
     PINYIN_PHONEME_TYPE_MEDIAL_NO_INITIAL, //!< No initial in the front.
@@ -215,10 +224,10 @@ typedef enum{
  *
  */
 typedef struct {
-    char  pinYin_phoneme[5]; //<! PinYin phoneme.
-    char  zhuYin[5];     //<! ZhuYin.
+    const char  *pinYin_phoneme; //<! PinYin phoneme.
+    const char  *zhuYin;     //<! ZhuYin.
     PinYin_Phoneme_Type pType;	//<! Type of PinYin Phoneme.
-} PinYin_ZhuYin_Properties;
+} P_Z_Properties;
 
 /**
  * Conversion property Tables.
@@ -227,7 +236,7 @@ typedef struct {
  * use PHONEMES[PINYIN_PHONEME_TYPE_INITIAL].
  *
  */
-extern PinYin_ZhuYin_Properties PHONEMES[PINYIN_PHONEME_TYPES_COUNT][];
+extern const P_Z_Properties * PHONEMES [];
 
 
 /**
@@ -289,10 +298,9 @@ PinYin *pinYin_convert_accent(const PinYin *pinYin, PinYin_Accent_Mode toMode, g
  * @param toMode the PinYin accent mode to be converted to.
  * @param toneMark TRUE if tone mark is preferred, FALSE to use trailing number.
  * @param outBuf the buffer that hold the converted PinYin.
- * @param error	 location to store the error occuring, or NULL to ignore errors. Any of the errors in GConvertError other than G_CONVERT_ERROR_NO_CONVERSION may occur.
- * @return Number of bytes written.
+ * @return The resulting buffer (outBuf).
  */
-glong pinYin_convert_accent_buffer(const PinYin *pinYin, PinYin_Accent_Mode toMode, , gboolean toneMark, PinYin *outBuf, GError **error);
+PinYin *pinYin_convert_accent_buffer(const PinYin *pinYin, PinYin_Accent_Mode toMode, gboolean toneMark, PinYin *outBuf);
 
 /**
  * PinYin to ZhuYin
@@ -301,31 +309,6 @@ glong pinYin_convert_accent_buffer(const PinYin *pinYin, PinYin_Accent_Mode toMo
  * @return a newly located ZhuYin instance.
  */
 ZhuYin *pinYin_to_zhuYin(const PinYin* pinYin);
-
-
-
-/*----------------------------------------
- * PinYin phoneme functions.
- */
-
-
-/**
- * Return the PinYin phoneme by its Id.
- * 
- *
- * @param id ZhuYin symbol Id.
- * @return the PinYin phoneme, or NULL if the id is negative.
- */
-const PinYin *pinYin_phoneme_from_id(ZhuYin_Symbol_Id id);
-
-
-/**
- * Return the Id of a ZhuYin s
- * 
- * @param pym  ZhuYin symbol.
- * @return the corresponding Id.
- */
-ZhuYin_Symbol_Id pinYin_phoneme_get_id(const PinYin *pSym);
 
 /*========================================
  * ZhuYin functions.
@@ -342,7 +325,7 @@ ZhuYin_Symbol_Id pinYin_phoneme_get_id(const PinYin *pSym);
  * @param zhuYinStr the ZhuYin in string, NULL for blank instance.
  * @return new ZhuYin instances.
  */
-ZhuYin *zhuYin_new(const char *zhuYinStr);
+ZhuYin *zhuYin_new(const char *zhuYin_str);
 
 
 /**
@@ -387,9 +370,8 @@ gboolean zhuYin_Symbol_is_tonemark(ZhuYin_Symbol zSym);
 
 guint zhuYin_get_phoneme_flags(ZhuYin *zhuYin);
 
-const pinYin_ZhuYin_Properties *pzProperties_from_pinyin_prefix(const char *pinYin_str, PinYin_Phoneme_Type pType);
-const pinYin_ZhuYin_Properties *pzProperties_from_zhuyin_prefix(const char *zhuYin_str, PinYin_Phoneme_Type pType);
-const pinYin_ZhuYin_Properties *pzProperties_from_zhuyin_symbol(ZhuYin_Symbol zSym, PinYin_Phoneme_Type pType);
+P_Z_Properties *pzProperties_from_pinyin_prefix(const char *pinYin_str, PinYin_Phoneme_Type pType);
+P_Z_Properties *pzProperties_from_zhuyin_prefix(const char *zhuYin_str, PinYin_Phoneme_Type pType);
 
 
 #endif /* UNIHAN_PHONETIC_H_ */
