@@ -200,9 +200,7 @@ gunichar* utf8_to_ucs4(const char* utf8_str);
  * @param ucs4_code the UCS-4 to be appended.
  * @return a pointer to utf8_str;
  */
-char* utf8_concat_ucs4(const char* utf8_str,gunichar ucs4_code);
-
-
+char* utf8_concat_ucs4(char* utf8_str,gunichar ucs4_code);
 
 /**
  * Compare between signed and unsigned char arrays.

@@ -1,12 +1,17 @@
+cmake_minimum_required(VERSION 2.4)
+if(COMMAND cmake_policy)
+      cmake_policy(SET CMP0003 NEW)
+endif(COMMAND cmake_policy)
+
 #Project name
 PROJECT(libUnihan)
 SET(CMAKE_C_FLAGS "-Wall")
 SET(PRJ_VER_MAJOR "0")
 SET(PRJ_VER_MINOR "4")
-SET(PRJ_VER_PATCH "1")
+SET(PRJ_VER_PATCH "2")
 SET(PRJ_VER ${PRJ_VER_MAJOR}.${PRJ_VER_MINOR}.${PRJ_VER_PATCH})
 SET(DB_VER "5.1.0")
-SET(DB_PATCH_LEVEL "4")
+SET(DB_PATCH_LEVEL "6")
 SET(DB_PRJ_NAME  "UnihanDb")
 SET(DB_NAME "Unihan.db")
 
@@ -32,6 +37,7 @@ ADD_DEFINITIONS(-DUNIHAN_DEFAULT_DB='"${DB_DIR}/${DB_NAME}"')
 
 # Source code subdirectories
 ADD_SUBDIRECTORY(src bin)
+ADD_SUBDIRECTORY(test)
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR})
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR})
 
@@ -117,4 +123,8 @@ CONFIGURE_FILE(
 
 ADD_CUSTOM_TARGET(uninstall
   "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
+
+### For testing
+ENABLE_TESTING()
+ADD_TEST(check_phonetic ${PROJECT_BINARY_DIR}/test/check_phonetic ) 
 

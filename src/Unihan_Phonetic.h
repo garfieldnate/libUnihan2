@@ -366,12 +366,12 @@ gboolean zhuYin_Symbol_is_medial(ZhuYin_Symbol zSym);
 
 gboolean zhuYin_Symbol_is_final(ZhuYin_Symbol zSym);
 
-gboolean zhuYin_Symbol_is_tonemark(ZhuYin_Symbol zSym);
+gboolean zhuYin_Symbol_is_toneMark(ZhuYin_Symbol zSym);
 
 guint zhuYin_get_phoneme_flags(ZhuYin *zhuYin);
 
-P_Z_Properties *pzProperties_from_pinyin_prefix(const char *pinYin_str, PinYin_Phoneme_Type pType);
-P_Z_Properties *pzProperties_from_zhuyin_prefix(const char *zhuYin_str, PinYin_Phoneme_Type pType);
+const P_Z_Properties *pzProperties_from_pinyin_prefix(const char *pinYin_str, PinYin_Phoneme_Type pType);
+const P_Z_Properties *pzProperties_from_zhuyin_prefix(const char *zhuYin_str, PinYin_Phoneme_Type pType);
 
 
 #endif /* UNIHAN_PHONETIC_H_ */

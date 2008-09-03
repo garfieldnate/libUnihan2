@@ -165,14 +165,7 @@ char* ucs4_to_utf8(gunichar ucs4_code){
     return utf8_str;
 }
 
-char* utf8_concat_ucs4(const char* utf8_str,gunichar ucs4_code){
-    char *ucs4_str=ucs4_to_utf8(ucs4_code);
-    strcat(utf8_str,ucs4_str);
-    g_free(ucs4_str);
-    return utf8_str;
-}
-
-char* utf8_concat_ucs4(const char* utf8_str,gunichar ucs4_code){
+char* utf8_concat_ucs4(char* utf8_str,gunichar ucs4_code){
     char *ucs4_str=ucs4_to_utf8(ucs4_code);
     strcat(utf8_str,ucs4_str);
     g_free(ucs4_str);
