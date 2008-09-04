@@ -35,12 +35,23 @@ ExamSet conversion_PINYIN_ACCENT_ALWAYS[]={
     {NULL}
 };
 
+gboolean perform_test(ExamSet *exSet,const char *prompt, gint acce){
+    printf("Testing %s",prompt);
+    while(exSet!=NULL && exSet->input!=NULL){
+	out=pinYin_convert_accent(exSet->input,PINYIN_ACCENT_ALWAYS,FALSE);
+	if (strcmp(out,exSet->expectOutput)!=0){
+	    g_error("Failed: Orig:%s Out:%s Exp:%s",exSet->input,out,exSet->expectOutput);
+	}
+	exSet=&conversion_PINYIN_ACCENT_ALWAYS[++i];
+    }
+
+}
+
 int main(int argc, char** argv){
     int i=0;
     ExamSet *exSet=&conversion_PINYIN_ACCENT_ALWAYS[i];
     char *out;
 
-    printf("Testing pinYin_convert_accent(*,PINYIN_ACCENT_ALWAYS,FALSE)");
     while(exSet!=NULL && exSet->input!=NULL){
 	out=pinYin_convert_accent(exSet->input,PINYIN_ACCENT_ALWAYS,FALSE);
 	if (strcmp(out,exSet->expectOutput)!=0){

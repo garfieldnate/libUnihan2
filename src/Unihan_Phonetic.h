@@ -159,6 +159,28 @@ typedef enum{
 
 
 /**
+ * Enumeration of ZhuYin tone mark handling.
+ * Originally, the neutral (fifth) tone mark of Zhuyin is put in the front, while the first tone mark is omitted.
+ * Use ZHUYIN_TONEMARK_ORIGINAL for this.
+ *
+ * However, for Zhuyin based input method, the neutral is put in the back.
+ * Use ZHUYIN_TONEMARK_INPUT_METHOD for this.
+ *
+ * If preserving tonemark is desireable, then 
+ * use ZHUYIN_TONEMARK_ALWAYS, in which the first tone is not omitted,
+ * otherwise is same with ZHUYIN_TONEMARK_INPUT_METHOD.
+ *
+ * If numerical tone mark is desired, use ZHUYIN_TONEMARK_NUMERICAL.
+ */
+typedef enum{
+    ZHUYIN_TONEMARK_ALWAYS,   //!<  Neutral (fifth) tone mark is put in the end, while the first tone mark is kept.
+    ZHUYIN_TONEMARK_ORIGINAL,   //!< Neutral (fifth) tone mark is put in the front, while the first tone mark is omitted.
+    ZHUYIN_TONEMARK_INPUT_METHOD,  //!< Neutral (fifth) tone mark is put in the front, while the first tone mark is omitted.Ü is represented as V, Ê is represented as E.
+    ZHUYIN_TONEMARK_NUMERICAL,  //!< Tone mark are represented as numerical, in the end of zhuyin.
+} ZhuYin_ToneMark_Mode;
+
+
+/**
  * Enumeration of pinyin phoneme type.
  *
  * Four types of elements has been used in Chinese phonetic notation such as pinYin or zhuyin:
@@ -306,9 +328,10 @@ PinYin *pinYin_convert_accent_buffer(const PinYin *pinYin, PinYin_Accent_Mode to
  * PinYin to ZhuYin
  *
  * @param pinYin the PinYin to be converted.
+ * @param mode the ZhuYin tone mark mode.
  * @return a newly located ZhuYin instance.
  */
-ZhuYin *pinYin_to_zhuYin(const PinYin* pinYin);
+ZhuYin *pinYin_to_zhuYin(const PinYin* pinYin, ZhuYin_ToneMark_Mode mode);
 
 /*========================================
  * ZhuYin functions.
@@ -328,13 +351,16 @@ ZhuYin *pinYin_to_zhuYin(const PinYin* pinYin);
 ZhuYin *zhuYin_new(const char *zhuYin_str);
 
 
+
+
 /**
  * ZhuYin to PinYin
  *
  * @param zhuYin the ZhuYin to be converted.
+ * @param mode the PinYin accent mode.
  * @return a newly located PinYin instance.
  */
-PinYin *zhuYin_to_pinYin(const ZhuYin* zhuYin);
+PinYin *zhuYin_to_pinYin(const ZhuYin* zhuYin, PinYin_Accent_Mode mode);
 
 
 /*----------------------------------------

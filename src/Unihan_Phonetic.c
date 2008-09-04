@@ -335,7 +335,6 @@ gboolean pinYin_has_toneMark(const PinYin* pinYin){
 PinYin *pinYin_convert_accent(const PinYin* pinYin, PinYin_Accent_Mode toMode,gboolean toneMark){
     glong i,items_written;
     gunichar *uniStr=g_utf8_to_ucs4_fast(pinYin, -1 , &items_written);
-    g_debug("items_written=%ld\n",items_written);
 
     GString *strBuf=g_string_sized_new(PINYIN_MAX_LENGTH);
 
@@ -496,7 +495,7 @@ static const P_Z_Properties *pinYin_determine_properties(char *pinYin_str, PinYi
     return prop;
 }
 
-ZhuYin *pinYin_to_zhuYin(const PinYin* pinYin){
+ZhuYin *pinYin_to_zhuYin(const PinYin* pinYin, ZhuYin_ToneMark_Mode mode){
     PinYin *aPinYin=pinYin_convert_accent(pinYin, PINYIN_ACCENT_ALWAYS,FALSE);
     ZhuYin *zhuYin=zhuYin_new(NULL);
     char *p=aPinYin;
@@ -529,6 +528,73 @@ ZhuYin *zhuYin_new(const char *zhuYin_str){
     return zhuYin;
 }
 
+PinYin *zhuYin_convert_toneMark(const ZhuYin* zhuYin, ZhuYin_ToneMark_Mode toneMark){
+    guint tone;
+    gunichar *uniStr=g_utf8_to_ucs4_fast(zhuYin, -1 , &items_written);
+    const char* p=zhuYin;
+    glong i,items_written;
+    gunichar *uniStr=g_utf8_to_ucs4_fast(pinYin, -1 , &items_written);
+
+    GString *strBuf=g_string_sized_new(PINYIN_MAX_LENGTH);
+
+    gboolean accentRequired;
+    for(i=0;i<items_written;i++){
+	if (is_diaeresis_u(uniStr,&i,&accentRequired)){
+	    g_debug("is_diaeresis_u=TRUE");
+	    if (accentRequired){
+		switch(toMode){
+		    case PINYIN_ACCENT_ALWAYS:
+		    case PINYIN_ACCENT_ORIGINAL:
+		    case PINYIN_ACCENT_UNIHAN:
+			g_string_append(strBuf,"Ü");
+			break;
+		    case PINYIN_ACCENT_TRAILING:
+			g_string_append(strBuf,"U:");
+			break;
+		    case PINYIN_ACCENT_INPUT_METHOD:
+			g_string_append(strBuf,"V");
+			break;
+		    case PINYIN_ACCENT_NONE:
+			g_string_append(strBuf,"U");
+			break;
+		}
+	    }else{
+		if (toMode==PINYIN_ACCENT_ALWAYS){
+		    g_string_append(strBuf,"Ü");
+		}else{
+		    g_string_append(strBuf,"U");
+		}
+	    }
+	}else if(is_circumflex_e(uniStr,&i,&accentRequired)){
+	    g_debug("is_circumflex_e=TRUE");
+	    if (accentRequired){
+		switch(toMode){
+		    case PINYIN_ACCENT_ALWAYS:
+		    case PINYIN_ACCENT_ORIGINAL:
+			g_string_append(strBuf,"Ê");
+			break;
+		    case PINYIN_ACCENT_UNIHAN:
+		    case PINYIN_ACCENT_TRAILING:
+		    case PINYIN_ACCENT_INPUT_METHOD:
+		    case PINYIN_ACCENT_NONE:
+			g_string_append(strBuf,"E");
+			break;
+		}
+	    }else{
+		if (toMode==PINYIN_ACCENT_ALWAYS){
+		    g_string_append(strBuf,"Ê");
+		}else{
+		    g_string_append(strBuf,"E");
+		}
+	    }
+	}else{
+	    g_debug("is_eu=FALSE");
+	    g_string_append_unichar(strBuf,uniStr[i]);
+	}
+    }
+    return g_string_free(strBuf,FALSE);
+
+}
 
 #define PHONEME_FLAG_HAS_INITIAL   0x1
 #define PHONEME_FLAG_HAS_MEDIAL    0x2
@@ -536,7 +602,7 @@ ZhuYin *zhuYin_new(const char *zhuYin_str){
 #define PHONEME_FLAG_HAS_TONEMARK  0x8
 
 
-PinYin *zhuYin_to_pinYin(const ZhuYin* zhuYin){
+PinYin *zhuYin_to_pinYin(const ZhuYin* zhuYin, PinYin_Accent_Mode mode){
     const P_Z_Properties *prop=NULL;
     glong i,items_written;
     gunichar *uniStr=g_utf8_to_ucs4_fast(zhuYin, -1 , &items_written);
