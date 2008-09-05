@@ -1,3 +1,5 @@
+- Add pinyin and zhuyin conversion functions.
+- Add pinyin and zhuyin database scalar functions.
 - Changed CMakefile.txt to reflects the version scheme change of UnihanDb
 
 * Fri Aug 08 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.4.1-0

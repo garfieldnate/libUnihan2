@@ -28,11 +28,26 @@ typedef struct{
     char *expectOutput;
 } ExamSet;
 
-ExamSet conversion_PINYIN_ACCENT_ALWAYS[]={
-    {"QI","QI"},
-    {"AI","AI"},
-    {"JU","JÜ"},
-    {NULL}
+
+const char *PINYIN_TABLES[]={
+    "BA",
+    "BO",
+    "BAI",
+    "BEI",
+    "BEO",
+    "BAN",
+    "BEN",
+    "BANG",
+    "BENG",
+    "BU",
+    "BI",
+    "BIE",
+    "BIAO",
+    "BIAN",
+    "BIN",
+    "BING",
+
+    NULL
 };
 
 gboolean perform_test(ExamSet *exSet,const char *prompt, gint acce){

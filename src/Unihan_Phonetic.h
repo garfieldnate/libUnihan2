@@ -123,6 +123,11 @@ typedef enum {
 #define ZHUYIN_SYMBOL_COUNT ZHUYIN_SYMBOL_NEUTRAL + 1 
 
 /**
+ * An array of ZhuYin symbols.
+ */
+extern const ZhuYin_Symbol ZHUYIN_SYMBOL_LIST[];
+
+/**
  * Enumeration of PinYin accent (not tone mark) handling modes.
  *
  * There are two PinYin symbols with accents, diaeresis U (Ü,ㄩ), and circumflex E (Ê,ㄝ) .
@@ -145,8 +150,10 @@ typedef enum {
  * Preserving accents unconditionally makes conversion and education easier, 
  * use PINYIN_ACCENT_ALWAYS for this purpose.
  *
- * Note that tone marks are not discussed here.
- * In libUnihan, tone marks are always represented as trailing number.
+ * Note that this enumeration is not for the pinyin tone mark.
+ * See pinYin_convert_accent_format() pinyin tone mark handling.
+ *
+ * @see pinYin_convert_accent_format()
  */
 typedef enum{
     PINYIN_ACCENT_ALWAYS,   //!< Ü is always represented as Ü, Ê is always represented as Ê. 
@@ -155,12 +162,12 @@ typedef enum{
     PINYIN_ACCENT_TRAILING, //!< Ü is represented as U:, Ê is represented as E.
     PINYIN_ACCENT_INPUT_METHOD,  //!< Ü is represented as V, Ê is represented as E.
     PINYIN_ACCENT_NONE      //!< Ü is represented as U, Ê is represented as E.
-} PinYin_Accent_Mode;
+} PinYin_Accent_Format;
 
 
 /**
  * Enumeration of ZhuYin tone mark handling.
- * Originally, the neutral (fifth) tone mark of Zhuyin is put in the front, while the first tone mark is omitted.
+ * Originally, the neutral (fifth) tone mark of zhuyin is put in the front, while the first tone mark is omitted.
  * Use ZHUYIN_TONEMARK_ORIGINAL for this.
  *
  * However, for Zhuyin based input method, the neutral is put in the back.
@@ -171,13 +178,15 @@ typedef enum{
  * otherwise is same with ZHUYIN_TONEMARK_INPUT_METHOD.
  *
  * If numerical tone mark is desired, use ZHUYIN_TONEMARK_NUMERICAL.
+ *
+ * @see zhuYin_convert_toneMark_format()
  */
 typedef enum{
     ZHUYIN_TONEMARK_ALWAYS,   //!<  Neutral (fifth) tone mark is put in the end, while the first tone mark is kept.
     ZHUYIN_TONEMARK_ORIGINAL,   //!< Neutral (fifth) tone mark is put in the front, while the first tone mark is omitted.
-    ZHUYIN_TONEMARK_INPUT_METHOD,  //!< Neutral (fifth) tone mark is put in the front, while the first tone mark is omitted.Ü is represented as V, Ê is represented as E.
-    ZHUYIN_TONEMARK_NUMERICAL,  //!< Tone mark are represented as numerical, in the end of zhuyin.
-} ZhuYin_ToneMark_Mode;
+    ZHUYIN_TONEMARK_INPUT_METHOD,  //!< Neutral (fifth) tone mark is put in the front, while the first tone mark is omitted.
+    ZHUYIN_TONEMARK_NUMERICAL,  //!< Tone mark are represented as numerical, in the end of Zhuyin.
+} ZhuYin_ToneMark_Format;
 
 
 /**
@@ -255,17 +264,14 @@ typedef struct {
  * Conversion property Tables.
  *
  * Example: To get the table of PINYIN_PHONEME_TYPE_INITIAL,
- * use PHONEMES[PINYIN_PHONEME_TYPE_INITIAL].
+ * use PHONEMES_LIST[PINYIN_PHONEME_TYPE_INITIAL].
  *
  */
-extern const P_Z_Properties * PHONEMES [];
+extern const P_Z_Properties * PHONEMES_LIST [];
 
-
-/**
- * An array of ZhuYin symbols.
+/*==========================================================
+ * PinYin functions.
  */
-extern const ZhuYin_Symbol ZHUYIN_SYMBOL_LIST[];
-
 
 /**
  * New a PinYin instance.
@@ -275,6 +281,8 @@ extern const ZhuYin_Symbol ZHUYIN_SYMBOL_LIST[];
  * converted to uppercase.
  * Note that the PinYin instance only hold #PINYIN_MAX_LENGTH bytes, 
  * including the EOL ('\0') character. Longer pinYin will be truncated.
+ *
+ * Note: use g_free to free the newly allocated instance.
  *
  * @param pinYinStr the PinYin in string, NULL for blank instance.
  * @return new PinYin instances.
@@ -304,36 +312,28 @@ gboolean pinYin_has_diaeresis_u(const PinYin *pinYin);
 gboolean pinYin_has_circumflex_e(const PinYin *pinYin);
 
 /**
- * Convert PinYin accents and return a newly allocated converted PinYin.
+ * Convert a PinYin to new accent formatReturn a newly allocated PinYin instance which contains the converted content.
+ *
+ * Note: use g_free to free the newly allocated instance.
  *
  * @param pinYin the PinYin to be converted.
- * @param toMode the PinYin accent mode to be converted to.
- * @param toneMark TRUE if tone mark is preferred, FALSE to use trailing number.
- * @return a newly located PinYin instance.
+ * @param toFormat the PinYin accent mode to be converted to.
+ * @param useToneMark TRUE if tone mark is preferred, FALSE to use trailing number.
+ * @return a newly allocated converted PinYin instance.
  */
-PinYin *pinYin_convert_accent(const PinYin *pinYin, PinYin_Accent_Mode toMode, gboolean toneMark);
+PinYin *pinYin_convert_accent_format(const PinYin *pinYin, PinYin_Accent_Format toFormat, gboolean useToneMark);
 
-/**
- * Convert PinYin accents and put the output to a given buffer.
- *
- * @param pinYin the PinYin to be converted.
- * @param toMode the PinYin accent mode to be converted to.
- * @param toneMark TRUE if tone mark is preferred, FALSE to use trailing number.
- * @param outBuf the buffer that hold the converted PinYin.
- * @return The resulting buffer (outBuf).
- */
-PinYin *pinYin_convert_accent_buffer(const PinYin *pinYin, PinYin_Accent_Mode toMode, gboolean toneMark, PinYin *outBuf);
 
 /**
  * PinYin to ZhuYin
  *
  * @param pinYin the PinYin to be converted.
- * @param mode the ZhuYin tone mark mode.
+ * @param toFormat the ZhuYin tone mark mode.
  * @return a newly located ZhuYin instance.
  */
-ZhuYin *pinYin_to_zhuYin(const PinYin* pinYin, ZhuYin_ToneMark_Mode mode);
+ZhuYin *pinYin_to_zhuYin(const PinYin* pinYin, ZhuYin_ToneMark_Format toFormat);
 
-/*========================================
+/*==========================================================
  * ZhuYin functions.
  */
 
@@ -345,25 +345,36 @@ ZhuYin *pinYin_to_zhuYin(const PinYin* pinYin, ZhuYin_ToneMark_Mode mode);
  * converted to uppercase.
  * Note that the ZhuYin instance only hold #ZHUYIN_MAX_LENGTH bytes, 
  * including the EOL ('\0') character. Longer zhuYin will be truncated.
+ *
+ * Note: use g_free to free the newly allocated instance.
+ *
  * @param zhuYinStr the ZhuYin in string, NULL for blank instance.
  * @return new ZhuYin instances.
  */
 ZhuYin *zhuYin_new(const char *zhuYin_str);
 
-
-
+/**
+ * Convert zhuyin to another tone mark format.
+ *
+ * Note: use g_free to free the newly allocated instance.
+ *
+ * @param zhuYin the ZhuYin to be converted.
+ * @param toFormat the ZhuYin tone mark mode to be converted to.
+ * @return the newly allocated ZhuYin instance that 
+ */
+ZhuYin *zhuYin_convert_toneMark_format(const ZhuYin* zhuYin, ZhuYin_ToneMark_Format toFormat);
 
 /**
  * ZhuYin to PinYin
  *
  * @param zhuYin the ZhuYin to be converted.
- * @param mode the PinYin accent mode.
+ * @param toFormat the PinYin accent mode.
  * @return a newly located PinYin instance.
  */
-PinYin *zhuYin_to_pinYin(const ZhuYin* zhuYin, PinYin_Accent_Mode mode);
+PinYin *zhuYin_to_pinYin(const ZhuYin* zhuYin, PinYin_Accent_Format toFormat, gboolean useToneMark);
 
 
-/*----------------------------------------
+/*----------------------------------------------------------
  * ZhuYin symbol functions.
  */
 
@@ -394,7 +405,22 @@ gboolean zhuYin_Symbol_is_final(ZhuYin_Symbol zSym);
 
 gboolean zhuYin_Symbol_is_toneMark(ZhuYin_Symbol zSym);
 
-guint zhuYin_get_phoneme_flags(ZhuYin *zhuYin);
+/**
+ * Return the tone id of given tone mark.
+ *
+ * @param zSym  ZhuYin symbol.
+ * @return tone id if zSym is tone mark, 0 otherwise.
+ */
+guint zhuYin_Symbol_to_toneMark_id(ZhuYin_Symbol zSym);
+
+/**
+ * Return the tone mark of given tone id.
+ *
+ * @param toneMark_id  toneMark_id.
+ * @return the ZhuYin symbol if id is between 1 to 5; returns 0 otherwise.
+ */
+ZhuYin_Symbol zhuYin_Symbol_from_toneMark_id(guint toneMark_id);
+
 
 const P_Z_Properties *pzProperties_from_pinyin_prefix(const char *pinYin_str, PinYin_Phoneme_Type pType);
 const P_Z_Properties *pzProperties_from_zhuyin_prefix(const char *zhuYin_str, PinYin_Phoneme_Type pType);
