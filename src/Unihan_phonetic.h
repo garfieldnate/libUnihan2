@@ -426,4 +426,5 @@ const P_Z_Properties *pzProperties_from_pinyin_prefix(const char *pinYin_str, Pi
 const P_Z_Properties *pzProperties_from_zhuyin_prefix(const char *zhuYin_str, PinYin_Phoneme_Type pType);
 
 
+
 #endif /* UNIHAN_PHONETIC_H_ */

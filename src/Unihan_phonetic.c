@@ -27,7 +27,7 @@
 
 #include "allocate.h"
 #include "str_functions.h"
-#include "Unihan_Phonetic.h"
+#include "Unihan_phonetic.h"
 
 
 const ZhuYin_Symbol ZHUYIN_SYMBOL_LIST[ZHUYIN_SYMBOL_COUNT]={

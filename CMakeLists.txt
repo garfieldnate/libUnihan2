@@ -95,11 +95,13 @@ SET(CPACK_RESOURCE_FILE_LICENSE
 SET(CPACK_PACKAGE_VERSION_MAJOR ${PRJ_VER_MAJOR})
 SET(CPACK_PACKAGE_VERSION_MINOR ${PRJ_VER_MINOR})
 SET(CPACK_PACKAGE_VERSION_PATCH ${PRJ_VER_PATCH})
-SET(COMMON_IGNORE_FILES "/CMakeFiles/" "/.svn/" "/doc/" "_CPack_Packages/"  "/www/"
-    ".cmake$" "~" ".swp" ".log" ".gz" ".vis"  '.db$' '.directory$' "CMakeCache.txt")
+SET(COMMON_IGNORE_FILES "/CMakeFiles/" "/Testing/" "/.svn/" "_CPack_Packages/" 
+    ".cmake$" "~" ".swp" ".log" ".gz" '.directory$' "CMakeCache.txt")
 
-SET(CPACK_SOURCE_IGNORE_FILES ${COMMON_IGNORE_FILES} "/bin/" ".db" "-db")
-SET(CPACK_PACKAGE_IGNORE_FILES ${COMMON_IGNORE_FILES} "/src/" )
+SET(PRJ_COMMON_IGNORE_FILES ${COMMON_IGNORE_FILES} "/doc/"  "/www/" ".vis"  '.db$' )
+
+SET(CPACK_SOURCE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/bin/" ".db" "-db")
+SET(CPACK_PACKAGE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/src/" )
 SET(CPACK_SOURCE_GENERATOR "TGZ")
 
 INCLUDE(CPack)
