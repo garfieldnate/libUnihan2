@@ -238,9 +238,14 @@ static gboolean is_diaeresis_u(gunichar *uniStr, glong *index, gboolean *accentR
 	    return FALSE;
     }
     if (g_unichar_isdefined(uniStr[*index+1])){
-	if ((uniStr[*index]=='U') && (uniStr[*index+1]==':')){
-	    (*index)++;
-	    return TRUE;
+	switch(uniStr[*index+1]){
+	    case ':':
+		(*index)++;
+	    case 'E':
+	    case 0xCA:  // 'Ê'
+		return TRUE;
+	    default:
+		break;
 	}
     }
     if (index>0){
@@ -269,8 +274,10 @@ gboolean is_circumflex_e(gunichar *uniStr, glong *index, gboolean *accentRequire
     switch(uniStr[*index]){
 	case 0xCA:  // 'Ê'
 	    return TRUE;
-	default:
+	case 'E':
 	    break;
+	default:
+	    return FALSE;
     }
     if (index>0){
 	switch(uniStr[*index-1]){
@@ -341,7 +348,7 @@ PinYin *pinYin_convert_accent_format(const PinYin* pinYin, PinYin_Accent_Format 
     gboolean accentRequired;
     for(i=0;i<items_written;i++){
 	if (is_diaeresis_u(uniStr,&i,&accentRequired)){
-	    g_debug("is_diaeresis_u=TRUE");
+//	    g_debug("is_diaeresis_u=TRUE");
 	    if (accentRequired){
 		switch(toFormat){
 		    case PINYIN_ACCENT_ALWAYS:
@@ -367,8 +374,9 @@ PinYin *pinYin_convert_accent_format(const PinYin* pinYin, PinYin_Accent_Format 
 		}
 	    }
 	}else if(is_circumflex_e(uniStr,&i,&accentRequired)){
-	    g_debug("is_circumflex_e=TRUE");
+//	    g_debug("is_circumflex_e=TRUE");
 	    if (accentRequired){
+//		g_debug("accentRequire=TRUE");
 		switch(toFormat){
 		    case PINYIN_ACCENT_ALWAYS:
 		    case PINYIN_ACCENT_ORIGINAL:
@@ -382,6 +390,7 @@ PinYin *pinYin_convert_accent_format(const PinYin* pinYin, PinYin_Accent_Format 
 			break;
 		}
 	    }else{
+//		g_debug("accentRequire=FALSE");
 		if (toFormat==PINYIN_ACCENT_ALWAYS){
 		    g_string_append(strBuf,"Ê");
 		}else{
@@ -389,7 +398,7 @@ PinYin *pinYin_convert_accent_format(const PinYin* pinYin, PinYin_Accent_Format 
 		}
 	    }
 	}else{
-	    g_debug("is_eu=FALSE");
+//	    g_debug("is_eu=FALSE");
 	    g_string_append_unichar(strBuf,uniStr[i]);
 	}
     }
@@ -784,7 +793,7 @@ const P_Z_Properties *pzProperties_from_zhuyin_prefix(const char *zhuYin_str, Pi
     g_assert(pType>=0);
     const P_Z_Properties *prop=&PHONEMES_LIST[pType][i];
 
-    while(prop!=NULL){
+    while(prop!=NULL && prop->zhuYin!=NULL){
 	if (g_str_has_prefix(zhuYin_str,prop->zhuYin)){
 	    return prop;
 	}

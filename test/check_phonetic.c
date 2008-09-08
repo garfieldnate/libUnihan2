@@ -20,31 +20,28 @@
  * Boston, MA  02111-1307  USA
  */ 
 #include <stdio.h>
+#include <stdlib.h>
 #include "Unihan.h"
-#include "Unihan_Phonetic.h"
-
-typedef struct{
-    char *input;
-    char *expectOutput;
-} ExamSet;
+#include "Unihan_phonetic.h"
+#include "Unihan_phonetic_tables.h"
 
 
-const char *PINYIN_COMBINITION_TABLES_ALWAYS[]={
+const char *PINYIN_COMBINATION_TABLES_ALWAYS[]={
     "BA",
     "BO",
     "BAI",
     "BEI",
     "BAO",
     "BAN",
-    "BIN",
+    "BEN",
     "BANG",
-    "BING",
+    "BENG",
     "BI",
-    "BIE",
+    "BIÊ",
     "BIAO",
     "BIAN",
-    "BEN",
-    "BENG",
+    "BIN",
+    "BING",
     "BU",
     "PA",
     "PO",
@@ -53,15 +50,15 @@ const char *PINYIN_COMBINITION_TABLES_ALWAYS[]={
     "PAO",
     "POU",
     "PAN",
-    "PIN",
+    "PEN",
     "PANG",
-    "PING",
+    "PENG",
     "PI",
-    "PIE",
+    "PIÊ",
     "PIAO",
     "PIAN",
-    "PEN",
-    "PENG",
+    "PIN",
+    "PING",
     "PU",
     "MA",
     "MO",
@@ -75,12 +72,12 @@ const char *PINYIN_COMBINITION_TABLES_ALWAYS[]={
     "MANG",
     "MENG",
     "MI",
-    "MIE",
+    "MIÊ",
     "MIAO",
     "MIU",
     "MIAN",
-    "MEN",
-    "MENG",
+    "MIN",
+    "MING",
     "MU",
     "FA",
     "FO",
@@ -105,12 +102,12 @@ const char *PINYIN_COMBINITION_TABLES_ALWAYS[]={
     "DENG",
     "DI",
     "DIA",
-    "DIE",
+    "DIÊ",
     "DIAO",
     "DIU",
     "DIAN",
     "DANG",
-    "DENG",
+    "DING",
     "DU",
     "DUO",
     "DUI",
@@ -126,7 +123,7 @@ const char *PINYIN_COMBINITION_TABLES_ALWAYS[]={
     "TANG",
     "TENG",
     "TI",
-    "TIE",
+    "TIÊ",
     "TIAO",
     "TIAN",
     "TING",
@@ -148,7 +145,7 @@ const char *PINYIN_COMBINITION_TABLES_ALWAYS[]={
     "NENG",
     "NI",
     "NIA",
-    "NIE",
+    "NIÊ",
     "NIAO",
     "NIU",
     "NIAN",
@@ -162,7 +159,6 @@ const char *PINYIN_COMBINITION_TABLES_ALWAYS[]={
     "NONG",
     "NÜ",
     "NÜÊ",
-    "NÜ",
     "LA",
     "LO",
     "LE",
@@ -175,7 +171,7 @@ const char *PINYIN_COMBINITION_TABLES_ALWAYS[]={
     "LENG",
     "LI",
     "LIA",
-    "LIE",
+    "LIÊ",
     "LIAO",
     "LIU",
     "LIAN",
@@ -190,7 +186,6 @@ const char *PINYIN_COMBINITION_TABLES_ALWAYS[]={
     "LÜ",
     "LÜÊ",
     "LÜAN",
-    "LÜN",
     "GA",
     "GE",
     "GAI",
@@ -452,54 +447,72 @@ const char *PINYIN_COMBINITION_TABLES_ALWAYS[]={
     NULL
 };
 
-const char *PINYIN_TABLES[]={
-    "BA",
-    "BO",
-    "BAI",
-    "BEI",
-    "BEO",
-    "BAN",
-    "BEN",
-    "BANG",
-    "BENG",
-    "BU",
-    "BI",
-    "BIE",
-    "BIAO",
-    "BIAN",
-    "BIN",
-    "BING",
+typedef enum{
+    PINYIN_ALWAYS,
+    PINYIN_ORIGINAL,
+    ZHUYIN_ALWAYS,
+    ZHUYIN_ORIGINAL
+} TEST_ID;
+
+#define TEST_NUM ZHUYIN_ORIGINAL +1
+
+const char *test_msgs[]={
+    "converting to pinyin ALWAYS",
+    "converting to pinyin ORIGINAL",
+    "converting to zhuyin ALWAYS",
+    "converting to zhuyin ORIGINAL",
     NULL
 };
 
+const char **dataSet[]={
+    PINYIN_COMBINATION_TABLES_ALWAYS,
+    PINYIN_COMBINATION_TABLES,
+    ZHUYIN_COMBINATION_TABLES,
+    ZHUYIN_COMBINATION_TABLES,
+};
 
+gboolean perform_test(TEST_ID testId){
+    const char **fromArray=NULL;
+    const char **toArray=NULL;
+    printf("Testing on %s \n",test_msgs[testId]);
 
-gboolean perform_test(guint toId, const char *prompt, gint acce){
-    printf("Testing %s",prompt);
-    while(exSet!=NULL && exSet->input!=NULL){
-	out=pinYin_convert_accent(exSet->input,PINYIN_ACCENT_ALWAYS,FALSE);
-	if (strcmp(out,exSet->expectOutput)!=0){
-	    g_error("Failed: Orig:%s Out:%s Exp:%s",exSet->input,out,exSet->expectOutput);
+    char *out;
+    guint i,j;
+    for(j=0;j<TEST_NUM;j++){
+	printf(" Sub-test %d: ...",j);
+	toArray=dataSet[testId];
+	fromArray=dataSet[j];
+	for(i=0;fromArray[i]!=NULL;i++){
+	    if (j<ZHUYIN_ALWAYS){
+		if (testId<ZHUYIN_ALWAYS){
+		    out=pinYin_convert_accent_format(fromArray[i],testId,FALSE);
+		}else{
+		    out=pinYin_to_zhuYin(fromArray[i],testId-ZHUYIN_ALWAYS);
+		}
+	    }else{
+		if (testId<ZHUYIN_ALWAYS){
+		    out=zhuYin_to_pinYin(fromArray[i],testId,FALSE);
+		}else{
+		    out=zhuYin_convert_toneMark_format(fromArray[i],testId-ZHUYIN_ALWAYS);
+		}
+	    }
+	    if (strcmp(out,toArray[i])!=0){
+		printf(" Failed: Orig:%s Out:%s Exp:%s\n",fromArray[i],out,toArray[i]);
+		return FALSE;
+	    }
 	}
-	exSet=&conversion_PINYIN_ACCENT_ALWAYS[++i];
+	printf(" completed.\n");
     }
-
+    printf("All sub-test completed.\n");
+    return TRUE;
 }
 
 int main(int argc, char** argv){
-    int i=0;
-    
-    ExamSet *exSet=&conversion_PINYIN_ACCENT_ALWAYS[i];
-    char *out;
-
-    while(exSet!=NULL && exSet->input!=NULL){
-	out=pinYin_convert_accent(exSet->input,PINYIN_ACCENT_ALWAYS,FALSE);
-	if (strcmp(out,exSet->expectOutput)!=0){
-	    g_error("Failed: Orig:%s Out:%s Exp:%s",exSet->input,out,exSet->expectOutput);
-	}
-	exSet=&conversion_PINYIN_ACCENT_ALWAYS[++i];
+    int test_index=atoi(argv[1]);
+    if (perform_test(test_index)){
+	printf("Success!");
+	return 0;
     }
-    printf("Success!");
+    return 1;
 
-    return 0;
 }
