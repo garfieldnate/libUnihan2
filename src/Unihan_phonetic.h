@@ -233,7 +233,6 @@ typedef enum{
     PINYIN_PHONEME_TYPE_MEDIAL_NO_INITIAL, //!< No initial in the front.
     PINYIN_PHONEME_TYPE_MEDIAL,            //!< Normal medials.
 
-    PINYIN_PHONEME_TYPE_FINAL_ONLY,        //!< Only finals, no others
     PINYIN_PHONEME_TYPE_FINAL_WITH_MEDIAL, //!< Finals with medial
     PINYIN_PHONEME_TYPE_FINAL_WITHOUT_MEDIAL, //!< Finals without medial
     PINYIN_PHONEME_TYPE_FINAL,             //!< Normal finals (which do not change form).
@@ -343,7 +342,7 @@ ZhuYin *pinYin_to_zhuYin(const PinYin* pinYin, ZhuYin_ToneMark_Format toFormat);
  * This function allocate a new ZhuYin instance.
  * Non-NULL zhuYinStr will be copied to the new ZhuYin instance and 
  * converted to uppercase.
- * Note that the ZhuYin instance only hold #ZHUYIN_MAX_LENGTH bytes, 
+ * Note that the ZhuYin instance only holds #ZHUYIN_MAX_LENGTH bytes, 
  * including the EOL ('\0') character. Longer zhuYin will be truncated.
  *
  * Note: use g_free to free the newly allocated instance.
@@ -352,6 +351,19 @@ ZhuYin *pinYin_to_zhuYin(const PinYin* pinYin, ZhuYin_ToneMark_Format toFormat);
  * @return new ZhuYin instances.
  */
 ZhuYin *zhuYin_new(const char *zhuYin_str);
+
+/**
+ * Strip tone mark of ZhuYin.
+ *
+ * This function strips the tone mark of zhuYin and return the id (1 to 5) of stripped tone mark.
+ * Tone mark 1 will be returned if zhuYin does not have any tone mark.
+ * The result will be stored in zhuYin, so backup it with g_strdup() to keep the original.
+ * 
+ *
+ * @param zhuYin the ZhuYin instance to be stripped.
+ * @return the stripped tone mark, from 1 to 5.
+ */
+guint zhuYin_strip_toneMark(ZhuYin* zhuYin);
 
 /**
  * Convert zhuyin to another tone mark format.

@@ -71,6 +71,7 @@ gboolean perform_test(TEST_ID testId){
 		    out=pinYin_convert_accent_format(fromArray[i],testId,FALSE);
 		}else{
 		    out=pinYin_to_zhuYin(fromArray[i],testId-ZHUYIN_ALWAYS);
+		    zhuYin_strip_toneMark(out);
 		}
 	    }else{
 		if (testId<ZHUYIN_ALWAYS){
