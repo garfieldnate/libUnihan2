@@ -23,40 +23,123 @@
 #include <glib.h>
 #include "allocate.h"
 #include "sqlite_functions.h"
+#include "str_functions.h"
+#include "verboseMsg.h"
 
-int sqlite_count_matches(sqlite3 *db,const char * sqlClause,char **errmsg){
-    char **resultp = NULL;
-    int nrow;
-    int ncolumn;
-
-    int ret = sqlite3_get_table(db, sqlClause, &resultp, &nrow, &ncolumn,
-	    errmsg);
-    sqlite3_free_table(resultp);
-    if (ret) {
-	return -1 * ret;
-    }
-    return nrow;
+SQL_Result *sql_result_new(){
+    SQL_Result *sResult=NEW_INSTANCE(SQL_Result);
+    sResult->fieldList=NULL;
+    sResult->resultList=stringList_new();
+    sResult->colCount=0;
+    return sResult;
 }
 
-StringList *sqlite_get_fieldNames(sqlite3 *db,const char * sqlClause,char **errmsg){
-    char **result = NULL;
-    int nrow;
-    int ncolumn;
+StringList *sql_result_free(SQL_Result *sResult, gboolean cleanResult){
+    g_assert(sResult);
+    StringList *resultList=NULL;
+    if (sResult->fieldList) {
+	stringList_free(sResult->fieldList);
+    }
+    if (sResult->resultList) {
+	if (cleanResult){
+	    stringList_free(sResult->resultList);
+	}else{
+	    resultList=sResult->resultList;
+	}
+    }
+    g_free(sResult);
+    return resultList;
+}
 
-    int ret = sqlite3_get_table(db, sqlClause, &result, &nrow, &ncolumn,
-	    errmsg);
-    if (ret) {
-	sqlite3_free_table(result);
+static int sqlite_count_matches_callback(void *data,int colCount,char** value_array,char **fieldName_array){
+    if (data==NULL){
+	return SQLITE_ABORT;
+    }
+    int *count=(int *) data;
+    (*count)++;
+    return SQLITE_OK;
+}
+
+
+int sqlite_count_matches(sqlite3 *db,const char * sqlClause,char **errMsg_ptr){
+    g_assert(db);
+    int rowCount=0,execResult;
+    execResult=sqlite3_exec(db,sqlClause,sqlite_count_matches_callback,&rowCount,errMsg_ptr);
+    if (execResult) {
+	return -1 * execResult;
+    }
+    return rowCount;
+}
+
+
+static int sqlite_get_sql_result_callback(void *data,int colCount,char** value_array,char **fieldName_array){
+    if (data==NULL){
+	return SQLITE_ABORT;
+    }
+    SQL_Result *sResult=(SQL_Result *) data;
+    int i;
+    if (!(sResult->fieldList)){
+	sResult->fieldList=stringList_new();
+	for(i=0;i<colCount;i++){
+	    stringList_insert(sResult->fieldList,fieldName_array[i]);
+	}
+	sResult->colCount=colCount;
+    }
+    for(i=0;i<colCount;i++){
+	stringList_insert(sResult->resultList,value_array[i]);
+    }
+    return SQLITE_OK;
+}
+
+SQL_Result *sqlite_get_sql_result(sqlite3 *db, const char *sqlClause, char **errMsg_ptr, int *execResult_ptr){
+    g_assert(db);
+    SQL_Result *sResult=sql_result_new();
+
+    *execResult_ptr=sqlite3_exec(db,sqlClause,sqlite_get_sql_result_callback,sResult,errMsg_ptr);
+    if (*execResult_ptr){
+	verboseMsg_print(VERBOSE_MSG_ERROR,"sqlite_get_stringList(): %s\n",*errMsg_ptr);
+	if (sResult)
+	    sql_result_free(sResult,TRUE);
 	return NULL;
     }
-    StringList *sList=stringList_new();
-    int i;
-    for(i=0;i<ncolumn;i++){
-	stringList_insert_const(sList,result[i]);
+    return sResult;
+}
+
+StringList *sqlite_get_tableNames(sqlite3 *db, char **errMsg_ptr){
+    g_assert(db);
+    int execResult;
+    SQL_Result *sResult=sqlite_get_sql_result(db, "SELECT name FROM sqlite_master WHERE type='table'",  errMsg_ptr, &execResult);
+    if (execResult){
+	verboseMsg_print(VERBOSE_MSG_ERROR,"sqlite_get_tableNames(): %s\n",*errMsg_ptr);
+	return sql_result_free(sResult,TRUE);
     }
-    sqlite3_free_table(result);
+    return sql_result_free(sResult,FALSE);
+}
+
+static int sqlite_get_fieldNames_callback(void *data,int colCount,char** value_array,char **fieldName_array){
+    StringList *sList=(StringList *) data;
+    int i;
+    for(i=0;i<colCount;i++){
+	stringList_insert(sList,fieldName_array[i]);
+    }
+    return SQLITE_ABORT;
+}
+
+
+StringList *sqlite_get_fieldNames(sqlite3 *db,const char * sqlClause,char **errMsg_ptr){
+    g_assert(db);
+    StringList *sList=stringList_new();
+    int execResult=sqlite3_exec(db,sqlClause,sqlite_get_fieldNames_callback,sList,errMsg_ptr);
+    if (execResult==SQLITE_ABORT){
+	sqlite3_free(*errMsg_ptr);
+    }else{
+	verboseMsg_print(VERBOSE_MSG_ERROR,"sqlite_get_fieldNames(): %s\n",*errMsg_ptr);
+	stringList_free(sList);
+	return NULL;
+    }
     return sList;
 }
+
 
 
 typedef struct {

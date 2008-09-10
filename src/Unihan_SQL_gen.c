@@ -1475,9 +1475,9 @@ static char *unihan_generate_where_clause(UnihanField givenField, const char *va
     return g_string_free(strBuf,FALSE);
 }
 
-int unihan_find_all_matched(UnihanField givenField, char *givenValue, 
-	UnihanField queryField,	char ***pResults,int *nrow, int *ncolumn, 
-	char **errmsg,gboolean likeMode,gboolean showScalarString){
+SQL_Result *unihan_find_all_matched(UnihanField givenField, char *givenValue, 
+	UnihanField queryField,	char **errMsg_ptr, int *execResult_ptr, 
+	gboolean likeMode,gboolean showScalarString){
     char *selectStr=NULL;
     char *fromStr=NULL;
     char *whereStr=NULL;
@@ -1514,13 +1514,14 @@ int unihan_find_all_matched(UnihanField givenField, char *givenValue,
 
     g_string_append(strBuf,";");
     verboseMsg_print(VERBOSE_MSG_INFO1,"%s\n",strBuf->str);
-    int ret=unihanSql_get_result_table(strBuf->str, pResults,nrow,ncolumn, errmsg);
+    
+    SQL_Result *sResult=unihanSql_get_sql_result(strBuf->str, errMsg_ptr, execResult_ptr);
     g_free(selectStr);
     g_free(fromStr);
     g_free(whereStr);
     g_string_free(strBuf,TRUE);
     g_free(tableArray);
-    return ret;
+    return sResult;
 }
 
 char* unihan_find_first_matched(UnihanField givenField, char* givenValue, 
@@ -1897,8 +1898,8 @@ int unihanSql_count_matches(const char * sqlClause){
     return ret;
 }
 
-int unihanSql_get_result_table(const char *sqlClause,char ***pResult, int *nrow, int *ncolumn, char **errmsg){
-    return sqlite3_get_table(unihanDb,sqlClause, pResult,nrow,ncolumn,errmsg);
+SQL_Result *unihanSql_get_sql_result(const char *sqlClause, char **errMsg_ptr, int *execResult_ptr){
+    return sqlite_get_sql_result(unihanDb, sqlClause, errMsg_ptr, execResult_ptr);
 }
 
 

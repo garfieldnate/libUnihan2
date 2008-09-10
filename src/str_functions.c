@@ -23,8 +23,9 @@
 #include <stdarg.h>
 #include <glib.h>
 #include <limits.h>
-#include "str_functions.h"
 #include "allocate.h"
+#include "collection.h"
+#include "str_functions.h"
 #include "verboseMsg.h"
 #define MAX_STRING_BUFFER_SIZE 1000
 
@@ -33,7 +34,7 @@
  */
 
 #ifndef DEFAULT_G_STRING_CHUNK_SIZE
-#define DEFAULT_G_STRING_CHUNK_SIZE 2000
+#define DEFAULT_G_STRING_CHUNK_SIZE 2048
 #endif
 
 StringList *stringList_new(){
@@ -48,8 +49,8 @@ StringList *stringList_new(){
 void stringList_clear(StringList *sList){
     g_assert(sList);
     sList->len=0;
-    g_ptr_array_set_size(sList->ptrArray,0);
-    g_array_set_size(sList->constArray,0);
+    G_ARRAY_REMOVE_ALL(sList->constArray);
+    G_PTR_ARRAY_REMOVE_ALL(sList->ptrArray);
 #ifdef HAVE_G_STRING_CHUNK_CLEAR
     g_string_chunk_clear(sList->chunk);
 #else
@@ -107,9 +108,10 @@ guint stringList_insert_const(StringList *sList, const char *str){
 
 void stringList_free(StringList *sList){
     g_assert(sList);
-    g_ptr_array_free(sList->ptrArray,TRUE);
     g_array_free(sList->constArray,TRUE);
+    g_ptr_array_free(sList->ptrArray,TRUE);
     g_string_chunk_free(sList->chunk);
+    g_free(sList);
 }
 
 char*

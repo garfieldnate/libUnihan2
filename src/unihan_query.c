@@ -80,7 +80,11 @@ static void printUsage(){
 
 static void printTables(){
     int i;
-    unihanDb_open_default();
+    int ret=unihanDb_open_default();
+    if (ret){
+	fprintf(stderr, "Unable to open database " UNIHAN_DEFAULT_DB ".\n");
+	exit(ret);
+    }
     StringList *sList=unihanDb_get_tableNames();
     if (sList==NULL){
 	fprintf(stderr, "Cannot get table names.\n");
@@ -115,7 +119,11 @@ static void printFields(char modeChar){
 	    break;
 	case 'r':
 	    printf("Real fields:\n");
-	    unihanDb_open_default();
+	    int ret=unihanDb_open_default();
+	    if (ret){
+		fprintf(stderr, "Unable to open database " UNIHAN_DEFAULT_DB ".\n");
+		exit(ret);
+	    }
 	    StringList *sList=unihanDb_get_tableNames();
 	    if (sList==NULL){
 		fprintf(stderr, "Cannot get table names.\n");
@@ -135,6 +143,7 @@ static void printFields(char modeChar){
 		printf("\n");
 		g_free(fields);
 	    }
+	    stringList_free(sList);
 	    unihanDb_close();
 	    break;
     }
@@ -257,6 +266,7 @@ int main(int argc, char** argv){
     int ret,nrow,ncolumn;
     ret=unihanDb_open_default();
     if (ret){
+	fprintf(stderr, "Unable to open database " UNIHAN_DEFAULT_DB ".\n");
 	exit(ret);
     }
 

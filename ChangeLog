@@ -1,5 +1,7 @@
-- Add pinyin and zhuyin conversion functions.
-- Add pinyin and zhuyin database scalar functions.
+- Add StringList *sqlite_get_stringList(sqlite3 *db, const char *sqlClause, int *rowCount_ptr, int *colCount_ptr, char **errMsg_ptr, int *execResult_ptr);
+- Modify unihanDb_open(const char *filename, int flags) from unihanDb_open(const char *filename);
+- Add pinyin and zhuyin conversion functions. (Unihan_phonetic.[ch])
+- Add pinyin and zhuyin database scalar functions. (Unihan_phonetic.[ch])
 - Changed CMakefile.txt to reflects the version scheme change of UnihanDb
 
 * Fri Aug 08 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.4.1-0

@@ -77,22 +77,20 @@ typedef int (*UnihanCallback)(void* userOption,int col_num,char** results,char**
  * @param givenValue the given value of the field.
  * @param queryField the result field.
  * @param pResults   result table.
- * @param nrow	     number of result rows written here.
- * @param ncolumn    number of result columns written here.
- * @param errmsg     Error msg written here.
+ * @param errMsg_ptr Error msg written here.
+ * @param execResult_ptr pointer to the sqlite3_exec() result code.  SQLITE_OK (value 0) if the query execute successfully, while non-zero value indicate error. 
  * @param likeMode   TRUE for using SQL LIKE in WHERE expression; FALSE for use '=' instead.
  * @param showScalarString TRUE to show code point as string "U+xxxx"; FALSE for show code point as integer.
- * @return SQLite result code, SQLITE_OK (value 0) if the query execute successfully, 
- *         while non-zero value indicate error. 
+ * @return a SQL_Result instance that stores the field names and result
+ * records.
  *
  * @see unihan_find_firstMatched()
- * @see unihanSql_get_result_table()
- * @see <a href="http://www.sqlite.org/c3ref/free_table.html">SQlite function: sqlite3_get_table()</a>
+ * @see unihanSql_get_sql_result()
  * @see <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite result codes</a>
  */
-int unihan_find_all_matched(UnihanField givenField, char *givenValue,
-       	UnihanField queryField,	char ***pResults,int *nrow, int *ncolumn,
-       	char **errmsg, gboolean likeMode,gboolean showScalarString);
+SQL_Result *unihan_find_all_matched(UnihanField givenField, char *givenValue, 
+	UnihanField queryField,	char **errMsg_ptr, int *execResult_ptr, 
+	gboolean likeMode,gboolean showScalarString);
 
 /**
  * Find the first matched result, given a field and its value.
@@ -281,13 +279,35 @@ StringList *unihanDb_get_tableNames();
 /**
  * Open a Unihan db.
  *
+ * The flags parameter provides additional control of database access.
+ * It is supported by sqlite3_open_v2(), thus it takes one of the following three values,
+ * optionally combined with the SQLITE_OPEN_NOMUTEX flag, just like the flags
+ * parameter of sqlite3_open_v2():
+ * <dl>
+ *    <dt>SQLITE_OPEN_READONLY</dt>
+ *      <dd>The database is opened in read-only mode. If the database does not already exist, 
+ *          an error is returned.</dd>
+ *    <dt>SQLITE_OPEN_READWRITE</dt>
+ *    <dd>The database is opened for reading and writing if possible, 
+ *        or reading only if the file is write protected by the operating system.
+ *        In either case the database must already exist, otherwise an error is returned.</dd>
+ *    <dt>SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE</dt>
+ *    <dd>The database is opened for reading and writing, and is creates it if 
+ *        it does not already exist. This is the behavior that is always used for 
+ *        sqlite3_open() and sqlite3_open16().</dd>
+ * </dl>
+ * See the sqlite3_open() for detail explanation of SQLITE_OPEN_NOMUTEX.
+ *
  * @param filename name of db file to be open.
+ * @param flags  Database access flags.
  * @return SQLite result code, SQLITE_OK (value 0) if the query executed successfully, 
  *         while non-zero value indicate error. 
  *
  * @see <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite result codes</a>
+ * @see <a
+ * href="http://www.sqlite.org/capi3ref.html#sqlite3_open">sqlite3_open()</a>
  */
-int unihanDb_open(const char *filename);
+int unihanDb_open(const char *filename, int flags);
 
 /**
  * Open the system default Unihan db.
@@ -547,31 +567,15 @@ int unihanSql_exec(char *sqlClause, UnihanCallback callback,
 	void *callbackOption,  char **errmsg);
 
 /**
- * Obtains a result table of SQL command.
- *
- * A convenient wrapper of <a href="http://www.sqlite.org/c3ref/free_table.html">sqlite3_get_table()</a>.
- *
- * A result table is memory data structure that stores the complete query results from one or more queries.
- * The <code>nrow</code> and <code>ncolumn</code> are the row and column of the results.
- * 
- * The return value is also identical to sqlite3_get_table(). 
- * SQLITE_OK (value 0) if the query execute successfully, 
- *         while non-zero value indicate error. 
- * See <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite result codes</a> for detail.
- *
- * Use sqlite3_table_free() to free the pResults after the finish using result table.
- *
+ * Obtains a SQL_Result table of SQL command.
  *
  * @param sqlClause SQL command to be passed to Unihan db.
- * @param pResult    result table.
- * @param nrow	     number of result rows written here.
- * @param ncolumn    number of result columns written here.
- * @param errmsg pointer for error message.
- * @return <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite result codes</a>
- * @see <a href="http://www.sqlite.org/c3ref/free_table.html">SQlite function: sqlite3_get_table()</a>
+ * @param errMsg_ptr pointer for error message.
+ * @param execResult_ptr pointer to <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite result codes</a>.
+ * @return an instance of SQL_Result that store fields and result rows.
  * @see unihan_find_all_matched()
  */
-int unihanSql_get_result_table(const char *sqlClause,char ***pResult, int *nrow, int *ncolumn, char **errmsg);
+SQL_Result *unihanSql_get_sql_result(const char *sqlClause, char **errMsg_ptr, int *execResult_ptr);
 
 
 /**

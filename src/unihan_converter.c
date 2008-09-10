@@ -338,7 +338,7 @@ int main(int argc,char** argv){
 	return -2;
     }
 
-    int ret = unihanDb_open(argv[optind+1]);
+    int ret = unihanDb_open(argv[optind+1],SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
 
     if (ret) {
         sqlite3 *db=unihanDb_get();

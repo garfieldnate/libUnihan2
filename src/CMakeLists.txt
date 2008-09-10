@@ -15,6 +15,7 @@ SET(libUnihan_SRCS Unihan.c Unihan.h Unihan_enum.h
     Unihan_phonetic.c Unihan_phonetic.h
     Unihan_phonetic_tables.c Unihan_phonetic_tables.h)
 SET(supporting_SRCS allocate.c allocate.h
+    collection.c collection.h
     sqlite_functions.c sqlite_functions.h
     str_functions.c str_functions.h
     verboseMsg.c verboseMsg.h)

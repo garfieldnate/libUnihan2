@@ -27,9 +27,23 @@
 #include <sqlite3.h>
 #include "str_functions.h"
 
-int sqlite_count_matches(sqlite3 *db,const char * sqlClause,char **errmsg);
+typedef struct {
+    StringList *fieldList;
+    StringList *resultList;
+    int colCount;		//!< column count.
+} SQL_Result;
 
-StringList *sqlite_get_fieldNames(sqlite3 *db,const char * sqlClause,char **errmsg);
+SQL_Result *sql_result_new();
+
+StringList *sql_result_free(SQL_Result *sResult, gboolean cleanResult);
+
+int sqlite_count_matches(sqlite3 *db,const char * sqlClause,char **errMsg);
+
+SQL_Result *sqlite_get_sql_result(sqlite3 *db, const char *sqlClause, char **errMsg_ptr, int *execResult_ptr);
+
+StringList *sqlite_get_tableNames(sqlite3 *db, char **errMsg_ptr);
+
+StringList *sqlite_get_fieldNames(sqlite3 *db,const char * sqlClause,char **errMsg);
 
 int sqlite_create_concat_aggregation_function(sqlite3 *db, const char *function_name);
 

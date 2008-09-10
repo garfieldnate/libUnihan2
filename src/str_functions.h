@@ -138,6 +138,10 @@ guint stringList_insert_const(StringList *sList, const char *str);
 /**
  * Free the StringList instance.
  *
+ * Note that this function assumes the sList is not NULL.
+ * Use <code> if (sList) stringList_free(sList);</code> to tolerate the NULL
+ * parameter.
+ * 
  * @param sList The StringList to be processed.
  */
 void stringList_free(StringList *sList);

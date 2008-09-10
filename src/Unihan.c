@@ -126,10 +126,11 @@ char *unihanChar_to_scalar_string(gunichar code){
 /*=================================
  * Sqlite DB file functions.
  */
-int unihanDb_open(const char *filename){
-    int ret = sqlite3_open(filename, &unihanDb);
+int unihanDb_open(const char *filename, int flags){
+    int ret = sqlite3_open_v2(filename, &unihanDb, flags, NULL);
     if (ret) {
-	verboseMsg_print(VERBOSE_MSG_ERROR, "Cannot open to database: %s, err msg:%s\n", filename,sqlite3_errmsg(unihanDb));
+	verboseMsg_print(VERBOSE_MSG_ERROR, "unihanDb_open(%s,%d): %s\n", 
+		filename,flags,sqlite3_errmsg(unihanDb));
 	sqlite3_close(unihanDb);
 	unihanDb=NULL;
 	return ret;
@@ -141,8 +142,8 @@ int unihanDb_open(const char *filename){
 		scalarFuncs[i].argc,SQLITE_UTF8,NULL,
 		scalarFuncs[i].func,NULL,NULL);
 	if (ret) {
-	    verboseMsg_print(VERBOSE_MSG_ERROR, "[DB:%s] Cannot set function %s, err msg:%s\n",
-		    filename,unihanDb,scalarFuncs[i].funcName,sqlite3_errmsg(unihanDb));
+	    verboseMsg_print(VERBOSE_MSG_ERROR, "unihanDb_open(%s,%d): Cannot set function %s, Msg:%s\n",
+		    filename,flags,scalarFuncs[i].funcName,sqlite3_errmsg(unihanDb));
 	    sqlite3_close(unihanDb);
 	    unihanDb=NULL;
 	}
@@ -151,7 +152,9 @@ int unihanDb_open(const char *filename){
     ret = sqlite3_create_function(unihanDb,"SEMANTIC_VARIANT_VALUE_CONCAT",5,SQLITE_UTF8,NULL,
 	    NULL,semantic_value_concat_step_Func,semantic_value_concat_finalized_Func);
     if (ret) {
-	verboseMsg_print(VERBOSE_MSG_ERROR, "Cannot set function ADOBE_RADICAL_STROKE_VALUE_CONCAT, err msg:%s\n", filename,sqlite3_errmsg(unihanDb));
+	verboseMsg_print(VERBOSE_MSG_ERROR, 
+		"unihanDb_open(%s,%d): Cannot set function ADOBE_RADICAL_STROKE_VALUE_CONCAT, Msg:%s\n"
+		, filename,flags,sqlite3_errmsg(unihanDb));
 	sqlite3_close(unihanDb);
 	unihanDb=NULL;
     }
@@ -160,7 +163,7 @@ int unihanDb_open(const char *filename){
 }
 
 int unihanDb_open_default(){
-    return unihanDb_open(UNIHAN_DEFAULT_DB);
+    return unihanDb_open(UNIHAN_DEFAULT_DB, SQLITE_OPEN_READONLY);
 }
 
 sqlite3 *unihanDb_get(){
@@ -168,20 +171,14 @@ sqlite3 *unihanDb_get(){
 }
 
 StringList *unihanDb_get_tableNames(){
-    char *errmsg=NULL;
-    int nrow,ncolumn;
-    char **results=NULL;
-    int ret=unihanSql_get_result_table("SELECT name FROM sqlite_master WHERE type='table'",&results,&nrow,&ncolumn,&errmsg);
-    if (ret){
-	verboseMsg_print(VERBOSE_MSG_ERROR,"[unihanDb_get_tables] select query error. err msg:%s\n",errmsg);
+    char *errMsg=NULL;
+    g_assert(unihanDb);
+    StringList *sList=sqlite_get_tableNames(unihanDb,&errMsg);
+    if (sList==NULL){
+	verboseMsg_print(VERBOSE_MSG_ERROR,"unihanDb_get_tableNames(): Msg:%s\n",errMsg);
+	sqlite3_free(errMsg);
 	return NULL;
     }
-    int i;
-    StringList *sList=stringList_new();
-    for (i=1;i<nrow+1;i++){
-	stringList_insert(sList,results[i]);
-    }
-    sqlite3_free_table(results);
     return sList;
 }
 
@@ -640,6 +637,7 @@ UnihanField* unihanTable_get_db_fields(UnihanTable table){
 	    char *fieldName=stringList_index(sList,counter);
 	    fields[counter]=unihanField_parse(fieldName);
 	}
+	stringList_free(sList);
     }
     fields[counter]=UNIHAN_INVALID_FIELD;
     return fields;
