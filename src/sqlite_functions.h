@@ -37,7 +37,7 @@ typedef struct {
 
 SQL_Result *sql_result_new();
 
-StringList *sql_result_free(SQL_Result *sResult, gboolean cleanResult);
+StringList *sql_result_free(SQL_Result *sResult, gboolean freeResult);
 
 int sqlite_count_matches(sqlite3 *db,const char * sqlClause,char **errMsg_ptr);
 

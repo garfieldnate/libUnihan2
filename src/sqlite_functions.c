@@ -36,14 +36,15 @@ SQL_Result *sql_result_new(){
     return sResult;
 }
 
-StringList *sql_result_free(SQL_Result *sResult, gboolean cleanResult){
+StringList *sql_result_free(SQL_Result *sResult, gboolean freeResult){
     g_assert(sResult);
     StringList *resultList=NULL;
     stringList_free(sResult->fieldList);
-    if (cleanResult){
+    if (freeResult){
 	stringList_free(sResult->resultList);
     }else{
 	resultList=sResult->resultList;
+	sResult->resultList=NULL;
     }
     if (sResult->errMsg)
 	sqlite3_free(sResult->errMsg);

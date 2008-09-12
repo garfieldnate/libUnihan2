@@ -47,9 +47,8 @@
 typedef struct {
     GStringChunk *chunk; //!< GStringChunk that actually stores the strings.
     GPtrArray *ptrArray; //!< A array of char* that points to the strings.
-    guint len;		 //!< Number of strings in the StringList.
-
     GArray *constArray;  //!< Stores the indexes of strings which are inserted constantly.
+    guint len;		 //!< Number of strings in the StringList.
 } StringList;
 
 /**
