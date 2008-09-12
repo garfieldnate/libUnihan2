@@ -99,7 +99,7 @@ char **stringList_to_charPointerPointer(StringList *sList);
  * @param index The given index.
  * @return The string at the given index. 
  */
-char *stringList_index(StringList *sList,guint index);
+const char *stringList_index(StringList *sList,guint index);
 
 /**
  * Insert a string to StringList.

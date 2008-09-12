@@ -66,6 +66,7 @@ static struct option longOptions[]={
 
 gboolean likeMode=FALSE;
 gboolean showScalarString=FALSE;
+UnihanQueryOption qOption=UNIHAN_QUERY_OPTION_DEFAULT;
 char *cmdSqlClause=NULL;
 char *givenFieldStr=NULL;
 char *givenValueStr=NULL;
@@ -78,6 +79,17 @@ static void printUsage(){
     printf(CMD_OPTIONS);
 }
 
+static StringList * get_tableNames(){
+    SQL_Result *sResult=unihanDb_get_tableNames();
+    if (sResult->execResult){
+	verboseMsg_print(VERBOSE_MSG_CRITICAL, "Cannot get table names. %s\n",sResult->errMsg);
+	sql_result_free(sResult,TRUE);
+	unihanDb_close();
+	exit (-1);
+    }
+    return sql_result_free(sResult,FALSE);
+}
+
 static void printTables(){
     int i;
     int ret=unihanDb_open_default();
@@ -85,11 +97,7 @@ static void printTables(){
 	fprintf(stderr, "Unable to open database " UNIHAN_DEFAULT_DB ".\n");
 	exit(ret);
     }
-    StringList *sList=unihanDb_get_tableNames();
-    if (sList==NULL){
-	fprintf(stderr, "Cannot get table names.\n");
-	exit(-1);
-    }
+    StringList *sList=get_tableNames();
     printf("Tables:\n");
     for(i=0;i<sList->len;i++){
 	printf("\t%3d %s\n",i+1,stringList_index(sList,i));
@@ -124,14 +132,10 @@ static void printFields(char modeChar){
 		fprintf(stderr, "Unable to open database " UNIHAN_DEFAULT_DB ".\n");
 		exit(ret);
 	    }
-	    StringList *sList=unihanDb_get_tableNames();
-	    if (sList==NULL){
-		fprintf(stderr, "Cannot get table names.\n");
-		exit(-1);
-	    }
+	    StringList *sList=get_tableNames();
 	    UnihanTable table;
 	    UnihanField *fields;
-	    char *tableName=NULL;
+	    const char *tableName=NULL;
 	    for(i=0;i<sList->len;i++){
 		tableName=stringList_index(sList,i);
 		table=unihanTable_parse(tableName);
@@ -219,7 +223,7 @@ static gboolean is_valid_arguments(int argc, char **argv) {
     return TRUE;
 }
 
-int simpleQuery(char ***pResults,int *nrow, int *ncolumn, char **errmsg,gboolean likeMode){
+SQL_Result *simpleQuery(){
     UnihanField givenField=unihanField_parse(givenFieldStr);
     UnihanField queryField=unihanField_parse(queryFieldStr);
     if (givenField<0){
@@ -230,56 +234,65 @@ int simpleQuery(char ***pResults,int *nrow, int *ncolumn, char **errmsg,gboolean
 	verboseMsg_print(VERBOSE_MSG_CRITICAL,"Invalid query field: %s\n",queryFieldStr);
 	exit(-2);
     }
-    int ret=unihan_find_all_matched(givenField, givenValueStr, queryField,
-	pResults,nrow, ncolumn, errmsg,likeMode,showScalarString);
-    return ret;
+    return unihan_find_all_matched(givenField, givenValueStr, queryField,qOption);
 }
 
-int sqlQuery(char ***pResults,int *nrow, int *ncolumn, char **errmsg){
-   return unihanSql_get_result_table(cmdSqlClause,pResults, nrow, ncolumn, errmsg); 
+SQL_Result *sqlQuery(){
+    return unihanSql_get_sql_result(cmdSqlClause);
 }
 
-void printResult(char **results,int nrow, int ncolumn){
+void printResult(SQL_Result *sResult){
     int i,j;
-    if (nrow==0){
+    int rowCount=sResult->resultList->len,
+	colCount=sResult->colCount;
+    
+
+    if (rowCount<=0){
 	printf("No matched results\n");
     }
-    for(i=0;i<nrow+1;i++){
-	for(j=0;j<ncolumn;j++){
+    for(j=0;j<colCount;j++){
+	if (j>0){
+	    printf(" |");
+	}
+	printf("%s",stringList_index(sResult->fieldList, j));
+    }
+    printf("\n");
+    for(i=0;i<rowCount;i++){
+	for(j=0;j<colCount;j++){
 	    if (j>0){
 		printf(" |");
 	    }
-	    printf("%s",results[i*ncolumn+j]);
+	    printf("%s",stringList_index(sResult->resultList, i*colCount+j));
 	}
 	printf("\n");
     }
-    printf("\n");
 }
 
 
 int main(int argc, char** argv){
+    int ret=0;
     if (!is_valid_arguments(argc,argv)){
 	exit(-1);
     }
-    char **results=NULL;
-    char *errmsg=NULL;
-    int ret,nrow,ncolumn;
     ret=unihanDb_open_default();
     if (ret){
 	fprintf(stderr, "Unable to open database " UNIHAN_DEFAULT_DB ".\n");
 	exit(ret);
     }
+    SQL_Result *sResult=NULL;
 
     if (cmdSqlClause){
-	ret=sqlQuery(&results,&nrow, &ncolumn, &errmsg);
+	sResult=sqlQuery();
     }else{
-	ret=simpleQuery(&results,&nrow, &ncolumn, &errmsg,likeMode);
+	sResult=simpleQuery();
     }
+    ret=sResult->execResult;
     if (ret){
-        fprintf(stderr, "Query failed. err msg:%s\n",errmsg);
-	exit(ret);
+	verboseMsg_print(VERBOSE_MSG_CRITICAL, "Query failed.:%s\n",sResult->errMsg);
+    }else{
+	printResult(sResult);
     }
-    printResult(results,nrow,ncolumn);
+    sql_result_free(sResult,TRUE);
     unihanDb_close();
-    return 0;
+    return ret;
 }

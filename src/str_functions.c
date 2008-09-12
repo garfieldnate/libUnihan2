@@ -73,7 +73,7 @@ char **stringList_to_charPointerPointer(StringList *sList){
     return (char**) sList->ptrArray->pdata;
 }
 
-char *stringList_index(StringList *sList,guint index){
+const char *stringList_index(StringList *sList,guint index){
     return g_ptr_array_index(sList->ptrArray,index);
 }
 

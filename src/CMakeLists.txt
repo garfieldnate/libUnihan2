@@ -6,6 +6,7 @@ LINK_DIRECTORIES(${GLIB2_LIBRARY_DIRS} ${SQLITE3_LIBRARY_DIRS})
 
 INCLUDE (CheckFunctionExists)
 CHECK_FUNCTION_EXISTS(g_string_chunk_clear HAVE_G_STRING_CHUNK_CLEAR)
+CHECK_FUNCTION_EXISTS(sqlite3_open_v2  HAVE_SQLITE3_OPEN_V2)
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/config.h)
 
 
@@ -16,6 +17,7 @@ SET(libUnihan_SRCS Unihan.c Unihan.h Unihan_enum.h
     Unihan_phonetic_tables.c Unihan_phonetic_tables.h)
 SET(supporting_SRCS allocate.c allocate.h
     collection.c collection.h
+    file_functions.c file_functions.h
     sqlite_functions.c sqlite_functions.h
     str_functions.c str_functions.h
     verboseMsg.c verboseMsg.h)

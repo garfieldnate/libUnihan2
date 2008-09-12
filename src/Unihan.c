@@ -20,6 +20,8 @@
  * Boston, MA  02111-1307  USA
  */
 
+#include <sqlite3.h>
+#include "file_functions.h"
 #include "Unihan_SQL_gen.c"
 #define UNIHAN_FIELD_ARRAY_MAX_LEN 10
 #define UNIHAN_TABLE_ARRAY_MAX_LEN 100
@@ -34,7 +36,7 @@ gboolean unihanChar_has_property(gunichar code, UnihanField field){
     }
     char buf[20];
     g_snprintf(buf,20,"%d",code);
-    char *ret=unihan_find_first_matched(UNIHAN_FIELD_CODE,buf, field,FALSE,FALSE);
+    char *ret=unihan_find_first_matched(UNIHAN_FIELD_CODE, buf, field, UNIHAN_QUERY_OPTION_DEFAULT);
     if ((ret!=NULL) && strlen(ret)>0){
 	return TRUE;
     }
@@ -51,9 +53,14 @@ gboolean unihanChar_is_in_source(gunichar code, UnihanIRG_SourceId source){
 	    code,UNIHAN_FIELD_NAMES[UNIHAN_FIELD_IRG_SOURCE_SHORT_NAME],
 	    UNIHAN_IRG_SOURCES[source].name);
 
-    int ret=unihanSql_count_matches(buf);
+    char *errMsg=NULL;
+    int ret=unihanSql_count_matches(buf,&errMsg);
     if (ret>0){
 	return TRUE;
+    }
+    if (ret<0){
+	verboseMsg_print(VERBOSE_MSG_WARNING, "unihanChar_is_in_source(%d,%d): %s\n",code,source,errMsg);
+	sqlite3_free(errMsg);
     }
     return FALSE;
 }
@@ -126,8 +133,45 @@ char *unihanChar_to_scalar_string(gunichar code){
 /*=================================
  * Sqlite DB file functions.
  */
+#ifndef SQLITE_OPEN_READONLY
+#define SQLITE_OPEN_READONLY         0x00000001
+#endif
+
+#ifndef SQLITE_OPEN_READWRITE
+#define SQLITE_OPEN_READWRITE        0x00000002
+#endif
+
+#ifndef SQLITE_OPEN_CREATE
+#define SQLITE_OPEN_CREATE           0x00000004
+#endif
+
+
 int unihanDb_open(const char *filename, int flags){
-    int ret = sqlite3_open_v2(filename, &unihanDb, flags, NULL);
+    int ret=0;
+#ifdef HAVE_SQLITE3_OPEN_V2    
+    ret = sqlite3_open_v2(filename, &unihanDb, flags, NULL);
+#else
+    if (flags & SQLITE_OPEN_READONLY ){
+	if (!isReadable(filename)){
+	    verboseMsg_print(VERBOSE_MSG_ERROR, "unihanDb_open(%s,%d): File is not redaable\n", 
+		    filename,flags);
+	    return -1;
+	}
+    }else if (flags & SQLITE_OPEN_READWRITE ){
+	if (!isReadable(filename)){
+	    verboseMsg_print(VERBOSE_MSG_ERROR, "unihanDb_open(%s,%d): File is not redaable\n", 
+		    filename,flags);
+	    return -1;
+	}else if (!isWritable(filename)){
+	    verboseMsg_print(VERBOSE_MSG_ERROR, "unihanDb_open(%s,%d): File is not writable\n", 
+		    filename,flags);
+	    return -2;
+	}
+    }
+    sqlite3_open(filename, &unihanDb);
+
+#endif
+
     if (ret) {
 	verboseMsg_print(VERBOSE_MSG_ERROR, "unihanDb_open(%s,%d): %s\n", 
 		filename,flags,sqlite3_errmsg(unihanDb));
@@ -170,16 +214,9 @@ sqlite3 *unihanDb_get(){
     return unihanDb;
 }
 
-StringList *unihanDb_get_tableNames(){
-    char *errMsg=NULL;
+SQL_Result *unihanDb_get_tableNames(){
     g_assert(unihanDb);
-    StringList *sList=sqlite_get_tableNames(unihanDb,&errMsg);
-    if (sList==NULL){
-	verboseMsg_print(VERBOSE_MSG_ERROR,"unihanDb_get_tableNames(): Msg:%s\n",errMsg);
-	sqlite3_free(errMsg);
-	return NULL;
-    }
-    return sList;
+    return sqlite_get_tableNames(unihanDb);
 }
 
 int unihanDb_close(){
@@ -384,7 +421,7 @@ gboolean unihanField_is_scalar_value(UnihanField field){
     return FALSE;
 }
 
-UnihanField unihanField_parse(char *str){
+UnihanField unihanField_parse(const char *str){
     int i;
     for(i=0;i<UNIHAN_FIELDS_COUNT;i++){
 	if (g_ascii_strcasecmp (str,UNIHAN_FIELD_NAMES[i])==0){
@@ -625,16 +662,17 @@ const char *unihanTable_to_string(UnihanTable table){
 }
 
 UnihanField* unihanTable_get_db_fields(UnihanTable table){
-    char *errmsg=NULL;
+    int execResult;
+    char *errMsg=NULL;
     UnihanField *fields=NEW_ARRAY_INSTANCE(UNIHAN_FIELD_ARRAY_MAX_LEN,UnihanField);
     GString *strBuf=g_string_new("SELECT * FROM ");
     g_string_append(strBuf,unihanTable_to_string(table));
-    StringList *sList=sqlite_get_fieldNames(unihanDb,strBuf->str,&errmsg);
+    StringList *sList=sqlite_get_fieldNames(unihanDb,strBuf->str,&execResult, &errMsg);
     guint counter=0;
     if (sList){
 	for(counter=0;counter< sList->len; counter++){
 	    g_assert(counter<UNIHAN_FIELD_ARRAY_MAX_LEN);
-	    char *fieldName=stringList_index(sList,counter);
+	    const char *fieldName=stringList_index(sList,counter);
 	    fields[counter]=unihanField_parse(fieldName);
 	}
 	stringList_free(sList);

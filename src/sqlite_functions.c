@@ -28,25 +28,25 @@
 
 SQL_Result *sql_result_new(){
     SQL_Result *sResult=NEW_INSTANCE(SQL_Result);
-    sResult->fieldList=NULL;
+    sResult->fieldList=stringList_new();
     sResult->resultList=stringList_new();
     sResult->colCount=0;
+    sResult->execResult=-1; 
+    sResult->errMsg=NULL;
     return sResult;
 }
 
 StringList *sql_result_free(SQL_Result *sResult, gboolean cleanResult){
     g_assert(sResult);
     StringList *resultList=NULL;
-    if (sResult->fieldList) {
-	stringList_free(sResult->fieldList);
+    stringList_free(sResult->fieldList);
+    if (cleanResult){
+	stringList_free(sResult->resultList);
+    }else{
+	resultList=sResult->resultList;
     }
-    if (sResult->resultList) {
-	if (cleanResult){
-	    stringList_free(sResult->resultList);
-	}else{
-	    resultList=sResult->resultList;
-	}
-    }
+    if (sResult->errMsg)
+	sqlite3_free(sResult->errMsg);
     g_free(sResult);
     return resultList;
 }
@@ -78,8 +78,7 @@ static int sqlite_get_sql_result_callback(void *data,int colCount,char** value_a
     }
     SQL_Result *sResult=(SQL_Result *) data;
     int i;
-    if (!(sResult->fieldList)){
-	sResult->fieldList=stringList_new();
+    if (!(sResult->colCount)){
 	for(i=0;i<colCount;i++){
 	    stringList_insert(sResult->fieldList,fieldName_array[i]);
 	}
@@ -91,29 +90,19 @@ static int sqlite_get_sql_result_callback(void *data,int colCount,char** value_a
     return SQLITE_OK;
 }
 
-SQL_Result *sqlite_get_sql_result(sqlite3 *db, const char *sqlClause, char **errMsg_ptr, int *execResult_ptr){
+SQL_Result *sqlite_get_sql_result(sqlite3 *db, const char *sqlClause){
     g_assert(db);
     SQL_Result *sResult=sql_result_new();
 
-    *execResult_ptr=sqlite3_exec(db,sqlClause,sqlite_get_sql_result_callback,sResult,errMsg_ptr);
-    if (*execResult_ptr){
-	verboseMsg_print(VERBOSE_MSG_ERROR,"sqlite_get_stringList(): %s\n",*errMsg_ptr);
-	if (sResult)
-	    sql_result_free(sResult,TRUE);
-	return NULL;
+    sResult->execResult=sqlite3_exec(db,sqlClause,sqlite_get_sql_result_callback,sResult,&sResult->errMsg);
+    if (sResult->execResult){
+	verboseMsg_print(VERBOSE_MSG_ERROR,"sqlite_get_stringList(): %s\n",sResult->errMsg);
     }
     return sResult;
 }
 
-StringList *sqlite_get_tableNames(sqlite3 *db, char **errMsg_ptr){
-    g_assert(db);
-    int execResult;
-    SQL_Result *sResult=sqlite_get_sql_result(db, "SELECT name FROM sqlite_master WHERE type='table'",  errMsg_ptr, &execResult);
-    if (execResult){
-	verboseMsg_print(VERBOSE_MSG_ERROR,"sqlite_get_tableNames(): %s\n",*errMsg_ptr);
-	return sql_result_free(sResult,TRUE);
-    }
-    return sql_result_free(sResult,FALSE);
+SQL_Result *sqlite_get_tableNames(sqlite3 *db){
+    return sqlite_get_sql_result(db, "SELECT name FROM sqlite_master WHERE type='table'");
 }
 
 static int sqlite_get_fieldNames_callback(void *data,int colCount,char** value_array,char **fieldName_array){
@@ -122,16 +111,19 @@ static int sqlite_get_fieldNames_callback(void *data,int colCount,char** value_a
     for(i=0;i<colCount;i++){
 	stringList_insert(sList,fieldName_array[i]);
     }
+    /* Just run once, no need to run all the records. */
     return SQLITE_ABORT;
 }
 
 
-StringList *sqlite_get_fieldNames(sqlite3 *db,const char * sqlClause,char **errMsg_ptr){
+StringList *sqlite_get_fieldNames(sqlite3 *db,const char * sqlClause, int *execResult_ptr, char **errMsg_ptr){
     g_assert(db);
     StringList *sList=stringList_new();
-    int execResult=sqlite3_exec(db,sqlClause,sqlite_get_fieldNames_callback,sList,errMsg_ptr);
-    if (execResult==SQLITE_ABORT){
+    *execResult_ptr=sqlite3_exec(db,sqlClause,sqlite_get_fieldNames_callback,sList,errMsg_ptr);
+    if (*execResult_ptr==SQLITE_ABORT){
+	/* Just run once, no need to run all the records. */
 	sqlite3_free(*errMsg_ptr);
+	*errMsg_ptr=NULL;
     }else{
 	verboseMsg_print(VERBOSE_MSG_ERROR,"sqlite_get_fieldNames(): %s\n",*errMsg_ptr);
 	stringList_free(sList);
@@ -153,7 +145,7 @@ void sqlite_concat_aggregation_step_Func(sqlite3_context *context, int argc, sql
     if (cStru->rowCount==0){
 	cStru->strBuf=g_string_new(NULL);
     }
-    const char *separater=(sqlite3_value_type(argv[1])==SQLITE_TEXT) ? sqlite_value_signed_text_cloned(argv[1]): "";
+    const char *separater=(sqlite3_value_type(argv[1])==SQLITE_TEXT) ? sqlite_value_signed_text(argv[1]): "";
     if (cStru->rowCount>0){
 	g_string_append(cStru->strBuf,separater);
     }
@@ -162,7 +154,7 @@ void sqlite_concat_aggregation_step_Func(sqlite3_context *context, int argc, sql
     double d;
     switch(sqlite3_value_type(argv[1])){
 	case SQLITE_TEXT:
-	    str=sqlite_value_signed_text_cloned(argv[0]);
+	    str=sqlite_value_signed_text(argv[0]);
 	    g_string_append(cStru->strBuf,separater);
 	    break;
 	case SQLITE_INTEGER:
@@ -195,11 +187,11 @@ int sqlite_create_concat_aggregation_function(sqlite3 *db, const char *function_
 	    NULL,sqlite_concat_aggregation_step_Func,sqlite_concat_aggregation_finalized_Func);
 }
 
-const char *sqlite_value_signed_text_buffer(char *buf,sqlite3_value *value){
+char *sqlite_value_signed_text_buffer(char *buf,sqlite3_value *value){
     return unsignedStr_to_signedStr_buffer(buf, sqlite3_value_text(value));
 }
 
-const char *sqlite_value_signed_text_cloned(sqlite3_value *value){
+char *sqlite_value_signed_text(sqlite3_value *value){
     const unsigned char *str=sqlite3_value_text(value);
     char *buf=NEW_ARRAY_INSTANCE(strlen((const char *) str)+1, char);
     return unsignedStr_to_signedStr_buffer(buf, str);

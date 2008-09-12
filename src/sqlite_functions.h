@@ -31,25 +31,27 @@ typedef struct {
     StringList *fieldList;
     StringList *resultList;
     int colCount;		//!< column count.
+    int execResult;		//!< sqlite3_exec result code. Initial value is -1, which means the result is not ready.
+    char *errMsg;		//!< Eroor messages from sqlite3_exec().
 } SQL_Result;
 
 SQL_Result *sql_result_new();
 
 StringList *sql_result_free(SQL_Result *sResult, gboolean cleanResult);
 
-int sqlite_count_matches(sqlite3 *db,const char * sqlClause,char **errMsg);
+int sqlite_count_matches(sqlite3 *db,const char * sqlClause,char **errMsg_ptr);
 
-SQL_Result *sqlite_get_sql_result(sqlite3 *db, const char *sqlClause, char **errMsg_ptr, int *execResult_ptr);
+SQL_Result *sqlite_get_sql_result(sqlite3 *db, const char *sqlClause);
 
-StringList *sqlite_get_tableNames(sqlite3 *db, char **errMsg_ptr);
+SQL_Result *sqlite_get_tableNames(sqlite3 *db);
 
-StringList *sqlite_get_fieldNames(sqlite3 *db,const char * sqlClause,char **errMsg);
+StringList *sqlite_get_fieldNames(sqlite3 *db,const char * sqlClause, int *execResult_ptr, char **errMsg_ptr);
 
 int sqlite_create_concat_aggregation_function(sqlite3 *db, const char *function_name);
 
-const char *sqlite_value_signed_text_buffer(char *buf,sqlite3_value *value);
+char *sqlite_value_signed_text_buffer(char *buf,sqlite3_value *value);
 
-const char *sqlite_value_signed_text_cloned(sqlite3_value *value);
+char *sqlite_value_signed_text(sqlite3_value *value);
 
 
 #endif /* SQLITE_FUNCTIONS_H_ */

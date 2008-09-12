@@ -29,6 +29,7 @@
 #ifndef UNIHAN_H_
 #define UNIHAN_H_
 #include "Unihan_enum.h"
+#include "sqlite_functions.h"
 #include "str_functions.h"
 
 
@@ -62,23 +63,34 @@ typedef struct {
  */
 typedef int (*UnihanCallback)(void* userOption,int col_num,char** results,char** col_names);
 
+
+/*@{*/
+/**
+ * Unihan query options.
+ * Unihan query options provides additional control over query processing, and output format.
+ *
+ */
+typedef guint UnihanQueryOption;
+
+#define UNIHAN_QUERY_OPTION_DEFAULT	0x00	//!< Default options.
+#define UNIHAN_QUERY_OPTION_LIKE		0x01   	//!< Using SQL LIKE in WHERE expression; FALSE for use '=' instead.
+#define UHIHAN_QUERY_OPTION_SCALAR_STRING	0x02	//!< TRUE to show code point as string "U+xxxx"; FALSE for show code point as integer.
+/*@}*/
+
 /**
  * Find all matched results, given a field and its value.
  *
- * This function is a convenient wrapper of unihanSql_get_result_table().
+ * This function is a convenient wrapper of unihanSql_get_sql_result().
  *
  * Put the known field as <code>givenFiled</code> and its value as <code>givenValue</code>.
  * The values of field specified in <code>queryField</code> will be put in the result table.
- *
- *
- * Use sqlite3_table_free() to free the pResults after the finish using result table.
+ * 
+ * Use sql_result_free() to free the pResults after the finish using result table.
  *
  * @param givenField the given (input) field.
  * @param givenValue the given value of the field.
  * @param queryField the result field.
- * @param pResults   result table.
- * @param errMsg_ptr Error msg written here.
- * @param execResult_ptr pointer to the sqlite3_exec() result code.  SQLITE_OK (value 0) if the query execute successfully, while non-zero value indicate error. 
+ * @param qOption    the ::UnihanQueryOption.
  * @param likeMode   TRUE for using SQL LIKE in WHERE expression; FALSE for use '=' instead.
  * @param showScalarString TRUE to show code point as string "U+xxxx"; FALSE for show code point as integer.
  * @return a SQL_Result instance that stores the field names and result
@@ -86,11 +98,11 @@ typedef int (*UnihanCallback)(void* userOption,int col_num,char** results,char**
  *
  * @see unihan_find_firstMatched()
  * @see unihanSql_get_sql_result()
+ * @see ::UnihanQueryOption
  * @see <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite result codes</a>
  */
 SQL_Result *unihan_find_all_matched(UnihanField givenField, char *givenValue, 
-	UnihanField queryField,	char **errMsg_ptr, int *execResult_ptr, 
-	gboolean likeMode,gboolean showScalarString);
+	UnihanField queryField, UnihanQueryOption qOption);
 
 /**
  * Find the first matched result, given a field and its value.
@@ -103,14 +115,13 @@ SQL_Result *unihan_find_all_matched(UnihanField givenField, char *givenValue,
  * @param givenField the given (input) field.
  * @param givenValue the given value of the field.
  * @param queryField the result field.
- * @param likeMode   TRUE for using SQL LIKE in WHERE expression; FALSE for use '=' instead.
- * @param showScalarString TRUE to show code point as string "U+xxxx"; FALSE for show code point as integer.
+ * @param qOption    the ::UnihanQueryOption.
  * @return the first matched result string. NULL if nothing matched.
  *
  * @see unihan_find_all_matched()
  */
 char* unihan_find_firstMatched(UnihanField givenField, char* givenValue, 
-	UnihanField queryField, gboolean likeMode,gboolean showScalarString);
+	UnihanField queryField, UnihanQueryOption qOption );
 
 /**
  * Count number of matched records in a table.
@@ -123,23 +134,18 @@ char* unihan_find_firstMatched(UnihanField givenField, char* givenValue,
  * where the valueArray[]={ "13317", "C","15387","3","1","1", NULL};
  * 
  * @param table		the database table to be looked at.
- * @param valueArray	array of char array, follow by a NULL as terminator.
- * @return number of matched record.
+ * @param valueList 	Values in StringList.
+ * @return number of matched record. Negative if error.
  */
-int unihan_count_matched_record(UnihanTable table,char **valueArray);
+int unihan_count_matched_record(UnihanTable table,StringList *valueList);
 
 /**
  * Insert a record to table.
  * 
- * The value to be insert should be in string representation, 
- * followed by a NULL as end of the value array.
+ * The value to be insert should be in string representation, as if put in plain text SQL command.
  *
- * For example, convert the values for kRSAdobe_Japan_1_6Table (13317,"C",15387,"3",1,1)
- * to char *valueArray[]={ "13317", "C","15387","3","1","1", NULL}
- * before insertion.
- *
- * @param table		the database table to be looked at.
- * @param valueArray	array of char array, follow by a NULL as terminator.
+ * @param table		The database table to be looked at.
+ * @param valueList 	Values in StringList.
  * @return SQLite result code, SQLITE_OK (value 0) if the query executed successfully, 
  *         while non-zero value indicate error. 
  *
@@ -147,7 +153,7 @@ int unihan_count_matched_record(UnihanTable table,char **valueArray);
  * @see unihan_insert_no_duplicate()
  * @see unihan_insert_value()
  */
-int unihan_insert(UnihanTable table,char **valueArray);
+int unihan_insert(UnihanTable table,StringList *valueList);
 
 /**
  * Insert a record to table with duplication check.
@@ -156,11 +162,11 @@ int unihan_insert(UnihanTable table,char **valueArray);
  * unihan_insert(). Return negative value if the duplication is found.
  *
  * @param table		the database table to be looked at.
- * @param valueArray	array of char array, follow by a NULL as terminator.
+ * @param valueList 	Values in StringList.
  * @return Negative value is duplication is found.  SQLITE_OK (value 0) if inserted successfully, 
  *         while positive value indicate error. 
  */
-int unihan_insert_no_duplicate(UnihanTable table,char **valueArray);
+int unihan_insert_no_duplicate(UnihanTable table,StringList *valueList);
 
 /**
  * Insert a Unihan textual formated record to corresponding tables.
@@ -274,7 +280,7 @@ sqlite3 *unihanDb_get();
  * Use stringList_free() to free it.
  * @return the tables in database.
  */
-StringList *unihanDb_get_tableNames();
+SQL_Result *unihanDb_get_tableNames();
 
 /**
  * Open a Unihan db.
@@ -486,7 +492,7 @@ gboolean unihanField_is_singleton(UnihanField field);
  * @param str		the string to be parsed.
  * @return		the UnihanField represented by the str in UCS4.
  */
-UnihanField unihanField_parse(char *str);
+UnihanField unihanField_parse(const char *str);
 
 /**
  * Returns a string representing a UnihanField.
@@ -546,11 +552,12 @@ void unihanIRG_SourceRec_free(UnihanIRG_SourceRec *rec);
  * Count the number of matches.
  *
  * @param sqlClause SQL command to be passed to Unihan db.
+ * @param errMsg_ptr pointer for error message.
  * @return Negative number if the command does not execute successfully, 
  * ( -1 * <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite_result_code</a>);
  *  Non-negative number is the number of matches.
  */
-int unihanSql_count_matches(const char * sqlClause);
+int unihanSql_count_matches(const char * sqlClause, char **errMsg_ptr);
 
 /**
  * Execute the SQL to Unihan db.
@@ -559,23 +566,21 @@ int unihanSql_count_matches(const char * sqlClause);
  * @param sqlClause SQL command to be passed to Unihan db.
  * @param callback callback function for each match record, can be NULL.
  * @param callbackOption option for callback function, can be NULL.
- * @param errmsg pointer for error message.
+ * @param errMsg_ptr pointer for error message.
  * @return <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite result codes</a>
  * @see <a href="http://www.sqlite.org/c3ref/exec.html">sqlite3_exec()</a>
  */
 int unihanSql_exec(char *sqlClause, UnihanCallback callback, 
-	void *callbackOption,  char **errmsg);
+ void *callbackOption,  char **errMsg_ptr);
 
 /**
  * Obtains a SQL_Result table of SQL command.
  *
  * @param sqlClause SQL command to be passed to Unihan db.
- * @param errMsg_ptr pointer for error message.
- * @param execResult_ptr pointer to <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite result codes</a>.
- * @return an instance of SQL_Result that store fields and result rows.
+ * @return an instance of SQL_Result that stores the results of the SQL command.
  * @see unihan_find_all_matched()
  */
-SQL_Result *unihanSql_get_sql_result(const char *sqlClause, char **errMsg_ptr, int *execResult_ptr);
+SQL_Result *unihanSql_get_sql_result(const char *sqlClause);
 
 
 /**
@@ -665,5 +670,21 @@ UnihanField* unihanTable_get_fields(UnihanTable table);
  * @return		all primary key fields of the given table in an UnihanField array.
  */
 UnihanField* unihanTable_get_primary_key_fields(UnihanTable table);
+
+/**
+ * For SQLite 3.3.X, as it does not have following define
+ */
+#ifndef SQLITE_OPEN_READONLY
+#define SQLITE_OPEN_READONLY         0x00000001
+#endif
+
+#ifndef SQLITE_OPEN_READWRITE
+#define SQLITE_OPEN_READWRITE        0x00000002
+#endif
+
+#ifndef SQLITE_OPEN_CREATE
+#define SQLITE_OPEN_CREATE           0x00000004
+#endif
+
 
 #endif /* UNIHAN_H */

@@ -28,10 +28,9 @@
 
 #include "config.h"
 #include <stdio.h>
+#include <sqlite3.h>
 #include "Unihan.h"
 #include "allocate.h"
-#include "sqlite_functions.h"
-#include "str_functions.h"
 #include "verboseMsg.h"
 
 #define MAX_BUFFER_SIZE 2000
@@ -925,12 +924,12 @@ static void semantic_value_concat_finalized_Func(sqlite3_context *context){
 /*=================================
  * Select generating functions.
  */
-static char *unihan_generate_select_clause(UnihanField field,gboolean showScalarString){
+static char *unihan_generate_select_clause(UnihanField field,UnihanQueryOption qOption){
     GString *strBuf=g_string_new(NULL);
     UnihanTable fromTable=unihanField_get_table(field);
     switch(field){
 	case UNIHAN_FIELD_CODE:
-	    if (showScalarString){
+	    if (qOption & UHIHAN_QUERY_OPTION_SCALAR_STRING){
 		g_string_printf(strBuf,"TO_SCALAR_STRING(%s) AS CodePoint",UNIHAN_FIELD_NAMES[UNIHAN_FIELD_CODE]);
 	    }else{
 		g_string_printf(strBuf,"%s",UNIHAN_FIELD_NAMES[UNIHAN_FIELD_CODE]);
@@ -941,7 +940,7 @@ static char *unihan_generate_select_clause(UnihanField field,gboolean showScalar
 	case UNIHAN_FIELD_KTRADITIONALVARIANT:
 
 	case UNIHAN_FIELD_VARIANT_CODE:
-	    if (showScalarString){
+	    if (qOption & UHIHAN_QUERY_OPTION_SCALAR_STRING){
 		g_string_printf(strBuf,"TO_SCALAR_STRING(%s.%s) AS VariantCodePoint",
 			UNIHAN_TABLE_NAMES[fromTable],
 			UNIHAN_FIELD_NAMES[UNIHAN_FIELD_VARIANT_CODE]);
@@ -1368,15 +1367,13 @@ static void unihan_append_where_clause_join_table(GString *strBuf,
 }
 
 static char *unihan_generate_where_clause(UnihanField givenField, const char *value, 
-	UnihanTable fromTable,
-	UnihanField queryField,
-       	gboolean likeMode){
+	UnihanTable fromTable,	UnihanField queryField,  UnihanQueryOption qOption){
     GString *strBuf=g_string_new(NULL);
     UnihanIRG_SourceRec *rec=NULL;
     if (unihanField_is_IRG_Source(givenField)){
 	rec=unihanIRG_SourceRec_parse(givenField,value);
     }
-    char *relStr=(likeMode)? "LIKE": "=";
+    char *relStr=(qOption & UNIHAN_QUERY_OPTION_LIKE)? "LIKE": "=";
 
     if (rec!=NULL){
 	g_string_append_printf(strBuf,"%s.%s=\"%s\"",
@@ -1476,8 +1473,7 @@ static char *unihan_generate_where_clause(UnihanField givenField, const char *va
 }
 
 SQL_Result *unihan_find_all_matched(UnihanField givenField, char *givenValue, 
-	UnihanField queryField,	char **errMsg_ptr, int *execResult_ptr, 
-	gboolean likeMode,gboolean showScalarString){
+	UnihanField queryField, UnihanQueryOption qOption){
     char *selectStr=NULL;
     char *fromStr=NULL;
     char *whereStr=NULL;
@@ -1491,9 +1487,9 @@ SQL_Result *unihan_find_all_matched(UnihanField givenField, char *givenValue,
 	if (i>0){
 	    g_string_append(strBuf," UNION ");
 	}
-	selectStr=unihan_generate_select_clause(queryField,showScalarString);
+	selectStr=unihan_generate_select_clause(queryField,qOption);
 	fromStr=unihan_generate_from_clause(givenField,queryField);
-	whereStr=unihan_generate_where_clause(givenField,givenValue,tableArray[i],queryField,likeMode);
+	whereStr=unihan_generate_where_clause(givenField,givenValue,tableArray[i],queryField,qOption);
 
 	g_string_append_printf(strBuf,"SELECT %s FROM %s WHERE %s",selectStr,fromStr, whereStr);
 
@@ -1515,7 +1511,7 @@ SQL_Result *unihan_find_all_matched(UnihanField givenField, char *givenValue,
     g_string_append(strBuf,";");
     verboseMsg_print(VERBOSE_MSG_INFO1,"%s\n",strBuf->str);
     
-    SQL_Result *sResult=unihanSql_get_sql_result(strBuf->str, errMsg_ptr, execResult_ptr);
+    SQL_Result *sResult=unihanSql_get_sql_result(strBuf->str);
     g_free(selectStr);
     g_free(fromStr);
     g_free(whereStr);
@@ -1525,57 +1521,60 @@ SQL_Result *unihan_find_all_matched(UnihanField givenField, char *givenValue,
 }
 
 char* unihan_find_first_matched(UnihanField givenField, char* givenValue, 
-	UnihanField queryField,gboolean likeMode,gboolean showScalarString){
-    int nrow, ncolumn;
-    char **results;
-    char *errmsg=NULL;
+	UnihanField queryField, UnihanQueryOption qOption){
 
-    int ret=unihan_find_all_matched(givenField,givenValue, queryField, &results,
-	    &nrow, &ncolumn, &errmsg,likeMode,showScalarString);
-    if (ret){
-	verboseMsg_print(VERBOSE_MSG_ERROR,"Database error: %s\n", errmsg);
+    SQL_Result *sResult=unihan_find_all_matched(givenField, givenValue,  queryField, qOption);
+    if (sResult->execResult){
+	verboseMsg_print(VERBOSE_MSG_ERROR,"Database error: %s\n", sResult->errMsg);
+	sql_result_free(sResult, TRUE);
 	return NULL;
     }
-    if (nrow<=0){
-	return NULL;
-    }
-    char *result=g_strdup(results[ncolumn]);
-    sqlite3_free_table(results);
+    char *result=g_strdup(stringList_index(sResult->resultList,0));
+    sql_result_free(sResult,TRUE);
     return result;
 }
 
 
-int unihan_count_matched_record(UnihanTable table, char** valueArray){
+int unihan_count_matched_record(UnihanTable table, StringList *valueList){
     int i;
     if (table<0){
-	return FALSE;
+	return -1;
     }
     UnihanField* fields=unihanTable_get_fields(table);
     GString *strBuf=g_string_new("SELECT * FROM");
     g_string_append_printf(strBuf," %s WHERE", UNIHAN_TABLE_NAMES[table]);
 
-    for(i=0;fields[i]>=0;i++){
-	if (valueArray[i]==NULL){
-	    g_error("Unihan.c:unihan_count_matched_record(): Table %s: valueArray is shorter than number of fields!\n",
-		    UNIHAN_TABLE_NAMES[table]);
+    for(i=0;i<valueList->len;i++){
+	if (fields[i]<0){
+	    g_error("unihan_count_matched_record(): too many values!  %d value required, but %d are given!\n",i,valueList->len);
 	}
 	if (i>0){
 	    g_string_append(strBuf," AND");
 	}
 	if (unihanField_is_integer(fields[i])){
-	    g_string_append_printf(strBuf," %s=%s",UNIHAN_FIELD_NAMES[fields[i]],valueArray[i]);
+	    g_string_append_printf(strBuf," %s=%s",UNIHAN_FIELD_NAMES[fields[i]],stringList_index(valueList,i));
 	}else{
-	    g_string_append_printf(strBuf," %s=\"%s\"",UNIHAN_FIELD_NAMES[fields[i]],valueArray[i]);
+	    g_string_append_printf(strBuf," %s=\"%s\"",UNIHAN_FIELD_NAMES[fields[i]],stringList_index(valueList,i));
 	}
     }
+    while(fields[i]>=0){
+	i++;
+    }
+    if (i!=valueList->len){
+	g_error("unihan_count_matched_record(): too few values!  %d value required, but %d are given!\n",i,valueList->len);
+    }
+
     g_string_append(strBuf,";");
     verboseMsg_print(VERBOSE_MSG_INFO2,"unihan_count_matched_record(): %s\n",strBuf->str);
-    int ret=unihanSql_count_matches(strBuf->str);
+    char *errMsg=NULL;
+    int ret=unihanSql_count_matches(strBuf->str,&errMsg);
     verboseMsg_print(VERBOSE_MSG_INFO2,"unihan_count_matched_record(): %d records founds\n",ret);
     g_string_free(strBuf,TRUE);
     g_free(fields);
     return ret;
 }
+
+
 
 static int latest_db_result(int result,int newResult){
     if ((result<=0) && (newResult>0)){
@@ -1591,8 +1590,7 @@ static int latest_db_result(int result,int newResult){
 }
 
 static int insert_semanticVariant(gunichar code, UnihanField field, const char *composite_value){
-    GStringChunk *sChunk=NULL;
-    GPtrArray *pArray=g_ptr_array_new();
+    StringList *sList=NULL;
 
     GArray *gArray=semanticDictRec_parse(composite_value);
     SemanticDictRec *sRec=NULL;
@@ -1604,60 +1602,38 @@ static int insert_semanticVariant(gunichar code, UnihanField field, const char *
 		extraTable=unihanField_get_extra_table(field);
 
 
-
     g_snprintf(codeBuf,20,"%d",code);
     for(i=0;i<gArray->len;i++){
+	sList=stringList_new();
 	sRec=&g_array_index(gArray,SemanticDictRec,i);
-	sChunk=g_string_chunk_new(1000);
 
 	g_snprintf(variantBuf,20,"%d",sRec->variantCode);
 	/* Insert to k*SementicVariantTable */
-	g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,codeBuf));
-	g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,variantBuf));
+	stringList_insert(sList,codeBuf);
+	stringList_insert(sList,variantBuf);
 
-	newResult=unihan_insert_no_duplicate(table,(char **) pArray->pdata);
+	newResult=unihan_insert_no_duplicate(table,sList);
 	result=latest_db_result(result,newResult);
-	/* We cannot use g_string_chunk_clear without glib>=2.14 */
-	g_string_chunk_free(sChunk);
-	g_ptr_array_set_size(pArray,0);
+	stringList_free(sList);
 
 	if (isEmptyString(sRec->fromDict)){
 	    continue;
 	}
 
+	sList=stringList_new();
 	/* Insert to SemanticDictTable */
-	sChunk=g_string_chunk_new(1000);
+	stringList_insert(sList,codeBuf);
+	stringList_insert(sList,variantBuf);
+	stringList_insert(sList,sRec->fromDict);
+	stringList_insert(sList,(sRec->T)? oneStr: zeroStr);
+	stringList_insert(sList,(sRec->B)? oneStr: zeroStr);
+	stringList_insert(sList,(sRec->Z)? oneStr: zeroStr);
 
-	g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,codeBuf));
-	g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,variantBuf));
-	g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,sRec->fromDict));
-	if (sRec->T){
-	    g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,oneStr));
-	}else{
-	    g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,zeroStr));
-	}
-
-	if (sRec->B){
-	    g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,oneStr));
-	}else{
-	    g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,zeroStr));
-	}
-
-	if (sRec->Z){
-	    g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,oneStr));
-	}else{
-	    g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,zeroStr));
-	}
-
-	newResult=unihan_insert_no_duplicate(extraTable,(char **) pArray->pdata);
+	newResult=unihan_insert_no_duplicate(extraTable,sList);
 	result=latest_db_result(result,newResult);
-	/* We cannot use g_string_chunk_clear without glib>=2.14 */
-	g_string_chunk_free(sChunk);
-	g_ptr_array_set_size(pArray,0);
-
+	stringList_free(sList);
     }
 
-    g_ptr_array_free(pArray,TRUE);
     g_array_free(gArray,TRUE);
     return result;
 }
@@ -1666,9 +1642,8 @@ static int insert_zVariant(gunichar code, UnihanField field, const char *composi
     char **subFieldArray=g_strsplit(composite_value,":",-1);
     g_assert(subFieldArray[0]);
     gunichar variantCode=unihanChar_parse(subFieldArray[0]);
-    GStringChunk *sChunk=g_string_chunk_new(1000);
-    GPtrArray *pArray=g_ptr_array_new();
     char codeBuf[20], variantBuf[20];
+    StringList *sList=stringList_new();
 
     int result=0,newResult=0;
     UnihanTable table=unihanField_get_table(field),
@@ -1677,59 +1652,60 @@ static int insert_zVariant(gunichar code, UnihanField field, const char *composi
     g_snprintf(codeBuf,20,"%d",code);
     g_snprintf(variantBuf,20,"%d",variantCode);
 
-    g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,codeBuf));
-    g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,variantBuf));
-    newResult=unihan_insert_no_duplicate(table,(char **) pArray->pdata);
+    stringList_insert(sList,codeBuf);
+    stringList_insert(sList,variantBuf);
+    newResult=unihan_insert_no_duplicate(table, sList);
     result=latest_db_result(result,newResult);
-    /* We cannot use g_string_chunk_clear without glib>=2.14 */
-    g_string_chunk_free(sChunk);
-    g_ptr_array_set_size(pArray,0);
 
     if (!isEmptyString(subFieldArray[1])){
-	sChunk=g_string_chunk_new(1000);
-	g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,codeBuf));
-	g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,variantBuf));
-	g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,subFieldArray[1]));
+	stringList_clear(sList);
+	stringList_insert(sList,codeBuf);
+	stringList_insert(sList,variantBuf);
+	stringList_insert(sList,subFieldArray[1]);
 
-	newResult=unihan_insert_no_duplicate(extraTable,(char **) pArray->pdata);
+	newResult=unihan_insert_no_duplicate(extraTable,sList);
 	result=latest_db_result(result,newResult);
-	/* We cannot use g_string_chunk_clear without glib>=2.14 */
-	g_string_chunk_free(sChunk);
 
     }
-    g_ptr_array_free(pArray,TRUE);
+    stringList_free(sList);
     g_strfreev(subFieldArray);
     return result;
 }
 
-int unihan_insert(UnihanTable table, char** valueArray){
+int unihan_insert(UnihanTable table, StringList *valueList){
     int i;
     char *errmsg=NULL;
     if (table<0){
-	return FALSE;
+	return -1;
     }
     UnihanField* fields=unihanTable_get_fields(table);
     GString *strBuf=g_string_new("INSERT INTO");
     g_string_append_printf(strBuf," %s VALUES (", UNIHAN_TABLE_NAMES[table]);
 
-    for(i=0;fields[i]>=0;i++){
-	if (valueArray[i]==NULL){
-	    g_error("Unihan.c:unihan_insert(): valueArray is shorter than number of fields!\n");
+    for(i=0;i<valueList->len;i++){
+	if (fields[i]<0){
+	    g_error("unihan_insert(): too many values!  %d value required, but %d are given!\n",i,valueList->len);
 	}
 	if (i>0){
 	    g_string_append_c(strBuf,',');
 	}
 	if (unihanField_is_integer(fields[i])){
-	    g_string_append_printf(strBuf," %s",valueArray[i]);
+	    g_string_append_printf(strBuf," %s",stringList_index(valueList,i));
 	}else{
-	    g_string_append_printf(strBuf," \"%s\"",valueArray[i]);
+	    g_string_append_printf(strBuf," \"%s\"",stringList_index(valueList,i));
 	}
+    }
+    while(fields[i]>=0){
+	i++;
+    }
+    if (i!=valueList->len){
+	g_error("unihan_insert(): too few values!  %d value required, but %d are given!\n",i,valueList->len);
     }
     g_string_append(strBuf,");");
     verboseMsg_print(VERBOSE_MSG_INFO1,"%s\n",strBuf->str);
     int ret=unihanSql_exec(strBuf->str,NULL,NULL,&errmsg);
     if (ret) {
-	verboseMsg_print(VERBOSE_MSG_ERROR, "unihan_insert(): Cannot %s, errmsg:%s\n", errmsg);
+	verboseMsg_print(VERBOSE_MSG_ERROR, "unihan_insert(): Cannot insert. :%s\n", errmsg);
     }
     g_string_free(strBuf,TRUE);
     g_free(fields);
@@ -1739,9 +1715,8 @@ int unihan_insert(UnihanTable table, char** valueArray){
 
 int unihan_insert_value(gunichar code, UnihanField field, const char *value){
     char buf[20];
-    GStringChunk *sChunk=g_string_chunk_new(1000);
     UnihanTable table=unihanField_get_table(field);
-    GPtrArray *pArray=g_ptr_array_new();
+    StringList *sList=stringList_new();
     char **subFieldArray=NULL;
     gunichar variantCode;
     static gunichar lastCode=0;
@@ -1762,19 +1737,15 @@ int unihan_insert_value(gunichar code, UnihanField field, const char *value){
 	g_snprintf(buf,20,"%d",code);
 
 	if (!unihanIRG_Source_has_no_mapping(rec->sourceId)){
-	    g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,buf));
-	    g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,srcData->name));
-	    g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,rec->sourceMapping));
-	    newResult=unihan_insert_no_duplicate(UNIHAN_TABLE_IRG_SOURCE_MAPPING,(char **) pArray->pdata);
+	    stringList_insert(sList,buf);
+	    stringList_insert(sList,srcData->name);
+	    stringList_insert(sList,rec->sourceMapping);
+	    newResult=unihan_insert_no_duplicate(UNIHAN_TABLE_IRG_SOURCE_MAPPING,sList);
 	    result=latest_db_result(result,newResult);
-	    /* We cannot use g_string_chunk_clear without glib>=2.14 */
-	    g_string_chunk_free(sChunk);
-	    sChunk=g_string_chunk_new(1000);
-	    g_ptr_array_set_size(pArray,0);
+	    stringList_clear(sList);
 	}
-
-	g_ptr_array_add(pArray,	g_string_chunk_insert (sChunk,buf));
-	g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,srcData->name));
+	stringList_insert(sList,buf);
+	stringList_insert(sList,srcData->name);
 	unihanIRG_SourceRec_free(rec);
     }else if (unihanField_array_index(field,UNIHAN_KVARIANT_FIELDS)>=0){
 	switch(field){
@@ -1786,9 +1757,9 @@ int unihan_insert_value(gunichar code, UnihanField field, const char *value){
 	    default:
 		variantCode=unihanChar_parse(value);
 		g_snprintf(buf,20,"%d",code);
-		g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,buf));
+		stringList_insert(sList,buf);
 		g_snprintf(buf,20,"%d",variantCode);
-		g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,buf));
+		stringList_insert(sList,buf);
 		break;
 	}
     }else  if (unihanField_array_index(field,UNIHAN_KRS_FIELDS)>=0){
@@ -1797,20 +1768,20 @@ int unihan_insert_value(gunichar code, UnihanField field, const char *value){
 		subFieldArray=g_strsplit_set(value,".+",-1);
 		g_snprintf(buf,20,"%d",code);
 
-		g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,buf));
-		g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,subFieldArray[0]));
-		g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,subFieldArray[1]));
-		g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,subFieldArray[2]));
-		g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,subFieldArray[3]));
-		g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,subFieldArray[4]));
+		stringList_insert(sList,buf);
+		stringList_insert(sList,subFieldArray[0]);
+		stringList_insert(sList,subFieldArray[1]);
+		stringList_insert(sList,subFieldArray[2]);
+		stringList_insert(sList,subFieldArray[3]);
+		stringList_insert(sList,subFieldArray[4]);
 
 		break;
 	    default:
 		subFieldArray=g_strsplit(value,".",-1);
 		g_snprintf(buf,20,"%d",code);
-		g_ptr_array_add(pArray,	g_string_chunk_insert (sChunk,buf));
-		g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,subFieldArray[0]));
-		g_ptr_array_add(pArray,g_string_chunk_insert (sChunk,subFieldArray[1]));
+		stringList_insert(sList,buf);
+		stringList_insert(sList,subFieldArray[0]);
+		stringList_insert(sList,subFieldArray[1]);
 		break;
 	}
 	g_assert(subFieldArray);
@@ -1818,62 +1789,61 @@ int unihan_insert_value(gunichar code, UnihanField field, const char *value){
     }else if (field==UNIHAN_FIELD_KMANDARIN){
 	if (lastCode!=code){
 	    freqRank=1;
+	    lastCode=code;
 	}
 	g_snprintf(buf,20,"%d",code);
-	g_ptr_array_add(pArray,	g_string_chunk_insert (sChunk,buf));
-	g_ptr_array_add(pArray,	g_string_chunk_insert (sChunk,value));
+	stringList_insert(sList,buf);
+	stringList_insert(sList,value);
 	g_snprintf(buf,20,"%d",freqRank);
-	g_ptr_array_add(pArray,	g_string_chunk_insert (sChunk,buf));
+	stringList_insert(sList,buf);
 	freqRank++;
     }else if (field==UNIHAN_FIELD_KHANYUPINLU){
 	g_snprintf(buf,20,"%d",code);
-	g_ptr_array_add(pArray,	g_string_chunk_insert (sChunk,buf));
+	stringList_insert(sList,buf);
 	GArray *pfArray=pinyinFreqRec_parse(value);
 	if (pfArray->len>0){
 	    PinyinFreqRec *rec=&g_array_index(pfArray,PinyinFreqRec,0);
-	    g_ptr_array_add(pArray, g_string_chunk_insert (sChunk,rec->pinyin));
+	    stringList_insert(sList,rec->pinyin);
 	    g_snprintf(buf,20,"%d",rec->freq);
-	    g_ptr_array_add(pArray,	g_string_chunk_insert (sChunk,buf));
+	    stringList_insert(sList,buf);
 	}
 	g_array_free(pfArray,TRUE);
     }else if (field==UNIHAN_FIELD_KIRGKANGXI || field==UNIHAN_FIELD_KKANGXI){
 	g_snprintf(buf,20,"%d",code);
-	g_ptr_array_add(pArray,	g_string_chunk_insert (sChunk,buf));
+	stringList_insert(sList,buf);
 	GArray *kArray=kangXiRec_parse(value);
 	if (kArray->len>0){
 	    KangXiRec *rec=&g_array_index(kArray,KangXiRec,0);
-	    g_ptr_array_add(pArray, g_string_chunk_insert (sChunk,rec->page));
-	    g_ptr_array_add(pArray, g_string_chunk_insert (sChunk,rec->charNum));
+	    stringList_insert(sList,rec->page);
+	    stringList_insert(sList,rec->charNum);
 	    g_snprintf(buf,20,"%d",(rec->virtual)? 1:0);
-	    g_ptr_array_add(pArray,	g_string_chunk_insert (sChunk,buf));
+	    stringList_insert(sList,buf);
 	}
 	g_array_free(kArray,TRUE);
 
     }else{
 	g_snprintf(buf,20,"%d",code);
-	g_ptr_array_add(pArray,	g_string_chunk_insert (sChunk,buf));
-	g_ptr_array_add(pArray,	g_string_chunk_insert (sChunk,value));
+	stringList_insert(sList,buf);
+	stringList_insert(sList,value);
     }
-    newResult=unihan_insert_no_duplicate(table,(char **) pArray->pdata);
+    newResult=unihan_insert_no_duplicate(table,sList);
     result=latest_db_result(result,newResult);
-    lastCode=code;
-    g_ptr_array_free(pArray,TRUE);
-    g_string_chunk_free(sChunk);
+    stringList_free(sList);
     return result;
 }
 
-int unihan_insert_no_duplicate(UnihanTable table, char** valueArray){
-    if (unihan_count_matched_record(table,valueArray)>0){
+int unihan_insert_no_duplicate(UnihanTable table, StringList *valueList){
+    if (unihan_count_matched_record(table,valueList)>0){
 	if (table==UNIHAN_TABLE_KSEMANTICVARIANT || table == UNIHAN_TABLE_KSPECIALIZEDSEMANTICVARIANT){
 	    verboseMsg_print(VERBOSE_MSG_WARNING,"code %s is already inserted in table %s, no need to insert again.\n",
-		    valueArray[0],UNIHAN_TABLE_NAMES[table]);
+		    stringList_index(valueList,0),UNIHAN_TABLE_NAMES[table]);
 	}else{
 	    verboseMsg_print(VERBOSE_MSG_WARNING,"Record duplicate in table %s on code=%s, skip!\n",
-		    UNIHAN_TABLE_NAMES[table],valueArray[0]);
+		    UNIHAN_TABLE_NAMES[table],stringList_index(valueList,0));
 	}
 	return -1;
     }
-    int ret=unihan_insert(table,valueArray);
+    int ret=unihan_insert(table,valueList);
     if (ret>0){
 	return ret;
     }
@@ -1885,21 +1855,20 @@ int unihan_insert_no_duplicate(UnihanTable table, char** valueArray){
  */
 
 int unihanSql_exec(char *sqlClause, UnihanCallback callback, 
-	void *callbackOption,  char **errmsg){
-    return sqlite3_exec(unihanDb, sqlClause, callback, callbackOption, errmsg);
+	void *callbackOption,  char **errMsg_ptr){
+    return sqlite3_exec(unihanDb, sqlClause, callback, callbackOption, errMsg_ptr);
 }
 
-int unihanSql_count_matches(const char * sqlClause){
-    char *zErrMsg = NULL;
-    int ret=sqlite_count_matches(unihanDb,sqlClause,&zErrMsg);
+int unihanSql_count_matches(const char * sqlClause, char **errMsg_ptr){
+    int ret=sqlite_count_matches(unihanDb,sqlClause,errMsg_ptr);
     if (ret<0){
-	verboseMsg_print(VERBOSE_MSG_ERROR, "Database error: %s\n", sqlite3_errmsg(unihanDb));
+	verboseMsg_print(VERBOSE_MSG_ERROR, "Database error: %s\n", *errMsg_ptr);
     }
     return ret;
 }
 
-SQL_Result *unihanSql_get_sql_result(const char *sqlClause, char **errMsg_ptr, int *execResult_ptr){
-    return sqlite_get_sql_result(unihanDb, sqlClause, errMsg_ptr, execResult_ptr);
+SQL_Result *unihanSql_get_sql_result(const char *sqlClause){
+    return sqlite_get_sql_result(unihanDb, sqlClause);
 }
 
 
