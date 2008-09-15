@@ -209,7 +209,10 @@ const P_Z_Properties *PHONEMES_LIST[]={
     NULL
 };
 
-
+const char *E_TONEMARKS[]={
+    "Ē",
+    "",
+}
 
 PinYin *pinYin_new(const char *pinYin_str){
     PinYin *pinYin;
@@ -348,6 +351,23 @@ gboolean pinYin_has_toneMark(const PinYin* pinYin){
     return result;
 }
 
+
+guint pinYin_strip_toneMark(PinYin* pinYin){
+    guint tone=0;
+    glong i,items_written;
+    gunichar *uniStr=g_utf8_to_ucs4_fast(pinYin, -1 , &items_written);
+    initString(pinYin);
+    gboolean result=FALSE;
+    for (i=0;i<items_written;i++){
+	utf8_concat_ucs4
+	if (!g_unichar_isalpha(uniStr[i]) && !g_unichar_isdigit(uniStr[i])){
+	    result=TRUE;
+	    break;
+	}
+    }
+    g_free(uniStr);
+    return tone;
+}
 
 PinYin *pinYin_convert_accent_format(const PinYin* pinYin, PinYin_Accent_Format toFormat,gboolean useToneMark){
     glong i,items_written;
