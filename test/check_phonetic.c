@@ -32,6 +32,8 @@
 typedef enum{
     PINYIN_ALWAYS,
     PINYIN_ORIGINAL,
+    PINYIN_UNIHAN,
+    PINYIN_TRAILING,
     ZHUYIN_ALWAYS,
     ZHUYIN_ORIGINAL
 } TEST_ID;
@@ -41,6 +43,8 @@ typedef enum{
 const char *test_msgs[]={
     "converting to pinyin ALWAYS",
     "converting to pinyin ORIGINAL",
+    "converting to pinyin UNIHAN",
+    "converting to pinyin TRAILING",
     "converting to zhuyin ALWAYS",
     "converting to zhuyin ORIGINAL",
     NULL
@@ -49,6 +53,8 @@ const char *test_msgs[]={
 const char **dataSet[]={
     PINYIN_COMBINATION_TABLES_ALWAYS,
     PINYIN_COMBINATION_TABLES,
+    PINYIN_COMBINATION_TABLES_UNIHAN,
+    PINYIN_COMBINATION_TABLES_TRAILING,
     ZHUYIN_COMBINATION_TABLES,
     ZHUYIN_COMBINATION_TABLES,
 };
@@ -68,17 +74,26 @@ gboolean perform_test(TEST_ID testId){
 	    verboseMsg_print(VERBOSE_MSG_INFO2,"  j=%d i=%d String=%s   ",j,i,fromArray[i]);
 	    if (j<ZHUYIN_ALWAYS){
 		if (testId<ZHUYIN_ALWAYS){
-		    out=pinYin_convert_accent_format(fromArray[i],testId,FALSE);
+		    if (j>=PINYIN_UNIHAN){
+			if (strcmp(fromArray[i],"E")==0){
+			    continue;
+			}else if (strcmp(fromArray[i],"LUAN")==0){
+			    continue;
+			}
+		    }
+		    out=pinYin_convert_accent_format(fromArray[i],testId,TRUE);
+		    pinYin_strip_toneMark(out);
 		}else{
 		    out=pinYin_to_zhuYin(fromArray[i],testId-ZHUYIN_ALWAYS);
 		    zhuYin_strip_toneMark(out);
 		}
 	    }else{
 		if (testId<ZHUYIN_ALWAYS){
-		    out=zhuYin_to_pinYin(fromArray[i],testId,FALSE);
-		    out[strlen(out)-1]='\0';
+		    out=zhuYin_to_pinYin(fromArray[i],testId,TRUE);
+		    pinYin_strip_toneMark(out);
 		}else{
 		    out=zhuYin_convert_toneMark_format(fromArray[i],testId-ZHUYIN_ALWAYS);
+		    zhuYin_strip_toneMark(out);
 		}
 	    }
 	    if (strcmp(out,toArray[i])!=0){

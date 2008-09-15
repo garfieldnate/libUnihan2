@@ -845,7 +845,7 @@ const char *PINYIN_COMBINATION_TABLES[]={
     "YE",
     "YAI",
     "YAO",
-    "YU",
+    "YOU",
     "YAN",
     "YIN",
     "YANG",

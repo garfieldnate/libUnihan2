@@ -46,7 +46,7 @@
  * 
  */
 
-#define ZHUYIN_MAX_LENGTH 9
+#define ZHUYIN_MAX_LENGTH 10
 
 /**
  * ZhuYin symbol.
@@ -311,16 +311,38 @@ gboolean pinYin_has_diaeresis_u(const PinYin *pinYin);
 gboolean pinYin_has_circumflex_e(const PinYin *pinYin);
 
 /**
+ * Strip the tone mark of PinYin and return the tone Id.
+ *
+ * This function strips the tone mark of pinYin and return the id (0 to 5) of stripped tone mark.
+ * Tone mark 0 will be returned if pinYin does not have any tone mark.
+ * The result will be stored in pinYin, so backup it with g_strdup() to keep the original.
+ *
+ * @param pinYin the pinYin instance to be stripped.
+ * @return the stripped tone mark, from 1 to 5.
+ */
+guint pinYin_strip_toneMark(PinYin* pinYin);
+
+/**
+ * Add the tone mark to pinYin and return a newly located PinYin instance which contains the result.
+ *
+ * @param pinYin the pinYin instance to be processed.
+ * @param tone the tone to be added.
+ * @param useTrailNamber TRUE 
+ * @return a newly relocate PinYin instance with tone mark.
+ */
+PinYin *pinYin_add_toneMark(PinYin* pinYin, guint tone, gboolean useTrailNumber);
+
+/**
  * Convert a PinYin to new accent formatReturn a newly allocated PinYin instance which contains the converted content.
  *
  * Note: use g_free to free the newly allocated instance.
  *
  * @param pinYin the PinYin to be converted.
  * @param toFormat the PinYin accent mode to be converted to.
- * @param useToneMark TRUE if tone mark is preferred, FALSE to use trailing number.
+ * @param useTrailNumber TRUE trailing number is preferred, FALSE to use traditional tonemark.
  * @return a newly allocated converted PinYin instance.
  */
-PinYin *pinYin_convert_accent_format(const PinYin *pinYin, PinYin_Accent_Format toFormat, gboolean useToneMark);
+PinYin *pinYin_convert_accent_format(const PinYin *pinYin, PinYin_Accent_Format toFormat, gboolean useTrailNumber);
 
 
 /**
@@ -381,9 +403,10 @@ ZhuYin *zhuYin_convert_toneMark_format(const ZhuYin* zhuYin, ZhuYin_ToneMark_For
  *
  * @param zhuYin the ZhuYin to be converted.
  * @param toFormat the PinYin accent mode.
+ * @param useTrailNumber TRUE trailing number is preferred, FALSE to use traditional tonemark.
  * @return a newly located PinYin instance.
  */
-PinYin *zhuYin_to_pinYin(const ZhuYin* zhuYin, PinYin_Accent_Format toFormat, gboolean useToneMark);
+PinYin *zhuYin_to_pinYin(const ZhuYin* zhuYin, PinYin_Accent_Format toFormat, gboolean useTrailNumber);
 
 
 /*----------------------------------------------------------
