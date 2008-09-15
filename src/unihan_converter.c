@@ -335,7 +335,7 @@ static gboolean is_valid_arguments(int argc, char **argv) {
 
 int main(int argc,char** argv){
     if (!is_valid_arguments(argc, argv)){
-	printf("%s\n",USAGE_MSG);
+	printf(USAGE_MSG,argv[0]);
 	exit(-1);
     }
     FILE *inF=NULL;
