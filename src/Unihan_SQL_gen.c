@@ -32,6 +32,7 @@
 #include "Unihan.h"
 #include "allocate.h"
 #include "verboseMsg.h"
+#include "file_functions.h"
 
 #define MAX_BUFFER_SIZE 2000
 static sqlite3 *unihanDb=NULL;

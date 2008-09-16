@@ -289,33 +289,11 @@ extern const P_Z_Properties * PHONEMES_LIST [];
 PinYin *pinYin_new(const char *pinYin_str);
 
 /**
- * PinYin contains character diaeresis U.
- *
- * This function detects the existence of character diaeresis U (Ü),
- * or JU, QU, XU, YU where Ü is simplified as U.
- *
- * @param pinYin the PinYin to be converted.
- * @return TRUE if Ü exists or U can be substituted with Ü; FALSE otherwise.
- */
-gboolean pinYin_has_diaeresis_u(const PinYin *pinYin);
-
-/**
- * PinYin contains character circumflex E.
- *
- * This function detects the existence of character circumflex E (Ê),
- * or IE, UE, ÜE where Ê is simplified as E.
- *
- * @param pinYin the PinYin to be converted.
- * @return TRUE if Ê exists or E can be substituted with Ê; FALSE otherwise.
- */
-gboolean pinYin_has_circumflex_e(const PinYin *pinYin);
-
-/**
  * Strip the tone mark of PinYin and return the tone Id.
  *
  * This function strips the tone mark of pinYin and return the id (0 to 5) of stripped tone mark.
  * Tone mark 0 will be returned if pinYin does not have any tone mark.
- * The result will be stored in pinYin, so backup it with g_strdup() to keep the original.
+ * The result will be stored in pinYin, so backup it with strdup() or g_strdup() to keep the original.
  *
  * @param pinYin the pinYin instance to be stripped.
  * @return the stripped tone mark, from 1 to 5.
@@ -323,14 +301,15 @@ gboolean pinYin_has_circumflex_e(const PinYin *pinYin);
 guint pinYin_strip_toneMark(PinYin* pinYin);
 
 /**
- * Add the tone mark to pinYin and return a newly located PinYin instance which contains the result.
+ * Add the tone mark to pinYin.
+ *
+ * The result will be stored in pinYin, so backup it with strdup() or g_strdup() to keep the original.
  *
  * @param pinYin the pinYin instance to be processed.
  * @param tone the tone to be added.
- * @param useTrailNamber TRUE 
- * @return a newly relocate PinYin instance with tone mark.
+ * @param useTrailNumber TRUE trailing number is preferred, FALSE to use traditional tonemark.
  */
-PinYin *pinYin_add_toneMark(PinYin* pinYin, guint tone, gboolean useTrailNumber);
+void pinYin_add_toneMark(PinYin* pinYin, guint tone, gboolean useTrailNumber);
 
 /**
  * Convert a PinYin to new accent formatReturn a newly allocated PinYin instance which contains the converted content.
@@ -386,6 +365,17 @@ ZhuYin *zhuYin_new(const char *zhuYin_str);
  * @return the stripped tone mark, from 1 to 5.
  */
 guint zhuYin_strip_toneMark(ZhuYin* zhuYin);
+
+/**
+ * Add the tone mark to zhuYin.
+ *
+ * The result will be stored in zhuYin, so backup it with strdup() or g_strdup() to keep the original.
+ *
+ * @param zhuYin the zhuYin instance to be processed.
+ * @param tone the tone to be added.
+ * @param toFormat the ZhuYin tone mark mode to be converted to.
+ */
+void zhuYin_add_toneMark(ZhuYin* zhuYin, guint tone, ZhuYin_ToneMark_Format toFormat);
 
 /**
  * Convert zhuyin to another tone mark format.

@@ -132,6 +132,53 @@ isEmptyString(const char *str){
     return FALSE;
 }
 
+void string_trim(char *str){
+    int i,j,k,len=strlen(str);
+    gboolean whiteSpaces=TRUE;
+    for(i=len-1;i>=0;i--){
+	switch(str[i]){
+	    case ' ':
+	    case '\n':
+	    case '\t':
+	    case '\r':
+		break;
+	    default:
+		whiteSpaces=FALSE;
+		break;
+	}
+	if (!whiteSpaces){
+	    break;
+	}
+    }
+    if (i==0 && whiteSpaces){
+	str[0]='\0';
+	return;
+    }
+    str[i+1]='\0';
+    whiteSpaces=TRUE;
+
+    for(j=0;j<i;j++){
+	switch(str[j]){
+	    case ' ':
+	    case '\n':
+	    case '\t':
+	    case '\r':
+		break;
+	    default:
+		whiteSpaces=FALSE;
+		break;
+	}
+	if (!whiteSpaces){
+	    break;
+	}
+    }
+
+    for(k=0;k< i-j+1;k++){
+	str[k]=str[k+j];
+    }
+    str[k]='\0';
+}
+
 char*
 subString(char *buf, const char *str,int beginIndex,int length){
     int i=0;

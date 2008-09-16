@@ -96,10 +96,11 @@ SET(CPACK_RESOURCE_FILE_LICENSE
 SET(CPACK_PACKAGE_VERSION_MAJOR ${PRJ_VER_MAJOR})
 SET(CPACK_PACKAGE_VERSION_MINOR ${PRJ_VER_MINOR})
 SET(CPACK_PACKAGE_VERSION_PATCH ${PRJ_VER_PATCH})
-SET(COMMON_IGNORE_FILES "/CMakeFiles/" "/Testing/" "/.svn/" "_CPack_Packages/" 
-    ".cmake$" "~" ".swp" ".log" ".gz" '.directory$' "CMakeCache.txt")
+SET(COMMON_IGNORE_FILES "/CMakeFiles/" "/Testing/" "/.svn/" "/CVS/" "_CPack_Packages/" 
+    ".cmake$" "~" ".swp" ".log" ".gz" ".directory$" "CMakeCache.txt")
 
-SET(PRJ_COMMON_IGNORE_FILES ${COMMON_IGNORE_FILES} "/doc/"  "/www/" ".vis"  '.db$' )
+SET(PRJ_COMMON_IGNORE_FILES ${COMMON_IGNORE_FILES} "/doc/"  "/www/" ".vis"
+    ".db$" )
 
 SET(CPACK_SOURCE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/bin/" ".db" "-db")
 SET(CPACK_PACKAGE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/src/" )
@@ -129,6 +130,19 @@ ADD_CUSTOM_TARGET(uninstall
 
 ### For testing
 ENABLE_TESTING()
-ADD_TEST(check_phonetic_pinyin_always ${PROJECT_BINARY_DIR}/test/check_phonetic 0) 
-ADD_TEST(check_phonetic_pinyin_original ${PROJECT_BINARY_DIR}/test/check_phonetic 0) 
+ADD_TEST(check_phonetic_pinyin_always 
+    ${PROJECT_BINARY_DIR}/test/check_phonetic 0) 
+ADD_TEST(check_phonetic_pinyin_original
+    ${PROJECT_BINARY_DIR}/test/check_phonetic 1) 
+ADD_TEST(check_phonetic_pinyin_unihan
+    ${PROJECT_BINARY_DIR}/test/check_phonetic 2) 
+ADD_TEST(check_phonetic_pinyin_trailing
+    ${PROJECT_BINARY_DIR}/test/check_phonetic 3) 
+ADD_TEST(check_phonetic_pinyin_inputMethod
+    ${PROJECT_BINARY_DIR}/test/check_phonetic 4) 
+ADD_TEST(check_phonetic_pinyin_none
+    ${PROJECT_BINARY_DIR}/test/check_phonetic 5) 
+ADD_TEST(check_phonetic_zhuyin_always
+    ${PROJECT_BINARY_DIR}/test/check_phonetic 6) 
+
 

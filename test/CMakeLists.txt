@@ -7,7 +7,9 @@ LINK_DIRECTORIES(${GLIB2_LIBRARY_DIRS} ${SQLITE3_LIBRARY_DIRS} ../lib)
 
 # executable built from some source
 ADD_EXECUTABLE(check_phonetic  check_phonetic.c)
+ADD_EXECUTABLE(check_toneMark  check_toneMark.c)
 TARGET_LINK_LIBRARIES(check_phonetic Unihan)
+TARGET_LINK_LIBRARIES(check_toneMark Unihan)
 
 
 

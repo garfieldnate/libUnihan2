@@ -24,9 +24,6 @@
 #include "verboseMsg.h"
 #include "Unihan.h"
 #include "Unihan_phonetic.h"
-#include "Unihan_phonetic_tables.h"
-#include "phonetic_test_tables.c"
-
 
 
 typedef enum{
@@ -37,7 +34,11 @@ typedef enum{
     PINYIN_INPUT_METHOD,
     PINYIN_NONE,
     ZHUYIN_ALWAYS,
+    ZHUYIN_ORIGINAL,
+    ZHUYIN_INPUT_METHOD,
+    ZHUYIN_NUMERICAL,
 } TEST_ID;
+
 
 const char *data_msgs[]={
     "pinyin ALWAYS",
@@ -47,90 +48,54 @@ const char *data_msgs[]={
     "pinyin INPUT METHOD",
     "pinyin NONE",
     "zhuyin ALWAYS",
+    "zhuyin ORIGINAL",
+    "zhuyin INPUT_METHOD",
+    "zhuyin NUMERICAL",
     NULL
 };
 
-const char **dataSet[]={
-    PINYIN_COMBINATION_TABLES_ALWAYS,
-    PINYIN_COMBINATION_TABLES,
-    PINYIN_COMBINATION_TABLES_UNIHAN,
-    PINYIN_COMBINATION_TABLES_TRAILING,
-    PINYIN_COMBINATION_TABLES_INPUT_METHOD,
-    PINYIN_COMBINATION_TABLES_NONE,
-    ZHUYIN_COMBINATION_TABLES,
+
+#define TEST_NUM 1
+
+
+const char *testFiles[]={
+    "ZhuYin_test_inputMethod.txt",
+    NULL
 };
 
-#define TEST_NUM 7
+FILE *fromF=NULL, *toF=NULL;
 
 gboolean perform_test(TEST_ID testId){
-    const char **fromArray=NULL;
-    const char **toArray=NULL;
-    printf("Testing on converting to %s \n",data_msgs[testId]);
+    char fromBuf[100];
+    char toBuf[100];
+    char *fromBuf_ptr,*toBuf_ptr;
 
+    printf("Testing on converting to %s \n",data_msgs[testId]);
     char *out;
     guint i,j;
     for(j=0;j<TEST_NUM;j++){
-	printf(" %d: From %s To %s \t...",j,data_msgs[j],data_msgs[testId]);
-	toArray=dataSet[testId];
-	fromArray=dataSet[j];
-	for(i=0;fromArray[i]!=NULL;i++){
-	    verboseMsg_print(VERBOSE_MSG_INFO2,"  j=%d i=%d String=%s   ",j,i,fromArray[i]);
-	    if (j<ZHUYIN_ALWAYS){
-		if (testId<ZHUYIN_ALWAYS){
-		    /* Skip non-functional dependency test */
-		    if (j>=PINYIN_UNIHAN){
-			if (strcmp(fromArray[i],"E")==0){
-			    continue;
-			}
-			if (j==PINYIN_NONE){
-			    if (g_str_has_prefix(fromArray[i],"NU")){
-				continue;
-			    }else if (g_str_has_prefix(fromArray[i],"LU")){
-				continue;
-			    }
-			}
-		    }
-		    out=pinYin_convert_accent_format(fromArray[i],testId,TRUE);
-		    pinYin_strip_toneMark(out);
-		}else{
-		    if (j>=PINYIN_UNIHAN){
-			if (strcmp(fromArray[i],"E")==0){
-			    continue;
-			}
-			if (j==PINYIN_NONE){
-			    if (g_str_has_prefix(fromArray[i],"NU")){
-				continue;
-			    }else if (g_str_has_prefix(fromArray[i],"LU")){
-				continue;
-			    }
-			}
-		    }
-		    out=pinYin_to_zhuYin(fromArray[i],testId-ZHUYIN_ALWAYS);
-		    zhuYin_strip_toneMark(out);
-		}
-	    }else{
-		if (testId<ZHUYIN_ALWAYS){
-		    out=zhuYin_to_pinYin(fromArray[i],testId,TRUE);
-		    pinYin_strip_toneMark(out);
-		}else{
-		    out=zhuYin_convert_toneMark_format(fromArray[i],testId-ZHUYIN_ALWAYS);
-		    zhuYin_strip_toneMark(out);
-		}
-	    }
-	    if (strcmp(out,toArray[i])!=0){
-		printf(" Failed: Orig=%s Out=%s Exp=%s\n",fromArray[i],out,toArray[i]);
-		return FALSE;
-	    }else{
-		verboseMsg_print(VERBOSE_MSG_INFO2,"  out=%s, exp=%s matched.\n",out,toArray[i]);
-	    }
+	if ((fromF=fopen(testFiles[j],"r"))==NULL){
+	    fprintf(stderr,"Cannot open file %s\n",testFiles[j]);
+	    return FALSE;
 	}
+	while(fgets(fromBuf,100,fromF)!=NULL){
+	    string_trim(fromBuf);
+	    out=zhuYin_convert_toneMark_format(fromBuf,ZHUYIN_TONEMARK_ORIGINAL);
+	    puts(out);
+	}
+	
 	printf(" completed.\n");
     }
     printf("All sub-test completed.\n");
     return TRUE;
 }
 
+
 int main(int argc, char** argv){
+    if (argc<2){
+	printf("Usage: %s <test num>\n",argv[0]);
+	return 1;
+    }
     int argIndex=1;
     if (strcmp(argv[argIndex],"-V")==0){
 	verboseMsg_set_level(VERBOSE_MSG_WARNING);

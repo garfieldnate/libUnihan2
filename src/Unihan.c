@@ -21,7 +21,6 @@
  */
 
 #include <sqlite3.h>
-#include "file_functions.h"
 #include "Unihan_SQL_gen.c"
 #define UNIHAN_FIELD_ARRAY_MAX_LEN 10
 #define UNIHAN_TABLE_ARRAY_MAX_LEN 100
@@ -153,23 +152,29 @@ int unihanDb_open(const char *filename, int flags){
 #else
     if (flags & SQLITE_OPEN_READONLY ){
 	if (!isReadable(filename)){
-	    verboseMsg_print(VERBOSE_MSG_ERROR, "unihanDb_open(%s,%d): File is not redaable\n", 
+	    verboseMsg_print(VERBOSE_MSG_ERROR, "unihanDb_open(%s,%d): File is not readable\n", 
 		    filename,flags);
 	    return -1;
 	}
+    }else if (flags & SQLITE_OPEN_CREATE){
+	if (!isWritable(filename)){
+	    verboseMsg_print(VERBOSE_MSG_ERROR, "unihanDb_open(%s,%d): File is not writable\n", 
+		    filename,flags);
+	    return -2;
+	}
     }else if (flags & SQLITE_OPEN_READWRITE ){
 	if (!isReadable(filename)){
-	    verboseMsg_print(VERBOSE_MSG_ERROR, "unihanDb_open(%s,%d): File is not redaable\n", 
+	    verboseMsg_print(VERBOSE_MSG_ERROR, "unihanDb_open(%s,%d): File is not readable\n", 
 		    filename,flags);
 	    return -1;
-	}else if (!isWritable(filename)){
+	}
+	if (!isWritable(filename)){
 	    verboseMsg_print(VERBOSE_MSG_ERROR, "unihanDb_open(%s,%d): File is not writable\n", 
 		    filename,flags);
 	    return -2;
 	}
     }
     sqlite3_open(filename, &unihanDb);
-
 #endif
 
     if (ret) {

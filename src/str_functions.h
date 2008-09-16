@@ -166,6 +166,17 @@ gboolean
 isEmptyString(const char *str);
 
 /**
+ * Trim the leading and trailing whitespace of the string.
+ *
+ * Note the content of <code>str</code> might be changed. 
+ * Use strdup() or  g_strdup() to backup.
+ *
+ * @param str String to be trim.
+ */
+void string_trim(char *str);
+
+
+/**
  * Returns a substring of the given string. 
  * 
  * The substring begins at the specified beginIndex and end after <code>length</code> bytes.
