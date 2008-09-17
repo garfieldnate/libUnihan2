@@ -247,6 +247,21 @@ typedef enum{
 
 
 /**
+ * Struct of PinYin-ZhuYin conversion rule.
+ *
+ * This struct shows a conversion rule between ZhuYin_Symbol
+ * and PinYin Phoneme.
+ *
+ */
+typedef struct {
+    const char  *pinYin_phoneme; //<! PinYin phoneme.
+    const char  *zhuYin;     //<! ZhuYin.
+    guint mask;             //<! The bits to be compare. (with AND)
+    guint match;            //<! The masked bits should be exactly the same with match, or the rule will not be applied.
+} P_Z_Rules;
+
+
+/**
  * Struct of PinYin-ZhuYin conversion property.
  *
  * This struct shows a conversion rule between ZhuYin_Symbol
