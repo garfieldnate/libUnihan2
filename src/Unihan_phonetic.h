@@ -255,7 +255,7 @@ typedef enum{
  */
 typedef struct {
     const char  *pinYin_phoneme; //<! PinYin phoneme.
-    const char  *zhuYin;     //<! ZhuYin.
+    ZhuYin_Symbol zhuYin;   //<! ZhuYin.
     guint mask;             //<! The bits to be compare. (with AND)
     guint match;            //<! The masked bits should be exactly the same with match, or the rule will not be applied.
 } P_Z_Rules;
