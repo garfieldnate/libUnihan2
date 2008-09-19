@@ -91,7 +91,7 @@ gboolean perform_test(TEST_ID testId){
 			}
 		    }
 		    out=pinYin_convert_accent_format(fromArray[i],testId,TRUE);
-		    pinYin_strip_toneMark(out);
+		    pinYin_strip_tone(out);
 		}else{
 		    if (j>=PINYIN_UNIHAN){
 			if (strcmp(fromArray[i],"E")==0){
@@ -106,15 +106,15 @@ gboolean perform_test(TEST_ID testId){
 			}
 		    }
 		    out=pinYin_to_zhuYin(fromArray[i],testId-ZHUYIN_ALWAYS);
-		    zhuYin_strip_toneMark(out);
+		    zhuYin_strip_tone(out);
 		}
 	    }else{
 		if (testId<ZHUYIN_ALWAYS){
 		    out=zhuYin_to_pinYin(fromArray[i],testId,TRUE);
-		    pinYin_strip_toneMark(out);
+		    pinYin_strip_tone(out);
 		}else{
 		    out=zhuYin_convert_toneMark_format(fromArray[i],testId-ZHUYIN_ALWAYS);
-		    zhuYin_strip_toneMark(out);
+		    zhuYin_strip_tone(out);
 		}
 	    }
 	    if (strcmp(out,toArray[i])!=0){

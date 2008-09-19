@@ -854,7 +854,7 @@ const char *PINYIN_COMBINATION_TABLES[]={
     "WA",
     "WO",
     "WAI",
-    "WI",
+    "WEI",
     "WAN",
     "WEN",
     "WANG",

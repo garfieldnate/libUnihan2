@@ -46,7 +46,7 @@
  * 
  */
 
-#define ZHUYIN_MAX_LENGTH 11
+#define ZHUYIN_MAX_LENGTH 13
 
 /**
  * ZhuYin symbol.
@@ -188,58 +188,6 @@ typedef enum{
     ZHUYIN_TONEMARK_NUMERICAL,  //!< Tone mark are represented as numerical, in the end of Zhuyin.
 } ZhuYin_ToneMark_Format;
 
-
-/**
- * Enumeration of pinyin phoneme type.
- *
- * Four types of elements has been used in Chinese phonetic notation such as pinYin or zhuyin:
- * <ol>
- *  <li>initials (I) - are always in the front (but not vice versa, see below), 
- *      usually contain consonants.</li>
- *  <li>medials (M) - symbols like ㄓ(zh) can be in the front, following initials,
- *      but not following finals.  Some literatures regard them as finals.</li>
- *  <li>finals (F) - are either standalone, or in the end.</li>
- *  <li>tone marks - marking the tones. They are either in the end (after finals and other elements), 
- *      or on the top of medials and finals.</li>
- * </ol>
- *
- * Zhuyin symbols do not change by other elements, however, the pinyin phonemes 
- * do have different forms according to the presents of other elements.
- *
- * For example 弯 (meaning: band/twist, zhuyin: ㄨㄢ, pinyin: wan), 
- * 欢 (meaning: happy zhuyin: ㄏㄨㄢ, pinyin: huan).
- * In zhuyin the part ㄨㄢ are same, but in pinyin, 'u' is replaced by 'w'
- * if the initial does not exist.
- *
- * Sometimes, special conversion rules are required for  following case:
- * 擁( zhuyin: ㄩㄥ, pinyin: yong), 兄 ( zhuyin: ㄒㄩㄥ, pinyin: xiong),
- * 翁( zhuyin: ㄨㄥ, pinyin: weng), 哄 ( zhuyin: ㄏㄨㄥ, pinyin: hong).
- * -ong cannot be simply converted to ㄩㄥ, as it might be ㄨㄥ;
- * ㄨㄥ cannot be simply converted to -ong, as it might be -eng.
- * Thus we also have element special (S) to handle this kind of conversion. 
- * It has either one medial or one medial and one final, and is in the end.
- *
- * Valid formats of elements: I, IM, IF, IS, IMF, S, M, MF, F.
- */
-typedef enum{
-    PINYIN_PHONEME_INVALID_TYPE=-1,  //!< Invalid phoneme type.
-
-    PINYIN_PHONEME_TYPE_INITIAL_ONLY, //!< Only initial present, no others.
-    PINYIN_PHONEME_TYPE_INITIAL,      //!< Normal Initials.       
-
-    PINYIN_PHONEME_TYPE_SPECIAL_NO_INITIAL, //!< No Initial (leading) Special case.
-    PINYIN_PHONEME_TYPE_SPECIAL,            //!< Special cases.
-
-    PINYIN_PHONEME_TYPE_MEDIAL_NO_INITIAL, //!< No initial in the front.
-    PINYIN_PHONEME_TYPE_MEDIAL,            //!< Normal medials.
-
-    PINYIN_PHONEME_TYPE_FINAL_WITH_MEDIAL, //!< Finals with medial
-    PINYIN_PHONEME_TYPE_FINAL_WITHOUT_MEDIAL, //!< Finals without medial
-    PINYIN_PHONEME_TYPE_FINAL,             //!< Normal finals (which do not change form).
-
-    PINYIN_PHONEME_TYPE_TONEMARK
-} PinYin_Phoneme_Type;
-
 /**
  * Number of PinYin phoneme type.
  */
@@ -258,6 +206,7 @@ typedef struct {
     ZhuYin_Symbol zhuYin_symbol;   //<! ZhuYin.
     guint mask;             //<! The bits to be compare. (with AND)
     guint match;            //<! The masked bits should be exactly the same with match, or the rule will not be applied.
+    guint location;
 } P_Z_Rule;
 
 
@@ -291,7 +240,7 @@ PinYin *pinYin_new(const char *pinYin_str);
  * @param pinYin the pinYin instance to be stripped.
  * @return the stripped tone mark, from 1 to 5.
  */
-guint pinYin_strip_toneMark(PinYin* pinYin);
+guint pinYin_strip_tone(PinYin* pinYin);
 
 /**
  * Add the tone mark to pinYin.
@@ -302,7 +251,7 @@ guint pinYin_strip_toneMark(PinYin* pinYin);
  * @param tone the tone to be added.
  * @param useTrailNumber TRUE trailing number is preferred, FALSE to use traditional tonemark.
  */
-void pinYin_add_toneMark(PinYin* pinYin, guint tone, gboolean useTrailNumber);
+void pinYin_add_tone(PinYin* pinYin, guint tone, gboolean useTrailNumber);
 
 /**
  * Convert a PinYin to new accent formatReturn a newly allocated PinYin instance which contains the converted content.
@@ -357,7 +306,7 @@ ZhuYin *zhuYin_new(const char *zhuYin_str);
  * @param zhuYin the ZhuYin instance to be stripped.
  * @return the stripped tone mark, from 1 to 5.
  */
-guint zhuYin_strip_toneMark(ZhuYin* zhuYin);
+guint zhuYin_strip_tone(ZhuYin* zhuYin);
 
 /**
  * Add the tone mark to zhuYin.
@@ -368,7 +317,7 @@ guint zhuYin_strip_toneMark(ZhuYin* zhuYin);
  * @param tone the tone to be added.
  * @param toFormat the ZhuYin tone mark mode to be converted to.
  */
-void zhuYin_add_toneMark(ZhuYin* zhuYin, guint tone, ZhuYin_ToneMark_Format toFormat);
+void zhuYin_add_tone(ZhuYin* zhuYin, guint tone, ZhuYin_ToneMark_Format toFormat);
 
 /**
  * Convert zhuyin to another tone mark format.
@@ -421,7 +370,7 @@ gboolean zhuYin_Symbol_is_medial(ZhuYin_Symbol zSym);
 
 gboolean zhuYin_Symbol_is_final(ZhuYin_Symbol zSym);
 
-gboolean zhuYin_Symbol_is_toneMark(ZhuYin_Symbol zSym);
+gboolean zhuYin_Symbol_is_tone(ZhuYin_Symbol zSym);
 
 /**
  * Return the tone id of given tone mark.
