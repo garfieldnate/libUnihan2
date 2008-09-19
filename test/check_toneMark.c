@@ -68,7 +68,6 @@ FILE *fromF=NULL, *toF=NULL;
 gboolean perform_test(TEST_ID testId){
     char fromBuf[100];
     char toBuf[100];
-    char *fromBuf_ptr,*toBuf_ptr;
 
     printf("Testing on converting to %s \n",data_msgs[testId]);
     char *out;
