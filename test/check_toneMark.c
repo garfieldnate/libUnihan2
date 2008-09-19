@@ -21,10 +21,13 @@
  */ 
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include "verboseMsg.h"
 #include "Unihan.h"
 #include "Unihan_phonetic.h"
 
+char dataPath[PATH_MAX];
+const char *dataDir=NULL;
 
 typedef enum{
     PINYIN_ALWAYS,
@@ -65,6 +68,15 @@ const char *testFiles[]={
 
 FILE *fromF=NULL, *toF=NULL;
 
+char *genDataPath(TEST_ID testId){
+    if (dataDir){
+	snprintf(dataPath, PATH_MAX, "%s/%s",dataDir,testFiles[testId]);
+    }else{
+	snprintf(dataPath, PATH_MAX, "%s",testFiles[testId]);
+    }
+    return dataPath;
+}
+
 gboolean perform_test(TEST_ID testId){
     char fromBuf[100];
     char toBuf[100];
@@ -73,7 +85,8 @@ gboolean perform_test(TEST_ID testId){
     char *out;
     guint i,j;
     for(j=0;j<TEST_NUM;j++){
-	if ((fromF=fopen(testFiles[j],"r"))==NULL){
+	genDataPath(j);
+	if ((fromF=fopen(dataPath ,"r"))==NULL){
 	    fprintf(stderr,"Cannot open file %s\n",testFiles[j]);
 	    return FALSE;
 	}
@@ -108,11 +121,12 @@ int main(int argc, char** argv){
     }else{
 	verboseMsg_set_level(VERBOSE_MSG_WARNING);
     }
-    int test_index=atoi(argv[argIndex]);
+    int test_index=atoi(argv[argIndex++]);
     if (test_index>=TEST_NUM || test_index<0){
 	printf("Invalid test number.\n");
 	return 2;
     }
+    dataDir=argv[argIndex++];
     if (perform_test(test_index)){
 	printf("Success!\n");
 	return 0;

@@ -46,7 +46,7 @@
  * 
  */
 
-#define ZHUYIN_MAX_LENGTH 10
+#define ZHUYIN_MAX_LENGTH 11
 
 /**
  * ZhuYin symbol.
@@ -261,28 +261,6 @@ typedef struct {
 } P_Z_Rule;
 
 
-/**
- * Struct of PinYin-ZhuYin conversion property.
- *
- * This struct shows a conversion rule between ZhuYin_Symbol
- * and PinYin Phoneme.
- *
- */
-typedef struct {
-    const char  *pinYin_phoneme; //<! PinYin phoneme.
-    const char  *zhuYin;     //<! ZhuYin.
-    PinYin_Phoneme_Type pType;	//<! Type of PinYin Phoneme.
-} P_Z_Properties;
-
-/**
- * Conversion property Tables.
- *
- * Example: To get the table of PINYIN_PHONEME_TYPE_INITIAL,
- * use PHONEMES_LIST[PINYIN_PHONEME_TYPE_INITIAL].
- *
- */
-extern const P_Z_Properties * PHONEMES_LIST [];
-
 /*==========================================================
  * PinYin functions.
  */
@@ -460,11 +438,6 @@ guint zhuYin_Symbol_to_toneMark_id(ZhuYin_Symbol zSym);
  * @return the ZhuYin symbol if id is between 1 to 5; returns 0 otherwise.
  */
 ZhuYin_Symbol zhuYin_Symbol_from_toneMark_id(guint toneMark_id);
-
-
-const P_Z_Properties *pzProperties_from_pinyin_prefix(const char *pinYin_str, PinYin_Phoneme_Type pType);
-const P_Z_Properties *pzProperties_from_zhuyin_prefix(const char *zhuYin_str, PinYin_Phoneme_Type pType);
-
 
 
 #endif /* UNIHAN_PHONETIC_H_ */
