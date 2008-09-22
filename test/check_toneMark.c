@@ -108,7 +108,6 @@ char *genDataPath(char *dataPath,TEST_ID testId){
 gboolean perform_test(TEST_ID testId){
     char fromBuf[100];
     char toBuf[100];
-
     printf("Testing on converting to %s \n",data_msgs[testId]);
     char *out;
     guint j;
@@ -116,6 +115,7 @@ gboolean perform_test(TEST_ID testId){
     for(j=0;j<TEST_NUM;j++){
 	if (j==testId)
 	    continue;
+	printf(" %d: From %s To %s \t...",j,data_msgs[j],data_msgs[testId]);
 	genDataPath(fromDataPath,j);
 	if ((fromF=fopen(fromDataPath ,"r"))==NULL){
 	    fprintf(stderr,"Cannot open file %s\n",fromDataPath);
@@ -135,19 +135,37 @@ gboolean perform_test(TEST_ID testId){
 	    if (j<ZHUYIN_ALWAYS){
 		if (testId<ZHUYIN_ALWAYS){
 		    /* Skip non-functional dependency test */
-		    if (j>=PINYIN_UNIHAN_F){
+		    if (j>=PINYIN_UNIHAN_F && testId<PINYIN_UNIHAN_F){
 			if (strcmp(fromBuf,"E")==0){
 			    continue;
+		        }else if (g_str_has_prefix(toBuf,"Ê")){
+			    // Ê only appears in ORIGINAL and ALWAYS.
+			    continue;
 			}
-			if (j==PINYIN_NONE_F || j==PINYIN_NONE_T){
-			    if (g_str_has_prefix(fromBuf,"NU")){
-				continue;
-			    }else if (g_str_has_prefix(fromBuf,"LU")){
+			if (j>=PINYIN_INPUT_METHOD_F && j<=PINYIN_INPUT_METHOD_T && (testId%2==0) ){
+			    // V does not have accent mark.
+			    if (g_strstr_len(fromBuf,PINYIN_MAX_LENGTH,"V")){
 				continue;
 			    }
 			}
+			if (j==PINYIN_NONE_F || j==PINYIN_NONE_T){
+			    if (g_str_has_prefix(toBuf,"N") || g_str_has_prefix(toBuf,"L")){
+				if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"Ǖ")){
+				    continue;
+				}else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"Ǘ")){
+				    continue;
+				}else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"Ǚ")){
+				    continue;
+				}else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"Ǜ")){
+				    continue;
+				}else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"Ü")){
+				    continue;
+				}
+			    }
+			}
 		    }
-		    out=pinYin_convert_accent_format(fromBuf,testId,(j%2==0) ? FALSE : TRUE);
+
+		    out=pinYin_convert_accent_format(fromBuf,testId,(testId%2==0) ? FALSE : TRUE);
 		}else{
 		    if (j>=PINYIN_UNIHAN_F){
 			if (strcmp(fromBuf,"E")==0){
