@@ -37,10 +37,6 @@ TARGET_LINK_LIBRARIES(Unihan ${SQLITE3_LIBRARIES}
 TARGET_LINK_LIBRARIES(unihan_converter Unihan)
 TARGET_LINK_LIBRARIES(unihan_query Unihan)
 
-# unihan_field_validation is a symbolic link to unihan_converter
-ADD_CUSTOM_TARGET(unihan_field_validation ALL
-    COMMAND /bin/ln -sf unihan_converter unihan_field_validation
-    WORKING_DIRECTORY bin)
 
 IF(NOT DEFINED LIB_INSTALL_DIR)
     SET(LIB_INSTALL_DIR lib)
@@ -51,10 +47,6 @@ ENDIF(NOT DEFINED LIB_INSTALL_DIR)
 INSTALL(TARGETS unihan_converter unihan_query Unihan
      RUNTIME DESTINATION bin
      LIBRARY DESTINATION ${LIB_INSTALL_DIR}
-)
-
-INSTALL(PROGRAMS ../bin/unihan_field_validation
-    DESTINATION bin
 )
 
 INSTALL(FILES Unihan.h Unihan_enum.h Unihan_phonetic.h str_functions.h
