@@ -63,7 +63,27 @@ typedef struct {
  */
 typedef int (*UnihanCallback)(void* userOption,int col_num,char** results,char** col_names);
 
+/**
+ * Data structure of database supporting functions.
+ *
+ */
+typedef struct databaseFuncStru{
+    const char* funcName;                //!< Name to be referred in SQL.
+    int argc;				 //!< Number of arguments.
+    void (*func)(sqlite3_context *context, int argc, sqlite3_value **argv); //!< Scalar function. Can be NULL.
+    void (*stepFunc)(sqlite3_context *context, int argc, sqlite3_value **argv);  //!< Aggregation step function. Can be NULL.
+    void (*finalizeFunc)(sqlite3_context *context); //!< Aggregation finalize function. Can be NULL.
+} DatabaseFuncStru;
 
+/**
+ * List of database supporting functions.
+ *
+ */
+extern const DatabaseFuncStru DATABASE_FUNCS[];
+
+/**
+ * @name Unihan query options.
+ */
 /*@{*/
 /**
  * Unihan query options.
@@ -72,7 +92,7 @@ typedef int (*UnihanCallback)(void* userOption,int col_num,char** results,char**
  */
 typedef guint UnihanQueryOption;
 
-#define UNIHAN_QUERY_OPTION_DEFAULT	0x00	//!< Default options.
+#define UNIHAN_QUERY_OPTION_DEFAULT		0x00	//!< Default options.
 #define UNIHAN_QUERY_OPTION_LIKE		0x01   	//!< Using SQL LIKE in WHERE expression; FALSE for use '=' instead.
 #define UHIHAN_QUERY_OPTION_SCALAR_STRING	0x02	//!< TRUE to show code point as string "U+xxxx"; FALSE for show code point as integer.
 /*@}*/
@@ -91,8 +111,6 @@ typedef guint UnihanQueryOption;
  * @param givenValue the given value of the field.
  * @param queryField the result field.
  * @param qOption    the ::UnihanQueryOption.
- * @param likeMode   TRUE for using SQL LIKE in WHERE expression; FALSE for use '=' instead.
- * @param showScalarString TRUE to show code point as string "U+xxxx"; FALSE for show code point as integer.
  * @return a SQL_Result instance that stores the field names and result
  * records.
  *
@@ -271,7 +289,6 @@ char *unihanChar_to_scalar_string(gunichar code);
  */
 sqlite3 *unihanDb_get();
 
-
 /**
  * Returns the tables in database.
  *
@@ -281,6 +298,7 @@ sqlite3 *unihanDb_get();
  * @return the tables in database.
  */
 SQL_Result *unihanDb_get_tableNames();
+
 
 /**
  * Open a Unihan db.
@@ -303,6 +321,8 @@ SQL_Result *unihanDb_get_tableNames();
  *        sqlite3_open() and sqlite3_open16().</dd>
  * </dl>
  * See the sqlite3_open() for detail explanation of SQLITE_OPEN_NOMUTEX.
+ *
+ * Note that SQLITE_OPEN_NOMUTEX flags is not supported in SQLite 3.3.X and earlier.
  *
  * @param filename name of db file to be open.
  * @param flags  Database access flags.
@@ -432,6 +452,14 @@ gboolean unihanField_is_indexed(UnihanField field);
  * @return TRUE if the field is integer; FALSE otherwise.
  */
 gboolean unihanField_is_integer(UnihanField field);
+
+/**
+ * Whether the field contains mandarin pronunciation.
+ *
+ * @param field the UnihanField
+ * @return TRUE if the field is integer; FALSE otherwise.
+ */
+gboolean unihanField_is_mandarin(UnihanField field);
 
 /**
  * Whether the field is a pseudo field.
@@ -671,20 +699,6 @@ UnihanField* unihanTable_get_fields(UnihanTable table);
  */
 UnihanField* unihanTable_get_primary_key_fields(UnihanTable table);
 
-/**
- * For SQLite 3.3.X, as it does not have following define
- */
-#ifndef SQLITE_OPEN_READONLY
-#define SQLITE_OPEN_READONLY         0x00000001
-#endif
-
-#ifndef SQLITE_OPEN_READWRITE
-#define SQLITE_OPEN_READWRITE        0x00000002
-#endif
-
-#ifndef SQLITE_OPEN_CREATE
-#define SQLITE_OPEN_CREATE           0x00000004
-#endif
 
 
 #endif /* UNIHAN_H */

@@ -24,7 +24,6 @@
 #include "verboseMsg.h"
 #include "Unihan.h"
 #include "Unihan_phonetic.h"
-#include "Unihan_phonetic_tables.h"
 #include "phonetic_test_tables.c"
 
 

@@ -20,7 +20,19 @@
  * Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+#include <stdio.h>
 #include <sqlite3.h>
+#include "Unihan.h"
+#include "allocate.h"
+#include "verboseMsg.h"
+#include "file_functions.h"
+#include "Unihan_phonetic.h"
+
+#define MAX_BUFFER_SIZE 2000
+static sqlite3 *unihanDb=NULL;
+
+#include "Unihan_SQL_funcs.c"
 #include "Unihan_SQL_gen.c"
 #define UNIHAN_FIELD_ARRAY_MAX_LEN 10
 #define UNIHAN_TABLE_ARRAY_MAX_LEN 100
@@ -186,26 +198,16 @@ int unihanDb_open(const char *filename, int flags){
     }
 
     int i=0;
-    for(i=0;i<UNIHAN_SCALAR_FUNCS_COUNT;i++){
-	ret = sqlite3_create_function(unihanDb,scalarFuncs[i].funcName,
-		scalarFuncs[i].argc,SQLITE_UTF8,NULL,
-		scalarFuncs[i].func,NULL,NULL);
+    for(i=0; DATABASE_FUNCS[i].argc!=0;i++){
+	ret = sqlite3_create_function(unihanDb,DATABASE_FUNCS[i].funcName,
+		DATABASE_FUNCS[i].argc,SQLITE_UTF8,NULL,
+		DATABASE_FUNCS[i].func,DATABASE_FUNCS[i].stepFunc,DATABASE_FUNCS[i].finalizeFunc);
 	if (ret) {
 	    verboseMsg_print(VERBOSE_MSG_ERROR, "unihanDb_open(%s,%d): Cannot set function %s, Msg:%s\n",
-		    filename,flags,scalarFuncs[i].funcName,sqlite3_errmsg(unihanDb));
+		    filename,flags,DATABASE_FUNCS[i].funcName,sqlite3_errmsg(unihanDb));
 	    sqlite3_close(unihanDb);
 	    unihanDb=NULL;
 	}
-    }
-
-    ret = sqlite3_create_function(unihanDb,"SEMANTIC_VARIANT_VALUE_CONCAT",5,SQLITE_UTF8,NULL,
-	    NULL,semantic_value_concat_step_Func,semantic_value_concat_finalized_Func);
-    if (ret) {
-	verboseMsg_print(VERBOSE_MSG_ERROR, 
-		"unihanDb_open(%s,%d): Cannot set function ADOBE_RADICAL_STROKE_VALUE_CONCAT, Msg:%s\n"
-		, filename,flags,sqlite3_errmsg(unihanDb));
-	sqlite3_close(unihanDb);
-	unihanDb=NULL;
     }
 
     return ret;
@@ -387,6 +389,13 @@ gboolean unihanField_is_indexed(UnihanField field){
 
 gboolean unihanField_is_integer(UnihanField field){
     if (unihanField_array_index(field,UNIHAN_INTEGER_FIELDS)>=0){
+	return TRUE;
+    }
+    return FALSE;
+}
+
+gboolean unihanField_is_mandarin(UnihanField field){
+    if (unihanField_array_index(field,UNIHAN_MANDARIN_FIELDS)>=0){
 	return TRUE;
     }
     return FALSE;

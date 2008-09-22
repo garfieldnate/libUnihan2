@@ -234,7 +234,9 @@ int unihan_test_record(gunichar code, UnihanField field, char *value){
     }
 
     for(i=0;i<rowCount;i++){
-	if (strcmp(charStr,stringList_index(sResult->resultList,(i+1)*colCount-1))==0){
+	verboseMsg_print(VERBOSE_MSG_INFO3,"  Result returned from database: %s\n",
+		stringList_index(sResult->resultList,(i+1)*colCount-1));
+	if (strcmp(value,stringList_index(sResult->resultList,(i+1)*colCount-1))==0){
 	    found=TRUE;
 	    break;
 	}
@@ -359,7 +361,7 @@ int main(int argc,char** argv){
 
     char readBuf[BUFFER_SIZE];
 
-    if (g_strrstr(argv[0],"_test")){
+    if (g_strrstr(argv[0],"_validation")){
 	testMode=TRUE;
     }else{
 	verboseMsg_set_logFile(logFile);

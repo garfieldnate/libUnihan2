@@ -8,11 +8,11 @@ endif(COMMAND cmake_policy)
 PROJECT(libUnihan)
 SET(CMAKE_C_FLAGS "-Wall")
 SET(PRJ_VER_MAJOR "0")
-SET(PRJ_VER_MINOR "4")
-SET(PRJ_VER_PATCH "2")
+SET(PRJ_VER_MINOR "5")
+SET(PRJ_VER_PATCH "0")
 SET(PRJ_VER ${PRJ_VER_MAJOR}.${PRJ_VER_MINOR}.${PRJ_VER_PATCH})
 SET(DB_VER "5.1.0")
-SET(DB_PATCH_LEVEL "6")
+SET(DB_PATCH_LEVEL "7")
 SET(DB_PRJ_NAME  "UnihanDb")
 SET(DB_NAME "Unihan.db")
 
@@ -97,13 +97,14 @@ SET(CPACK_PACKAGE_VERSION_MAJOR ${PRJ_VER_MAJOR})
 SET(CPACK_PACKAGE_VERSION_MINOR ${PRJ_VER_MINOR})
 SET(CPACK_PACKAGE_VERSION_PATCH ${PRJ_VER_PATCH})
 SET(COMMON_IGNORE_FILES "/CMakeFiles/" "/Testing/" "/.svn/" "/CVS/" "_CPack_Packages/" 
-    ".cmake$" "~" ".swp" ".log" ".gz" ".directory$" "CMakeCache.txt")
+    ".cmake$" "~" ".swp" ".log" ".gz" ".directory$" "CMakeCache.txt"
+    "/src/config.h")
 
 SET(PRJ_COMMON_IGNORE_FILES ${COMMON_IGNORE_FILES} "/doc/"  "/www/" ".vis"
     ".db$" )
 
 SET(CPACK_SOURCE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/bin/" ".db" "-db")
-SET(CPACK_PACKAGE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/src/" )
+SET(CPACK_PACKAGE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/src/" "/test/")
 SET(CPACK_SOURCE_GENERATOR "TGZ")
 
 INCLUDE(CPack)
@@ -145,4 +146,36 @@ ADD_TEST(check_phonetic_pinyin_none
 ADD_TEST(check_phonetic_zhuyin_always
     ${PROJECT_BINARY_DIR}/test/check_phonetic 6) 
 
+ADD_TEST(toneMark_pinyin_always_f 
+    ${PROJECT_BINARY_DIR}/test/check_toneMark 0 test) 
+ADD_TEST(toneMark_pinyin_always_t 
+    ${PROJECT_BINARY_DIR}/test/check_toneMark 1 test) 
+ADD_TEST(toneMark_pinyin_original_f 
+    ${PROJECT_BINARY_DIR}/test/check_toneMark 2 test) 
+ADD_TEST(toneMark_pinyin_original_t
+    ${PROJECT_BINARY_DIR}/test/check_toneMark 3 test) 
+ADD_TEST(toneMark_pinyin_unihan_f
+    ${PROJECT_BINARY_DIR}/test/check_toneMark 4 test) 
+ADD_TEST(toneMark_pinyin_unihan_t
+    ${PROJECT_BINARY_DIR}/test/check_toneMark 5 test) 
+ADD_TEST(toneMark_pinyin_trailing_f
+    ${PROJECT_BINARY_DIR}/test/check_toneMark 6 test) 
+ADD_TEST(toneMark_pinyin_trailing_t
+    ${PROJECT_BINARY_DIR}/test/check_toneMark 7 test) 
+ADD_TEST(toneMark_pinyin_inputMethod_f
+    ${PROJECT_BINARY_DIR}/test/check_toneMark 8 test) 
+ADD_TEST(toneMark_pinyin_inputMethod_t
+    ${PROJECT_BINARY_DIR}/test/check_toneMark 9 test) 
+ADD_TEST(toneMark_pinyin_none_f
+    ${PROJECT_BINARY_DIR}/test/check_toneMark 10 test) 
+ADD_TEST(toneMark_pinyin_none_t
+    ${PROJECT_BINARY_DIR}/test/check_toneMark 11 test) 
+ADD_TEST(toneMark_zhuyin_always
+    ${PROJECT_BINARY_DIR}/test/check_toneMark 12 test) 
+ADD_TEST(toneMark_zhuyin_original
+    ${PROJECT_BINARY_DIR}/test/check_toneMark 13 test) 
+ADD_TEST(toneMark_zhuyin_inputMethod
+    ${PROJECT_BINARY_DIR}/test/check_toneMark 14 test) 
+ADD_TEST(toneMark_zhuyin_numberical
+    ${PROJECT_BINARY_DIR}/test/check_toneMark 15 test) 
 

@@ -1,5 +1,5 @@
 /** 
- * @file Unihan_Phonetic.c
+ * @file Unihan_phonetic.c
  *
  */
 
@@ -27,6 +27,7 @@
 
 #include "allocate.h"
 #include "str_functions.h"
+#include "sqlite_functions.h"
 #include "Unihan_phonetic.h"
 
 
@@ -148,6 +149,24 @@ const ZhuYin_Symbol_Properties ZHUYIN_SYMBOL_PROPERTIES[]={
     {0x02D9, PHONEME_FLAG_HAS_TONEMARK},   // "˙"
     {0,0}
 };
+
+
+/**
+ * Struct of PinYin-ZhuYin conversion rule.
+ *
+ * This struct shows a conversion rule between ZhuYin_Symbol
+ * and PinYin Phoneme.
+ *
+ */
+typedef struct {
+    const char  *pinYin_phoneme; //<! PinYin phoneme.
+    ZhuYin_Symbol zhuYin_symbol;   //<! ZhuYin.
+    guint mask;             //<! The bits to be compare. (with AND)
+    guint match;            //<! The masked bits should be exactly the same with match, or the rule will not be applied.
+    guint location;
+} P_Z_Rule;
+
+
 
 const P_Z_Rule P_Z_RULES[]={
     {"ZHI",  0x3113, PHONEME_FLAG_HAS_MEDIAL | PHONEME_FLAG_HAS_FINAL, 0}, // "ㄓ"
@@ -698,6 +717,7 @@ PinYin *pinYin_convert_accent_format(const PinYin* pinYin, PinYin_Accent_Format 
 		}
 	    }
 	}else if(is_circumflex_e(uniStr,&i,&accentRequired)){
+//	    printf("is_circumflex_e=TRUE, accent=%d\n",accentRequired);
 	    if (accentRequired){
 		switch(toFormat){
 		    case PINYIN_ACCENT_ALWAYS:
@@ -995,4 +1015,51 @@ ZhuYin_Symbol zhuYin_Symbol_from_toneMark_id(guint toneMark_id){
     }
     return 0;
 }
+
+/*========================================
+ * ZhuYin database conversion functions.
+ */
+
+void pinYin_convert_accent_format_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv){
+    g_assert(argc==3);
+    char pinYinTmp[PINYIN_MAX_LENGTH];
+    const char *pinYin=sqlite_value_signed_text_buffer(pinYinTmp,argv[0]);
+    int toFormat= (sqlite3_value_type(argv[1])==SQLITE_INTEGER) ? sqlite3_value_int64(argv[1]): 0;
+    gboolean useTrailNumber= 
+	(((sqlite3_value_type(argv[2])==SQLITE_INTEGER) ? sqlite3_value_int64(argv[2]): 0)==0)? FALSE: TRUE;
+    char *pStr=pinYin_convert_accent_format(pinYin,toFormat,useTrailNumber);
+    sqlite3_result_text(context,pStr,-1,g_free);
+}
+
+void pinYin_to_zhuYin_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv){
+    g_assert(argc==2);
+    char pinYinTmp[PINYIN_MAX_LENGTH];
+    const char *pinYin=sqlite_value_signed_text_buffer(pinYinTmp,argv[0]);
+    int toFormat= (sqlite3_value_type(argv[1])==SQLITE_INTEGER) ? sqlite3_value_int64(argv[1]): 0;
+    char *pStr=pinYin_to_zhuYin(pinYin,toFormat);
+    sqlite3_result_text(context,pStr,-1,g_free);
+}
+
+void zhuYin_convert_toneMark_format_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv){
+    g_assert(argc==2);
+    char zhuYinTmp[ZHUYIN_MAX_LENGTH];
+    const char *zhuYin=sqlite_value_signed_text_buffer(zhuYinTmp,argv[0]);
+    int toFormat= (sqlite3_value_type(argv[1])==SQLITE_INTEGER) ? sqlite3_value_int64(argv[1]): 0;
+    char *pStr=zhuYin_convert_toneMark_format(zhuYin,toFormat);
+    sqlite3_result_text(context,pStr,-1,g_free);
+}
+
+void zhuYin_to_pinYin_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv){
+    g_assert(argc==3);
+    char zhuYinTmp[ZHUYIN_MAX_LENGTH];
+    const char *zhuYin=sqlite_value_signed_text_buffer(zhuYinTmp,argv[0]);
+    int toFormat= (sqlite3_value_type(argv[1])==SQLITE_INTEGER) ? sqlite3_value_int64(argv[1]): 0;
+    gboolean useTrailNumber= 
+	(((sqlite3_value_type(argv[2])==SQLITE_INTEGER) ? sqlite3_value_int64(argv[2]): 0)==0)? FALSE: TRUE;
+    char *pStr=zhuYin_to_pinYin(zhuYin,toFormat,useTrailNumber);
+    sqlite3_result_text(context,pStr,-1,g_free);
+}
+
+
+
 

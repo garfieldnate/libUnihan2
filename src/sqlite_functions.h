@@ -27,6 +27,37 @@
 #include <sqlite3.h>
 #include "str_functions.h"
 
+/**
+ * SQLITE_OPEN flags.
+ *
+ * For SQLite 3.3.X and earlier, as it does not have following definitions.
+ */
+#ifndef SQLITE_OPEN_READONLY
+
+/**
+ * The database is opened for reading only.
+ */
+#define SQLITE_OPEN_READONLY         0x00000001
+#endif
+
+#ifndef SQLITE_OPEN_READWRITE
+/**
+ * The database is opened for reading and writing.
+ */
+#define SQLITE_OPEN_READWRITE        0x00000002
+#endif
+
+#ifndef SQLITE_OPEN_CREATE
+/**
+ * The database is opened for reading and writing, and is creates it if  it does not already exist. 
+ *
+ * This is the behavior that is always used for  sqlite3_open().
+ */
+#define SQLITE_OPEN_CREATE           0x00000004
+#endif
+
+
+
 typedef struct {
     StringList *fieldList;
     StringList *resultList;

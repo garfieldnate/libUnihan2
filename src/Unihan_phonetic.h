@@ -1,5 +1,5 @@
 /** 
- * @file Unihan_Phonetic.h
+ * @file Unihan_phonetic.h
  * @brief Phonetic symbols (PinYin and ZhuYin) processing functions.
  * 
  * This header file lists the functions for PinYin and ZhuYin processing,
@@ -35,17 +35,15 @@
 #ifndef UNIHAN_PHONETIC_H_
 #define UNIHAN_PHONETIC_H_
 
+#include <sqlite3.h>
 /**
- * Maximum space that pinyin requires.
- * 
+ * Maximum space that PinYin requires.
  */
 #define PINYIN_MAX_LENGTH 9
 
 /**
- * Maximum space that pinyin requires.
- * 
+ * Maximum space that ZhuYin requires.
  */
-
 #define ZHUYIN_MAX_LENGTH 13
 
 /**
@@ -120,6 +118,10 @@ typedef enum {
     ZHUYIN_SYMBOL_4,         //!< ZhuYin 4th tone mark 'ˋ'
     ZHUYIN_SYMBOL_NEUTRAL,   //!< ZhuYin neutral (5th) tone mark '˙'
 } ZhuYin_Symbol_Id;
+
+/**
+ * Total number of support ZhuYin symbols.
+ */
 #define ZHUYIN_SYMBOL_COUNT ZHUYIN_SYMBOL_NEUTRAL + 1 
 
 /**
@@ -188,27 +190,6 @@ typedef enum{
     ZHUYIN_TONEMARK_NUMERICAL,  //!< Tone mark are represented as numerical, in the end of Zhuyin.
 } ZhuYin_ToneMark_Format;
 
-/**
- * Number of PinYin phoneme type.
- */
-#define PINYIN_PHONEME_TYPES_COUNT PINYIN_PHONEME_TYPE_TONEMARK+1
-
-
-/**
- * Struct of PinYin-ZhuYin conversion rule.
- *
- * This struct shows a conversion rule between ZhuYin_Symbol
- * and PinYin Phoneme.
- *
- */
-typedef struct {
-    const char  *pinYin_phoneme; //<! PinYin phoneme.
-    ZhuYin_Symbol zhuYin_symbol;   //<! ZhuYin.
-    guint mask;             //<! The bits to be compare. (with AND)
-    guint match;            //<! The masked bits should be exactly the same with match, or the rule will not be applied.
-    guint location;
-} P_Z_Rule;
-
 
 /*==========================================================
  * PinYin functions.
@@ -218,14 +199,14 @@ typedef struct {
  * New a PinYin instance.
  *
  * This function allocate a new PinYin instance.
- * Non-NULL pinYinStr will be copied to the new PinYin instance and 
+ * Non pinYin_str will be copied to the newly allocated PinYin instance and
  * converted to uppercase.
  * Note that the PinYin instance only hold #PINYIN_MAX_LENGTH bytes, 
  * including the EOL ('\0') character. Longer pinYin will be truncated.
  *
  * Note: use g_free to free the newly allocated instance.
  *
- * @param pinYinStr the PinYin in string, NULL for blank instance.
+ * @param pinYin_str the PinYin in string, NULL for blank instance.
  * @return new PinYin instances.
  */
 PinYin *pinYin_new(const char *pinYin_str);
@@ -234,8 +215,10 @@ PinYin *pinYin_new(const char *pinYin_str);
  * Strip the tone mark of PinYin and return the tone Id.
  *
  * This function strips the tone mark of pinYin and return the id (0 to 5) of stripped tone mark.
- * Tone mark 0 will be returned if pinYin does not have any tone mark.
  * The result will be stored in pinYin, so backup it with strdup() or g_strdup() to keep the original.
+ *
+ * Note that 5  will be returned if pinYin does not have any tone mark,
+ * as it usually implies that pinYin is in fifth tone.
  *
  * @param pinYin the pinYin instance to be stripped.
  * @return the stripped tone mark, from 1 to 5.
@@ -283,14 +266,14 @@ ZhuYin *pinYin_to_zhuYin(const PinYin* pinYin, ZhuYin_ToneMark_Format toFormat);
  * New a ZhuYin instance.
  *
  * This function allocate a new ZhuYin instance.
- * Non-NULL zhuYinStr will be copied to the new ZhuYin instance and 
+ * Non-NULL zhuYin_str will be copied to the new ZhuYin instance and 
  * converted to uppercase.
  * Note that the ZhuYin instance only holds #ZHUYIN_MAX_LENGTH bytes, 
  * including the EOL ('\0') character. Longer zhuYin will be truncated.
  *
  * Note: use g_free to free the newly allocated instance.
  *
- * @param zhuYinStr the ZhuYin in string, NULL for blank instance.
+ * @param zhuYin_str the ZhuYin in string, NULL for blank instance.
  * @return new ZhuYin instances.
  */
 ZhuYin *zhuYin_new(const char *zhuYin_str);
@@ -301,6 +284,9 @@ ZhuYin *zhuYin_new(const char *zhuYin_str);
  * This function strips the tone mark of zhuYin and return the id (1 to 5) of stripped tone mark.
  * Tone mark 1 will be returned if zhuYin does not have any tone mark.
  * The result will be stored in zhuYin, so backup it with g_strdup() to keep the original.
+ *
+ * Note that 1  will be returned if zhuYin does not have any tone mark,
+ * as it usually implies that zhuYin is in first tone.
  * 
  *
  * @param zhuYin the ZhuYin instance to be stripped.
@@ -363,13 +349,36 @@ ZhuYin_Symbol zhuYin_Symbol_from_id(ZhuYin_Symbol_Id id);
  */
 ZhuYin_Symbol_Id zhuYin_Symbol_get_id(ZhuYin_Symbol zSym);
 
-
+/**
+ * Whether the zhuYin symbol is an initial.
+ *
+ * @param zSym  ZhuYin symbol.
+ * @return TRUE if the zhuYin symbol is an initial, FALSE otherwise.
+ */
 gboolean zhuYin_Symbol_is_initial(ZhuYin_Symbol zSym);
 
+/**
+ * Whether the zhuYin symbol is an medial.
+ *
+ * @param zSym  ZhuYin symbol.
+ * @return TRUE if the zhuYin symbol is an medial, FALSE otherwise.
+ */
 gboolean zhuYin_Symbol_is_medial(ZhuYin_Symbol zSym);
 
+/**
+ * Whether the zhuYin symbol is an final.
+ *
+ * @param zSym  ZhuYin symbol.
+ * @return TRUE if the zhuYin symbol is an final, FALSE otherwise.
+ */
 gboolean zhuYin_Symbol_is_final(ZhuYin_Symbol zSym);
 
+/**
+ * Whether the zhuYin symbol is either a toneMark or number which indicates the tone.
+ *
+ * @param zSym  ZhuYin symbol.
+ * @return TRUE if the zhuYin symbol is either a toneMark or number which indicates the tone, FALSE otherwise.
+ */
 gboolean zhuYin_Symbol_is_tone(ZhuYin_Symbol zSym);
 
 /**
@@ -388,5 +397,53 @@ guint zhuYin_Symbol_to_toneMark_id(ZhuYin_Symbol zSym);
  */
 ZhuYin_Symbol zhuYin_Symbol_from_toneMark_id(guint toneMark_id);
 
+/**
+ * PinYin convert accent format scalar function for SQL command call.
+ *
+ * This function is meant to be called by sqlite3_create_function()
+ * and used in SQL command. Do not use it directly.
+ *
+ * @param context The sqlite3_context.
+ * @param argc Number of argument expected.
+ * @param argv Arguments for this scalar function .
+ */
+void pinYin_convert_accent_format_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv);
+
+/**
+ * PinYin to ZhuYin converting scalar function for SQL command call.
+ *
+ * This function is meant to be called by sqlite3_create_function()
+ * and used in SQL command. Do not use it directly.
+ *
+ * @param context The sqlite3_context.
+ * @param argc Number of argument expected.
+ * @param argv Arguments for this scalar function .
+ */
+void pinYin_to_zhuYin_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv);
+
+/**
+ * ZhuYin convert accent format scalar function for SQL command call.
+ *
+ * This function is meant to be called by sqlite3_create_function()
+ * and used in SQL command. Do not use it directly.
+ *
+ * @param context The sqlite3_context.
+ * @param argc Number of argument expected.
+ * @param argv Arguments for this scalar function .
+ */
+void zhuYin_convert_toneMark_format_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv);
+
+
+/**
+ * ZhuYin to PinYin converting scalar function for SQL command call.
+ *
+ * This function is meant to be called by sqlite3_create_function()
+ * and used in SQL command. Do not use it directly.
+ *
+ * @param context The sqlite3_context.
+ * @param argc Number of argument expected.
+ * @param argv Arguments for this scalar function .
+ */
+void zhuYin_to_pinYin_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv);
 
 #endif /* UNIHAN_PHONETIC_H_ */

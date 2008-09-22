@@ -39,28 +39,35 @@
 #include "allocate.h"
 #include "str_functions.h"
 #include "Unihan.h"
+#include "Unihan_phonetic.h"
 #include "verboseMsg.h"
 
-#define USAGE_MSG "Usage: unihan_query [-V] [-L] [-U] <given_field> <given_value> <query_on_field>\n\
-    unihan_query [-V] -S <SQL clause>\n"
+#define USAGE_MSG "Usage: \n\
+    Field Query: unihan_query [-V] [-L] [-U] [-Z 0-3]<given_field> <given_value> <query_on_field>\n\
+    SQL Query: unihan_query [-V] -S <SQL clause>\n"
 
 #define CMD_OPTIONS "\
 Options: \n\
 \t-h: show this help.\n\
-\t-L: like mode, specify the given_value is a pattern to be used in LIKE SQL search.\n\
-\t-S: pass SQL clause.\n\
-\t-U: output decimal Unicode code point as Unicode scalar string (U+xxxxx).\n\
 \t-V: increase the verbose level.\n\
+\t-S: pass SQL clause.\n\
+\n Field query only options:\n\
+\t-L: like mode, specify the given_value is a pattern to be used in LIKE SQL search.\n\
+\t-U: output decimal Unicode code point as Unicode scalar string (U+xxxxx).\n\
+\t-Z [0-3]: Display ZhuYin, 0 for ALWAYS, 1 for ORIGINAL, 2 for INPUT_METHOD, 3 for NUMBERICAL.\n\
+\n Show options:\n\
 \t-t, --show-tables: show all the tables in the default db.\n\
 \t-a, --show-all-fields: show all supported fields.\n\
+\t-p, --show-pseudo-fields: show all pseudo fields.\n\
 \t-r, --show-real-fields: show all non-pseudo fields.\n\
-\t-p, --show-pseudo-fields: show all pseudo fields\n"
+\t-f, --show-all-functions: show all supported functions\n"
 
 static struct option longOptions[]={
     {"show-tables",0,NULL,'t'},
     {"show-all-fields",0,NULL,'a'},
-    {"show-real-fields",0,NULL,'r'},
     {"show-pseudo-fields",0,NULL,'p'},
+    {"show-real-fields",0,NULL,'r'},
+    {"show-all-functions",0,NULL,'f'},
     {0,0,0,0}
 };
 
@@ -72,6 +79,11 @@ char *givenFieldStr=NULL;
 char *givenValueStr=NULL;
 char *queryFieldStr=NULL;
 int verboseLevel=VERBOSE_MSG_ERROR;
+
+gboolean displayZhuYin=FALSE;
+guint toFormat=1;
+gboolean displayPinYin=FALSE;
+gboolean useTrailingNumber=TRUE;
 
 
 static void printUsage(){
@@ -153,13 +165,22 @@ static void printFields(char modeChar){
     }
 }
 
+void printFuncs(){
+    printf("Database functions:\n\tName                                        Argc\n");
+    int i;
+    for(i=0;DATABASE_FUNCS[i].argc!=0;i++){
+	printf("\t%-40s\t%d\n",DATABASE_FUNCS[i].funcName,DATABASE_FUNCS[i].argc);
+    }
+}
+
 /**
  * Whether the command line options are valid.
  */
 static gboolean is_valid_arguments(int argc, char **argv) {
     int opt;
     int option_index=0;
-    while ((opt = getopt_long(argc, argv, "tarphUVLS:",longOptions,&option_index)) != -1) {
+
+    while ((opt = getopt_long(argc, argv, "tarpfhUVLS:Z:",longOptions,&option_index)) != -1) {
 	switch (opt) {
 	    case 'h':
 		printUsage();
@@ -176,6 +197,10 @@ static gboolean is_valid_arguments(int argc, char **argv) {
 	    case 'V':
 		verboseLevel++;
 		break;
+	    case 'Z':
+		displayZhuYin=TRUE;
+		toFormat=atoi(optarg);
+		break;
 	    case 't':
 		/* Print tables */
 		printTables();
@@ -185,6 +210,10 @@ static gboolean is_valid_arguments(int argc, char **argv) {
 	    case 'r':
 		/* Print fields */
 		printFields(opt);
+		exit(0);
+	    case 'f':
+		/* Print fields */
+		printFuncs();
 		exit(0);
 	    default: /* ’? */
                 printf("Unrecognized Option -%c\n\n",opt);
@@ -223,7 +252,7 @@ static gboolean is_valid_arguments(int argc, char **argv) {
     return TRUE;
 }
 
-SQL_Result *simpleQuery(){
+SQL_Result *fieldQuery(){
     UnihanField givenField=unihanField_parse(givenFieldStr);
     UnihanField queryField=unihanField_parse(queryFieldStr);
     if (givenField<0){
@@ -243,13 +272,22 @@ SQL_Result *sqlQuery(){
 
 void printResult(SQL_Result *sResult){
     int i,j;
-    int rowCount=sResult->resultList->len,
-	colCount=sResult->colCount;
-    
-
-    if (rowCount<=0){
-	printf("No matched results\n");
+    int colCount=sResult->colCount;
+    if (colCount<=0){
+	printf("No matched results, colCount=%d\n",colCount);
+	return;
     }
+    int rowCount=sResult->resultList->len/colCount;
+    if (rowCount<=0){
+	printf("No matched results, rowCount=%d\n",rowCount);
+	return;
+    }
+
+    const char *resultStr=NULL;
+    char *resultTmp=NULL;
+    UnihanField queryField;
+
+
     for(j=0;j<colCount;j++){
 	if (j>0){
 	    printf(" |");
@@ -262,7 +300,19 @@ void printResult(SQL_Result *sResult){
 	    if (j>0){
 		printf(" |");
 	    }
-	    printf("%s",stringList_index(sResult->resultList, i*colCount+j));
+	    resultStr=stringList_index(sResult->resultList, i*colCount+j);
+	    queryField=unihanField_parse(stringList_index(sResult->fieldList, j));
+	    if (unihanField_is_mandarin(queryField)){
+		if (displayZhuYin){
+		    resultTmp=pinYin_to_zhuYin(resultStr,toFormat);
+		    resultStr=resultTmp;
+		}
+	    }
+	    printf("%s",resultStr);
+	    if (resultTmp){
+		resultStr=NULL;
+		g_free(resultTmp);
+	    }
 	}
 	printf("\n");
     }
@@ -284,7 +334,7 @@ int main(int argc, char** argv){
     if (cmdSqlClause){
 	sResult=sqlQuery();
     }else{
-	sResult=simpleQuery();
+	sResult=fieldQuery();
     }
     ret=sResult->execResult;
     if (ret){

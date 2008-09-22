@@ -88,8 +88,8 @@ const char *testFiles[]={
     "PinYin_test_none_f.txt",
     "PinYin_test_none_t.txt",
     "ZhuYin_test_always.txt",
-    "ZhuYin_test_inputMethod.txt",
     "ZhuYin_test_original.txt",
+    "ZhuYin_test_inputMethod.txt",
     "ZhuYin_test_numerical.txt",
     NULL
 };
@@ -132,40 +132,66 @@ gboolean perform_test(TEST_ID testId){
 	    }
 	    string_trim(fromBuf);
 	    string_trim(toBuf);
+	    /* Skip non-functional dependency test */
+	    if (testId%2==0){
+		if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"Ê")){
+		    // Tone make cannot be add upon Ê 
+		    continue;
+		}else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"V")){
+		    // Tone make cannot be add upon V
+		    continue;
+		}
+	    }
+	    if (j%2==0){
+		if (g_strstr_len(fromBuf,PINYIN_MAX_LENGTH,"Ê")){
+		    // Tone make cannot be add upon Ê 
+		    continue;
+		}else if (g_strstr_len(fromBuf,PINYIN_MAX_LENGTH,"V")){
+		    // Tone make cannot be add upon V
+		    continue;
+		}
+	    }
 	    if (j<ZHUYIN_ALWAYS){
-		if (testId<ZHUYIN_ALWAYS){
-		    /* Skip non-functional dependency test */
-		    if (j>=PINYIN_UNIHAN_F && testId<PINYIN_UNIHAN_F){
-			if (strcmp(fromBuf,"E")==0){
-			    continue;
-		        }else if (g_str_has_prefix(toBuf,"Ê")){
-			    // Ê only appears in ORIGINAL and ALWAYS.
-			    continue;
-			}
-			if (j>=PINYIN_INPUT_METHOD_F && j<=PINYIN_INPUT_METHOD_T && (testId%2==0) ){
-			    // V does not have accent mark.
-			    if (g_strstr_len(fromBuf,PINYIN_MAX_LENGTH,"V")){
+		/* Skip non-functional dependency test */
+		if (j>=PINYIN_UNIHAN_F){
+		    if (strcmp(fromBuf,"E")==0){
+			continue;
+		    }else if (g_str_has_prefix(toBuf,"Ê")){
+			// Ê only appears in ORIGINAL and ALWAYS.
+			continue;
+		    }else if (g_str_has_prefix(toBuf,"ㄝ")){
+			// Single ㄝ can only be converted from PINYIN_ORIGINAL and PINYIN_ALWAYS.
+			continue;
+		    }
+		    if (j==PINYIN_NONE_F || j==PINYIN_NONE_T){
+			if (g_str_has_prefix(toBuf,"N") || g_str_has_prefix(toBuf,"L")){
+			    if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"Ǖ")){
+				continue;
+			    }else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"Ǘ")){
+				continue;
+			    }else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"Ǚ")){
+				continue;
+			    }else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"Ǜ")){
+				continue;
+			    }else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"Ü")){
+				continue;
+			    }else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"V")){
+				continue;
+			    }else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,":")){
 				continue;
 			    }
-			}
-			if (j==PINYIN_NONE_F || j==PINYIN_NONE_T){
-			    if (g_str_has_prefix(toBuf,"N") || g_str_has_prefix(toBuf,"L")){
-				if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"Ǖ")){
-				    continue;
-				}else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"Ǘ")){
-				    continue;
-				}else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"Ǚ")){
-				    continue;
-				}else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"Ǜ")){
-				    continue;
-				}else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"Ü")){
-				    continue;
-				}
-			    }
+			}else if (g_str_has_prefix(toBuf,"ㄋㄩ")){
+			    // ㄋㄩ cannot be convert from PINYIN_NONE
+			    continue;
+			}else if (g_str_has_prefix(toBuf,"ㄌㄩ")){
+			    // ㄌㄩ cannot be convert from PINYIN_NONE
+			    continue;
 			}
 		    }
+		}
 
-		    out=pinYin_convert_accent_format(fromBuf,testId,(testId%2==0) ? FALSE : TRUE);
+		if (testId<ZHUYIN_ALWAYS){
+		    out=pinYin_convert_accent_format(fromBuf,testId/2,(testId%2==0) ? FALSE : TRUE);
 		}else{
 		    if (j>=PINYIN_UNIHAN_F){
 			if (strcmp(fromBuf,"E")==0){
@@ -182,8 +208,11 @@ gboolean perform_test(TEST_ID testId){
 		    out=pinYin_to_zhuYin(fromBuf,testId-ZHUYIN_ALWAYS);
 		}
 	    }else{
+		/* j>= ZHUYIN_ALWAYS*/
+		/* Skip non-functional dependency test */
+
 		if (testId<ZHUYIN_ALWAYS){
-		    out=zhuYin_to_pinYin(fromBuf,testId,(testId%2==0) ? FALSE : TRUE);
+		    out=zhuYin_to_pinYin(fromBuf,testId/2,(testId%2==0) ? FALSE : TRUE);
 		}else{
 		    out=zhuYin_convert_toneMark_format(fromBuf,testId-ZHUYIN_ALWAYS);
 		}

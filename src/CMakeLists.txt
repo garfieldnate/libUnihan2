@@ -13,8 +13,7 @@ CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/confi
 # Unihan_SQL_gen.c is already included in Unihan.c,
 # no need to be in libUnihan_SRCS
 SET(libUnihan_SRCS Unihan.c Unihan.h Unihan_enum.h 
-    Unihan_phonetic.c Unihan_phonetic.h
-    Unihan_phonetic_tables.c Unihan_phonetic_tables.h)
+    Unihan_phonetic.c Unihan_phonetic.h)
 SET(supporting_SRCS allocate.c allocate.h
     collection.c collection.h
     file_functions.c file_functions.h
@@ -58,7 +57,8 @@ INSTALL(PROGRAMS ../bin/unihan_field_validation
     DESTINATION bin
 )
 
-INSTALL(FILES Unihan.h Unihan_enum.h str_functions.h
+INSTALL(FILES Unihan.h Unihan_enum.h Unihan_phonetic.h str_functions.h
+    sqlite_functions.h
     DESTINATION include/${PROJECT_NAME}
 )
 
