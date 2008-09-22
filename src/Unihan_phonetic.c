@@ -279,7 +279,7 @@ const gunichar U_DIAERESIS_TONEMARKS[5]={
     0x01D7,  // "Ǜ",
     0x01D9,  // "Ǚ",
     0x01DB,  // "Ǘ",
-    0x00DC,  // "Ǖ"
+    0x00DC,  // "Ü"
 };
 
 const gunichar *PINYIN_TONEMARKS[6]={
