@@ -58,8 +58,8 @@ make doxygen
 rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
 
-%check
-make test
+#%check
+#make test
 
 %clean
 rm -rf $RPM_BUILD_ROOT

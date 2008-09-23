@@ -77,7 +77,7 @@ ADD_CUSTOM_TARGET(rpm
     COMMAND mkdir -p RPMS/i386
     COMMAND mkdir -p RPMS/x86_64
     COMMAND mkdir -p BUILD
-    COMMAND rpmbuild -bb SPECS/libUnihan.spec --rcfile rpmrc
+    COMMAND rpmbuild -ba SPECS/libUnihan.spec --rcfile rpmrc
 )
 ###==================================================================
 # Database related targets.

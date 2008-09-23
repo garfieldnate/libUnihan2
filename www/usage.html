@@ -61,7 +61,7 @@
 				<li>then<br />
 				<ol style="list-style-type:lower-alpha;">
 				    <li>Download <a href="ftp://ftp.unicode.org/Public/UNIDATA/Unihan.zip">Unihan.zip</a> from Unicode.org and extract it as Unihan.txt in current directory.</li>
-				    <li>bin/unihan_converter Unihan.txt  Unihan.db.5.1.0-4</li>
+				    <li>bin/unihan_converter Unihan.txt  Unihan.db.5.1.0-7</li>
 				</ol></li>
 				<li>Otherwise just extract the Unihan.db from the <a href="http://downloads.sourceforge.net/libunihan/libUnihan-data-5.1.0-4.tar.gz">latest libUnihan-data tar ball.</a></li>
 			    </ol>
@@ -89,14 +89,6 @@
 			    <p>You don't really need to run it unless you
 			    prefer to rebuild the Unihan.db on your own.</p>
 			</dd>
-			<dt>unihan_field_validation</dt>
-			<dd>
-			<p>Summary: Verify the Unihan.db by comparing the
-			database query against the original Unihan tag values.</p>
-			<p>Synopsis: <code>unihan_convert <em>&lt;Unihan.txt&gt;</em> <em>&lt;SQL Unihan&gt;</em></code></p>
-			<p>It might takes days to complete, so no need to run it unless you do need to verify whether
-			the output of pseudo fields are correct.</p>
-			</dd>
 			<dt>unihan_query</dt>
 			<dd>
 			<p>Summary: query on the libUnihan database</p>
@@ -117,7 +109,17 @@
 			use simple query. On the other hand, SQL query sheds
 			more light for advance users.
 			</p>
+			</dd>
 
+			<dt>unihan_field_validation (Move to test suite, so
+			it won't be installed by default)</dt>
+			<dd>
+			<p>Summary: Verify the Unihan.db by comparing the
+			database query against the original Unihan tag values.</p>
+			<p>Synopsis: <code>unihan_convert <em>&lt;Unihan.txt&gt;</em> <em>&lt;SQL Unihan&gt;</em></code></p>
+			<p>It might takes days to complete, so no need to run it unless you do need to verify whether
+			the output of pseudo fields are correct.</p>
+			</dd>
 			<h3>Examples</h3>
 			<p>Mandarin pinyin lookup:</p>
 			<table class="example">
