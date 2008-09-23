@@ -84,13 +84,18 @@ ADD_CUSTOM_TARGET(install_db
 )
 
 ADD_CUSTOM_TARGET(rpm
-    COMMAND rpmbuild -ba libUnihan.spec
+    COMMAND make package_source
+    COMMAND ln -sf ../${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz SOURCES/${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz
+    COMMAND mkdir -p RPMS
+    COMMAND rpmbuild -ba libUnihan.spec --rcfile rpmrc
 )
 
 ADD_CUSTOM_TARGET(srpm
-    COMMAND rpmbuild -bs libUnihan.spec
+    COMMAND make package_source
+    COMMAND ln -sf ../${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz SOURCES/${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz
+    COMMAND mkdir -p SRPMS
+    COMMAND rpmbuild -bs libUnihan.spec --rcfile rpmrc
 )
-
 
 ### Package configuration
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "libUnihan")
@@ -118,6 +123,7 @@ SET(CPACK_PACKAGE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/src/" "/test/"
     ".spec$")
 SET(CPACK_SOURCE_GENERATOR "TGZ")
 
+
 INCLUDE(CPack)
 
 ### Document generation
@@ -139,6 +145,7 @@ CONFIGURE_FILE(
 
 ADD_CUSTOM_TARGET(uninstall
   "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
+
 
 ### For testing
 ENABLE_TESTING()
