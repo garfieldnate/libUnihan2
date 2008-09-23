@@ -1,3 +1,8 @@
+====== 2008-09-23 libUnihan 0.5.1 released ====
+Can display ZhuYin now.
+ZhuYin and PinYin format conversion support.
+Correct the counting of FreqRank Field in kMandarinTable.
+
 ====== 2008-08-08 libUnihan 0.4.1 released ====
 Shows support fields and tables for unihan_query
 Header files have moved to {include}/libUnihan.

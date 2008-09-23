@@ -58,6 +58,9 @@ make doxygen
 rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
 
+#%check
+#make test
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
@@ -78,7 +81,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/%{name}/
 %{_libdir}/%{name}.so
 %{_bindir}/unihan_converter
-%{_bindir}/unihan_field_validation
 
 %files doc
 %defattr(-,root,root,-)

@@ -1,4 +1,4 @@
-* Tue Sep 23 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.5.0-0
+* Tue Sep 23 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.5.1-0
 - New Features:
   + PinYin accent format conversion functions (C and SQL scalar).
   + ZhuYin tone mark format conversion functions (C and SQL scalar).
@@ -14,7 +14,7 @@
   + Add test suite.
   + Where-clause-generator is now able to escape the quote character(').
   + unihan_field_validation is moved to test/, therefore it will not be in binary package.
-  + New make targets: rpm and srpm to generate rpm and srpm.
+  + New make targets: rpm, srpm, rpm_db and srpm_db to generate rpm and srpm for libUnihan and UnihanDb.
 - Removed:
   + unihanSql_get_result_table(). As it uses sqlite3_get_table() which might cause memory leak.
 

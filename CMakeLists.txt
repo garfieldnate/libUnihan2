@@ -9,7 +9,7 @@ PROJECT(libUnihan)
 SET(CMAKE_C_FLAGS "-Wall")
 SET(PRJ_VER_MAJOR "0")
 SET(PRJ_VER_MINOR "5")
-SET(PRJ_VER_PATCH "0")
+SET(PRJ_VER_PATCH "1")
 SET(PRJ_VER ${PRJ_VER_MAJOR}.${PRJ_VER_MINOR}.${PRJ_VER_PATCH})
 SET(DB_VER "5.1.0")
 SET(DB_PATCH_LEVEL "7")
@@ -60,6 +60,28 @@ INSTALL(FILES ${MAIN_DOCS}
 #    DEPENDS ${DB_NAME}.${DB_VER})
 # COMMAND(ln -s  ${DB_NAME}.${DB_VER} ${DB_NAME})
 
+
+ADD_CUSTOM_TARGET(srpm
+    COMMAND make package_source
+    COMMAND mkdir -p SOURCES
+    COMMAND ln -sf ../${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz SOURCES/${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz
+    COMMAND mkdir -p SRPMS
+    COMMAND rpmbuild -bs SPECS/libUnihan.spec --rcfile rpmrc
+)
+
+ADD_CUSTOM_TARGET(rpm
+    COMMAND make package_source
+    COMMAND mkdir -p SOURCES
+    COMMAND ln -sf ../${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz SOURCES/${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz
+    COMMAND mkdir -p SRPMS
+    COMMAND mkdir -p RPMS/i386
+    COMMAND mkdir -p RPMS/x86_64
+    COMMAND mkdir -p BUILD
+    COMMAND rpmbuild -bb SPECS/libUnihan.spec --rcfile rpmrc
+)
+###==================================================================
+# Database related targets.
+#
 SET(DB_DOCS README-db ChangeLog-db)
 
 ADD_CUSTOM_TARGET(package_db_doc
@@ -83,21 +105,23 @@ ADD_CUSTOM_TARGET(install_db
     COMMAND cp ChangLog-db "${docdir}/${DB_PRJ_NAME}" 
 )
 
-ADD_CUSTOM_TARGET(rpm
-    COMMAND make package_source
-    COMMAND ln -sf ../${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz SOURCES/${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz
-    COMMAND mkdir -p RPMS
-    COMMAND rpmbuild -ba libUnihan.spec --rcfile rpmrc
+ADD_CUSTOM_TARGET(srpm_db
+    COMMAND ln -sf ../${DB_PRJ_NAME}-doc-${DB_VER}.tar.gz SOURCES/${DB_PRJ_NAME}-doc-${DB_VER}.tar.gz
+    COMMAND rpmbuild -bs SPECS/UnihanDb.spec --rcfile rpmrc
 )
 
-ADD_CUSTOM_TARGET(srpm
-    COMMAND make package_source
-    COMMAND ln -sf ../${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz SOURCES/${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz
-    COMMAND mkdir -p SRPMS
-    COMMAND rpmbuild -bs libUnihan.spec --rcfile rpmrc
+ADD_CUSTOM_TARGET(rpm_db
+    COMMAND ln -sf ../${DB_PRJ_NAME}-doc-${DB_VER}.tar.gz SOURCES/${DB_PRJ_NAME}-doc-${DB_VER}.tar.gz
+    COMMAND mkdir -p RPMS/noarch
+    COMMAND rpmbuild -ba SPECS/UnihanDb.spec --rcfile rpmrc
 )
 
-### Package configuration
+ADD_DEPENDENCIES(srpm_db package_db_doc)
+ADD_DEPENDENCIES(rpm_db package_db_doc)
+
+###==================================================================
+# CPack configuration
+#
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "libUnihan")
 SET(CPACK_PACKAGE_VENDOR "Red Hat, APAC, Inc.")
 SET(CPACK_GENERATOR "TGZ")
@@ -111,12 +135,15 @@ SET(CPACK_PACKAGE_VERSION_MINOR ${PRJ_VER_MINOR})
 SET(CPACK_PACKAGE_VERSION_PATCH ${PRJ_VER_PATCH})
 SET(COMMON_IGNORE_FILES "/CMakeFiles/" "_CPack_Packages/" "/Testing/"
     ".cmake$"   ".directory$" "CMakeCache.txt"
-    "/.svn/"  "/CVS/" "~" ".swp" ".log" ".gz"
-    "/src/config.h")
+    "/.svn/"  "/CVS/" "~$" ".swp$" ".log$" ".gz$"
+    "/src/config.h$")
 
-SET(PRJ_COMMON_IGNORE_FILES ${COMMON_IGNORE_FILES} "/doc/"  "/www/" ".vis"
-    ".db$" "test/check_phonetic" "test/check_toneMark"
-    "test/unihan_field_validation")
+SET(RPM_IGNORE_FILES "/SOURCES/" "/SRPMS/" "/RPMS/" "/BUILD/")
+
+SET(PRJ_COMMON_IGNORE_FILES ${COMMON_IGNORE_FILES} ${RPM_IGNORE_FILES}
+    "/doc/"  "/www/" ".vis$"
+    ".db$" "test/check_phonetic$" "test/check_toneMark$"
+    "test/unihan_field_validation$")
 
 SET(CPACK_SOURCE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/bin/" ".db" "-db")
 SET(CPACK_PACKAGE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/src/" "/test/"
