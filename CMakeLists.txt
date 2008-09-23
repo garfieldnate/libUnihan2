@@ -83,6 +83,14 @@ ADD_CUSTOM_TARGET(install_db
     COMMAND cp ChangLog-db "${docdir}/${DB_PRJ_NAME}" 
 )
 
+ADD_CUSTOM_TARGET(rpm
+    COMMAND rpmbuild -ba libUnihan.spec
+)
+
+ADD_CUSTOM_TARGET(srpm
+    COMMAND rpmbuild -bs libUnihan.spec
+)
+
 
 ### Package configuration
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "libUnihan")
@@ -96,15 +104,18 @@ SET(CPACK_RESOURCE_FILE_LICENSE
 SET(CPACK_PACKAGE_VERSION_MAJOR ${PRJ_VER_MAJOR})
 SET(CPACK_PACKAGE_VERSION_MINOR ${PRJ_VER_MINOR})
 SET(CPACK_PACKAGE_VERSION_PATCH ${PRJ_VER_PATCH})
-SET(COMMON_IGNORE_FILES "/CMakeFiles/" "/Testing/" "/.svn/" "/CVS/" "_CPack_Packages/" 
-    ".cmake$" "~" ".swp" ".log" ".gz" ".directory$" "CMakeCache.txt"
+SET(COMMON_IGNORE_FILES "/CMakeFiles/" "_CPack_Packages/" "/Testing/"
+    ".cmake$"   ".directory$" "CMakeCache.txt"
+    "/.svn/"  "/CVS/" "~" ".swp" ".log" ".gz"
     "/src/config.h")
 
 SET(PRJ_COMMON_IGNORE_FILES ${COMMON_IGNORE_FILES} "/doc/"  "/www/" ".vis"
-    ".db$" )
+    ".db$" "test/check_phonetic" "test/check_toneMark"
+    "test/unihan_field_validation")
 
 SET(CPACK_SOURCE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/bin/" ".db" "-db")
-SET(CPACK_PACKAGE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/src/" "/test/")
+SET(CPACK_PACKAGE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/src/" "/test/"
+    ".spec$")
 SET(CPACK_SOURCE_GENERATOR "TGZ")
 
 INCLUDE(CPack)

@@ -37,6 +37,7 @@
  *  <li> VERBOSE_MSG_INFO2       4
  *  <li> VERBOSE_MSG_INFO3       5
  *  <li> VERBOSE_MSG_INFO4       6
+ *  <li> VERBOSE_MSG_INFO5       7
  * </ol>
  */
 #define VERBOSE_MSG_NONE        -1
@@ -47,6 +48,7 @@
 #define VERBOSE_MSG_INFO2       4
 #define VERBOSE_MSG_INFO3       5
 #define VERBOSE_MSG_INFO4       6
+#define VERBOSE_MSG_INFO5       7
 
 int verboseMsg_get_level();
 void verboseMsg_set_level(int verboseLevel);

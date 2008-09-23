@@ -1,9 +1,22 @@
-* Mon Sep 22 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.5.0-0
-- Correct the counting freq_rank.
-- Add StringList *sqlite_get_stringList(sqlite3 *db, const char *sqlClause, int *rowCount_ptr, int *colCount_ptr, char **errMsg_ptr, int *execResult_ptr);
-- Modify unihanDb_open(const char *filename, int flags) from unihanDb_open(const char *filename);
-- Add pinyin and zhuyin conversion functions. (Unihan_phonetic.[ch])
-- Changed CMakefile.txt to reflects the version scheme change of UnihanDb
+* Tue Sep 23 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.5.0-0
+- New Features:
+  + PinYin accent format conversion functions (C and SQL scalar).
+  + ZhuYin tone mark format conversion functions (C and SQL scalar).
+  + PinYin <-->  ZhuYin conversion functions (C and SQL scalar).
+  + Display as ZhuYin.
+- Fixed:
+  + Correct counting in FreqRank field of kMandarin table.
+  + The query functions such as unihan_find_all_matched() returns SQL_Results type, to avoid the memory leaking problems.
+- Changed:
+  + unihanDb_open() now supports the R/W control.
+  + Changed CMakefile.txt to reflects the version scheme change of UnihanDb
+  + StringList type for storing const string arrays.
+  + Add test suite.
+  + Where-clause-generator is now able to escape the quote character(').
+  + unihan_field_validation is moved to test/, therefore it will not be in binary package.
+  + New make targets: rpm and srpm to generate rpm and srpm.
+- Removed:
+  + unihanSql_get_result_table(). As it uses sqlite3_get_table() which might cause memory leak.
 
 * Fri Aug 08 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.4.1-0
 - Shows support fields and tables for unihan_query
@@ -12,7 +25,7 @@
 - Completed the description of str_functions.h
 - In str_functions.h: unsignedStr_to_signedStr and signedStr_to_unsignedStr
 clones the inputs now, while _buffer postfix for the circumstances that the buffer is given.
-Addressing C#6 [Bug 453520] Review Request: libUnihan 
+- Addressing C#6 [Bug 453520] Review Request: libUnihan 
 - rpmlint undefined-non-weak-symbol problems solved.
 - Moved the include statement of private header files to Unihan_SQL_gen.c files.
 - Move the doc/{name} files  to doc/{name}-{version}.

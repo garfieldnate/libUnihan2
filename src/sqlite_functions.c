@@ -79,6 +79,7 @@ static int sqlite_get_sql_result_callback(void *data,int colCount,char** value_a
     }
     SQL_Result *sResult=(SQL_Result *) data;
     int i;
+    verboseMsg_print(VERBOSE_MSG_INFO4," sqlite_get_sql_result_callback(,%d,): \n",colCount);
     if (!(sResult->colCount)){
 	for(i=0;i<colCount;i++){
 	    stringList_insert(sResult->fieldList,fieldName_array[i]);
@@ -86,6 +87,7 @@ static int sqlite_get_sql_result_callback(void *data,int colCount,char** value_a
 	sResult->colCount=colCount;
     }
     for(i=0;i<colCount;i++){
+	verboseMsg_print(VERBOSE_MSG_INFO5,"  value_array[%d]=%s\n",i,value_array[i]);
 	stringList_insert(sResult->resultList,value_array[i]);
     }
     return SQLITE_OK;

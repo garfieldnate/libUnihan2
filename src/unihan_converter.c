@@ -138,8 +138,10 @@ gboolean isKSemanticValue_matched(const char *value, const char *resultField){
     }    
     g_strfreev(resultArray);
     g_strfreev(valueArray);
-    if ((i==1) && (j==1))
+    if (i==1 && j==1){
+	/* No further dictionary information */
 	return TRUE;
+    }
     return FALSE;    
 }
 
@@ -151,7 +153,7 @@ int unihan_test_record(gunichar code, UnihanField field, char *value){
     int ret;
     gboolean found=FALSE;
     int i;
-    int colCount,rowCount;
+    int colCount,totalCount;
 
     /* code -> value */
     printf("=== code -> value \n");
@@ -164,14 +166,14 @@ int unihan_test_record(gunichar code, UnihanField field, char *value){
 	exit(ret);
     }
     colCount=sResult->colCount;
-    rowCount=sResult->resultList->len;
+    totalCount=sResult->resultList->len;
 
-    if (rowCount<=0){
+    if (totalCount<=0){
 	printf(" Field %s of character %d(%s) does not have any value\n",unihanField_to_string(field),code, charStr);
 	exit(-10);
     }
 
-    for(i=0;i<rowCount;i++){
+    for(i=0;i<totalCount;i++){
         switch(field){
             case UNIHAN_FIELD_KSEMANTICVARIANT:
             case UNIHAN_FIELD_KSPECIALIZEDSEMANTICVARIANT:
@@ -190,7 +192,7 @@ int unihan_test_record(gunichar code, UnihanField field, char *value){
     }
     if (!found){
 	printf(" Field %s of character %d(%s) value: [%s]  does not equal the original value [%s]\n",
-		unihanField_to_string(field),code, charStr, stringList_index(sResult->resultList,rowCount*colCount-1), value );
+		unihanField_to_string(field),code, charStr, stringList_index(sResult->resultList,totalCount-1), value );
 	exit(-11);
     }
     sql_result_free(sResult,TRUE);
@@ -216,7 +218,8 @@ int unihan_test_record(gunichar code, UnihanField field, char *value){
 	    break;
     }
 
-    sResult=unihan_find_all_matched(UNIHAN_FIELD_CODE,codeStr,field, UHIHAN_QUERY_OPTION_SCALAR_STRING);
+    sResult=unihan_find_all_matched(field,buf,UNIHAN_FIELD_CODE, UNIHAN_QUERY_OPTION_DEFAULT);
+
     ret=sResult->execResult;
     if (ret) {
 	printf(" Database error:%s\n", sResult->errMsg);
@@ -225,18 +228,18 @@ int unihan_test_record(gunichar code, UnihanField field, char *value){
 	exit(ret);
     }
     colCount=sResult->colCount;
-    rowCount=sResult->resultList->len;
+    totalCount=sResult->resultList->len;
 
 
-    if (rowCount<=0){
-	printf(" Cannot found value %s in field %s.\n",value,unihanField_to_string(field));
+    if (totalCount<=0){
+	printf(" Cannot found value %s in field %s.\n",buf,unihanField_to_string(field));
 	exit(-12);
     }
 
-    for(i=0;i<rowCount;i++){
+    for(i=0;i<totalCount;i++){
 	verboseMsg_print(VERBOSE_MSG_INFO3,"  Result returned from database: %s\n",
 		stringList_index(sResult->resultList,(i+1)*colCount-1));
-	if (strcmp(value,stringList_index(sResult->resultList,(i+1)*colCount-1))==0){
+	if (strcmp(codeStr,stringList_index(sResult->resultList,(i+1)*colCount-1))==0){
 	    found=TRUE;
 	    break;
 	}

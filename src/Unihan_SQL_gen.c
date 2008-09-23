@@ -473,15 +473,18 @@ const char *UNIHAN_RANGE_NAMES[UNIHAN_RANGES_COUNT]={
 /*=================================
  * Select generating functions.
  */
-static char *unihan_generate_select_clause(UnihanField field,UnihanQueryOption qOption){
+static char *unihan_generate_select_clause(UnihanField givenField,UnihanField queryField,UnihanQueryOption qOption){
     GString *strBuf=g_string_new(NULL);
-    UnihanTable fromTable=unihanField_get_table(field);
-    switch(field){
+    UnihanTable fromTable=unihanField_get_table(queryField);
+    UnihanTable fieldTable;
+    switch(queryField){
 	case UNIHAN_FIELD_CODE:
+	    fieldTable=unihanField_get_table(givenField);
+	    
 	    if (qOption & UHIHAN_QUERY_OPTION_SCALAR_STRING){
-		g_string_printf(strBuf,"TO_SCALAR_STRING(%s) AS CodePoint",UNIHAN_FIELD_NAMES[UNIHAN_FIELD_CODE]);
+		g_string_printf(strBuf,"TO_SCALAR_STRING(%s.%s) AS CodePoint",UNIHAN_TABLE_NAMES[fieldTable],UNIHAN_FIELD_NAMES[UNIHAN_FIELD_CODE]);
 	    }else{
-		g_string_printf(strBuf,"%s",UNIHAN_FIELD_NAMES[UNIHAN_FIELD_CODE]);
+		g_string_printf(strBuf,"%s.%s",UNIHAN_TABLE_NAMES[fieldTable],UNIHAN_FIELD_NAMES[UNIHAN_FIELD_CODE]);
 	    }
 	    break;
 	case UNIHAN_FIELD_KCOMPATIBILITYVARIANT:
@@ -564,7 +567,7 @@ static char *unihan_generate_select_clause(UnihanField field,UnihanQueryOption q
 	    break;
 
 	default:
-	    g_string_printf(strBuf,"%s.%s",UNIHAN_TABLE_NAMES[fromTable],UNIHAN_FIELD_NAMES[field]);
+	    g_string_printf(strBuf,"%s.%s",UNIHAN_TABLE_NAMES[fromTable],UNIHAN_FIELD_NAMES[queryField]);
 	    break;  
     }    
     return g_string_free(strBuf,FALSE);
@@ -679,7 +682,7 @@ static char *unihan_generate_from_clause(UnihanField givenField,UnihanField quer
 
 static char *unihan_append_radical_stroke_where_clause(GString *strBuf, UnihanField field, const char *value){
     int i=0,len=strlen(value);
-    g_string_append_printf(strBuf,"%s=\"",
+    g_string_append_printf(strBuf,"%s='",
 	    UNIHAN_FIELD_NAMES[UNIHAN_FIELD_RADICAL_INDEX]);
 
     while (i<len && value[i]!='.'){
@@ -689,7 +692,7 @@ static char *unihan_append_radical_stroke_where_clause(GString *strBuf, UnihanFi
 
     if (value[i]=='.'){
 	/* additional strokes count   */
-	g_string_append_printf(strBuf,"\" AND %s=\"",UNIHAN_FIELD_NAMES[UNIHAN_FIELD_ADDITIONAL_STROKE_COUNT]);
+	g_string_append_printf(strBuf,"' AND %s='",UNIHAN_FIELD_NAMES[UNIHAN_FIELD_ADDITIONAL_STROKE_COUNT]);
 	i++;
     }else{
 	verboseMsg_print(VERBOSE_MSG_ERROR,"Invalid format!");
@@ -699,7 +702,7 @@ static char *unihan_append_radical_stroke_where_clause(GString *strBuf, UnihanFi
 	g_string_append_c(strBuf,value[i]);
 	i++;
     }
-    g_string_append(strBuf,"\" ") ;
+    g_string_append(strBuf,"' ") ;
 
     return strBuf->str;
 }
@@ -820,11 +823,11 @@ static void unihan_append_kangXi_where_clause(GString *strBuf, UnihanField field
 
     if (gArray->len>0){
 	rec=&g_array_index(gArray,KangXiRec,i);
-	g_string_append_printf(strBuf," %s.%s=\"%s\"",
+	g_string_append_printf(strBuf," %s.%s='%s'",
 		UNIHAN_TABLE_NAMES[table],
 		UNIHAN_FIELD_NAMES[UNIHAN_FIELD_KANGXI_PAGE],
 		rec->page);
-	g_string_append_printf(strBuf," AND %s.%s=\"%s\"",
+	g_string_append_printf(strBuf," AND %s.%s='%s'",
 		UNIHAN_TABLE_NAMES[table],
 		UNIHAN_FIELD_NAMES[UNIHAN_FIELD_KANGXI_CHARNUM],
 		rec->charNum);
@@ -845,7 +848,7 @@ static void unihan_append_pinyinFreq_where_clause(GString *strBuf, UnihanField f
 
     if (gArray->len>0){
 	rec=&g_array_index(gArray,PinyinFreqRec,i);
-	g_string_append_printf(strBuf," %s.%s=\"%s\"",
+	g_string_append_printf(strBuf," %s.%s='%s'",
 		UNIHAN_TABLE_NAMES[table],
 		UNIHAN_FIELD_NAMES[UNIHAN_FIELD_PINYIN],
 		rec->pinyin);
@@ -871,7 +874,7 @@ static void unihan_append_semantic_where_clause(GString *strBuf, UnihanField fie
 		UNIHAN_FIELD_NAMES[UNIHAN_FIELD_VARIANT_CODE],
 		rec->variantCode);
 	if (!isEmptyString(rec->fromDict)){
-	    g_string_append_printf(strBuf," AND %s=\"%s\"",
+	    g_string_append_printf(strBuf," AND %s='%s'",
 		    UNIHAN_FIELD_NAMES[UNIHAN_FIELD_FROM_DICT],
 		    rec->fromDict);
 	    g_string_append_printf(strBuf," AND semanticT=%d AND semanticB=%d AND semanticZ=%d",
@@ -890,7 +893,7 @@ static void unihan_append_zvariant_where_clause(GString *strBuf, UnihanField fie
 	    UNIHAN_FIELD_NAMES[UNIHAN_FIELD_VARIANT_CODE],
 	    variantCode);
     if (!isEmptyString(subFieldArray[1])){
-	g_string_append_printf(strBuf," AND %s=\"%s\"",
+	g_string_append_printf(strBuf," AND %s='%s'",
 		UNIHAN_FIELD_NAMES[UNIHAN_FIELD_ZVARIANT_SOURCE],
 		subFieldArray[1]);
     }
@@ -923,14 +926,15 @@ static char *unihan_generate_where_clause(UnihanField givenField, const char *va
 	rec=unihanIRG_SourceRec_parse(givenField,value);
     }
     char *relStr=(qOption & UNIHAN_QUERY_OPTION_LIKE)? "LIKE": "=";
+    char *strTmp=NULL;
 
     if (rec!=NULL){
-	g_string_append_printf(strBuf,"%s.%s=\"%s\"",
+	g_string_append_printf(strBuf,"%s.%s='%s'",
 		UNIHAN_TABLE_NAMES[UNIHAN_TABLE_IRG_SOURCE],
 		UNIHAN_FIELD_NAMES[UNIHAN_FIELD_IRG_SOURCE_SHORT_NAME],
 		UNIHAN_IRG_SOURCES[rec->sourceId].name);
 	if (!unihanIRG_Source_has_no_mapping(rec->sourceId)){
-	    g_string_append_printf(strBuf," AND %s %s \"%s\"",
+	    g_string_append_printf(strBuf," AND %s %s '%s'",
 		    UNIHAN_FIELD_NAMES[UNIHAN_FIELD_IRG_SOURCE_MAPPING],
 		    relStr,
 		    rec->sourceMapping);
@@ -962,7 +966,7 @@ static char *unihan_generate_where_clause(UnihanField givenField, const char *va
 	    case UNIHAN_FIELD_KCOMPATIBILITYVARIANT:
 	    case UNIHAN_FIELD_KSIMPLIFIEDVARIANT:
 	    case UNIHAN_FIELD_KTRADITIONALVARIANT:
-		g_string_append_printf(strBuf,"%s.%s=\"%s\"",
+		g_string_append_printf(strBuf,"%s.%s='%s'",
 			UNIHAN_TABLE_NAMES[fromTable],
 			UNIHAN_FIELD_NAMES[UNIHAN_FIELD_VARIANT_CODE],
 			value);
@@ -972,10 +976,14 @@ static char *unihan_generate_where_clause(UnihanField givenField, const char *va
 		break;
 
 	    default:
-		g_string_append_printf(strBuf,"%s.%s %s \"%s\"",
+		strTmp=sqlite3_mprintf("%s.%s %s %Q",
 			UNIHAN_TABLE_NAMES[fromTable],
 			UNIHAN_FIELD_NAMES[givenField],
 			relStr,value);
+
+
+		g_string_append(strBuf,strTmp);
+		sqlite3_free(strTmp);
 		break;
 	}
     }
@@ -1036,7 +1044,7 @@ SQL_Result *unihan_find_all_matched(UnihanField givenField, char *givenValue,
 	if (i>0){
 	    g_string_append(strBuf," UNION ");
 	}
-	selectStr=unihan_generate_select_clause(queryField,qOption);
+	selectStr=unihan_generate_select_clause(givenField,queryField,qOption);
 	fromStr=unihan_generate_from_clause(givenField,queryField);
 	whereStr=unihan_generate_where_clause(givenField,givenValue,tableArray[i],queryField,qOption);
 
@@ -1061,6 +1069,7 @@ SQL_Result *unihan_find_all_matched(UnihanField givenField, char *givenValue,
     verboseMsg_print(VERBOSE_MSG_INFO1,"%s\n",strBuf->str);
     
     SQL_Result *sResult=unihanSql_get_sql_result(strBuf->str);
+    verboseMsg_print(VERBOSE_MSG_INFO4," 2 sResult->colCount=%d \n",sResult->colCount);
     g_free(selectStr);
     g_free(fromStr);
     g_free(whereStr);
