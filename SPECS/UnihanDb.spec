@@ -12,7 +12,7 @@ Summary(zh_TW): 符合第五正規化之統漢字(Unihan)資料庫
 BuildArch:      noarch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-root-%(%{__id_u} -n)
 BuildRequires:  libUnihan-devel >= 0.5.0
-Requires:	sqlite
+Requires:       sqlite
 URL:            http://www.unicode.org/charts/unihan.html
 
 Source0:        ftp://ftp.unicode.org/Public/UNIDATA/Unihan.zip

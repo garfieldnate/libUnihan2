@@ -1,11 +1,11 @@
-REMOTE_SITE=shell.sourceforge.net
+REMOTE_SITE=web.sourceforge.net
 REMOTE_DIR=/home/groups/l/li/libunihan
 REMOTE_DIR_HTDOCS=${REMOTE_DIR}/htdocs/
 RSYNC_ARGS=--cvs-exclude --recursive --verbose --update --compress --exclude *.core --stats --progress --archive --copy-links
 RSYNC=/usr/bin/rsync
 CLEAN_FLAGS=--delete
 USER=dingyichen
-SSH_ARGS=-e "ssh -l ${USER}"
+SSH_ARGS=-e "ssh -l ${USER},libunihan"
 
 JS_FILES=*.js
 CSS_FILES=*.css
