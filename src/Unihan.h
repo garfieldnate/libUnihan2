@@ -32,6 +32,11 @@
 #include "sqlite_functions.h"
 #include "str_functions.h"
 
+/**
+ * Prototype of callback function for SQL execution.
+ */
+typedef int (*UnihanCallback)(void* userOption,int col_num,char** results,char** col_names);
+
 
 /**
  * IRG source data.
@@ -57,11 +62,6 @@ typedef struct {
     const char *sourceMapping;   //!< the mapping of the character in the source.
 } UnihanIRG_SourceRec;
 
-
-/**
- * Prototype of callback function for SQL execution.
- */
-typedef int (*UnihanCallback)(void* userOption,int col_num,char** results,char** col_names);
 
 /**
  * Data structure of database supporting functions.
@@ -94,7 +94,7 @@ typedef guint UnihanQueryOption;
 
 #define UNIHAN_QUERY_OPTION_DEFAULT		0x00	//!< Default options.
 #define UNIHAN_QUERY_OPTION_LIKE		0x01   	//!< Using SQL LIKE in WHERE expression; FALSE for use '=' instead.
-#define UHIHAN_QUERY_OPTION_SCALAR_STRING	0x02	//!< TRUE to show code point as string "U+xxxx"; FALSE for show code point as integer.
+#define UNIHAN_QUERY_OPTION_SCALAR_STRING	0x02	//!< TRUE to show code point as string "U+xxxx"; FALSE for show code point as integer.
 /*@}*/
 
 /**
@@ -464,12 +464,12 @@ gboolean unihanField_is_mandarin(UnihanField field);
 /**
  * Whether the field is a pseudo field.
  *
- * A pseudo field is a compound of attributes from one or more tables.
- * It is also represent a Unihan.txt tag whose value is not normalized.
- * Pseudo fields usually associate with extra tables, 
- * see unihanField_get_extra_table() for details.
+ * A pseudo field is a field whose value is not derived directly from table but database functions.
+ * Field zhuyin, for example, is not in database but derived from function <code>PINYIN_TO_ZHUYIN()</code>.
+ * It is deemed to be a short cut for database functions.
  *
- * For example, kSemanticVariant is a pseudo field which combines:
+ *
+ * Another example is field kSemanticVariant, which is a pseudo field which combines:
  * kSemanticVariantTable.varinatCode, kSemanticVariantTableExtra.fromDict,
  * kSemanticVariantTableExtra.semanticT, kSemanticVariantTableExtra.semanticB and
  * kSemanticVariantTableExtra.semanticZ
@@ -481,22 +481,14 @@ gboolean unihanField_is_mandarin(UnihanField field);
 gboolean unihanField_is_pseudo(UnihanField field);
 
 /**
- * Whether the field is a pseudo field.
+ * Whether the field holds UCS4 value.
  *
- * A pseudo field is a compound of attributes from one or more tables.
- * It is also represent a Unihan.txt tag whose value is not normalized.
- * Pseudo fields usually associate with extra tables, 
- * see unihanField_get_extra_table() for details.
- *
- * For example, kSemanticVariant is a pseudo field which combines:
- * kSemanticVariantTable.varinatCode, kSemanticVariantTableExtra.fromDict,
- * kSemanticVariantTableExtra.semanticT, kSemanticVariantTableExtra.semanticB and
- * kSemanticVariantTableExtra.semanticZ
+ * UCS4 fields can be displayed in the form of Unicode scalar string (U+xxxxx)
  *
  * @param field the UnihanField 
- * @return TRUE if the field is a pseudo field; FALSE otherwise.
+ * @return TRUE if the field holds a UCS4 value; FALSE otherwise.
  */
-gboolean unihanField_is_scalar_value(UnihanField field);
+gboolean unihanField_is_ucs4(UnihanField field);
 
 /**
  * Whether the field is a singleton field.

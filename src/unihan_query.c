@@ -71,8 +71,6 @@ static struct option longOptions[]={
     {0,0,0,0}
 };
 
-gboolean likeMode=FALSE;
-gboolean showScalarString=FALSE;
 UnihanQueryOption qOption=UNIHAN_QUERY_OPTION_DEFAULT;
 char *cmdSqlClause=NULL;
 char *givenFieldStr=NULL;
@@ -186,13 +184,13 @@ static gboolean is_valid_arguments(int argc, char **argv) {
 		printUsage();
 		exit(0);
 	    case 'L':
-		likeMode=TRUE;
+		qOption |= UNIHAN_QUERY_OPTION_LIKE;
 		break;
 	    case 'S':
 		cmdSqlClause=optarg;
 		break;
 	    case 'U':
-		showScalarString=TRUE;
+		qOption |= UNIHAN_QUERY_OPTION_SCALAR_STRING;
 		break;
 	    case 'V':
 		verboseLevel++;
@@ -221,12 +219,12 @@ static gboolean is_valid_arguments(int argc, char **argv) {
                 return FALSE;
         }
     }
-    if (likeMode && cmdSqlClause){
+    if (qOption & UNIHAN_QUERY_OPTION_LIKE && cmdSqlClause){
 	printf("-L and -S cannot be used together!\n");
 	printUsage();
 	return FALSE;
     }
-    if (showScalarString && cmdSqlClause){
+    if (qOption & UNIHAN_QUERY_OPTION_SCALAR_STRING && cmdSqlClause){
 	printf("-U and -S cannot be used together!\n");
 	printUsage();
 	return FALSE;

@@ -293,6 +293,9 @@ UnihanTable unihanField_get_table(UnihanField field){
 		return UNIHAN_TABLE_KMANDARIN;
 	    case UNIHAN_FIELD_ZVARIANT_SOURCE:
 		return UNIHAN_TABLE_KZVARIANT_EXTRA;
+	    case UNIHAN_FIELD_ZHUYIN:
+		/* Zhuyin is converted from kMandarin */
+		return UNIHAN_TABLE_KMANDARIN;
 	    default:
 		break;
 	}
@@ -421,6 +424,14 @@ gboolean unihanField_is_pseudo(UnihanField field){
     }
 }
 
+gboolean unihanField_is_ucs4(UnihanField field){
+    if (unihanField_array_index(field,UNIHAN_UCS4_FIELDS)>=0){
+	return TRUE;
+    }
+    return FALSE;
+}
+
+
 gboolean unihanField_is_singleton(UnihanField field){
     if (unihanField_array_index(field,UNIHAN_SINGLETON_FIELDS)>=0){
 	return TRUE;
@@ -428,12 +439,6 @@ gboolean unihanField_is_singleton(UnihanField field){
     return FALSE;
 }
 
-gboolean unihanField_is_scalar_value(UnihanField field){
-    if (unihanField_array_index(field,UNIHAN_SCALAR_FIELDS)>=0){
-	return TRUE;
-    }
-    return FALSE;
-}
 
 UnihanField unihanField_parse(const char *str){
     int i;

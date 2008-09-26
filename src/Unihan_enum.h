@@ -57,7 +57,9 @@
  *    <ol>
  *        <li>UNIHAN_FIELD_KCANTONESE: Cantonese pronunciation</li>
  *        <li>UNIHAN_FIELD_KJAPANESEKUN: Japanese pronunciation</li>
- *        <li>UNIHAN_FIELD_KMANDARIN: Mandarin pronunciation</li>
+ *        <li>UNIHAN_FIELD_KMANDARIN: Mandarin pronunciation in Hanyu  Pinyin</li>
+ *        <li>UNIHAN_FIELD_ZHUYIN: Mandarin pronunciation as in Zhuyin</li>
+ *
  *    </ol>
  *    <li>UNIHAN_INVALID_FIELD: For error output of end of Unihan field array.</li>
  * </ol>
@@ -184,19 +186,30 @@ typedef enum{
     UNIHAN_FIELD_PINYIN,		//!< HanYu pinyin
     UNIHAN_FIELD_PINYIN_FREQ,		//!< Frequency appears in Xiandai Hanyu Pinlu Cidian (現代漢語頻率詞典)
 
-    UNIHAN_FIELD_ZVARIANT_SOURCE 	//!< The "Source" of Z variants, such as "kHKGlyph" 
+    UNIHAN_FIELD_ZVARIANT_SOURCE, 	//!< The "Source" of Z variants, such as "kHKGlyph" 
+
+    UNIHAN_FIELD_ZHUYIN			//!< ZhuYin field.
 } UnihanField;
 
 /**
  * Number of recognized Unihan fields.
  */
-#define UNIHAN_FIELDS_COUNT	UNIHAN_FIELD_ZVARIANT_SOURCE+1 
+#define UNIHAN_FIELDS_COUNT	UNIHAN_FIELD_ZHUYIN+1 
 
 /**
  * Enumeration of tables.
  *
- * Tables in libUnihan have 2 or more fields, 
- * one is UNIHAN_FIELD_CODE ("code") field for the code points of characters,
+ * This enumeration list all tables in Unihan databases, as well as ad hoc
+ * values for the return value of unihanField_get_table().
+ * These are:
+ * <ol>
+ *   <li><code>UNIHAN_NOT_A_TABLE</code>: Indicate the given field is not from a table..</li>
+ *   <li><code>UNIHAN_INVALID_TABLE</code>: Indicate the end of an Unihan table array or invalid table.</li>
+ *   <li><code>UNIHAN_AMBIGUOUS_TABLE</code>: Indicate the field appears in multiple tables.</li>
+ * </ol>
+ *
+ * Every tables in libUnihan have 2 or more fields, 
+ * one is always UNIHAN_FIELD_CODE ("code") field for the code points of characters,
  * the other fields stores parts of Unihan tag value.
  *
  * Normally, each Unihan tag has a corresponding table, for example, 
@@ -233,8 +246,9 @@ typedef enum{
  * @see unihanTable_get_db_fields(), unihanTable_get_fields(), unihanTable_get_primary_key_fields()
  */
 typedef enum{
+    UNIHAN_NOT_A_TABLE=-3,		//!< Return value for pseudo fields with unihanField_get_table(), as they are derived from database functions but not table fields.
     UNIHAN_INVALID_TABLE=-2,		//!< End of an Unihan table array or indicate invalid table.
-    UNIHAN_AMBIGUOUS_TABLE=-1,		//!< Cannot decide which table is more appropriate.
+    UNIHAN_AMBIGUOUS_TABLE=-1,		//!< Cannot decide which table is more appropriate, usually because it appears in multiple tables, such as UNIHAN_FIELD_CODE.
     UNIHAN_TABLE_KACCOUNTINGNUMERIC,	//!< Table for accounting numberic.
     UNIHAN_TABLE_KBIGFIVE, 		//!< Table for Big 5
     UNIHAN_TABLE_KCANGJIE,		//!< Table for Cangjie

@@ -1,3 +1,9 @@
+- Fixed:
+  + Behavior of unihan_query -U is now corrected.
+- Changed:
+  + unihanField_is_scalar_value() is renamed as unihanField_is_ucs4()
+
+
 * Tue Sep 23 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.5.1-0
 - New Features:
   + PinYin accent format conversion functions (C and SQL scalar).

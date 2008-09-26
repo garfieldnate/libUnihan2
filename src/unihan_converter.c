@@ -157,7 +157,7 @@ int unihan_test_record(gunichar code, UnihanField field, char *value){
 
     /* code -> value */
     printf("=== code -> value \n");
-    SQL_Result *sResult=unihan_find_all_matched(UNIHAN_FIELD_CODE,codeStr,field, UHIHAN_QUERY_OPTION_SCALAR_STRING);
+    SQL_Result *sResult=unihan_find_all_matched(UNIHAN_FIELD_CODE,codeStr,field, UNIHAN_QUERY_OPTION_SCALAR_STRING);
     ret=sResult->execResult;
     if (ret) {
 	printf(" Database error:%s\n", sResult->errMsg);

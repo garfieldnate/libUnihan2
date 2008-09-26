@@ -20,6 +20,453 @@
  * Boston, MA  02111-1307  USA
  */
 
+
+/**
+ * UNIHAN_FIELD_NAMES.
+ *
+ *
+ */
+const char *UNIHAN_FIELD_NAMES[UNIHAN_FIELDS_COUNT+1]={
+    "code",
+    "kAccountingNumeric",
+    "kBigFive",
+    "kCangjie",
+    "kCantonese",
+    "kCCCII",
+    "kCheungBauerIndex",
+    "kCheungBauer",
+    "kCihaiT",
+    "kCNS1986",
+    "kCNS1992",
+    "kCompatibilityVariant",
+    "kCowles",
+    "kDaeJaweon",
+    "kDefinition",
+    "kEACC",
+    "kFennIndex",
+    "kFenn",
+    "kFourCornerCode",
+    "kFrequency",
+    "kGB0",
+    "kGB1",
+    "kGB3",
+    "kGB5",
+    "kGB7",
+    "kGB8",
+    "kGradeLevel",
+    "kGSR",
+    "kHangul",
+    "kHanYu",
+    "kHanyuPinlu",
+    "kHDZRadBreak",
+    "kHKGlyph",
+    "kHKSCS",
+    "kIBMJapan",
+    "kIICore",
+    "kIRGDaeJaweon",
+    "kIRGDaiKanwaZiten",
+    "kIRGHanyuDaZidian",
+    "kIRGKangXi",
+    "kIRG_GSource",
+    "kIRG_HSource",
+    "kIRG_JSource",
+    "kIRG_KPSource",
+    "kIRG_KSource",
+    "kIRG_TSource",
+    "kIRG_USource",
+    "kIRG_VSource",
+    "kJapaneseKun",
+    "kJapaneseOn",
+    "kJIS0213",
+    "kJis0",
+    "kJis1",
+    "kKangXi",
+    "kKarlgren",
+    "kKorean",
+    "kKPS0",
+    "kKPS1",
+    "kKSC0",
+    "kKSC1",
+    "kLau",
+    "kMainlandTelegraph",
+    "kMandarin",
+    "kMatthews",
+    "kMeyerWempe",
+    "kMorohashi",
+    "kNelson",
+    "kOtherNumeric",
+    "kPhonetic",
+    "kPrimaryNumeric",
+    "kPseudoGB1",
+    "kRSAdobe_Japan1_6",
+    "kRSJapanese",
+    "kRSKangXi",
+    "kRSKanWa",
+    "kRSKorean",
+    "kRSUnicode",
+    "kSBGY",
+    "kSemanticVariant",
+    "kSimplifiedVariant",
+    "kSpecializedSemanticVariant",
+    "kTaiwanTelegraph",
+    "kTang",
+    "kTotalStrokes",
+    "kTraditionalVariant",
+    "kVietnamese",
+    "kXerox",
+    "kXHC1983",
+    "kZVariant",
+
+    "utf8",
+
+    "shortSourceName",
+    "sourceMapping",
+
+    "variantType",
+    "variantCode",
+
+    "fromDict",
+    "semanticT",
+    "semanticB",
+    "semanticZ",
+
+    "radicalIndex",
+    "additionalStrokeCount",
+
+    "adobeCID_CV",
+    "adobeCID",
+    "adobeCID_radicalStrokeCount",
+
+    "kangXi_page",
+    "kangXi_charNum",
+    "kangXi_virtual",
+
+    "freqRank",
+
+    "pinyin",
+    "pinyin_freq",
+
+    "zVariantSource",
+
+    "zhuyin",
+    NULL
+};
+
+const char *UNIHAN_TABLE_NAMES[]={
+    "kAccountingNumericTable",
+    "kBigFiveTable",
+    "kCangjieTable",
+    "kCantoneseTable",
+    "kCCCIITable",
+    "kCheungBauerIndexTable",
+    "kCheungBauerTable",
+    "kCihaiTTable",
+    "kCNS1986Table",
+    "kCNS1992Table",
+    "kCompatibilityVariantTable",
+    "kCowlesTable",
+    "kDaeJaweonTable",
+    "kDefinitionTable",
+    "kEACCTable",
+    "kFennIndexTable",
+    "kFennTable",
+    "kFourCornerCodeTable",
+    "kFrequencyTable",
+    "kGB0Table",
+    "kGB1Table",
+    "kGB3Table",
+    "kGB5Table",
+    "kGB7Table",
+    "kGB8Table",
+    "kGradeLevelTable",
+    "kGSRTable",
+    "kHangulTable",
+    "kHanYuTable",
+    "kHanyuPinluTable",
+    "kHDZRadBreakTable",
+    "kHKGlyphTable",
+    "kHKSCSTable",
+    "kIBMJapanTable",
+    "kIICoreTable",
+    "kIRGDaeJaweonTable",
+    "kIRGDaiKanwaZitenTable",
+    "kIRGHanyuDaZidianTable",
+    "kIRGKangXiTable",
+    "kJapaneseKunTable",
+    "kJapaneseOnTable",
+    "kJIS0213Table",
+    "kJis0Table",
+    "kJis1Table",
+    "kKangXiTable",
+    "kKarlgrenTable",
+    "kKoreanTable",
+    "kKPS0Table",
+    "kKPS1Table",
+    "kKSC0Table",
+    "kKSC1Table",
+    "kLauTable",
+    "kMainlandTelegraphTable",
+    "kMandarinTable",
+    "kMatthewsTable",
+    "kMeyerWempeTable",
+    "kMorohashiTable",
+    "kNelsonTable",
+    "kOtherNumericTable",
+    "kPhoneticTable",
+    "kPrimaryNumericTable",
+    "kPseudoGB1Table",
+    "kRSAdobe_Japan1_6Table",
+    "kRSJapaneseTable",
+    "kRSKangXiTable",
+    "kRSKanWaTable",
+    "kRSKoreanTable",
+    "kRSUnicodeTable",
+    "kSBGYTable",
+    "kSemanticVariantTable",
+    "kSimplifiedVariantTable",
+    "kSpecializedSemanticVariantTable",
+    "kTaiwanTelegraphTable",
+    "kTangTable",
+    "kTotalStrokesTable",
+    "kTraditionalVariantTable",
+    "kVietnameseTable",
+    "kXeroxTable",
+    "kXHC1983Table",
+    "kZVariantTable",
+
+    "utf8Table",
+
+    "IRG_SourceTable",
+
+    "IRG_SourceMappingTable",
+
+    "kSemanticVariantTableExtra",
+    "kSpecializedSemanticVariantTableExtra",
+    "kZVariantTableExtra",
+    NULL
+};
+
+
+
+/**
+ * Fields that holds integer.
+ *
+ * Note that 0-padded fields (such as UNIHAN_FIELD_ADDITIONAL_STROKE_COUNT) are not treated as integer.
+ */
+const UnihanField UNIHAN_INTEGER_FIELDS[]={
+    UNIHAN_FIELD_CODE,
+    UNIHAN_FIELD_KACCOUNTINGNUMERIC,
+    UNIHAN_FIELD_KCOMPATIBILITYVARIANT,
+    UNIHAN_FIELD_KFREQUENCY,
+    UNIHAN_FIELD_KGRADELEVEL,
+    UNIHAN_FIELD_KOTHERNUMERIC,
+    UNIHAN_FIELD_KPRIMARYNUMERIC,
+    UNIHAN_FIELD_KSIMPLIFIEDVARIANT,
+
+    UNIHAN_FIELD_KTOTALSTROKES,
+    UNIHAN_FIELD_KTRADITIONALVARIANT,
+
+    UNIHAN_FIELD_VARIANT_CODE,
+    UNIHAN_FIELD_SEMANTIC_T,
+    UNIHAN_FIELD_SEMANTIC_B,
+    UNIHAN_FIELD_SEMANTIC_Z,
+
+    UNIHAN_FIELD_ADOBE_CID_RADICAL_STROKE_COUNT,
+
+    UNIHAN_FIELD_KANGXI_VIRTUAL,
+    UNIHAN_FIELD_FREQ_RANK,
+    UNIHAN_FIELD_PINYIN_FREQ,
+    UNIHAN_INVALID_FIELD
+};
+
+
+UnihanField UNIHAN_IRG_SOURCE_FIELDS[]={
+    UNIHAN_FIELD_KIRG_GSOURCE,
+    UNIHAN_FIELD_KIRG_HSOURCE,
+    UNIHAN_FIELD_KIRG_JSOURCE,
+    UNIHAN_FIELD_KIRG_KPSOURCE,
+    UNIHAN_FIELD_KIRG_KSOURCE,
+    UNIHAN_FIELD_KIRG_TSOURCE,
+    UNIHAN_FIELD_KIRG_USOURCE,
+    UNIHAN_FIELD_KIRG_VSOURCE,
+    UNIHAN_INVALID_FIELD
+};
+
+const UnihanField UNIHAN_KRS_FIELDS[]={
+    UNIHAN_FIELD_KRSADOBE_JAPAN1_6,
+    UNIHAN_FIELD_KRSJAPANESE,
+    UNIHAN_FIELD_KRSKANGXI,
+    UNIHAN_FIELD_KRSKANWA,
+    UNIHAN_FIELD_KRSKOREAN,
+    UNIHAN_FIELD_KRSUNICODE,
+    UNIHAN_INVALID_FIELD
+};
+
+const UnihanField UNIHAN_KVARIANT_FIELDS[]={
+    UNIHAN_FIELD_KCOMPATIBILITYVARIANT,
+    UNIHAN_FIELD_KSEMANTICVARIANT,
+    UNIHAN_FIELD_KSIMPLIFIEDVARIANT,
+    UNIHAN_FIELD_KSPECIALIZEDSEMANTICVARIANT, 
+    UNIHAN_FIELD_KTRADITIONALVARIANT,
+    UNIHAN_FIELD_KZVARIANT,
+    UNIHAN_INVALID_FIELD
+};
+
+
+const UnihanField UNIHAN_UCS4_FIELDS[]={
+    UNIHAN_FIELD_CODE,
+    UNIHAN_FIELD_KCOMPATIBILITYVARIANT,
+    UNIHAN_FIELD_KSEMANTICVARIANT,
+    UNIHAN_FIELD_KSIMPLIFIEDVARIANT,
+    UNIHAN_FIELD_KSPECIALIZEDSEMANTICVARIANT, 
+    UNIHAN_FIELD_KTRADITIONALVARIANT,
+    UNIHAN_FIELD_KZVARIANT,
+    UNIHAN_FIELD_VARIANT_CODE,
+    UNIHAN_INVALID_FIELD
+};
+
+const UnihanField UNIHAN_MANDARIN_FIELDS[]={
+    UNIHAN_FIELD_KMANDARIN,
+    UNIHAN_FIELD_PINYIN,
+    UNIHAN_FIELD_ZHUYIN,
+    UNIHAN_INVALID_FIELD
+};
+
+/**
+ * Fields that are functional dependent to code.
+ *
+ * 
+ */
+const UnihanField UNIHAN_SINGLETON_FIELDS[]={
+    UNIHAN_FIELD_CODE,
+    UNIHAN_FIELD_KACCOUNTINGNUMERIC,
+    UNIHAN_FIELD_KBIGFIVE,
+    UNIHAN_FIELD_KCCCII,
+    UNIHAN_FIELD_KCHEUNGBAUER,
+    UNIHAN_FIELD_KCNS1986,
+    UNIHAN_FIELD_KCNS1992,
+    UNIHAN_FIELD_KDEFINITION,
+    UNIHAN_FIELD_KFOURCORNERCODE,
+    UNIHAN_FIELD_KFREQUENCY,
+    UNIHAN_FIELD_KGB0,
+    UNIHAN_FIELD_KGB1,
+    UNIHAN_FIELD_KGB3,
+    UNIHAN_FIELD_KGB5,
+    UNIHAN_FIELD_KGB7,
+    UNIHAN_FIELD_KGB8,
+    UNIHAN_FIELD_KGRADELEVEL,
+    UNIHAN_FIELD_KHKSCS,
+    UNIHAN_FIELD_KHKGLYPH,
+    UNIHAN_FIELD_KIICORE,
+    UNIHAN_FIELD_KIBMJAPAN,
+    UNIHAN_FIELD_KJIS0213,
+    UNIHAN_FIELD_KJIS0,	
+    UNIHAN_FIELD_KJIS1,	
+    UNIHAN_FIELD_KKPS0,
+    UNIHAN_FIELD_KKPS1,
+    UNIHAN_FIELD_KKSC0,
+    UNIHAN_FIELD_KKSC1,
+    UNIHAN_FIELD_KMAINLANDTELEGRAPH,
+    UNIHAN_FIELD_KOTHERNUMERIC,
+    UNIHAN_FIELD_KPRIMARYNUMERIC,
+    UNIHAN_FIELD_KTAIWANTELEGRAPH,
+    UNIHAN_FIELD_KTOTALSTROKES,
+    UNIHAN_FIELD_KXEROX,
+    UNIHAN_FIELD_UTF8,
+    UNIHAN_INVALID_FIELD
+};
+
+UnihanIRG_SourceData UNIHAN_IRG_SOURCES[]={
+    {"G0","GB2312-80"},
+    {"G1","GB12345-90 with 58 Hong Kong and 92 Korean \"Idu\" characters"},
+    {"G3","GB7589-87 unsimplified forms"},
+    {"G5","GB7590-87 unsimplified forms"},
+    {"G7","General Purpose Hanzi List for Modern Chinese Language, and General List of Simplified Hanzi"},
+    {"GS","Singapore characters"},
+    {"G8","GB8685-88"},
+    {"GE","GB16500-95"},
+    {"G9","GB18030-2000"},
+    {"G4K","Siku Quanshu"},
+    {"GBK","Chinese Encyclopedia"},
+    {"GCH","The Ci Hai (PRC edition)"},
+    {"GCY","The Ci Yuan "},
+    {"GFZ","Founder Press System"},
+    {"GFZ_BK","Founder Press System"},
+    {"GHC","The Hanyu Da Cidian"},
+    {"GHZ","The Hanyu Da Zidian"},
+    {"GKX","The KangXi dictionary"},
+
+    {"H","Hong Kong Supplementary Character Set"},
+    {"J0","JIS X 0208:1990"},
+    {"J1","JIS X 0212:1990"},
+    {"JA","Unified Japanese IT Vendors Contemporary Ideographs, 1993"},
+    {"J3","JIS X 0213:2000"},
+    {"J3A","JIS X 0213:2004 level-3"},
+    {"J4","JIS X 0213:2000"},
+
+    {"KP0","KPS 9566-97"},
+    {"KP1","KPS 10721-2000"},
+
+    {"K0","KS C 5601-1987"},
+    {"K1","KS C 5657-1991"},
+    {"K2","PKS C 5700-1 1994"},
+    {"K3","PKS C 5700-2 1994"},
+    {"K4","PKS 5700-3:1998"},
+
+    {"T1","CNS 11643-1992, plane 1"},
+    {"T2","CNS 11643-1992, plane 2"},
+    {"T3","CNS 11643-1992, plane 3 (with some additional characters)"},
+    {"T4","CNS 11643-1992, plane 4"},
+    {"T5","CNS 11643-1992, plane 5"},
+    {"T6","CNS 11643-1992, plane 6"},
+    {"T7","CNS 11643-1992, plane 7"},
+    {"TF","CNS 11643-1992, plane 15"},
+
+    {"U","Other sources which were used by the Unicode Consortium"},
+
+    {"V0","TCVN 5773:1993"},
+    {"V1","TCVN 6056:1995"},
+    {"V2","VHN 01:1998"},
+    {"V3","VHN 02:1998"},
+    {NULL}
+};
+
+#define UNIHAN_NOINDEX_IRG_SOURCES_COUNT	9
+const UnihanIRG_SourceId UNIHAN_NOINDEX_IRG_SOURCES[UNIHAN_NOINDEX_IRG_SOURCES_COUNT]={
+    UNIHAN_SOURCE_G4K,
+    UNIHAN_SOURCE_GBK,
+    UNIHAN_SOURCE_GCH,
+    UNIHAN_SOURCE_GCY,
+    UNIHAN_SOURCE_GFZ,
+    UNIHAN_SOURCE_GFZ_BK,
+    UNIHAN_SOURCE_GHC,
+    UNIHAN_SOURCE_GHZ,
+    UNIHAN_SOURCE_GKX
+};
+
+const char UNIHAN_LOCALE_NAMES[UNIHAN_LOCALES_COUNT][6]={
+    "ja_JP",  
+    "ko_KP",  
+    "ko_KR",
+    "zh_CN",  
+    "zh_HK",  
+    "zh_SG",  
+    "zh_TW",  
+    "vi_VN",
+};
+
+const char *UNIHAN_RANGE_NAMES[UNIHAN_RANGES_COUNT]={
+    "CJK Unified Ideographs Extension A",
+    "CJK Unified Ideographs",
+    "CJK Unified Ideographs (4.1)",
+    "CJK Unified Ideographs (5.1)",
+    "CJK Compatibility Ideographs (a)",
+    "CJK Compatibility Ideographs (b)",
+    "CJK Compatibility Ideographs (4.1)",
+    "CJK Unified Ideographs Extension B",
+    "CJK Compatibility Supplement"
+};
+
 /*=========================================================================
  * Value parsing/toString functions
  */
@@ -460,14 +907,49 @@ const DatabaseFuncStru DATABASE_FUNCS[]={
     {"IRG_SOURCE_VALUE_CONCAT",2,irg_source_value_concat_Func,NULL,NULL},
     {"KANGXI_VALUE_CONCAT",3,kangXi_value_concat_Func,NULL,NULL},
     {"RADICAL_STROKE_VALUE_CONCAT",2,radicalStroke_value_concat_Func,NULL,NULL},
-    {"TO_SCALAR_STRING",1,to_scalar_string_Func,NULL,NULL},
+    {"TO_SCALAR_STRING",1,to_scalar_string_Func,NULL,NULL,},
     {"Z_VARIANT_VALUE_CONCAT",2,zVariant_value_concat_Func,NULL,NULL},
     {"PINYIN_CONVERT_ACCENT_FORMAT",3,pinYin_convert_accent_format_scalar_func,NULL,NULL},
     {"PINYIN_TO_ZHUYIN",2,pinYin_to_zhuYin_scalar_func,NULL,NULL},
     {"ZHUYIN_CONVERT_TONEMARK_FORMAT",2,zhuYin_convert_toneMark_format_scalar_func,NULL,NULL},
     {"ZHUYIN_TO_PINYIN",3,zhuYin_to_pinYin_scalar_func,NULL,NULL},
     {"SEMANTIC_VARIANT_VALUE_CONCAT",5,NULL,semantic_value_concat_step_Func,semantic_value_concat_finalized_Func},
-    {NULL,0,NULL,NULL,NULL}
+    {NULL,0,NULL,NULL,NULL},
 };
 
 
+/**
+ * Data structure of database supporting functions.
+ *
+ */
+typedef struct pseudoFieldStru{
+    UnihanField pseudoField;             //!< Pseudo fields.
+    const char* funcName;                //!< Associated Function name.
+} PseudoFieldStru;
+
+const PseudoFieldStru PSEUDO_FIELDS[]={
+    {UNIHAN_FIELD_KIRG_GSOURCE,  "IRG_SOURCE_VALUE_CONCAT"},
+    {UNIHAN_FIELD_KIRG_HSOURCE,  "IRG_SOURCE_VALUE_CONCAT"}, 
+    {UNIHAN_FIELD_KIRG_JSOURCE,   "IRG_SOURCE_VALUE_CONCAT"},
+    {UNIHAN_FIELD_KIRG_KPSOURCE,  "IRG_SOURCE_VALUE_CONCAT"},
+    {UNIHAN_FIELD_KIRG_KSOURCE,   "IRG_SOURCE_VALUE_CONCAT"},
+    {UNIHAN_FIELD_KIRG_TSOURCE,   "IRG_SOURCE_VALUE_CONCAT"},
+    {UNIHAN_FIELD_KIRG_USOURCE,   "IRG_SOURCE_VALUE_CONCAT"},
+    {UNIHAN_FIELD_KIRG_VSOURCE,   "IRG_SOURCE_VALUE_CONCAT"},
+    {UNIHAN_FIELD_KCOMPATIBILITYVARIANT, "SEMANTIC_VARIANT_VALUE_CONCAT"},
+    {UNIHAN_FIELD_KSEMANTICVARIANT, "SEMANTIC_VARIANT_VALUE_CONCAT"},
+    {UNIHAN_FIELD_KSIMPLIFIEDVARIANT, "SEMANTIC_VARIANT_VALUE_CONCAT"},
+    {UNIHAN_FIELD_KSPECIALIZEDSEMANTICVARIANT,  "SEMANTIC_VARIANT_VALUE_CONCAT"},
+    {UNIHAN_FIELD_KTRADITIONALVARIANT, "SEMANTIC_VARIANT_VALUE_CONCAT"},
+    {UNIHAN_FIELD_KZVARIANT,"Z_VARIANT_VALUE_CONCAT"},
+    {UNIHAN_FIELD_KRSADOBE_JAPAN1_6,"ADOBE_RADICAL_STROKE_VALUE_CONCAT"},
+    {UNIHAN_FIELD_KRSJAPANESE, "RADICAL_STROKE_VALUE_CONCAT"},
+    {UNIHAN_FIELD_KRSKANGXI, "RADICAL_STROKE_VALUE_CONCAT"},
+    {UNIHAN_FIELD_KRSKANWA, "RADICAL_STROKE_VALUE_CONCAT"},
+    {UNIHAN_FIELD_KRSKOREAN, "RADICAL_STROKE_VALUE_CONCAT"},
+    {UNIHAN_FIELD_KRSUNICODE, "RADICAL_STROKE_VALUE_CONCAT"},
+    {UNIHAN_FIELD_KHANYUPINLU, "HANYU_PINLU_VALUE_CONCAT"},
+    {UNIHAN_FIELD_KIRGKANGXI, "KANGXI_VALUE_CONCAT"},
+    {UNIHAN_FIELD_KKANGXI, "KANGXI_VALUE_CONCAT"},
+    {UNIHAN_INVALID_FIELD,   NULL},
+};
