@@ -22,6 +22,8 @@
 
 #include "allocate.h"
 
+
+
 void **array2D_new(size_t row_size, size_t col_size, size_t element_size, size_t pointer_size){
     void **arrayPtr;
     arrayPtr=(void**) g_malloc(row_size * pointer_size);

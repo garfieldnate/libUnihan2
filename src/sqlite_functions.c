@@ -44,7 +44,7 @@ StringList *sql_result_free(SQL_Result *sResult, gboolean freeResult){
 	stringList_free(sResult->resultList);
     }else{
 	resultList=sResult->resultList;
-	sResult->resultList=NULL;
+//	sResult->resultList=NULL;
     }
     if (sResult->errMsg)
 	sqlite3_free(sResult->errMsg);

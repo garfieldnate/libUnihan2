@@ -52,11 +52,24 @@ typedef struct {
 } StringList;
 
 /**
- * Allocate space for a StringList instance.
+ * Create a new StringList instance.
  *
  * @return the pointer to the allocated space.
  */
 StringList *stringList_new();
+
+/**
+ * Create a new StringList instance with given sizes.
+ *
+ * This function allocate space for a StringList with given size, thus avoid
+ * frequent reallocation.
+ *
+ * @param chunk_size Size in bytes required for string storage.
+ * @param element_count Number of strings.
+ * @param const_count Number of constant strings (strings without duplication).
+ * @return the pointer to the allocated space.
+ */
+StringList *stringList_sized_new(size_t chunk_size, size_t element_count, size_t const_count);
 
 /**
  * Clear all content of Stringlist.

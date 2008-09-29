@@ -40,8 +40,17 @@
 StringList *stringList_new(){
     StringList *sList=NEW_INSTANCE(StringList);
     sList->chunk=g_string_chunk_new(DEFAULT_G_STRING_CHUNK_SIZE);
+    sList->constArray=g_array_new(TRUE,TRUE,sizeof(guint));
     sList->ptrArray=g_ptr_array_new();
-    sList->constArray=g_array_new(FALSE,FALSE,sizeof(guint));
+    sList->len=0;
+    return sList;
+}
+
+StringList *stringList_sized_new(size_t chunk_size, size_t element_count, size_t const_count){
+    StringList *sList=NEW_INSTANCE(StringList);
+    sList->chunk=g_string_chunk_new(chunk_size);
+    sList->ptrArray=g_ptr_array_sized_new(element_count);
+    sList->constArray=g_array_sized_new(FALSE,FALSE,sizeof(guint),const_count);
     sList->len=0;
     return sList;
 }
@@ -108,8 +117,8 @@ guint stringList_insert_const(StringList *sList, const char *str){
 
 void stringList_free(StringList *sList){
     g_assert(sList);
-    g_array_free(sList->constArray,TRUE);
     g_ptr_array_free(sList->ptrArray,TRUE);
+    g_array_free(sList->constArray,TRUE);
     g_string_chunk_free(sList->chunk);
     g_free(sList);
 }

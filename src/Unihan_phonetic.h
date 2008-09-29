@@ -211,23 +211,44 @@ typedef enum{
  */
 PinYin *pinYin_new(const char *pinYin_str);
 
+
 /**
- * Strip the tone mark of PinYin and return the tone Id.
+ * Return the explicit-specified tone of PinYin.
  *
- * This function strips the tone mark of pinYin and return the id (0 to 5) of stripped tone mark.
- * The result will be stored in pinYin, so backup it with strdup() or g_strdup() to keep the original.
+ * This function finds and returns the explicit-specified tone of pinYin.
+ * Thus 0 will be returned if pinYin does not have any explicit-specified tone.
+ * 
+ * This function acts this way in order to accommodate 
+ * the SQL LIKE query such as <code>... WHERE kMandarin LIKE 'KE%'</code>.
  *
- * Note that 5  will be returned if pinYin does not have any tone mark,
- * as it usually implies that pinYin is in fifth tone.
+ * Sometimes, 5th tone mark is omitted, please convert the value 0 to 5
+ * if this is the case. 
  *
  * @param pinYin the pinYin instance to be stripped.
- * @return the stripped tone mark, from 1 to 5.
+ * @return the tone id from 1 to 5 if the tone is explicit-specified, 0
+ * otherwise.
+ * @see pinYin_strip_tone()
+ */
+guint pinYin_get_tone(const PinYin* pinYin);
+
+/**
+ * Strip the tone mark of PinYin and return explicit-specified the tone Id.
+ *
+ * This function strips the tone mark of pinYin,
+ * otherwise is similar to pinYin_get_tone().
+ *
+ * @param pinYin the pinYin instance to be stripped.
+ * @return the tone id from 1 to 5 if the tone is explicit-specified, 0
+ * @see pinYin_get_tone()
  */
 guint pinYin_strip_tone(PinYin* pinYin);
 
 /**
  * Add the tone mark to pinYin.
  *
+ * This function add tone mark to zhuYin, existing tone will be removed before adding new tone.
+ * If tone is 0, then existing tone will be removed, but no new tone will be added.
+ * 
  * The result will be stored in pinYin, so backup it with strdup() or g_strdup() to keep the original.
  *
  * @param pinYin the pinYin instance to be processed.
@@ -239,12 +260,17 @@ void pinYin_add_tone(PinYin* pinYin, guint tone, gboolean useTrailNumber);
 /**
  * Convert a PinYin to new accent formatReturn a newly allocated PinYin instance which contains the converted content.
  *
- * Note: use g_free to free the newly allocated instance.
+ * Unlike pinYin_get_tone() and pinYin_strip_tone() which only identify the explicit-specified tone,
+ * this function treats the unspecified tone as 5th tone,  unless SQL
+ * wild characters '%' and '_' are encountered. 
+ *
+ * Use g_free to free the newly allocated instance.
  *
  * @param pinYin the PinYin to be converted.
  * @param toFormat the PinYin accent mode to be converted to.
  * @param useTrailNumber TRUE trailing number is preferred, FALSE to use traditional tonemark.
  * @return a newly allocated converted PinYin instance.
+ * @see zhuYin_to_pinYin()
  */
 PinYin *pinYin_convert_accent_format(const PinYin *pinYin, PinYin_Accent_Format toFormat, gboolean useTrailNumber);
 
@@ -255,6 +281,7 @@ PinYin *pinYin_convert_accent_format(const PinYin *pinYin, PinYin_Accent_Format 
  * @param pinYin the PinYin to be converted.
  * @param toFormat the ZhuYin tone mark mode.
  * @return a newly located ZhuYin instance.
+ * @see zhuYin_convert_toneMark_format()
  */
 ZhuYin *pinYin_to_zhuYin(const PinYin* pinYin, ZhuYin_ToneMark_Format toFormat);
 
@@ -278,25 +305,45 @@ ZhuYin *pinYin_to_zhuYin(const PinYin* pinYin, ZhuYin_ToneMark_Format toFormat);
  */
 ZhuYin *zhuYin_new(const char *zhuYin_str);
 
+
 /**
- * Strip tone mark of ZhuYin.
+ * Return the explicit-specified tone of ZhuYin.
  *
- * This function strips the tone mark of zhuYin and return the id (1 to 5) of stripped tone mark.
- * Tone mark 1 will be returned if zhuYin does not have any tone mark.
- * The result will be stored in zhuYin, so backup it with g_strdup() to keep the original.
- *
- * Note that 1  will be returned if zhuYin does not have any tone mark,
- * as it usually implies that zhuYin is in first tone.
+ * This function finds and returns the explicit-specified tone of zhuYin.
+ * Thus 0 will be returned if zhuYin does not have any explicit-specified tone.
  * 
+ * This function acts this way in order to accommodate 
+ * the SQL LIKE query such as <code>... WHERE zhuYin LIKE 'ㄊㄧㄢ%'</code>.
  *
- * @param zhuYin the ZhuYin instance to be stripped.
- * @return the stripped tone mark, from 1 to 5.
+ * Sometimes, 1th tone mark is omitted, please convert the value 0 to 1
+ * if this is the case. 
+ *
+ * @param zhuYin the zhuYin instance to be stripped.
+ * @return the tone id from 1 to 5 if the tone is explicit-specified, 0
+ * otherwise.
+ * @see zhuYin_strip_tone()
+ */
+guint zhuYin_get_tone(const ZhuYin* zhuYin);
+
+
+/**
+ * Strip the tone mark of ZhuYin and return explicit-specified the tone Id.
+ *
+ * This function strips the tone mark of zhuYin,
+ * otherwise is similar to zhuYin_get_tone().
+ *
+ * @param zhuYin the zhuYin instance to be stripped.
+ * @return the tone id from 1 to 5 if the tone is explicit-specified, 0
+ * @see zhuYin_get_tone()
  */
 guint zhuYin_strip_tone(ZhuYin* zhuYin);
 
 /**
  * Add the tone mark to zhuYin.
  *
+ * This function add tone mark to zhuYin, existing tone will be removed before adding new tone.
+ * If tone is 0, then existing tone will be removed, but no new tone will be added.
+ * 
  * The result will be stored in zhuYin, so backup it with strdup() or g_strdup() to keep the original.
  *
  * @param zhuYin the zhuYin instance to be processed.
@@ -308,11 +355,16 @@ void zhuYin_add_tone(ZhuYin* zhuYin, guint tone, ZhuYin_ToneMark_Format toFormat
 /**
  * Convert zhuyin to another tone mark format.
  *
+ * Unlike zhuYin_get_tone() and zhuYin_strip_tone() which only identify the explicit-specified tone,
+ * this function treats the unspecified tone as 1st tone,  unless SQL
+ * wild characters '%' and '_' are encountered. 
+ *
  * Note: use g_free to free the newly allocated instance.
  *
  * @param zhuYin the ZhuYin to be converted.
  * @param toFormat the ZhuYin tone mark mode to be converted to.
  * @return the newly allocated ZhuYin instance that 
+ * @see pinYin_to_zhuYin()
  */
 ZhuYin *zhuYin_convert_toneMark_format(const ZhuYin* zhuYin, ZhuYin_ToneMark_Format toFormat);
 
@@ -323,6 +375,7 @@ ZhuYin *zhuYin_convert_toneMark_format(const ZhuYin* zhuYin, ZhuYin_ToneMark_For
  * @param toFormat the PinYin accent mode.
  * @param useTrailNumber TRUE trailing number is preferred, FALSE to use traditional tonemark.
  * @return a newly located PinYin instance.
+ * @see pinYin_convert_accent_format()
  */
 PinYin *zhuYin_to_pinYin(const ZhuYin* zhuYin, PinYin_Accent_Format toFormat, gboolean useTrailNumber);
 

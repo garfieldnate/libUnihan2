@@ -1,7 +1,7 @@
 Name:           libUnihan
 %define         libUnihan_ver_major 0
 %define         libUnihan_ver_minor 5
-Version:        %{libUnihan_ver_major}.%{libUnihan_ver_minor}.1
+Version:        %{libUnihan_ver_major}.%{libUnihan_ver_minor}.2
 Release:        0%{?dist}
 Group:          System Environment/Libraries
 License:        LGPLv2+

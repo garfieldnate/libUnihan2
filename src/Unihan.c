@@ -419,6 +419,8 @@ gboolean unihanField_is_pseudo(UnihanField field){
 	case UNIHAN_FIELD_KIRGKANGXI:
 	case UNIHAN_FIELD_KKANGXI:
 	    return TRUE;
+	case UNIHAN_FIELD_ZHUYIN:
+	    return TRUE;
 	default:
 	    return FALSE;
     }

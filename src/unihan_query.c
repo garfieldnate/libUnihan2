@@ -43,7 +43,7 @@
 #include "verboseMsg.h"
 
 #define USAGE_MSG "Usage: \n\
-    Field Query: unihan_query [-V] [-L] [-U] [-Z 0-3]<given_field> <given_value> <query_on_field>\n\
+    Field Query: unihan_query [-V] [-L] [-U] [-Z 0-3] <given_field> <given_value> <query_on_field>\n\
     SQL Query: unihan_query [-V] -S <SQL clause>\n"
 
 #define CMD_OPTIONS "\
@@ -54,7 +54,11 @@ Options: \n\
 \n Field query only options:\n\
 \t-L: like mode, specify the given_value is a pattern to be used in LIKE SQL search.\n\
 \t-U: output decimal Unicode code point as Unicode scalar string (U+xxxxx).\n\
-\t-Z [0-3]: Display ZhuYin, 0 for ALWAYS, 1 for ORIGINAL, 2 for INPUT_METHOD, 3 for NUMBERICAL.\n\
+\t-Z [0-3]: ZhuYin tone mark format, 0 for always shows tone, 1 for  original ZhuYin format,\n\
+\t          2 for input method ZhuYin format, 3 for showing as number.\n\
+\t-P [0-5]: PinYin accent format, 0 for always shows accent if applicable, 1 for  original PinYin accent format,\n\
+\t          2 for Unihan PinYin accent format,  3 for trailing (CCEDIT) format,\n\
+\t          4 for input method accent (LV,NV) format,   5 for non-accent (passport) format.\n\
 \n Show options:\n\
 \t-t, --show-tables: show all the tables in the default db.\n\
 \t-a, --show-all-fields: show all supported fields.\n\
@@ -78,9 +82,8 @@ char *givenValueStr=NULL;
 char *queryFieldStr=NULL;
 int verboseLevel=VERBOSE_MSG_ERROR;
 
-gboolean displayZhuYin=FALSE;
-guint toFormat=1;
-gboolean displayPinYin=FALSE;
+int zhuYin_toFormat=-1;
+int pinYin_toFormat=-1;
 gboolean useTrailingNumber=TRUE;
 
 
@@ -119,6 +122,7 @@ static void printTables(){
 
 static void printFields(char modeChar){
     int i,j,counter=0;
+    StringList *sList=NULL;
 
     switch(modeChar){
 	case 'a':
@@ -142,7 +146,7 @@ static void printFields(char modeChar){
 		fprintf(stderr, "Unable to open database " UNIHAN_DEFAULT_DB ".\n");
 		exit(ret);
 	    }
-	    StringList *sList=get_tableNames();
+	    sList=get_tableNames();
 	    UnihanTable table;
 	    UnihanField *fields;
 	    const char *tableName=NULL;
@@ -196,8 +200,7 @@ static gboolean is_valid_arguments(int argc, char **argv) {
 		verboseLevel++;
 		break;
 	    case 'Z':
-		displayZhuYin=TRUE;
-		toFormat=atoi(optarg);
+		zhuYin_toFormat=atoi(optarg);
 		break;
 	    case 't':
 		/* Print tables */
@@ -301,8 +304,8 @@ void printResult(SQL_Result *sResult){
 	    resultStr=stringList_index(sResult->resultList, i*colCount+j);
 	    queryField=unihanField_parse(stringList_index(sResult->fieldList, j));
 	    if (unihanField_is_mandarin(queryField)){
-		if (displayZhuYin){
-		    resultTmp=pinYin_to_zhuYin(resultStr,toFormat);
+		if (zhuYin_toFormat>=0){
+		    resultTmp=pinYin_to_zhuYin(resultStr,zhuYin_toFormat);
 		    resultStr=resultTmp;
 		}
 	    }

@@ -67,7 +67,7 @@ typedef struct {
  * Data structure of database supporting functions.
  *
  */
-typedef struct databaseFuncStru{
+typedef struct {
     const char* funcName;                //!< Name to be referred in SQL.
     int argc;				 //!< Number of arguments.
     void (*func)(sqlite3_context *context, int argc, sqlite3_value **argv); //!< Scalar function. Can be NULL.
