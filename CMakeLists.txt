@@ -146,11 +146,11 @@ SET(RPM_IGNORE_FILES "/SOURCES/" "/SRPMS/" "/RPMS/" "/BUILD/")
 SET(PRJ_COMMON_IGNORE_FILES ${COMMON_IGNORE_FILES} ${RPM_IGNORE_FILES}
     "/doc/"  "/www/" ".vis$"
     ".db$" "test/check_phonetic$" "test/check_toneMark$"
-    "test/unihan_field_validation$")
+    "test/unihan_field_validation$" "Doxyfile$")
 
 SET(CPACK_SOURCE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/bin/" ".db" "-db")
 SET(CPACK_PACKAGE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/src/" "/test/"
-    ".spec$")
+    ".spec$" "Doxyfile.in$")
 SET(CPACK_SOURCE_GENERATOR "TGZ")
 
 
@@ -159,9 +159,9 @@ INCLUDE(CPack)
 ### Document generation
 FIND_PACKAGE(Doxygen)
 IF (EXISTS ${DOXYGEN})
-  ADD_CUSTOM_COMMAND(OUTPUT Doxyfile
-      COMMAND "/bin/tr Doxyfile.in" Doxyfile
-      MAIN_DEPENDENCY Doxyfile.in)
+  ADD_CUSTOM_TARGET(Doxyfile
+      COMMAND sed "s/_PRJ_VER/${PRJ_VER}/" Doxyfile.in > Doxyfile
+  )
   ADD_CUSTOM_TARGET(doxygen    
     COMMAND "${DOXYGEN}" "Doxyfile"
     DEPENDS Doxyfile
