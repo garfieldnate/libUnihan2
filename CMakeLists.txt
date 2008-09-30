@@ -60,6 +60,9 @@ INSTALL(FILES ${MAIN_DOCS}
 #    DEPENDS ${DB_NAME}.${DB_VER})
 # COMMAND(ln -s  ${DB_NAME}.${DB_VER} ${DB_NAME})
 
+###==================================================================
+# RPM targets
+#
 
 ADD_CUSTOM_TARGET(srpm
     COMMAND make package_source
@@ -156,8 +159,12 @@ INCLUDE(CPack)
 ### Document generation
 FIND_PACKAGE(Doxygen)
 IF (EXISTS ${DOXYGEN})
+  ADD_CUSTOM_COMMAND(OUTPUT Doxyfile
+      COMMAND "/bin/tr Doxyfile.in" Doxyfile
+      MAIN_DEPENDENCY Doxyfile.in)
   ADD_CUSTOM_TARGET(doxygen    
     COMMAND "${DOXYGEN}" "Doxyfile"
+    DEPENDS Doxyfile
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
   INSTALL(DIRECTORY doc/html
     DESTINATION "${docdir}/${PROJECT_NAME}-${PRJ_VER}"

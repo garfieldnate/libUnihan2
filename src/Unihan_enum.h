@@ -203,7 +203,6 @@ typedef enum{
  * values for the return value of unihanField_get_table().
  * These are:
  * <ol>
- *   <li><code>UNIHAN_NOT_A_TABLE</code>: Indicate the given field is not from a table..</li>
  *   <li><code>UNIHAN_INVALID_TABLE</code>: Indicate the end of an Unihan table array or invalid table.</li>
  *   <li><code>UNIHAN_AMBIGUOUS_TABLE</code>: Indicate the field appears in multiple tables.</li>
  * </ol>

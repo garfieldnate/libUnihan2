@@ -1,6 +1,7 @@
 - New Features:
   + New pseudo field 'ZhuYin'.
   + allocate.h is in API.
+  + New unihan_query options: -O -P -T -Z -z
 - Fixed:
   + Behavior of unihan_query -U is now corrected.
   + Descriptions about pseudo field are corrected.

@@ -43,7 +43,7 @@
 #include "verboseMsg.h"
 
 #define USAGE_MSG "Usage: \n\
-    Field Query: unihan_query [-V] [-L] [-U] [-Z 0-3] <given_field> <given_value> <query_on_field>\n\
+    Field Query: unihan_query [-V] [-LUTz] [-Z 0-3] [-P 0-5] <given_field> <given_value> <query_on_field>\n\
     SQL Query: unihan_query [-V] -S <SQL clause>\n"
 
 #define CMD_OPTIONS "\
@@ -51,15 +51,22 @@ Options: \n\
 \t-h: show this help.\n\
 \t-V: increase the verbose level.\n\
 \t-S: pass SQL clause.\n\
-\n Field query only options:\n\
-\t-L: like mode, specify the given_value is a pattern to be used in LIKE SQL search.\n\
-\t-U: output decimal Unicode code point as Unicode scalar string (U+xxxxx).\n\
-\t-Z [0-3]: ZhuYin tone mark format, 0 for always shows tone, 1 for  original ZhuYin format,\n\
-\t          2 for input method ZhuYin format, 3 for showing as number.\n\
-\t-P [0-5]: PinYin accent format, 0 for always shows accent if applicable, 1 for  original PinYin accent format,\n\
-\t          2 for Unihan PinYin accent format,  3 for trailing (CCEDIT) format,\n\
-\t          4 for input method accent (LV,NV) format,   5 for non-accent (passport) format.\n\
-\n Show options:\n\
+\n\
+ Field query only options:\n\
+\t-O: Show given field in result as well.\n\
+\t-L: Like mode, specify the given_value is a pattern to be used in LIKE SQL search.\n\
+\t-U: Unicode code as Unicode scalar string (U+xxxxx).\n\
+\t-P [0-5]: PinYin accent format, 0 for always shows accent if applicable,\n\
+\t          1 for  original PinYin accent format, 2 for Unihan PinYin accent format, \n\
+\t	    3 for trailing (CCEDIT) format, 4 for input method accent (LV,NV) format,\n\
+\t          5 for non-accent (passport) format. Default is 2. \n\
+\t-T: Use accent-like tone mark to display tone\n\
+\t-Z [0-3]: ZhuYin tone mark format, 0 for always shows tone, \n\
+\t          1 for  original ZhuYin format,  2 for input method ZhuYin format,\n\
+\t          3 for showing as number.  Default is 1. \n\
+\t-z: Force ZhuYin display. \n\
+\n\
+ Show options:\n\
 \t-t, --show-tables: show all the tables in the default db.\n\
 \t-a, --show-all-fields: show all supported fields.\n\
 \t-p, --show-pseudo-fields: show all pseudo fields.\n\
@@ -75,15 +82,15 @@ static struct option longOptions[]={
     {0,0,0,0}
 };
 
-UnihanQueryOption qOption=UNIHAN_QUERY_OPTION_DEFAULT;
+UnihanQueryOption qOption=0;
 char *cmdSqlClause=NULL;
 char *givenFieldStr=NULL;
 char *givenValueStr=NULL;
 char *queryFieldStr=NULL;
 int verboseLevel=VERBOSE_MSG_ERROR;
 
-int zhuYin_toFormat=-1;
-int pinYin_toFormat=-1;
+guint pinYin_toFormat=PINYIN_ACCENT_UNIHAN;
+guint zhuYin_toFormat=ZHUYIN_TONEMARK_ORIGINAL;
 gboolean useTrailingNumber=TRUE;
 
 
@@ -182,7 +189,7 @@ static gboolean is_valid_arguments(int argc, char **argv) {
     int opt;
     int option_index=0;
 
-    while ((opt = getopt_long(argc, argv, "tarpfhUVLS:Z:",longOptions,&option_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "tarpfhUVLS:OP:TZ:z",longOptions,&option_index)) != -1) {
 	switch (opt) {
 	    case 'h':
 		printUsage();
@@ -199,8 +206,28 @@ static gboolean is_valid_arguments(int argc, char **argv) {
 	    case 'V':
 		verboseLevel++;
 		break;
+	    case 'O':
+		qOption |= UNIHAN_QUERY_OPTION_SHOW_GIVEN_FIELD;
+		break;
+	    case 'P':
+		pinYin_toFormat=atoi(optarg);
+		if (pinYin_toFormat<0 || pinYin_toFormat>5){
+		    printf(" Invalid PinYin format number, should be between 0 to 5.\n");
+		    exit(-1);
+		}
+		break;
+	    case 'T':
+		qOption |= UNIHAN_QUERY_OPTION_PINYIN_TONE_ACCENT;
+		break;
 	    case 'Z':
 		zhuYin_toFormat=atoi(optarg);
+		if (zhuYin_toFormat<0 || zhuYin_toFormat>3){
+		    printf(" Invalid ZhuYin format number, should be between 0 to 3.\n");
+		    exit(-1);
+		}
+		break;
+	    case 'z':
+		qOption |= UNIHAN_QUERY_OPTION_ZHUYIN_FORCE_DISPLAY;
 		break;
 	    case 't':
 		/* Print tables */
@@ -241,6 +268,8 @@ static gboolean is_valid_arguments(int argc, char **argv) {
 	givenFieldStr=argv[optind];
 	givenValueStr=argv[optind+1];
 	queryFieldStr=argv[optind+2];
+	UNIHAN_QUERY_OPTION_SET_PINYIN_FORMAT(qOption,pinYin_toFormat);
+	UNIHAN_QUERY_OPTION_SET_ZHUYIN_FORMAT(qOption,zhuYin_toFormat);
     }else{
 	/* SQL mode */
 	if (argc-optind!=0){
@@ -275,7 +304,7 @@ void printResult(SQL_Result *sResult){
     int i,j;
     int colCount=sResult->colCount;
     if (colCount<=0){
-	printf("No matched results, colCount=%d\n",colCount);
+	printf("No matched results!\n");
 	return;
     }
     int rowCount=sResult->resultList->len/colCount;
@@ -285,9 +314,6 @@ void printResult(SQL_Result *sResult){
     }
 
     const char *resultStr=NULL;
-    char *resultTmp=NULL;
-    UnihanField queryField;
-
 
     for(j=0;j<colCount;j++){
 	if (j>0){
@@ -302,18 +328,7 @@ void printResult(SQL_Result *sResult){
 		printf(" |");
 	    }
 	    resultStr=stringList_index(sResult->resultList, i*colCount+j);
-	    queryField=unihanField_parse(stringList_index(sResult->fieldList, j));
-	    if (unihanField_is_mandarin(queryField)){
-		if (zhuYin_toFormat>=0){
-		    resultTmp=pinYin_to_zhuYin(resultStr,zhuYin_toFormat);
-		    resultStr=resultTmp;
-		}
-	    }
 	    printf("%s",resultStr);
-	    if (resultTmp){
-		resultStr=NULL;
-		g_free(resultTmp);
-	    }
 	}
 	printf("\n");
     }

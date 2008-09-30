@@ -6,8 +6,11 @@
  * such as conversion between HanYu pinyin conversion C functions, and
  * corresponding SQL scalar functions.
  *
- * Note that PinYin is represented as uppercase, which is same with kMandarin 
+ * PinYin is displayed and stored as uppercase, which is same with kMandarin 
  * in Unihan.
+ *
+ * Note that this header is included in Unihan.h, 
+ * so no need to includes it explicitly if Unihan.h is also included.
  */
 
 /*

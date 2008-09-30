@@ -143,8 +143,8 @@ const char *UNIHAN_FIELD_NAMES[UNIHAN_FIELDS_COUNT+1]={
 
     "freqRank",
 
-    "pinyin",
-    "pinyin_freq",
+    "pinYin",
+    "pinYin_freq",
 
     "zVariantSource",
 
@@ -541,32 +541,32 @@ static void kangXiRec_to_string(char* const buf, KangXiRec *rec){
 }
 
 /*-----------------------------
- * Parse pinyin freq (PinLu)
+ * Parse pinYin freq (PinLu)
  */
 
 typedef enum{
     UNIHAN_PINYIN_FREQ_STATE_PINYIN,
     UNIHAN_PINYIN_FREQ_STATE_FREQ,
     UNIHAN_PINYIN_FREQ_STATE_SEPARATER
-} UnihanPinyinFreqState;
+} UnihanPinYinFreqState;
 
 
 #define STRING_BUFFER_PINYIN_SIZE 8
 #define STRING_BUFFER_FREQ_SIZE 6
 #define STRING_BUFFER_PINYIN_FREQ_SIZE STRING_BUFFER_PINYIN_SIZE+ STRING_BUFFER_FREQ_SIZE +3
 typedef struct {
-    char pinyin[7];
+    char pinYin[7];
     int freq;
-} PinyinFreqRec;
+} PinYinFreqRec;
 
-static GArray *pinyinFreqRec_parse(const char *composite_value){
-    GArray *gArray=g_array_new(FALSE,TRUE,sizeof(PinyinFreqRec));
+static GArray *pinYinFreqRec_parse(const char *composite_value){
+    GArray *gArray=g_array_new(FALSE,TRUE,sizeof(PinYinFreqRec));
     char **subFieldArray=g_strsplit_set(composite_value," ()",-1);
     int i;
     int currIndex=0;
     int freq;
-    PinyinFreqRec *currRec=NULL;
-    UnihanPinyinFreqState state=UNIHAN_PINYIN_FREQ_STATE_PINYIN;
+    PinYinFreqRec *currRec=NULL;
+    UnihanPinYinFreqState state=UNIHAN_PINYIN_FREQ_STATE_PINYIN;
 
     for(i=0;subFieldArray[i]!=NULL;i++){
 	switch(state){
@@ -577,8 +577,8 @@ static GArray *pinyinFreqRec_parse(const char *composite_value){
 		g_assert(i>0);
 		currIndex=gArray->len;
 		g_array_set_size(gArray,currIndex+1);
-		currRec=&g_array_index(gArray,PinyinFreqRec,currIndex);
-		g_strlcpy(currRec->pinyin,subFieldArray[i-1],STRING_BUFFER_PINYIN_SIZE);
+		currRec=&g_array_index(gArray,PinYinFreqRec,currIndex);
+		g_strlcpy(currRec->pinYin,subFieldArray[i-1],STRING_BUFFER_PINYIN_SIZE);
 		freq=atoi(subFieldArray[i]);
 		g_assert(freq);
 		currRec->freq=freq;
@@ -593,17 +593,29 @@ static GArray *pinyinFreqRec_parse(const char *composite_value){
     return gArray;
 }
 
-static void pinyinFreqRec_parse_SQLite_value
-(PinyinFreqRec *rec, sqlite3_context *context, int argc, sqlite3_value **argv){
-    g_assert(argc==2);
+static void pinYinFreqRec_parse_SQLite_value
+(PinYinFreqRec *rec, sqlite3_context *context, int argc, sqlite3_value **argv){
+    g_assert(argc==3);
     if (sqlite3_value_type(argv[0])==SQLITE_TEXT){
-	sqlite_value_signed_text_buffer(rec->pinyin,argv[0]);
+	sqlite_value_signed_text_buffer(rec->pinYin,argv[0]);
     }
     rec->freq=sqlite3_value_int(argv[1]);
 }
 
-static void pinyinFreqRec_to_string(char* const buf, PinyinFreqRec *rec){
-    g_snprintf(buf,STRING_BUFFER_PINYIN_FREQ_SIZE,"%s(%d)",rec->pinyin,rec->freq);
+static void pinYinFreqRec_to_string(char* const buf, PinYinFreqRec *rec, UnihanQueryOption qOption){
+    PinYin *pinYin=NULL;
+    ZhuYin *zhuYin=NULL;
+
+    if (qOption & UNIHAN_QUERY_OPTION_ZHUYIN_FORCE_DISPLAY){
+	zhuYin=pinYin_to_zhuYin(rec->pinYin,UNIHAN_QUERY_OPTION_GET_ZHUYIN_FORMAT(qOption));
+	g_snprintf(buf,STRING_BUFFER_PINYIN_FREQ_SIZE,"%s(%d)",zhuYin,rec->freq);
+	g_free(zhuYin);
+    }else{
+	pinYin=pinYin_convert_accent_format(rec->pinYin,UNIHAN_QUERY_OPTION_GET_PINYIN_FORMAT(qOption),
+		((qOption & UNIHAN_QUERY_OPTION_PINYIN_TONE_ACCENT) ? 0: 1));
+	g_snprintf(buf,STRING_BUFFER_PINYIN_FREQ_SIZE,"%s(%d)",pinYin,rec->freq);
+	g_free(pinYin);
+    }
 }
 
 
@@ -728,11 +740,15 @@ static void adobeRadicalStroke_value_concat_Func(sqlite3_context *context, int a
 }
 
 static void hanYu_pinLu_value_concat_Func(sqlite3_context *context, int argc, sqlite3_value **argv){
-    PinyinFreqRec rec;
+    PinYinFreqRec rec;
+    g_assert(argc==3);
     char *pStr=NEW_ARRAY_INSTANCE(STRING_BUFFER_PINYIN_FREQ_SIZE,char);
-    pinyinFreqRec_parse_SQLite_value(&rec, context, argc, argv);
-
-    pinyinFreqRec_to_string(pStr,&rec);
+    pinYinFreqRec_parse_SQLite_value(&rec, context, argc, argv);
+    UnihanQueryOption qOption=UNIHAN_QUERY_OPTION_DEFAULT;
+    if (sqlite3_value_type(argv[2])==SQLITE_INTEGER){
+	qOption= sqlite3_value_int64(argv[2]); 
+    }
+    pinYinFreqRec_to_string(pStr,&rec,qOption);
     sqlite3_result_text(context,pStr,-1,g_free);
 }
 
@@ -903,7 +919,7 @@ static void semantic_value_concat_finalized_Func(sqlite3_context *context){
 
 const DatabaseFuncStru DATABASE_FUNCS[]={
     {"ADOBE_RADICAL_STROKE_VALUE_CONCAT",5,adobeRadicalStroke_value_concat_Func,NULL,NULL},
-    {"HANYU_PINLU_VALUE_CONCAT",2,hanYu_pinLu_value_concat_Func,NULL,NULL},
+    {"HANYU_PINLU_VALUE_CONCAT",3,hanYu_pinLu_value_concat_Func,NULL,NULL},
     {"IRG_SOURCE_VALUE_CONCAT",2,irg_source_value_concat_Func,NULL,NULL},
     {"KANGXI_VALUE_CONCAT",3,kangXi_value_concat_Func,NULL,NULL},
     {"RADICAL_STROKE_VALUE_CONCAT",2,radicalStroke_value_concat_Func,NULL,NULL},
@@ -924,7 +940,7 @@ const DatabaseFuncStru DATABASE_FUNCS[]={
  */
 typedef struct pseudoFieldStru{
     UnihanField pseudoField;             //!< Pseudo fields.
-    const char* funcName;                //!< Associated Function name.
+    const char *funcName;                //!< Associated Function name.
 } PseudoFieldStru;
 
 const PseudoFieldStru PSEUDO_FIELDS[]={
@@ -948,5 +964,6 @@ const PseudoFieldStru PSEUDO_FIELDS[]={
     {UNIHAN_FIELD_KHANYUPINLU, "HANYU_PINLU_VALUE_CONCAT"},
     {UNIHAN_FIELD_KIRGKANGXI, "KANGXI_VALUE_CONCAT"},
     {UNIHAN_FIELD_KKANGXI, "KANGXI_VALUE_CONCAT"},
-    {UNIHAN_INVALID_FIELD,   NULL},
+    {UNIHAN_FIELD_ZHUYIN,  "PINYIN_ZHUYIN"},
+    {UNIHAN_INVALID_FIELD,  NULL},
 };

@@ -29,6 +29,7 @@
 #ifndef UNIHAN_H_
 #define UNIHAN_H_
 #include "Unihan_enum.h"
+#include "Unihan_phonetic.h"
 #include "sqlite_functions.h"
 #include "str_functions.h"
 
@@ -87,15 +88,57 @@ extern const DatabaseFuncStru DATABASE_FUNCS[];
 /*@{*/
 /**
  * Unihan query options.
- * Unihan query options provides additional control over query processing, and output format.
+ * Unihan query options provides additional control of query processing,
+ * such as SQL like query and output format.
  *
  */
 typedef guint UnihanQueryOption;
 
-#define UNIHAN_QUERY_OPTION_DEFAULT		0x00	//!< Default options.
-#define UNIHAN_QUERY_OPTION_LIKE		0x01   	//!< Using SQL LIKE in WHERE expression; FALSE for use '=' instead.
-#define UNIHAN_QUERY_OPTION_SCALAR_STRING	0x02	//!< TRUE to show code point as string "U+xxxx"; FALSE for show code point as integer.
+#define UNIHAN_QUERY_OPTION_LIKE		1   	//!< Using SQL LIKE in WHERE expression.
+#define UNIHAN_QUERY_OPTION_SCALAR_STRING	1 << 1	//!< Show code point as string "U+xxxx".
+#define UNIHAN_QUERY_OPTION_SHOW_GIVEN_FIELD    1 << 2  //!< Show the given field in results.
+#define UNIHAN_QUERY_OPTION_PINYIN_TONE_ACCENT  1 << 3  //!< Use accent mark for pinyin tone.
+#define UNIHAN_QUERY_OPTION_PINYIN_FORMAT_MASK  7 << 4  //!< Mask for pinyin format.
+#define UNIHAN_QUERY_OPTION_ZHUYIN_FORCE_DISPLAY  1 << 7  //!< Force ZhuYin display.
+#define UNIHAN_QUERY_OPTION_ZHUYIN_FORMAT_MASK  7 << 8  //!< Mask for zhuyin format.
+
+#define UNIHAN_QUERY_OPTION_DEFAULT		(PINYIN_ACCENT_UNIHAN << 4) | (ZHUYIN_TONEMARK_ORIGINAL << 8)	
+   //!< Default options, PinYin format is Unihan; and ZhuYin format is Original.
+
+/**
+ * Get PinYin format from UnihanQueryOption.
+ *
+ * @param options A UnihanQueryOption.
+ * @return PinYin_Accent_Format
+ */
+#define UNIHAN_QUERY_OPTION_GET_PINYIN_FORMAT(options) (options & UNIHAN_QUERY_OPTION_PINYIN_FORMAT_MASK) >> 4
+
+/**
+ * Set PinYin format to UnihanQueryOption.
+ *
+ * @param options A UnihanQueryOption.
+ * @param format PinYin_Accent_Format.
+ */
+#define UNIHAN_QUERY_OPTION_SET_PINYIN_FORMAT(options,format) options |= format << 4
+
+/**
+ * Get ZhuYin format from UnihanQueryOption.
+ *
+ * @param options A UnihanQueryOption.
+ * @return ZhuYin_ToneMark_Format
+ */
+#define UNIHAN_QUERY_OPTION_GET_ZHUYIN_FORMAT(options) (options & UNIHAN_QUERY_OPTION_ZHUYIN_FORMAT_MASK) >> 8
+
+/**
+ * Set ZhuYin format to UnihanQueryOption.
+ *
+ * @param options A UnihanQueryOption.
+ * @param format ZhuYin_Accent_Format.
+ */
+#define UNIHAN_QUERY_OPTION_SET_ZHUYIN_FORMAT(options,format) options |= format << 8
+
 /*@}*/
+
 
 /**
  * Find all matched results, given a field and its value.
