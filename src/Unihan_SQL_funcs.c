@@ -43,8 +43,8 @@ const char *UNIHAN_FIELD_NAMES[UNIHAN_FIELDS_COUNT+1]={
     "kDaeJaweon",
     "kDefinition",
     "kEACC",
-    "kFennIndex",
     "kFenn",
+    "kFennIndex",
     "kFourCornerCode",
     "kFrequency",
     "kGB0",
@@ -168,8 +168,8 @@ const char *UNIHAN_TABLE_NAMES[]={
     "kDaeJaweonTable",
     "kDefinitionTable",
     "kEACCTable",
-    "kFennIndexTable",
     "kFennTable",
+    "kFennIndexTable",
     "kFourCornerCodeTable",
     "kFrequencyTable",
     "kGB0Table",
@@ -329,6 +329,17 @@ const UnihanField UNIHAN_MANDARIN_FIELDS[]={
     UNIHAN_FIELD_KMANDARIN,
     UNIHAN_FIELD_PINYIN,
     UNIHAN_FIELD_ZHUYIN,
+    UNIHAN_INVALID_FIELD
+};
+
+const UnihanField UNIHAN_CASE_NO_CHANGE_FIELDS[]={
+    UNIHAN_FIELD_KDEFINITION,
+    UNIHAN_INVALID_FIELD
+};
+
+
+const UnihanField UNIHAN_LOWERCASE_FIELDS[]={
+    UNIHAN_FIELD_KCANTONESE,
     UNIHAN_INVALID_FIELD
 };
 
@@ -811,6 +822,21 @@ static void radicalStroke_value_concat_Func(sqlite3_context *context, int argc, 
     sqlite3_result_text(context,pStr,-1,g_free);
 }
 
+static void scalar_string_parse_Func(sqlite3_context *context, int argc, sqlite3_value **argv){
+    g_assert(argc==1);
+    char *pStr=NEW_ARRAY_INSTANCE(20,char);
+    char *value=sqlite_value_signed_text(argv[0]);
+    if (value && value[0]=='U'){
+	gunichar uniChar=unihanChar_parse(value);
+	g_snprintf(pStr,20,"%u",uniChar);
+    }else{
+	g_strlcpy(pStr,value,20);
+    }
+    g_free(value);
+    sqlite3_result_text(context,pStr,-1,g_free);
+}
+
+
 static void to_scalar_string_Func(sqlite3_context *context, int argc, sqlite3_value **argv){
     g_assert(argc==1);
     gunichar code= (sqlite3_value_type(argv[0])==SQLITE_INTEGER) ? sqlite3_value_int64(argv[0]): 0;
@@ -914,7 +940,7 @@ static void semantic_value_concat_finalized_Func(sqlite3_context *context){
 
 
 /*=========================================================================
- * Sqlite aggregation custom functions
+ * Sqlite database functions
  */
 
 const DatabaseFuncStru DATABASE_FUNCS[]={
@@ -923,6 +949,7 @@ const DatabaseFuncStru DATABASE_FUNCS[]={
     {"IRG_SOURCE_VALUE_CONCAT",2,irg_source_value_concat_Func,NULL,NULL},
     {"KANGXI_VALUE_CONCAT",3,kangXi_value_concat_Func,NULL,NULL},
     {"RADICAL_STROKE_VALUE_CONCAT",2,radicalStroke_value_concat_Func,NULL,NULL},
+    {"SCALAR_STRING_PARSE",1, scalar_string_parse_Func,NULL,NULL},
     {"TO_SCALAR_STRING",1,to_scalar_string_Func,NULL,NULL,},
     {"Z_VARIANT_VALUE_CONCAT",2,zVariant_value_concat_Func,NULL,NULL},
     {"PINYIN_CONVERT_ACCENT_FORMAT",3,pinYin_convert_accent_format_scalar_func,NULL,NULL},

@@ -61,7 +61,7 @@
 typedef struct {
     StringList *fieldList;
     StringList *resultList;
-    int colCount;		//!< column count.
+    int colCount;		//!< Column count.
     int execResult;		//!< sqlite3_exec result code. Initial value is -1, which means the result is not ready.
     char *errMsg;		//!< Eroor messages from sqlite3_exec().
 } SQL_Result;

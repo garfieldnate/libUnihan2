@@ -162,7 +162,7 @@ typedef guint UnihanQueryOption;
  * @see ::UnihanQueryOption
  * @see <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite result codes</a>
  */
-SQL_Result *unihan_find_all_matched(UnihanField givenField, char *givenValue, 
+SQL_Result *unihan_find_all_matched(UnihanField givenField, const char *givenValue, 
 	UnihanField queryField, UnihanQueryOption qOption);
 
 /**
@@ -181,7 +181,7 @@ SQL_Result *unihan_find_all_matched(UnihanField givenField, char *givenValue,
  *
  * @see unihan_find_all_matched()
  */
-char* unihan_find_firstMatched(UnihanField givenField, char* givenValue, 
+char* unihan_find_firstMatched(UnihanField givenField, const char* givenValue, 
 	UnihanField queryField, UnihanQueryOption qOption );
 
 /**
@@ -379,7 +379,7 @@ SQL_Result *unihanDb_get_tableNames();
 int unihanDb_open(const char *filename, int flags);
 
 /**
- * Open the system default Unihan db.
+ * Open the system default Unihan Db as read-only.
  *
  * @return SQLite result code, SQLITE_OK (value 0) if the query executed successfully, 
  *         while non-zero value indicate error. 
@@ -497,6 +497,41 @@ gboolean unihanField_is_indexed(UnihanField field);
 gboolean unihanField_is_integer(UnihanField field);
 
 /**
+ * Whether the case of value should be kept.
+ *
+ * Usually, the Unihan tag values are stored as uppercase, such as
+ * \c UNIHAN_FIELD_KMANDARIN, \c UNIHAN_FIELD_PINYIN.
+ *
+ * However, there are exceptions such as field \c UNIHAN_FIELD_KCANTONESE 
+ * which always stores as lowercase; 
+ * while field \c UNIHAN_FIELD_KDEFINITION the other hand, may have uppercase
+ * and lowercase characters.
+ *
+ * This function returns \c TRUE if the case of field value should not be changed,
+ * as with \c UNIHAN_FIELD_KDEFINITION; \c FALSE otherwise.
+ *
+ * @param field the UnihanField
+ * @return TRUE if the case of field value should not be changed; FALSE otherwise.
+ */
+gboolean unihanField_is_case_no_change(UnihanField field);
+
+/**
+ * Whether the value in the field is stored as lowercase.
+ *
+ * Usually, the Unihan tag values are stored as uppercase, such as
+ * \c UNIHAN_FIELD_KMANDARIN, \c UNIHAN_FIELD_PINYIN.
+ *
+ * However, there are exceptions such as field \c UNIHAN_FIELD_KCANTONESE 
+ * which always stores as lowercase; 
+ * while field \c UNIHAN_FIELD_KDEFINITIONon the other hand, may have uppercase
+ * and lowercase characters.
+ *
+ * @param field the UnihanField
+ * @return TRUE if the value of field is stored as lowercase; FALSE otherwise.
+ */
+gboolean unihanField_is_lowercase(UnihanField field);
+
+/**
  * Whether the field contains mandarin pronunciation.
  *
  * @param field the UnihanField
@@ -508,7 +543,7 @@ gboolean unihanField_is_mandarin(UnihanField field);
  * Whether the field is a pseudo field.
  *
  * A pseudo field is a field whose value is not derived directly from table but database functions.
- * Field zhuyin, for example, is not in database but derived from function <code>PINYIN_TO_ZHUYIN()</code>.
+ * Field zhuyin, for example, is not in database but derived from function PINYIN_TO_ZHUYIN().
  * It is deemed to be a short cut for database functions.
  *
  *
@@ -568,7 +603,7 @@ const char* unihanField_to_string(UnihanField field);
 /**
  * Whether the SourceId has mapping.
  *
- * Some IRG sources (such as UNIHAN_SOURCE_GKX, UNIHAN_SOURCE_G4K) does not 
+ * Some IRG sources (such as \c UNIHAN_SOURCE_GKX, \c UNIHAN_SOURCE_G4K) does not 
  * have mapping index (inner code). This function tells whether a 
  * Source ID has mapping.
  *
@@ -597,7 +632,8 @@ UnihanIRG_SourceId unihanIRG_SourceId_parse(const char *sourceShortName);
 /**
  * Parse the string argument as Unihan IRG Source Rec.
  *
- * Note: Use unihanIRG_SourceRec_free() to free the return rec.
+ * @Note {Use unihanIRG_SourceRec_free() to free the generated rec.}
+ *
  * @param field 	the UnihanField 
  * @param value		the string to be parsed.
  * @return 		the UnihanIRG_SourceRec.

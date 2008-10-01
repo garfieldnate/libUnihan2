@@ -2,13 +2,18 @@
   + New pseudo field 'ZhuYin'.
   + allocate.h is in API.
   + New unihan_query options: -O -P -T -Z -z
+  + Scalar String (U+XXXXX) is now be able to use in the input of Field query.
+  + New functions: unihanField_is_keepcase() and unihanField_is_lowercase()
 - Fixed:
   + Behavior of unihan_query -U is now corrected.
   + Descriptions about pseudo field are corrected.
 - Changed:
+  + In document, "simply query" is replaced by "field query".
   + unihanField_is_scalar_value() is renamed as unihanField_is_ucs4().
   + pinyin_strip_tone() and zhuYin_strip_tone()  now return 0 if tone of
     pinyin/zhuyin is not specified.
+  + Doxyfile is renamed as Doxygen.in, so no need to manually modified the
+  version number.
 
 
 * Tue Sep 23 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.5.1-0

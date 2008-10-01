@@ -39,7 +39,7 @@ static void unihan_generate_select_field_clause(GString *strBuf, UnihanField giv
     switch(queryField){
 	case UNIHAN_FIELD_CODE:
 	    if (qOption & UNIHAN_QUERY_OPTION_SCALAR_STRING){
-		g_string_append_printf(strBuf,"TO_SCALAR_STRING(%s.%s) AS CodePoint",UNIHAN_TABLE_NAMES[givenTable],UNIHAN_FIELD_NAMES[UNIHAN_FIELD_CODE]);
+		g_string_append_printf(strBuf,"TO_SCALAR_STRING(%s.%s) AS code",UNIHAN_TABLE_NAMES[givenTable],UNIHAN_FIELD_NAMES[UNIHAN_FIELD_CODE]);
 	    }else{
 		g_string_append_printf(strBuf,"%s.%s",UNIHAN_TABLE_NAMES[givenTable],UNIHAN_FIELD_NAMES[UNIHAN_FIELD_CODE]);
 	    }
@@ -546,8 +546,17 @@ static char *unihan_generate_where_clause(UnihanField givenField, const char *va
 	UnihanTable fromTable,	UnihanField queryField,  UnihanQueryOption qOption){
     GString *strBuf=g_string_new(NULL);
     UnihanIRG_SourceRec *rec=NULL;
+    char *valueTmp= NULL;
+    if (unihanField_is_case_no_change(givenField)){
+	valueTmp=g_strdup(value);
+    }else if (unihanField_is_lowercase(givenField)){
+	valueTmp=g_utf8_strdown(value,-1);
+    }else{
+	valueTmp=g_utf8_strup(value,-1);
+    }
+
     if (unihanField_is_IRG_Source(givenField)){
-	rec=unihanIRG_SourceRec_parse(givenField,value);
+	rec=unihanIRG_SourceRec_parse(givenField,valueTmp);
     }
     char *relStr=(qOption & UNIHAN_QUERY_OPTION_LIKE)? "LIKE": "=";
     char *strTmp=NULL;
@@ -575,26 +584,39 @@ static char *unihan_generate_where_clause(UnihanField givenField, const char *va
 	unihanIRG_SourceRec_free(rec);
     }else{
 	switch(givenField){
+	    case UNIHAN_FIELD_CODE:
+		if (valueTmp[0]=='U'){
+		    strTmp=sqlite3_mprintf("TO_SCALAR_STRING(%s.%s) %s %Q",
+			    UNIHAN_TABLE_NAMES[fromTable],
+			    UNIHAN_FIELD_NAMES[givenField],
+			    relStr, valueTmp);
+		}else{
+		    strTmp=sqlite3_mprintf("%s.%s %s %Q",
+			    UNIHAN_TABLE_NAMES[fromTable],
+			    UNIHAN_FIELD_NAMES[givenField],
+			    relStr, valueTmp);
+		}
+		break;
 	    case UNIHAN_FIELD_KIRGKANGXI:
 	    case UNIHAN_FIELD_KKANGXI:
-		unihan_append_kangXi_where_clause(strBuf,givenField,value);
+		unihan_append_kangXi_where_clause(strBuf,givenField,valueTmp);
 		break;
 	    case UNIHAN_FIELD_KHANYUPINLU:
-		unihan_append_pinYinFreq_where_clause(strBuf,givenField,value);
+		unihan_append_pinYinFreq_where_clause(strBuf,givenField,valueTmp);
 		break;
 	    case UNIHAN_FIELD_KRSADOBE_JAPAN1_6:
-		unihan_append_adobe_japan1_6_where_clause(strBuf,value);
+		unihan_append_adobe_japan1_6_where_clause(strBuf,valueTmp);
 		break;
 	    case UNIHAN_FIELD_KRSJAPANESE:
 	    case UNIHAN_FIELD_KRSKANGXI:
 	    case UNIHAN_FIELD_KRSKANWA:
 	    case UNIHAN_FIELD_KRSKOREAN:
 	    case UNIHAN_FIELD_KRSUNICODE:
-		unihan_append_radical_stroke_where_clause(strBuf, givenField, value);
+		unihan_append_radical_stroke_where_clause(strBuf, givenField, valueTmp);
 		break;
 	    case UNIHAN_FIELD_KSEMANTICVARIANT:
 	    case UNIHAN_FIELD_KSPECIALIZEDSEMANTICVARIANT:
-		unihan_append_semantic_where_clause(strBuf, givenField, value);
+		unihan_append_semantic_where_clause(strBuf, givenField, valueTmp);
 		break;
 	    case UNIHAN_FIELD_KCOMPATIBILITYVARIANT:
 	    case UNIHAN_FIELD_KSIMPLIFIEDVARIANT:
@@ -602,26 +624,26 @@ static char *unihan_generate_where_clause(UnihanField givenField, const char *va
 		strTmp=sqlite3_mprintf("%s.%s=%Q",
 			UNIHAN_TABLE_NAMES[fromTable],
 			UNIHAN_FIELD_NAMES[UNIHAN_FIELD_VARIANT_CODE],
-			value);
+			valueTmp);
 		break;
 	    case UNIHAN_FIELD_KZVARIANT:
-		unihan_append_zvariant_where_clause(strBuf, givenField, value);
+		unihan_append_zvariant_where_clause(strBuf, givenField, valueTmp);
 		break;
 	    case UNIHAN_FIELD_ZHUYIN:
-		pinYinTmp=zhuYin_to_pinYin(value,PINYIN_ACCENT_UNIHAN,TRUE);
+		pinYinTmp=zhuYin_to_pinYin(valueTmp,PINYIN_ACCENT_UNIHAN,TRUE);
 		strTmp=sqlite3_mprintf("%s.%s %s %Q",
 			UNIHAN_TABLE_NAMES[UNIHAN_TABLE_KMANDARIN],
 			UNIHAN_FIELD_NAMES[UNIHAN_FIELD_KMANDARIN],
 			relStr,
 			pinYinTmp,
-			value);
+			valueTmp);
 		g_free(pinYinTmp);
 		break;
 	    default:
 		strTmp=sqlite3_mprintf("%s.%s %s %Q",
 			UNIHAN_TABLE_NAMES[fromTable],
 			UNIHAN_FIELD_NAMES[givenField],
-			relStr,value);
+			relStr,valueTmp);
 
 		break;
 	}
@@ -639,11 +661,12 @@ static char *unihan_generate_where_clause(UnihanField givenField, const char *va
     if (source>=0){
 	unihan_append_IRG_sources_query_where_clause(strBuf, source);
     }
+    g_free(valueTmp);
 
     return g_string_free(strBuf,FALSE);
 }
 
-SQL_Result *unihan_find_all_matched(UnihanField givenField, char *givenValue, 
+SQL_Result *unihan_find_all_matched(UnihanField givenField, const char *givenValue, 
 	UnihanField queryField, UnihanQueryOption qOption){
     char *selectStr=NULL;
     char *fromStr=NULL;
@@ -692,7 +715,7 @@ SQL_Result *unihan_find_all_matched(UnihanField givenField, char *givenValue,
     return sResult;
 }
 
-char* unihan_find_first_matched(UnihanField givenField, char* givenValue, 
+char* unihan_find_first_matched(UnihanField givenField, const char* givenValue, 
 	UnihanField queryField, UnihanQueryOption qOption){
 
     SQL_Result *sResult=unihan_find_all_matched(givenField, givenValue,  queryField, qOption);

@@ -40,12 +40,13 @@
 
 #include <sqlite3.h>
 /**
- * Maximum space that PinYin requires.
+ * Spaces that PinYin might occupy.
+ *
  */
 #define PINYIN_MAX_LENGTH 9
 
 /**
- * Maximum space that ZhuYin requires.
+ * Spaces that ZhuYin might occupy.
  */
 #define ZHUYIN_MAX_LENGTH 13
 
@@ -63,6 +64,8 @@ typedef char ZhuYin;
  * Pronunciation in PinYin UTF-8 string.
  */
 typedef char PinYin;
+
+
 
 /**
  * Enumeration of ZhuYin symbols.

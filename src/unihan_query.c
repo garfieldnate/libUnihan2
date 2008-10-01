@@ -91,7 +91,6 @@ int verboseLevel=VERBOSE_MSG_ERROR;
 
 guint pinYin_toFormat=PINYIN_ACCENT_UNIHAN;
 guint zhuYin_toFormat=ZHUYIN_TONEMARK_ORIGINAL;
-gboolean useTrailingNumber=TRUE;
 
 
 static void printUsage(){

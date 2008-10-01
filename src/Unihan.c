@@ -397,6 +397,22 @@ gboolean unihanField_is_integer(UnihanField field){
     return FALSE;
 }
 
+
+gboolean unihanField_is_case_no_change(UnihanField field){
+    if (unihanField_array_index(field,UNIHAN_CASE_NO_CHANGE_FIELDS)>=0){
+	return TRUE;
+    }
+    return FALSE;
+}
+
+gboolean unihanField_is_lowercase(UnihanField field){
+    if (unihanField_array_index(field,UNIHAN_LOWERCASE_FIELDS)>=0){
+	return TRUE;
+    }
+    return FALSE;
+}
+
+
 gboolean unihanField_is_mandarin(UnihanField field){
     if (unihanField_array_index(field,UNIHAN_MANDARIN_FIELDS)>=0){
 	return TRUE;

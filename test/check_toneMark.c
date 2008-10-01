@@ -25,7 +25,6 @@
 #include <limits.h>
 #include "verboseMsg.h"
 #include "Unihan.h"
-#include "Unihan_phonetic.h"
 
 char fromDataPath[PATH_MAX];
 char toDataPath[PATH_MAX];

@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include "verboseMsg.h"
 #include "Unihan.h"
-#include "Unihan_phonetic.h"
 #include "phonetic_test_tables.c"
 
 

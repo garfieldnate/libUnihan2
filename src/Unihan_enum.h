@@ -196,6 +196,7 @@ typedef enum{
  */
 #define UNIHAN_FIELDS_COUNT	UNIHAN_FIELD_ZHUYIN+1 
 
+
 /**
  * Enumeration of tables.
  *
