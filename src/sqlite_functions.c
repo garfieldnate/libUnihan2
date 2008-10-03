@@ -28,8 +28,10 @@
 
 SQL_Result *sql_result_new(){
     SQL_Result *sResult=NEW_INSTANCE(SQL_Result);
-    sResult->fieldList=stringList_new();
-    sResult->resultList=stringList_new();
+    sResult->fieldList=stringList_sized_new(SQL_RESULT_FIELD_CHUNK_SIZE,
+	    SQL_RESULT_FIELD_ELEMENT_COUNT,SQL_RESULT_FIELD_CONST_COUNT);
+    sResult->resultList=stringList_sized_new(SQL_RESULT_RESULT_CHUNK_SIZE,
+	    SQL_RESULT_RESULT_ELEMENT_COUNT,SQL_RESULT_RESULT_CONST_COUNT);
     sResult->colCount=0;
     sResult->execResult=-1; 
     sResult->errMsg=NULL;
@@ -79,9 +81,10 @@ static int sqlite_get_sql_result_callback(void *data,int colCount,char** value_a
     }
     SQL_Result *sResult=(SQL_Result *) data;
     int i;
-    verboseMsg_print(VERBOSE_MSG_INFO4," sqlite_get_sql_result_callback(,%d,): \n",colCount);
+    verboseMsg_print(VERBOSE_MSG_INFO4," sqlite_get_sql_result_callback(,%d,,): \n",colCount);
     if (!(sResult->colCount)){
 	for(i=0;i<colCount;i++){
+	    verboseMsg_print(VERBOSE_MSG_INFO5,"  field_array[%d]=%s\n",i,fieldName_array[i]);
 	    stringList_insert(sResult->fieldList,fieldName_array[i]);
 	}
 	sResult->colCount=colCount;

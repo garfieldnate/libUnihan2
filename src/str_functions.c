@@ -88,17 +88,26 @@ const char *stringList_index(StringList *sList,guint index){
 
 
 guint stringList_insert(StringList *sList, const char *str){
-    gchar *ptr=g_string_chunk_insert (sList->chunk,str);
-    g_ptr_array_add(sList->ptrArray,ptr);
+    if (str){
+	gchar *ptr=g_string_chunk_insert (sList->chunk,str);
+	g_ptr_array_add(sList->ptrArray,ptr);
+    }else{
+	g_ptr_array_add(sList->ptrArray,NULL);
+    }
     sList->len++;
-    return sList->len-1;
+    return sList->len-1;    
+
+
 }
 
 guint stringList_insert_const(StringList *sList, const char *str){
-    gchar *ptr=g_string_chunk_insert_const (sList->chunk,str);
+    gchar *ptr=NULL;
     guint i;
     guint index=0;
     gboolean matched=FALSE;
+    if (str){
+	ptr=g_string_chunk_insert_const (sList->chunk,str);
+    }
     for(i=0;i<sList->constArray->len;i++){
 	index=g_array_index(sList->constArray,guint,i);
 	if (stringList_index(sList,index)==ptr){

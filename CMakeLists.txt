@@ -183,6 +183,9 @@ ADD_CUSTOM_TARGET(uninstall
 
 ### For testing
 ENABLE_TESTING()
+ADD_TEST(check_functions_0 
+    ${PROJECT_BINARY_DIR}/test/check_functions 0)
+
 ADD_TEST(check_phonetic_pinyin_always 
     ${PROJECT_BINARY_DIR}/test/check_phonetic 0) 
 ADD_TEST(check_phonetic_pinyin_original

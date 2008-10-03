@@ -2,7 +2,7 @@
  * @file str_functions.h
  * @brief String processing functions.
  * 
- * This header file list the some string processing functions.
+ * This header file lists the some string processing functions.
  * Such as subString, and StringList, which provides a memory efficient
  * methods to store a list of constrant strings.
  */
@@ -125,7 +125,8 @@ const char *stringList_index(StringList *sList,guint index);
  * each inserted identical string will have it own spaces.
  *
  * @param sList The StringList to be processed.
- * @param str String to be inserted. 
+ * @param str String to be inserted, can be NULL.
+ * @return the index of the newly inserted string.
  * @see stringList_insert_const()
  */
 guint stringList_insert(StringList *sList, const char *str);
@@ -143,6 +144,7 @@ guint stringList_insert(StringList *sList, const char *str);
  *
  * @param sList The StringList to be processed.
  * @param str String to be inserted. 
+ * @return the index of the newly inserted string.
  * @see stringList_insert()
  */
 guint stringList_insert_const(StringList *sList, const char *str);

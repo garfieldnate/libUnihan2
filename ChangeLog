@@ -7,6 +7,7 @@
 - Fixed:
   + Behavior of unihan_query -U is now corrected.
   + Descriptions about pseudo field are corrected.
+  + Handle NULL of str in stringList_insert(StringList *sList, const char *str).
 - Changed:
   + In document, "simply query" is replaced by "field query".
   + unihanField_is_scalar_value() is renamed as unihanField_is_ucs4().

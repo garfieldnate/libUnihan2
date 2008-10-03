@@ -49,8 +49,8 @@ INSTALL(TARGETS unihan_converter unihan_query Unihan
      LIBRARY DESTINATION ${LIB_INSTALL_DIR}
 )
 
-INSTALL(FILES Unihan.h Unihan_enum.h Unihan_phonetic.h str_functions.h
-    sqlite_functions.h
+INSTALL(FILES Unihan.h Unihan_enum.h Unihan_phonetic.h 
+    allocate.h str_functions.h sqlite_functions.h
     DESTINATION include/${PROJECT_NAME}
 )
 

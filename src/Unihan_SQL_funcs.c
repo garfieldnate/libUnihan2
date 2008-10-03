@@ -333,13 +333,54 @@ const UnihanField UNIHAN_MANDARIN_FIELDS[]={
 };
 
 const UnihanField UNIHAN_CASE_NO_CHANGE_FIELDS[]={
+    UNIHAN_FIELD_UTF8,
+    UNIHAN_FIELD_KCHEUNGBAUER,
+    UNIHAN_FIELD_KCHEUNGBAUERINDEX,
+    UNIHAN_FIELD_KCIHAIT,
+    UNIHAN_FIELD_KCOWLES,
+    UNIHAN_FIELD_KDAEJAWEON,
     UNIHAN_FIELD_KDEFINITION,
+    UNIHAN_FIELD_KFENNINDEX,
+    UNIHAN_FIELD_KFOURCORNERCODE,
+    UNIHAN_FIELD_KHANYU,
+    UNIHAN_FIELD_KIICORE,
+    UNIHAN_FIELD_KIRGDAIKANWAZITEN,
+    UNIHAN_FIELD_KIRGKANGXI,
+    UNIHAN_FIELD_KJIS0213,
+    UNIHAN_FIELD_KJIS0,
+    UNIHAN_FIELD_KJIS1,
+    UNIHAN_FIELD_KKANGXI,
+    UNIHAN_FIELD_KKSC0,
+    UNIHAN_FIELD_KKSC1,
+    UNIHAN_FIELD_KLAU,
+    UNIHAN_FIELD_KMAINLANDTELEGRAPH,
+    UNIHAN_FIELD_KMOROHASHI,
+    UNIHAN_FIELD_KNELSON,
+    UNIHAN_FIELD_KPSEUDOGB1,
+    UNIHAN_FIELD_KRSJAPANESE,
+    UNIHAN_FIELD_KRSKANGXI,
+    UNIHAN_FIELD_KRSKANWA,
+    UNIHAN_FIELD_KRSKOREAN,
+    UNIHAN_FIELD_KRSUNICODE,
+    UNIHAN_FIELD_KSBGY,
+    UNIHAN_FIELD_KSEMANTICVARIANT,
+    UNIHAN_FIELD_KSPECIALIZEDSEMANTICVARIANT,
+    UNIHAN_FIELD_KTAIWANTELEGRAPH,
+    UNIHAN_FIELD_KTANG,
+    UNIHAN_FIELD_KVIETNAMESE,
+    UNIHAN_FIELD_KXEROX,
+
     UNIHAN_INVALID_FIELD
 };
 
 
 const UnihanField UNIHAN_LOWERCASE_FIELDS[]={
     UNIHAN_FIELD_KCANTONESE,
+    UNIHAN_FIELD_KHANYUPINLU,
+    UNIHAN_FIELD_KGSR,
+    UNIHAN_FIELD_KMATTHEWS,
+    UNIHAN_FIELD_KMEYERWEMPE,
+    UNIHAN_FIELD_KXHC1983,
     UNIHAN_INVALID_FIELD
 };
 
@@ -663,11 +704,13 @@ static GArray *semanticDictRec_parse(const char *composite_value){
     int len;
     for(i=0;subFieldArray[i]!=NULL;i++){
 	switch(subFieldArray[i][0]){
+	    case 'u':
 	    case 'U':
 		state=UNIHAN_SEMANTIC_VARIANT_STATE_CODE;
 		variantCode=0;
 		break;
 	    case 'k':
+	    case 'K':
 		state=UNIHAN_SEMANTIC_VARIANT_STATE_DICT;
 		break;
 	    default:
@@ -837,6 +880,23 @@ static void scalar_string_parse_Func(sqlite3_context *context, int argc, sqlite3
 }
 
 
+
+static void to_lowercase_Func(sqlite3_context *context, int argc, sqlite3_value **argv){
+    g_assert(argc==1);
+    char *str=sqlite_value_signed_text(argv[0]);
+    char *pStr=g_utf8_strdown(str,-1);
+    g_free(str);
+    sqlite3_result_text(context,pStr,-1,g_free);
+}
+
+static void to_uppercase_Func(sqlite3_context *context, int argc, sqlite3_value **argv){
+    g_assert(argc==1);
+    char *str=sqlite_value_signed_text(argv[0]);
+    char *pStr=g_utf8_strup(str,-1);
+    g_free(str);
+    sqlite3_result_text(context,pStr,-1,g_free);
+}
+
 static void to_scalar_string_Func(sqlite3_context *context, int argc, sqlite3_value **argv){
     g_assert(argc==1);
     gunichar code= (sqlite3_value_type(argv[0])==SQLITE_INTEGER) ? sqlite3_value_int64(argv[0]): 0;
@@ -948,15 +1008,17 @@ const DatabaseFuncStru DATABASE_FUNCS[]={
     {"HANYU_PINLU_VALUE_CONCAT",3,hanYu_pinLu_value_concat_Func,NULL,NULL},
     {"IRG_SOURCE_VALUE_CONCAT",2,irg_source_value_concat_Func,NULL,NULL},
     {"KANGXI_VALUE_CONCAT",3,kangXi_value_concat_Func,NULL,NULL},
-    {"RADICAL_STROKE_VALUE_CONCAT",2,radicalStroke_value_concat_Func,NULL,NULL},
-    {"SCALAR_STRING_PARSE",1, scalar_string_parse_Func,NULL,NULL},
-    {"TO_SCALAR_STRING",1,to_scalar_string_Func,NULL,NULL,},
-    {"Z_VARIANT_VALUE_CONCAT",2,zVariant_value_concat_Func,NULL,NULL},
     {"PINYIN_CONVERT_ACCENT_FORMAT",3,pinYin_convert_accent_format_scalar_func,NULL,NULL},
     {"PINYIN_TO_ZHUYIN",2,pinYin_to_zhuYin_scalar_func,NULL,NULL},
+    {"RADICAL_STROKE_VALUE_CONCAT",2,radicalStroke_value_concat_Func,NULL,NULL},
+    {"SCALAR_STRING_PARSE",1, scalar_string_parse_Func,NULL,NULL},
+    {"SEMANTIC_VARIANT_VALUE_CONCAT",5,NULL,semantic_value_concat_step_Func,semantic_value_concat_finalized_Func},
+    {"TO_SCALAR_STRING",1,to_scalar_string_Func,NULL,NULL,},
+    {"TO_LOWERCASE",1,to_lowercase_Func,NULL,NULL},
+    {"TO_UPPERCASE",1,to_uppercase_Func,NULL,NULL},
+    {"Z_VARIANT_VALUE_CONCAT",2,zVariant_value_concat_Func,NULL,NULL},
     {"ZHUYIN_CONVERT_TONEMARK_FORMAT",2,zhuYin_convert_toneMark_format_scalar_func,NULL,NULL},
     {"ZHUYIN_TO_PINYIN",3,zhuYin_to_pinYin_scalar_func,NULL,NULL},
-    {"SEMANTIC_VARIANT_VALUE_CONCAT",5,NULL,semantic_value_concat_step_Func,semantic_value_concat_finalized_Func},
     {NULL,0,NULL,NULL,NULL},
 };
 

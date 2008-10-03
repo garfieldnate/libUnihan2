@@ -402,6 +402,14 @@ gboolean unihanField_is_case_no_change(UnihanField field){
     if (unihanField_array_index(field,UNIHAN_CASE_NO_CHANGE_FIELDS)>=0){
 	return TRUE;
     }
+    if (unihanField_is_ucs4(field)){
+	/* UCS4 fields can have U+xxxx form, so need to be converted to uppercase. */
+	return FALSE;
+    }
+    if (unihanField_is_integer(field)){
+	/* Integer fields do not need to convert cases. */
+	return FALSE;
+    }
     return FALSE;
 }
 

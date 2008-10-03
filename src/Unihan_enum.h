@@ -1,6 +1,6 @@
 /** 
  * @file Unihan_enum.h
- * @brief Enumeration and definte used in libUnihan.
+ * @brief Enumeration and defintion used in libUnihan.
  * 
  * This header file consists enumeration and definte used in libUnihan.
  * It is included in Unihan.h, so no need to include it directly.

@@ -506,12 +506,17 @@ gboolean unihanField_is_integer(UnihanField field);
  * which always stores as lowercase; 
  * while field \c UNIHAN_FIELD_KDEFINITION the other hand, may have uppercase
  * and lowercase characters.
+ * 
+ * Integer fields need not change case, however, as UCS-4 can have 'U+xxxxx'
+ * form, UCS-4 should be convert to uppercase.
  *
- * This function returns \c TRUE if the case of field value should not be changed,
+ * This function returns \c TRUE if the case of field value need not be changed,
  * as with \c UNIHAN_FIELD_KDEFINITION; \c FALSE otherwise.
  *
  * @param field the UnihanField
  * @return TRUE if the case of field value should not be changed; FALSE otherwise.
+ * @see unihanField_is_ucs4()
+ * @see unihanField_is_lowercase()
  */
 gboolean unihanField_is_case_no_change(UnihanField field);
 
@@ -528,6 +533,7 @@ gboolean unihanField_is_case_no_change(UnihanField field);
  *
  * @param field the UnihanField
  * @return TRUE if the value of field is stored as lowercase; FALSE otherwise.
+ * @see unihanField_is_case_no_change()
  */
 gboolean unihanField_is_lowercase(UnihanField field);
 
@@ -632,7 +638,7 @@ UnihanIRG_SourceId unihanIRG_SourceId_parse(const char *sourceShortName);
 /**
  * Parse the string argument as Unihan IRG Source Rec.
  *
- * @Note {Use unihanIRG_SourceRec_free() to free the generated rec.}
+ * @note {Use unihanIRG_SourceRec_free() to free the generated rec.}
  *
  * @param field 	the UnihanField 
  * @param value		the string to be parsed.

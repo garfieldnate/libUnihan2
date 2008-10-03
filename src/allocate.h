@@ -33,7 +33,6 @@
 #include <stdlib.h>
 #include <glib.h>
 
-
 /**
  * Allocate a new two dimension array.
  *

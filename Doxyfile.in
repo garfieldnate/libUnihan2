@@ -534,7 +534,8 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT                  = src/Unihan.h src/Unihan_enum.h src/Unihan_phonetic.h src/allocate.h src/str_functions.h 
+INPUT                  = src/Unihan.h src/Unihan_enum.h src/Unihan_phonetic.h \
+			 src/allocate.h  src/sqlite_functions.h src/str_functions.h
 
 # This tag can be used to specify the character encoding of the source files 
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is 
