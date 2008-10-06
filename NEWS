@@ -1,6 +1,12 @@
 ====== 2008-10-06 libUnihan 0.5.2 released ====
-This release provides some improvement feature, such as ZhuYin pseudo field,
- and new unihan_query options:  -O -P -T -Z -z.
+This release provides further support of ZhuYin and PinYin, such as
+ZhuYin pseudo field, and new unihan_query options:  -Z, -z, -P, -p.
+
+Now unihan_query is not only capable of showing the result fields, 
+but also showing given fields with -O flags. Thus it will be more 
+convenient for result checking, especially for SQL like  queries.
+
+Test suite is now introduced into libUnihan. Many bugs have been found with it. :-)
 
 ====== 2008-09-23 libUnihan 0.5.1 released ====
 Can display ZhuYin now.

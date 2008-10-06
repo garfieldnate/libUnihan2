@@ -35,11 +35,52 @@ ENDIF(NOT DEFINED docdir)
 SET(DB_DIR ${datadir}/${DB_PRJ_NAME})
 ADD_DEFINITIONS(-DUNIHAN_DEFAULT_DB='"${DB_DIR}/${DB_NAME}"')
 
-SET(RPM_RELEASE `rpm -q --qf \"%{release}\\n\" --specfile
-    SPECS/${PROJECT_NAME}.spec | head -1`)
 
+###==================================================================
+# Find parameters configuration
+#
+#  Note: CMake 2.4 does not support STRING(STRIP ..)
 
+EXECUTE_PROCESS(COMMAND rpm -q --qf "%{release} " --specfile SPECS/${PROJECT_NAME}.spec 
+    COMMAND head -n 1
+    COMMAND sed -e "s/ .*//"
+    OUTPUT_VARIABLE RPM_RELEASE)
+
+##
+#  SSH_SETTING format
+#  SSH_USER=<user_name>
+#  SSH_ARGS=<additional args>
+#
+
+IF(EXISTS  SSH_SETTING)
+    EXECUTE_PROCESS(COMMAND  grep SSH_USER SSH_SETTING
+	COMMAND sed -e "s/SSH_USER=//"
+	COMMAND tr \\n \\t
+	COMMAND sed  -e s/\\t//
+	OUTPUT_VARIABLE SSH_USER
+	)
+    IF(COMMAND  "grep SSH_ARGS SSH_SETTING")
+	EXECUTE_PROCESS(COMMAND  grep SSH_ARGS SSH_SETTING
+	    COMMAND sed -e "s/SSH_ARGS=//"
+	    COMMAND tr \\n \\t
+	    COMMAND sed  -e s/\\t//
+	    OUTPUT_VARIABLE SSH_ARGS
+	    )
+	IF (${SSH_ARGS} STREQUAL "")
+	    SET(SFTP_SSH_ARGS "")
+	ELSE (${SSH_ARGS} STREQUAL "")
+	    SET(SFTP_SSH_ARGS -F ${SSH_ARGS})
+	ENDIF (${SSH_ARGS} STREQUAL "")
+    ELSE (COMMAND  "grep SSH_ARGS SSH_SETTING")
+	SET(SFTP_SSH_ARGS "")
+    ENDIF(COMMAND  "grep SSH_ARGS SSH_SETTING")
+ENDIF(EXISTS  SSH_SETTING)
+
+#MESSAGE("SSH_USER=|${SSH_USER}| SSH_ARGS=${SSH_ARGS} SSH_SETTING=${SSH_SETTING}")
+
+###==================================================================
 # Source code subdirectories
+#
 ADD_SUBDIRECTORY(src bin)
 ADD_SUBDIRECTORY(test)
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR})
@@ -172,15 +213,8 @@ ADD_CUSTOM_TARGET(rpm-mock-x86_64 make srpm
 SET(UPLOAD_SITE frs.sourceforge.net)
 SET(HOSTING_SERVICE_PROVIDER "Source forge")
 
-##
-#  SSH_SETTING format
-#  SSH_USER=<user_name>
-#  SSH_ARGS=<additional args>
-#
-
 ADD_CUSTOM_TARGET(upload_pkg_release
-    VERBATIM
-    COMMAND  "source SSH_SETTING;sftp -b UploadPkg.batch ${SSH_USER}@${UPLOAD_SITE}"
+    COMMAND  sftp -b UploadPkg.batch ${SFTP_SSH_ARGS} ${SSH_USER}@${UPLOAD_SITE}
     DEPENDS SSH_SETTING UploadPkg.batch.in
     COMMENT "Uploading the package releases to ${HOSTING_SERVICE_PROVIDER}...")
 

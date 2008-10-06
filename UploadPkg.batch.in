@@ -1,0 +1,11 @@
+cd uploads
+put libUnihan-@PRJ_VER@-Source.tar.gz
+put SRPMS/libUnihan-@PRJ_VER@-@RPM_RELEASE@.src.rpm
+put RPMS/i386/libUnihan-@PRJ_VER@-@RPM_RELEASE@.i386.rpm
+put RPMS/i386/libUnihan-devel-@PRJ_VER@-@RPM_RELEASE@.i386.rpm
+put RPMS/i386/libUnihan-doc-@PRJ_VER@-@RPM_RELEASE@.i386.rpm
+put RPMS/x86_64/libUnihan-@PRJ_VER@-@RPM_RELEASE@.x86_64.rpm
+put RPMS/x86_64/libUnihan-devel-@PRJ_VER@-@RPM_RELEASE@.x86_64.rpm
+put RPMS/x86_64/libUnihan-doc-@PRJ_VER@-@RPM_RELEASE@.x86_64.rpm
+bye
+
