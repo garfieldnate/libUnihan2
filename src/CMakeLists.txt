@@ -21,6 +21,9 @@ SET(supporting_SRCS allocate.c allocate.h
     str_functions.c str_functions.h
     verboseMsg.c verboseMsg.h)
 
+SET(DOCUMENTED_HEADERS Unihan.h Unihan_enum.h Unihan_phonetic.h 
+   allocate.h sqlite_functions.h str_functions.h)
+
 ADD_LIBRARY(Unihan SHARED ${libUnihan_SRCS} ${supporting_SRCS})
 SET_TARGET_PROPERTIES(Unihan PROPERTIES 
     VERSION "${PRJ_VER_MAJOR}.${PRJ_VER_MINOR}"
@@ -49,8 +52,7 @@ INSTALL(TARGETS unihan_converter unihan_query Unihan
      LIBRARY DESTINATION ${LIB_INSTALL_DIR}
 )
 
-INSTALL(FILES Unihan.h Unihan_enum.h Unihan_phonetic.h 
-    allocate.h str_functions.h sqlite_functions.h
+INSTALL(FILES ${DOCUMENTED_HEADERS}
     DESTINATION include/${PROJECT_NAME}
 )
 

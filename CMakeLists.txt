@@ -35,6 +35,9 @@ ENDIF(NOT DEFINED docdir)
 SET(DB_DIR ${datadir}/${DB_PRJ_NAME})
 ADD_DEFINITIONS(-DUNIHAN_DEFAULT_DB='"${DB_DIR}/${DB_NAME}"')
 
+SET(RPM_RELEASE `rpm -q --qf \"%{release}\\n\" --specfile
+    SPECS/${PROJECT_NAME}.spec | head -1`)
+
 
 # Source code subdirectories
 ADD_SUBDIRECTORY(src bin)
@@ -46,9 +49,14 @@ FIND_PACKAGE(PkgConfig)
 PKG_CHECK_MODULES(GLIB2 glib-2.0)
 PKG_CHECK_MODULES(SQLITE3 sqlite3)
 
+CONFIGURE_FILE(Doxyfile.in Doxyfile)
+CONFIGURE_FILE(UploadPkg.batch.in UploadPkg.batch)
+
 ADD_CUSTOM_TARGET(${DB_NAME}
     COMMAND /bin/ln -sf ${DB_NAME}.${DB_VER}-${DB_PATCH_LEVEL} ${DB_NAME}
     DEPENDS ${DB_NAME}.${DB_VER}-${DB_PATCH_LEVEL})
+
+
 
 SET(MAIN_DOCS AUTHORS README ChangeLog NEWS COPYING COPYING.LESSER )
 
@@ -59,68 +67,6 @@ INSTALL(FILES ${MAIN_DOCS}
 #    COMMAND /bin/ln -sf ${DB_NAME}.${DB_VER} ${DB_NAME}
 #    DEPENDS ${DB_NAME}.${DB_VER})
 # COMMAND(ln -s  ${DB_NAME}.${DB_VER} ${DB_NAME})
-
-###==================================================================
-# RPM targets
-#
-
-ADD_CUSTOM_TARGET(srpm
-    COMMAND make package_source
-    COMMAND mkdir -p SOURCES
-    COMMAND ln -sf ../${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz SOURCES/${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz
-    COMMAND mkdir -p SRPMS
-    COMMAND rpmbuild -bs SPECS/libUnihan.spec --rcfile rpmrc
-)
-
-ADD_CUSTOM_TARGET(rpm
-    COMMAND make package_source
-    COMMAND mkdir -p SOURCES
-    COMMAND ln -sf ../${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz SOURCES/${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz
-    COMMAND mkdir -p SRPMS
-    COMMAND mkdir -p RPMS/i386
-    COMMAND mkdir -p RPMS/x86_64
-    COMMAND mkdir -p BUILD
-    COMMAND rpmbuild -ba SPECS/libUnihan.spec --rcfile rpmrc
-)
-###==================================================================
-# Database related targets.
-#
-SET(DB_DOCS README-db ChangeLog-db)
-
-ADD_CUSTOM_TARGET(package_db_doc
-    COMMAND /bin/tar czvf "${DB_PRJ_NAME}-doc-${DB_VER}.tar.gz" ${DB_DOCS}
-)
-
-ADD_CUSTOM_TARGET(package_db
-    COMMAND mkdir -p "${DB_PRJ_NAME}-${DB_VER}-${DB_PATCH_LEVEL}" 
-    COMMAND cp "${DB_NAME}.${DB_VER}-${DB_PATCH_LEVEL}" "${DB_PRJ_NAME}-${DB_VER}-${DB_PATCH_LEVEL}" 
-    COMMAND cp ${DB_DOCS}  "${DB_PRJ_NAME}-${DB_VER}-${DB_PATCH_LEVEL}" 
-    COMMAND /bin/tar czvf "${DB_PRJ_NAME}-${DB_VER}-${DB_PATCH_LEVEL}.tar.gz" "${DB_PRJ_NAME}-${DB_VER}-${DB_PATCH_LEVEL}"
-    COMMAND rm -fr "${DB_PRJ_NAME}-${DB_VER}-${DB_PATCH_LEVEL}"
-)
-
-ADD_CUSTOM_TARGET(install_db
-    COMMAND mkdir -p "${DB_DIR}" 
-    COMMAND cp "${DB_NAME}.${DB_VER}-${DB_PATCH_LEVEL}" ${DB_DIR}
-    COMMAND ln -sf "${DB_NAME}.${DB_VER}-${DB_PATCH_LEVEL}" ${DB_DIR}/${DB_NAME}
-    COMMAND mkdir -p "${docdir}/${DB_PRJ_NAME}" 
-    COMMAND cp README-db "${docdir}/${DB_PRJ_NAME}" 
-    COMMAND cp ChangLog-db "${docdir}/${DB_PRJ_NAME}" 
-)
-
-ADD_CUSTOM_TARGET(srpm_db
-    COMMAND ln -sf ../${DB_PRJ_NAME}-doc-${DB_VER}.tar.gz SOURCES/${DB_PRJ_NAME}-doc-${DB_VER}.tar.gz
-    COMMAND rpmbuild -bs SPECS/UnihanDb.spec --rcfile rpmrc
-)
-
-ADD_CUSTOM_TARGET(rpm_db
-    COMMAND ln -sf ../${DB_PRJ_NAME}-doc-${DB_VER}.tar.gz SOURCES/${DB_PRJ_NAME}-doc-${DB_VER}.tar.gz
-    COMMAND mkdir -p RPMS/noarch
-    COMMAND rpmbuild -ba SPECS/UnihanDb.spec --rcfile rpmrc
-)
-
-ADD_DEPENDENCIES(srpm_db package_db_doc)
-ADD_DEPENDENCIES(rpm_db package_db_doc)
 
 ###==================================================================
 # CPack configuration
@@ -139,14 +85,15 @@ SET(CPACK_PACKAGE_VERSION_PATCH ${PRJ_VER_PATCH})
 SET(COMMON_IGNORE_FILES "/CMakeFiles/" "_CPack_Packages/" "/Testing/"
     ".cmake$"   ".directory$" "CMakeCache.txt"
     "/.svn/"  "/CVS/" "~$" ".swp$" ".log$" ".gz$"
-    "/src/config.h$")
+    "/src/config.h$") 
 
 SET(RPM_IGNORE_FILES "/SOURCES/" "/SRPMS/" "/RPMS/" "/BUILD/")
 
 SET(PRJ_COMMON_IGNORE_FILES ${COMMON_IGNORE_FILES} ${RPM_IGNORE_FILES}
     "/doc/"  "/www/" ".vis$"
     ".db$" "test/check_phonetic$" "test/check_toneMark$"
-    "test/unihan_field_validation$" "Doxyfile$")
+    "test/unihan_field_validation$" "Doxyfile$" "UploadPkg.batch$"
+    "SSH_SETTING")
 
 SET(CPACK_SOURCE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/bin/" ".db" "-db")
 SET(CPACK_PACKAGE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/src/" "/test/"
@@ -156,15 +103,14 @@ SET(CPACK_SOURCE_GENERATOR "TGZ")
 
 INCLUDE(CPack)
 
-### Document generation
+
+###==================================================================
+# Document generation
+#
 FIND_PACKAGE(Doxygen)
 IF (EXISTS ${DOXYGEN})
-  ADD_CUSTOM_TARGET(Doxyfile
-      COMMAND sed "s/_PRJ_VER/${PRJ_VER}/" Doxyfile.in > Doxyfile
-  )
   ADD_CUSTOM_TARGET(doxygen    
     COMMAND "${DOXYGEN}" "Doxyfile"
-    DEPENDS Doxyfile
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
   INSTALL(DIRECTORY doc/html
     DESTINATION "${docdir}/${PROJECT_NAME}-${PRJ_VER}"
@@ -178,10 +124,112 @@ CONFIGURE_FILE(
   IMMEDIATE @ONLY)
 
 ADD_CUSTOM_TARGET(uninstall
-  "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
+  "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+)
 
 
-### For testing
+###==================================================================
+# RPM targets
+#
+
+
+ADD_CUSTOM_TARGET(srpm
+    COMMAND make package_source
+    COMMAND mkdir -p SOURCES
+    COMMAND ln -sf ../${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz SOURCES/${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz
+    COMMAND mkdir -p SRPMS
+    COMMAND rpmbuild -bs SPECS/libUnihan.spec --rcfile rpmrc
+    )
+
+ADD_CUSTOM_TARGET(rpm
+    COMMAND make package_source
+    COMMAND mkdir -p SOURCES
+    COMMAND ln -sf ../${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz SOURCES/${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz
+    COMMAND mkdir -p SRPMS
+    COMMAND mkdir -p RPMS/i386
+    COMMAND mkdir -p RPMS/x86_64
+    COMMAND mkdir -p BUILD
+    COMMAND rpmbuild -ba SPECS/libUnihan.spec --rcfile rpmrc
+    )
+
+ADD_CUSTOM_TARGET(rpm-mock-i386 make srpm
+    COMMAND mkdir -p RPMS/i386
+    COMMAND mock -r  fedora-9-i386 --resultdir=RPMS/i386
+    SRPMS/${PROJECT_NAME}-${PRJ_VER}-${RPM_RELEASE}.src.rpm
+)
+
+ADD_CUSTOM_TARGET(rpm-mock-x86_64 make srpm
+    COMMAND mkdir -p RPMS/x86_64
+    COMMAND mock -r  fedora-9-x86_64 --resultdir=RPMS/x86_64
+    SRPMS/${PROJECT_NAME}-${PRJ_VER}-${RPM_RELEASE}.src.rpm
+)
+
+
+
+###==================================================================
+# Upload the package releases to hosting service provider (Source forge).
+#
+SET(UPLOAD_SITE frs.sourceforge.net)
+SET(HOSTING_SERVICE_PROVIDER "Source forge")
+
+##
+#  SSH_SETTING format
+#  SSH_USER=<user_name>
+#  SSH_ARGS=<additional args>
+#
+
+ADD_CUSTOM_TARGET(upload_pkg_release
+    VERBATIM
+    COMMAND  "source SSH_SETTING;sftp -b UploadPkg.batch ${SSH_USER}@${UPLOAD_SITE}"
+    DEPENDS SSH_SETTING UploadPkg.batch.in
+    COMMENT "Uploading the package releases to ${HOSTING_SERVICE_PROVIDER}...")
+
+
+
+###==================================================================
+# Database related targets.
+#
+SET(DB_DOCS README-db ChangeLog-db)
+
+ADD_CUSTOM_TARGET(package_db_doc
+    COMMAND /bin/tar czvf "${DB_PRJ_NAME}-doc-${DB_VER}.tar.gz" ${DB_DOCS}
+    )
+
+ADD_CUSTOM_TARGET(package_db
+    COMMAND mkdir -p "${DB_PRJ_NAME}-${DB_VER}-${DB_PATCH_LEVEL}" 
+    COMMAND cp "${DB_NAME}.${DB_VER}-${DB_PATCH_LEVEL}" "${DB_PRJ_NAME}-${DB_VER}-${DB_PATCH_LEVEL}" 
+    COMMAND cp ${DB_DOCS}  "${DB_PRJ_NAME}-${DB_VER}-${DB_PATCH_LEVEL}" 
+    COMMAND /bin/tar czvf "${DB_PRJ_NAME}-${DB_VER}-${DB_PATCH_LEVEL}.tar.gz" "${DB_PRJ_NAME}-${DB_VER}-${DB_PATCH_LEVEL}"
+    COMMAND rm -fr "${DB_PRJ_NAME}-${DB_VER}-${DB_PATCH_LEVEL}"
+    )
+
+ADD_CUSTOM_TARGET(install_db
+    COMMAND mkdir -p "${DB_DIR}" 
+    COMMAND cp "${DB_NAME}.${DB_VER}-${DB_PATCH_LEVEL}" ${DB_DIR}
+    COMMAND ln -sf "${DB_NAME}.${DB_VER}-${DB_PATCH_LEVEL}" ${DB_DIR}/${DB_NAME}
+    COMMAND mkdir -p "${docdir}/${DB_PRJ_NAME}" 
+    COMMAND cp README-db "${docdir}/${DB_PRJ_NAME}" 
+    COMMAND cp ChangLog-db "${docdir}/${DB_PRJ_NAME}" 
+    )
+
+ADD_CUSTOM_TARGET(srpm_db
+    COMMAND ln -sf ../${DB_PRJ_NAME}-doc-${DB_VER}.tar.gz SOURCES/${DB_PRJ_NAME}-doc-${DB_VER}.tar.gz
+    COMMAND rpmbuild -bs SPECS/UnihanDb.spec --rcfile rpmrc
+    )
+
+ADD_CUSTOM_TARGET(rpm_db
+    COMMAND ln -sf ../${DB_PRJ_NAME}-doc-${DB_VER}.tar.gz SOURCES/${DB_PRJ_NAME}-doc-${DB_VER}.tar.gz
+    COMMAND mkdir -p RPMS/noarch
+    COMMAND rpmbuild -ba SPECS/UnihanDb.spec --rcfile rpmrc
+    )
+
+ADD_DEPENDENCIES(srpm_db package_db_doc)
+ADD_DEPENDENCIES(rpm_db package_db_doc)
+
+
+###==================================================================
+# Test Suites.
+#
 ENABLE_TESTING()
 ADD_TEST(check_functions_0 
     ${PROJECT_BINARY_DIR}/test/check_functions 0)

@@ -1,3 +1,7 @@
+====== 2008-10-06 libUnihan 0.5.2 released ====
+This release provides some improvement feature, such as ZhuYin pseudo field,
+ and new unihan_query options:  -O -P -T -Z -z.
+
 ====== 2008-09-23 libUnihan 0.5.1 released ====
 Can display ZhuYin now.
 ZhuYin and PinYin format conversion support.

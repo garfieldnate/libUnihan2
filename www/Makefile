@@ -1,8 +1,9 @@
 ##
 #  SSH_SETTING format
-#  SSH_ARGS=-e "ssh -l $<USER>,libunihan [Other flags]"
+#  SSH_USER=<user_name>
+#  SSH_ARGS=<additional args>
 #
-include SSH_SETTING
+include ../SSH_SETTING
 
 
 REMOTE_SITE=web.sourceforge.net
@@ -11,6 +12,8 @@ REMOTE_DIR_HTDOCS=${REMOTE_DIR}/htdocs/
 RSYNC_ARGS=--cvs-exclude --recursive --verbose --update --compress --exclude *.core --stats --progress --archive --copy-links
 RSYNC=/usr/bin/rsync
 CLEAN_FLAGS=--delete
+SSH_PASS_ARGS=-e "ssh -l ${SSH_USER},libunihan ${SSH_ARGS}"
+
 
 JS_FILES=*.js
 CSS_FILES=*.css
