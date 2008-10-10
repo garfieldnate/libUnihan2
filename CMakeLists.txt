@@ -47,20 +47,24 @@ EXECUTE_PROCESS(COMMAND rpm -q --qf "%{release} " --specfile SPECS/${PROJECT_NAM
     OUTPUT_VARIABLE RPM_RELEASE)
 
 ##
-#  SSH_SETTING format
+#  Developer can edit a DEVELOPER_SETTING file, 
+#  which defines the developer specific information,
+#  So they can upload to hosting service provider.
+#
+#  DEVELOPER_SETTING format
 #  SSH_USER=<user_name>
 #  SSH_ARGS=<additional args>
 #
 
-IF(EXISTS  SSH_SETTING)
-    EXECUTE_PROCESS(COMMAND  grep SSH_USER SSH_SETTING
+IF(EXISTS  DEVELOPER_SETTING)
+    EXECUTE_PROCESS(COMMAND  grep SSH_USER DEVELOPER_SETTING
 	COMMAND sed -e "s/SSH_USER=//"
 	COMMAND tr \\n \\t
 	COMMAND sed  -e s/\\t//
 	OUTPUT_VARIABLE SSH_USER
 	)
-    IF(COMMAND  "grep SSH_ARGS SSH_SETTING")
-	EXECUTE_PROCESS(COMMAND  grep SSH_ARGS SSH_SETTING
+    IF(COMMAND  "grep SSH_ARGS DEVELOPER_SETTING")
+	EXECUTE_PROCESS(COMMAND  grep SSH_ARGS DEVELOPER_SETTING
 	    COMMAND sed -e "s/SSH_ARGS=//"
 	    COMMAND tr \\n \\t
 	    COMMAND sed  -e s/\\t//
@@ -71,12 +75,12 @@ IF(EXISTS  SSH_SETTING)
 	ELSE (${SSH_ARGS} STREQUAL "")
 	    SET(SFTP_SSH_ARGS -F ${SSH_ARGS})
 	ENDIF (${SSH_ARGS} STREQUAL "")
-    ELSE (COMMAND  "grep SSH_ARGS SSH_SETTING")
+    ELSE (COMMAND  "grep SSH_ARGS DEVELOPER_SETTING")
 	SET(SFTP_SSH_ARGS "")
-    ENDIF(COMMAND  "grep SSH_ARGS SSH_SETTING")
-ENDIF(EXISTS  SSH_SETTING)
+    ENDIF(COMMAND  "grep SSH_ARGS DEVELOPER_SETTING")
+ENDIF(EXISTS  DEVELOPER_SETTING)
 
-#MESSAGE("SSH_USER=|${SSH_USER}| SSH_ARGS=${SSH_ARGS} SSH_SETTING=${SSH_SETTING}")
+#MESSAGE("SSH_USER=|${SSH_USER}| SSH_ARGS=${SSH_ARGS} DEVELOPER_SETTING=${DEVELOPER_SETTING}")
 
 ###==================================================================
 # Source code subdirectories
@@ -134,7 +138,7 @@ SET(PRJ_COMMON_IGNORE_FILES ${COMMON_IGNORE_FILES} ${RPM_IGNORE_FILES}
     "/doc/"  "/www/" ".vis$"
     ".db$" "test/check_phonetic$" "test/check_toneMark$"
     "test/unihan_field_validation$" "Doxyfile$" "UploadPkg.batch$"
-    "SSH_SETTING")
+    "DEVELOPER_SETTING")
 
 SET(CPACK_SOURCE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/bin/" ".db" "-db")
 SET(CPACK_PACKAGE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/src/" "/test/"
@@ -215,7 +219,7 @@ SET(HOSTING_SERVICE_PROVIDER "Source forge")
 
 ADD_CUSTOM_TARGET(upload_pkg_release
     COMMAND  sftp -b UploadPkg.batch ${SFTP_SSH_ARGS} ${SSH_USER}@${UPLOAD_SITE}
-    DEPENDS SSH_SETTING UploadPkg.batch.in
+    DEPENDS DEVELOPER_SETTING UploadPkg.batch.in
     COMMENT "Uploading the package releases to ${HOSTING_SERVICE_PROVIDER}...")
 
 

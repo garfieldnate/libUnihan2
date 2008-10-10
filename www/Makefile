@@ -1,9 +1,8 @@
 ##
-#  SSH_SETTING format
-#  SSH_USER=<user_name>
-#  SSH_ARGS=<additional args>
+#  For format of ../DEVELOPER_SETTING file,
+#  See ../CMakeList.txt.
 #
-include ../SSH_SETTING
+include ../DEVELOPER_SETTING
 
 
 REMOTE_SITE=web.sourceforge.net

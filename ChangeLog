@@ -1,3 +1,10 @@
+- New Features:
+- Fixed:
+- Changed:
+  + In collection.h, G_ARRAY_COPY is renamed as G_ARRAY_CONCAT to reflect its real functionality.
+
+
+
 * Tue Oct 06 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.5.2-0
 - New Features:
   + New pseudo field 'ZhuYin'.

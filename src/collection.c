@@ -26,7 +26,7 @@
 #include <glib.h>
 
 typedef struct SetToStringArguments_ {
-    SetType type;
+    ElementType type;
     GString *strBuf;
 } SetToStringArguments;
 
@@ -49,15 +49,15 @@ static void hashSet_to_string_GHFunc(gpointer key, gpointer value, gpointer user
     gint *intValue;
     gchar *strValue;
     switch (arg->type) {
-    case INTEGER_SET:
+    case ELEMENTS_TYPE_INTEGER:
         intValue=(gint *) key;
         g_string_append_printf(arg->strBuf," %d",*intValue);
         break;
-    case STRING_SET:
+    case ELEMENTS_TYPE_STRING:
         strValue=(gchar *) key;
         g_string_append_printf(arg->strBuf," %s",strValue);
         break;
-    case DIRECT_SET:
+    case ELEMENTS_TYPE_POINTER:
         g_string_append_printf(arg->strBuf," %p",key);
         break;
     default:
@@ -66,28 +66,28 @@ static void hashSet_to_string_GHFunc(gpointer key, gpointer value, gpointer user
     }
 }
 
-HashSet *hashSet_new_auto(SetType type){
+HashSet *hashSet_new_default(ElementType type){
     return hashSet_new(type,NULL,NULL);
 }
 
 
-HashSet *hashSet_new(SetType type,GHashFunc hash_func, GEqualFunc key_equal_func){
-    return hashSet_new_full(type,hash_func,key_equal_func,NULL,NULL);
+HashSet *hashSet_new(ElementType type,GHashFunc hash_func, GEqualFunc element_equal_func){
+    return hashSet_new_full(type,hash_func,element_equal_func,NULL);
 }
 
-HashSet *hashSet_new_full(SetType type,GHashFunc hash_func, GEqualFunc key_equal_func,
-             GDestroyNotify key_destroy_func, GDestroyNotify value_destroy_func) {
+HashSet *hashSet_new_full(ElementType type,GHashFunc hash_func, GEqualFunc element_equal_func,
+             GDestroyNotify element_destroy_func) {
     GHashFunc hash_f=hash_func;
-    GEqualFunc key_equal_f=key_equal_func;
+    GEqualFunc element_equal_f=element_equal_func;
     if (hash_f==NULL) {
         switch (type) {
-        case INTEGER_SET:
+        case ELEMENTS_TYPE_INTEGER:
             hash_f=g_int_hash;
             break;
-        case STRING_SET:
+        case ELEMENTS_TYPE_STRING:
             hash_f=g_str_hash;
             break;
-        case DIRECT_SET:
+        case ELEMENTS_TYPE_POINTER:
             hash_f=g_direct_hash;
             break;
         default:
@@ -95,16 +95,16 @@ HashSet *hashSet_new_full(SetType type,GHashFunc hash_func, GEqualFunc key_equal
             break;
         }
     }
-    if (key_equal_func==NULL) {
+    if (element_equal_func==NULL) {
         switch (type) {
-        case INTEGER_SET:
-            key_equal_f=g_int_equal;
+        case ELEMENTS_TYPE_INTEGER:
+            element_equal_f=g_int_equal;
             break;
-        case STRING_SET:
-            key_equal_f=g_str_equal;
+        case ELEMENTS_TYPE_STRING:
+            element_equal_f=g_str_equal;
             break;
-        case DIRECT_SET:
-            key_equal_f=g_direct_equal;
+        case ELEMENTS_TYPE_POINTER:
+            element_equal_f=g_direct_equal;
             break;
         default:
             g_error("hashSet_new: GEqualFunc is absent.\n");
@@ -113,11 +113,11 @@ HashSet *hashSet_new_full(SetType type,GHashFunc hash_func, GEqualFunc key_equal
     }
     HashSet *resultSet=NEW_INSTANCE(HashSet);
     resultSet->setType=type;
-    resultSet->hTable=g_hash_table_new_full(hash_f,key_equal_f,key_destroy_func,value_destroy_func);
+    resultSet->hTable=g_hash_table_new_full(hash_f,element_equal_f,element_destroy_func,NULL);
     return resultSet;
 }
 
-void hashSet_reset(HashSet *hashSet) {
+void hashSet_remove_all(HashSet *hashSet) {
     g_hash_table_remove_all(hashSet->hTable);
 }
 
@@ -125,7 +125,7 @@ void hashSet_copy(HashSet *dest, HashSet *src) {
     if (dest->setType!=src->setType) {
         g_error("hashSet_copy: setType of dest (%d) and src (%d) should be the same.\n",dest->setType,src->setType);
     }
-    hashSet_reset(dest);
+    hashSet_remove_all(dest);
     g_hash_table_foreach(src->hTable,hashSet_add_element_GHFunc,dest);
 }
 
@@ -133,27 +133,27 @@ guint hashSet_get_size(HashSet *hashSet) {
     return g_hash_table_size(hashSet->hTable);
 }
 
-gboolean hashSet_has_element(HashSet *hashSet,gconstpointer key) {
-    gpointer p=g_hash_table_lookup(hashSet->hTable,key);
+gboolean hashSet_has_element(HashSet *hashSet,gconstpointer element) {
+    gpointer p=g_hash_table_lookup(hashSet->hTable,element);
     return (p!=NULL)? TRUE:FALSE;
 }
 
 
-gboolean hashSet_add_element(HashSet *s,gpointer key) {
-    if (!hashSet_has_element(s,key)) {
-        g_hash_table_insert(s->hTable,key,key);
+gboolean hashSet_add_element(HashSet *hashSet,gpointer element) {
+    if (!hashSet_has_element(hashSet,element)) {
+        g_hash_table_insert(hashSet->hTable,element,element);
         return TRUE;
     }
     return FALSE;
 }
 
-gboolean hashSet_remove_element(HashSet *hashSet,gconstpointer key) {
-    return g_hash_table_remove(hashSet->hTable,key);
+gboolean hashSet_remove_element(HashSet *hashSet,gconstpointer element) {
+    return g_hash_table_remove(hashSet->hTable,element);
 }
 
 void hashSet_union(HashSet *result, HashSet *s1,HashSet *s2) {
     if (s1!=result && s2!=result) {
-        hashSet_reset(result);
+        hashSet_remove_all(result);
     }
     g_hash_table_foreach(s1->hTable,hashSet_add_element_GHFunc,result);
     g_hash_table_foreach(s2->hTable,hashSet_add_element_GHFunc,result);
@@ -227,7 +227,7 @@ GArray *g_array_copy(GArray *dest,GArray *src){
         g_error("g_array_copy: dest cannot be null");
     }
     G_ARRAY_REMOVE_ALL(dest);
-    return G_ARRAY_COPY(dest,src);
+    return G_ARRAY_CONCAT(dest,src);
 }
 
 //int main(int argc,char** argv) {
@@ -247,9 +247,9 @@ GArray *g_array_copy(GArray *dest,GArray *src){
 //}
 
 //int main(int argc,char** argv) {
-//    HashSet *s1=hashSet_new(INTEGER_SET,NULL,NULL);
-//    HashSet *s2=hashSet_new(INTEGER_SET,NULL,NULL);
-//    HashSet *s3=hashSet_new(INTEGER_SET,NULL,NULL);
+//    HashSet *s1=hashSet_new(ELEMENTS_TYPE_INTEGER,NULL,NULL);
+//    HashSet *s2=hashSet_new(ELEMENTS_TYPE_INTEGER,NULL,NULL);
+//    HashSet *s3=hashSet_new(ELEMENTS_TYPE_INTEGER,NULL,NULL);
 //    int a1[]={ 1, 2, 3, 4, 5, 5};
 //    int a2[]={ 2, 4, 4, 6, 8,10 };
 //    int i;
@@ -275,8 +275,8 @@ GArray *g_array_copy(GArray *dest,GArray *src){
 //    printf("s2=%s\n",hashSet_to_string(s2));
 //    printf("s3=%s\n",hashSet_to_string(s3));
 
-//    hashSet_reset(s1);
-//    hashSet_reset(s2);
+//    hashSet_remove_all(s1);
+//    hashSet_remove_all(s2);
 //    for (i=0;i<6;i++) {
 //        hashSet_add_element(s1,&a1[i]);
 //        hashSet_add_element(s2,&a2[i]);
@@ -287,8 +287,8 @@ GArray *g_array_copy(GArray *dest,GArray *src){
 //    printf("s2=%s\n",hashSet_to_string(s2));
 //    printf("s3=%s\n",hashSet_to_string(s3));
 
-//    hashSet_reset(s1);
-//    hashSet_reset(s2);
+//    hashSet_remove_all(s1);
+//    hashSet_remove_all(s2);
 //    for (i=0;i<6;i++) {
 //        hashSet_add_element(s1,&a1[i]);
 //        hashSet_add_element(s2,&a2[i]);

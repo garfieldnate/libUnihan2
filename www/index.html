@@ -78,17 +78,17 @@ themeStart(getLanguageObject("title",getLanguageIndex(preferredLanguage)));
   </div>
   <div id="faqEn" style="position: relative; ">
       <h1>Frequent asked questions</h1>
-      <dl>
-	  <dt>Why do you develop libUnihan?</dt>
-	  <dd>To address
+      <ol>
+	  <li><b>Why do you develop libUnihan?</b><br />
+	  To address
 	  <a href="https://bugzilla.redhat.com/show_bug.cgi?id=227792">U+8AAA (說) and U+8AAC(説) bug</a>. 
 	  The information provides by Unihan.txt is sufficient for resolution, however,
 	  a C API for SQLized Unihan character database is more convenient for  C developers.
-	  </dd>
-	  <dt>What the database schema for libUnihan?</dt>
-	  <dd>See the <a href="api/Unihan_8h.html#482d204b9220c7394b44e6bf1196e401">table</a> and <a href="api/Unihan_8h.html#369221e7c16046dd6bd43a7423b96b84">field</a> description for details.</dd>
-	  <dt>Can libUnihan tell whether the which region/country does the character belongs to?</dt>
-	  <dd>Not exactly, because usually a character appears in many
+	  </li>
+	  <li><b>What the database schema for libUnihan?</b><br />
+	  See the <a href="api/Unihan_8h.html#482d204b9220c7394b44e6bf1196e401">table</a> and <a href="api/Unihan_8h.html#369221e7c16046dd6bd43a7423b96b84">field</a> description for details.</li>
+	  <li><b>Can libUnihan tell whether the which region/country does the character belongs to?</b><br />
+	  Not exactly, because usually a character appears in many
 	  regions. For example, U+4E94 (五) can appears in China, Japan, Korea and Vietnam.
 	  However, there are three functions which provide region sensitive information:
 	  <ol>
@@ -102,15 +102,36 @@ themeStart(getLanguageObject("title",getLanguageIndex(preferredLanguage)));
 	  Normally, 3) is preferable as if avoid the confusion like U+8AAA(說)/U+8AAC(説) and U+52FB(勻)/U+5300(匀),
 	  unless input of rare characters is needed.
 
-	  </dd>
-	  <dt>What's the licenses of libUnihan?</dt>
-	  <dd>The libUnihan itself is released under LGPLv2, while its database, UnihanDb, is released under MIT. </dd>
-	  <dt>Can we use Python or other language to access the database?</dt>
-	  <dd>Yes, the libUnihan database is based on SQLite, so it can be accessed by any languages that 
-	  provide SQLite binding. See the <a href="api/Unihan_8h.html#482d204b9220c7394b44e6bf1196e401">table</a> and <a href="api/Unihan_8h.html#369221e7c16046dd6bd43a7423b96b84">field</a> description for details.
+	  </li>
+
+	  <li><b>What's the licenses of libUnihan?</b><br />
+	  The libUnihan itself is released under LGPLv2, while its database, UnihanDb, is released under MIT. </li>
+	  <li><b>How many characters are covered by libUnihan?</b><br />
+	  libUnihan is based on <a href="http://unicode.org/charts/unihan.html">Unihan character database</a>,
+	  it has every characters that Unihan has. The code point range covered by current Unihan (5.1.0):
+	  <ul>
+	      <li><code>U+3400..U+4DB5</code>: CJK Unified Ideographs Extension A </li>
+	      <li><code>U+4E00..U+9FA5</code>: CJK Unified Ideographs </li>
+	      <li><code>U+9FA6..U+9FBB</code>: CJK Unified Ideographs (4.1)</li>
+	      <li><code>U+9FBC..U+9FC3</code>: CJK Unified Ideographs (5.1)</li>
+	      <li><code>U+F900..U+FA2D</code>: CJK Compatibility Ideographs (a)</li>
+	      <li><code>U+FA30..U+FA6A</code>: CJK Compatibility Ideographs (b)</li>
+	      <li><code>U+FA70..U+FAD9</code>: CJK Compatibility Ideographs (4.1)</li>
+	      <li><code>U+20000..U+2A6D6</code>: CJK Unified Ideographs Extension B</li>
+	      <li><code>U+2F800..U+2FA1D</code>: CJK Compatibility Supplement</li>
+	  </ul>
+	  Totally 71234 characters.
+
+	  </li>
+
+
+	  <li><b>Can we use Python or other language to access the database?</b><br />
+	  Yes, the libUnihan database is based on SQLite, so it can be accessed by any languages that 
+	  provide SQLite binding. See the <a href="api/Unihan__enum_8h.html#482d204b9220c7394b44e6bf1196e401">table</a> and <a href="api/Unihan__enum_8h.html#369221e7c16046dd6bd43a7423b96b84">field</a> description for details.
 	      Nevertheless, the libUnihan provide various C functions for convenient.
-	  </dd>
-      </dl>
+          </li>
+
+      </ol>
 
 
   </div>
