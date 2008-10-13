@@ -2,7 +2,7 @@
  * @file collection.h
  * @brief Functions for collection data structures such as set and array .
  * 
- * This header file Functions for Collection data structures such as set and array.
+ * This header file lists functions for collection data structures such as set and array.
  */
 
 /*
@@ -30,33 +30,6 @@
 #ifndef COLLECTION_H_
 #define COLLECTION_H_
 #include <glib.h>
-
-/**
- * Concatenate two GArrays.
- *
- * This macro appends GArray \a src to \a dest . The results is stored in \a dest.
- *
- * @param dest The GArray to be append to.
- * @param src The GArray to be appended from.
- * @return The GArray \a dest.
- */
-#define G_ARRAY_CONCAT(dest,src) g_array_append_vals(dest,src->data,src->len)
-
-/**
- * Remove all elements of a GArray.
- * 
- * This macro removes all elements in \a array.
- * @param array GArray to be processed.
- */
-#define G_ARRAY_REMOVE_ALL(array) if (array->len>0) g_array_remove_range(array,0,array->len)
-
-/**
- * Remove all elements of a GPTRArray.
- * 
- * This macro removes all elements in \a array.
- * @param array GPtrArray to be processed.
- */
-#define G_PTR_ARRAY_REMOVE_ALL(array) if (array->len>0) g_ptr_array_remove_range(array,0,array->len)
 
 /**
  * Enumeration of element types which the collection stores. 
@@ -170,17 +143,6 @@ HashSet *hashSet_new_full(ElementType type,GHashFunc hash_func, GEqualFunc eleme
 
 
 /**
- *  Remove all elements in the set.
- *  
- *  This function removes all elements in \a s.
- *  If \c element_destroy_func is supplied when \a s is created,
- *  it will be executed to free the elements.
- *
- * @param hashSet The HashSet to be processed.
- */
-void hashSet_remove_all(HashSet *hashSet);
-
-/**
  *  Copy from another HashSet.
  *
  *  This function copies the elements from \a src to \a dest.
@@ -214,28 +176,213 @@ gboolean hashSet_has_element(HashSet *hashSet,gconstpointer element);
 
 
 /**
- * hashSet_add_element:
- * Add new element to @s, if it does not have the element.
+ * Add an element to the HashSet.
+ *
+ * Add an element to \a hashSet, if it does not yet have an identical element.
+ * Note that this function only copies the pointer of \a element, not the content.
+ * So try not free the space that the \a element points to until \a element is removed from hashSet.
  * 
- * @s the HashSet
- * @element the element to be insert
+ * @param hashSet The HashSet to be processed.
+ * @param element The element to be added.
+ * @return TRUE if the \a element has been added, FALSE if \a element has not been added because an identical element exists.
  */
 gboolean hashSet_add_element(HashSet *hashSet,gpointer element);
 
+/**
+ *  Remove all elements in the set.
+ *  
+ *  This function removes all elements in \a hashSet.
+ *  If \c element_destroy_func is supplied when \a s is created,
+ *  it will be executed to free the elements.
+ *
+ * @param hashSet The HashSet to be processed.
+ * @see hashSet_remove_element()
+ * @see hashSet_steal_all()
+ * @see hashSet_steal_element()
+ */
+void hashSet_remove_all(HashSet *hashSet);
+
+
+/**
+ * Remove an element to the HashSet.
+ *
+ * Remove an element from \a hashSet.
+ * Note that the \a element_destroy_func will be executed if it was given when constructing \a hashSet,
+ * otherwise, only the pointer \a element will be removed, not the content.
+ * 
+ * @param hashSet The HashSet to be processed.
+ * @param element The element to be removed.
+ * @return TRUE if the \a element  was found and removed. FALSE otherwise.
+ * @see hashSet_remove_all()
+ * @see hashSet_steal_all()
+ * @see hashSet_steal_element()
+ */
 gboolean hashSet_remove_element(HashSet *hashSet,gconstpointer element);
 
+
+/**
+ *  Steal all elements in the set.
+ *  
+ * This function "steals" all elements from \a hashSet by removing all the element from it,
+ * but not free the content that the elements point to,
+ * in spite of whether the \a element_destroy_func is given or not.
+ * 
+ *
+ * @param hashSet The HashSet to be processed.
+ * @see hashSet_remove_all()
+ * @see hashSet_remove_element()
+ * @see hashSet_steal_element()
+ */
+void hashSet_steal_all(HashSet *hashSet);
+
+/**
+ * Steal an element to the HashSet.
+ *
+ * This function "steals" an element from \a hashSet by removing \a element from it,
+ * but not free the content that \a element points to,
+ * in spite of whether the \a element_destroy_func is given or not.
+ * 
+ * @param hashSet The HashSet to be processed.
+ * @param element The element to be removed.
+ * @return TRUE if the \a element  was found and removed. FALSE otherwise.
+ * @see hashSet_remove_all()
+ * @see hashSet_remove_element()
+ * @see hashSet_steal_all()
+ */
+gboolean hashSet_steal_element(HashSet *hashSet,gconstpointer element);
+
+/**
+ * @name Set operations.
+ *
+ * Set operation functions such as union and interset.
+ * @{
+ */
+/**
+ * Union two sets.
+ *
+ * This function performs a set union operation on \a hashSet1 and \a hashSet2,
+ * and put the result set in \a result.
+ * The set \a result can be either \a hashSet1, \a hashSet2 or another HashSet,
+ * but cannot be \c NULL.
+ * 
+ * 
+ * @param hashSet1 The HashSet to be processed.
+ * @param hashSet2 The HashSet to be processed.
+ * @param result The HashSet that holds the result.
+ */
 void hashSet_union(HashSet *result, HashSet *hashSet1, HashSet *hashSet2);
 
-void hashSet_interset(HashSet *result, HashSet *hashSet1, HashSet *hashSet2);
+/**
+ * Intersect two sets.
+ *
+ * This function performs a set intersect operation on \a hashSet1 and \a hashSet2,
+ * and put the result set in \a result.
+ * The set \a result can be either \a hashSet1, \a hashSet2 or another HashSet,
+ * but cannot be \c NULL.
+ * 
+ * 
+ * @param hashSet1 The HashSet to be processed.
+ * @param hashSet2 The HashSet to be processed.
+ * @param result The HashSet that holds the result.
+ */
+void hashSet_intersect(HashSet *result, HashSet *hashSet1, HashSet *hashSet2);
 
-gchar* hashSet_to_string(HashSet *hashSet);
+/**
+ * @}
+ */
 
+
+/**
+ * New a string representation for the content of the HashSet.
+ *
+ * This function produces a string representation of the HashSet.
+ * The output formats are like (in printf() format):
+ *
+ * - ELEMENTS_TYPE_INTEGER: [ %d %d %d ... ]
+ * - ELEMENTS_TYPE_STRING:  [ %s %s %s ... ]
+ * - ELEMENTS_TYPE_POINTER: [ %p %p %p ... ]
+ * - ELEMENTS_TYPE_CUSTOM:  [ %p %p %p ... ]
+ *
+ * The return string is new allocated, use \c free() or \c g_free() to free it.
+ * 
+ * @param hashSet The HashSet to be processed.
+ * @return a newly allocated string which represents the content of  result The HashSet that holds the result.
+ */
+char* hashSet_to_string(HashSet *hashSet);
+
+/**
+ * Free the hashSet instance.
+ *
+ * @param hashSet The HashSet to be processed.
+ */
 void hashSet_destroy(HashSet *hashSet);
 
-gint integer_compareFunc(gconstpointer a,gconstpointer b);
+/**
+ * GCompareFunc that compares two intergers.
+ *
+ * @param a pointer to an integer.
+ * @param b pointer to another integer.
+ * @return negative value if value of a < b; zero if value of a = b; positive value if value of  a > b.
+ */ 
+int integer_compareFunc(gconstpointer a,gconstpointer b);
 
-gint g_array_find(GArray *array,gpointer key, gint keySize,GCompareFunc func);
+/**
+ * Remove all elements of a GPTRArray.
+ * 
+ * This macro removes all elements in \a array.
+ * @param array GPtrArray to be processed.
+ */
+#define G_PTR_ARRAY_REMOVE_ALL(array) if (array->len>0) g_ptr_array_remove_range(array,0,array->len)
 
+/**
+ * Concatenate two GArrays.
+ *
+ * This macro appends GArray \a src to \a dest . The results is stored in \a dest.
+ *
+ * @param dest The GArray to be append to.
+ * @param src The GArray to be appended from.
+ * @return The GArray \a dest.
+ */
+#define G_ARRAY_CONCAT(dest,src) g_array_append_vals(dest,src->data,src->len)
+
+/**
+ * Remove all elements of a GArray.
+ * 
+ * This macro removes all elements in \a array.
+ * @param array GArray to be processed.
+ */
+#define G_ARRAY_REMOVE_ALL(array) if (array->len>0) g_array_remove_range(array,0,array->len)
+
+/**
+ * Find an element  in a GArray.
+ *
+ * This function uses \a func, A GCompareFunc to compare and find an element in \a array.
+ * The prototype of GCompareFunc is:
+ * <tt>int  (*GCompareFunc)  (gconstpointer a, gconstpointer b)</tt>
+ * 
+ * Note that it finds whether the content of \a element is in the \a array .
+ *
+ *
+ *
+ * @param array The array to be processed.
+ * @param element The element to be found.
+ * @param elementSize  The number of bytes which the content of \a element occupies.
+ * @param func The GCompareFunc that compar
+ * @return index of the element in the array; -1 if such element cannot be found.
+ */
+int g_array_find(GArray *array, gpointer element, gint elementSize,GCompareFunc func);
+
+/**
+ * Copy from another GArray.
+ *
+ *  This function copies the elements from \a src to \a dest.
+ *  The old elements in \a dest will be removed by G_ARRAY_REMOVE_ALL().
+ *  Note that if \a src is NULL, content of \a dest will be freed.
+ *
+ * @param dest GArray to be copied to.
+ * @param src GArray to be copied to.
+ * @return The GArray \a dest.
+ */
 GArray *g_array_copy(GArray *dest,GArray *src);
 
 #endif /*COLLECTION_H_*/

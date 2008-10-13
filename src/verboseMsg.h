@@ -1,3 +1,10 @@
+/** 
+ * @file verboseMsg.h
+ * @brief Verbose message handling.
+ *
+ * This header file lists functions for verbose message handling.
+ */
+
 /*
  * Copyright © 2008  Red Hat, Inc. All rights reserved.
  * Copyright © 2008  Ding-Yi Chen <dchen at redhat dot com>

@@ -117,9 +117,6 @@ HashSet *hashSet_new_full(ElementType type,GHashFunc hash_func, GEqualFunc eleme
     return resultSet;
 }
 
-void hashSet_remove_all(HashSet *hashSet) {
-    g_hash_table_remove_all(hashSet->hTable);
-}
 
 void hashSet_copy(HashSet *dest, HashSet *src) {
     if (dest->setType!=src->setType) {
@@ -147,8 +144,20 @@ gboolean hashSet_add_element(HashSet *hashSet,gpointer element) {
     return FALSE;
 }
 
+void hashSet_remove_all(HashSet *hashSet) {
+    g_hash_table_remove_all(hashSet->hTable);
+}
+
 gboolean hashSet_remove_element(HashSet *hashSet,gconstpointer element) {
     return g_hash_table_remove(hashSet->hTable,element);
+}
+
+gboolean hashSet_steal_element(HashSet *hashSet,gconstpointer element) {
+    return g_hash_table_steal(hashSet->hTable,element);
+}
+
+void hashSet_steal_all(HashSet *hashSet) {
+    g_hash_table_steal_all(hashSet->hTable);
 }
 
 void hashSet_union(HashSet *result, HashSet *s1,HashSet *s2) {
@@ -159,7 +168,7 @@ void hashSet_union(HashSet *result, HashSet *s1,HashSet *s2) {
     g_hash_table_foreach(s2->hTable,hashSet_add_element_GHFunc,result);
 }
 
-void hashSet_interset(HashSet *result, HashSet *s1,HashSet *s2) {
+void hashSet_intersect(HashSet *result, HashSet *s1,HashSet *s2) {
     HashSet *hashSet1,*hashSet2;
     if (s1!=result && s2!=result) {
         hashSet_copy(result,s1);
@@ -175,7 +184,7 @@ void hashSet_interset(HashSet *result, HashSet *s1,HashSet *s2) {
     g_hash_table_foreach_remove(hashSet1->hTable,hashSet_interset_element_GHFunc,hashSet2);
 }
 
-gchar* hashSet_to_string(HashSet *hashSet) {
+char* hashSet_to_string(HashSet *hashSet) {
     GString *strBuf=g_string_new("[");
 
     SetToStringArguments arg;
@@ -191,8 +200,7 @@ void hashSet_destroy(HashSet *s){
     g_free(s);
 }
 
-gint
-integer_compareFunc(gconstpointer a, gconstpointer b){
+int integer_compareFunc(gconstpointer a, gconstpointer b){
     int *ia=(int *) a;
     int *ib=(int *) b;
     if (*ia<*ib){
@@ -205,12 +213,12 @@ integer_compareFunc(gconstpointer a, gconstpointer b){
 
 
 gint 
-g_array_find(GArray *array,gpointer key, gint keySize,GCompareFunc func){
+g_array_find(GArray *array, gpointer element, gint elementSize,GCompareFunc func){
     gint len=array->len;
     gint i;
     for(i=0;i<len;i++){
-        gpointer k=& array->data[i*keySize];
-        if (func(k,key)==0)
+        gpointer k=& array->data[i*elementSize];
+        if (func(k,element)==0)
             return i;
     }
     return -1;
