@@ -29,7 +29,7 @@ truepath(const gchar *path, gchar *resolved_path){
         // initialize variables
         firstSlash = suffix = homeDirStr = NULL;
         
-	firstSlash = strchr(workingPath, FILE_SEPARATOR);
+	firstSlash = strchr(workingPath, DIRECTORY_SEPARATOR);
         if (firstSlash == NULL)
             suffix = "";
         else
@@ -47,7 +47,7 @@ truepath(const gchar *path, gchar *resolved_path){
             homeDirStr = pw->pw_dir;
         
         if (homeDirStr != NULL){
-	    int ret=g_sprintf(fullPath, "%s/%s", homeDirStr, suffix);
+	    gint ret=g_sprintf(fullPath, "%s%c%s", homeDirStr, DIRECTORY_SEPARATOR, suffix);
 	    if (ret>0){
 		result = realpath(fullPath, resolved_path);
 	    }
@@ -79,34 +79,67 @@ isWritable(const gchar *filename){
     return result;
 }
 
-gchar *search_file_given_paths(const gchar *filename,const gchar* search_paths,gboolean readable){
-    gchar buf[PATH_MAX];
+gboolean filename_meets_accessMode(const gchar *filename, guint access_mode_mask){
+    if (access_mode_mask & FILE_MODE_READ){
+	if (!isReadable(filename)){
+	    return FALSE;
+	}
+    }
+    if (access_mode_mask & FILE_MODE_WRITE){
+	if (access_mode_mask & (FILE_MODE_READ | FILE_MODE_EXECUTE | FILE_MODE_EXIST)){
+	    /* File must exist */
+	    if (access(filename,W_OK)!=0){
+		return FALSE;
+	    }
+	}else{
+	    /* File need not exist */
+	    if (!isWritable(filename)){
+		return FALSE;
+	    }
+	}
+    }
+    if (access_mode_mask & FILE_MODE_EXECUTE){
+	if (access(filename,X_OK)!=0){
+	    return FALSE;
+	}
+    }
+    if (access_mode_mask & FILE_MODE_EXIST){
+	if (access(filename,F_OK)!=0){
+	    return FALSE;
+	}
+    }
+    return TRUE;
+}
+
+gchar *filename_search_paths(const gchar *filename,const gchar *search_paths){
+    return filename_search_paths_mode(filename,search_paths,FILE_MODE_EXIST);
+}
+
+gchar *filename_search_paths_mode(const gchar *filename,const gchar *search_paths,guint access_mode_mask){
+    gchar currPath[PATH_MAX];
+    gchar currPath_full[PATH_MAX];
     gchar pSep[2];
     pSep[0]=PATH_SEPARATOR;
     pSep[1]='\0';
 
-    GString *strBuf=g_string_new(NULL);
     gchar** searchDir=g_strsplit(search_paths,pSep,0);
-    int i,len;
+    gint i,len;
     for(i=0;searchDir[i]!=NULL;i++){
 	len=strlen(searchDir[i]);
-	if ((searchDir[i][len-1]==FILE_SEPARATOR) ){
-	    g_string_printf(strBuf,"%s%s",searchDir[i],filename);
+	if ((searchDir[i][len-1]==DIRECTORY_SEPARATOR) ){
+	    g_snprintf(currPath,PATH_MAX,"%s%s",searchDir[i],filename);
 	}else{
-	    g_string_printf(strBuf,"%s%c%s",searchDir[i],FILE_SEPARATOR,filename);
+	    g_snprintf(currPath,PATH_MAX,"%s%c%s",searchDir[i],DIRECTORY_SEPARATOR,filename);
 	}
-	if (truepath(strBuf->str,buf)==NULL){
+	if (truepath(currPath,currPath_full)==NULL){
 	    continue;
 	}
-	if (readable && isReadable(buf)){
-	    g_string_assign(strBuf,buf);
-	    return g_string_free(strBuf,FALSE);
-	}else if(isWritable(buf)){
-	    g_string_assign(strBuf,buf);
-	    return g_string_free(strBuf,FALSE); 
+	if (filename_meets_accessMode(currPath_full, access_mode_mask)){
+	    g_strfreev(searchDir);
+	    return g_strdup(currPath_full);
 	}
     }
-    g_string_free(strBuf,TRUE);
+    g_strfreev(searchDir);
     return NULL;
 }
 

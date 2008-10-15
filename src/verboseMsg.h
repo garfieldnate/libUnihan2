@@ -2,7 +2,20 @@
  * @file verboseMsg.h
  * @brief Verbose message handling.
  *
- * This header file lists functions for verbose message handling.
+ * Verbose messages show critical errors, errors, warnings, and various messages 
+ * for information or debugging use.
+ *
+ * They can display on screen, depending on the <i>current verbose level</i> and 
+ * <i>message verbose level</i>.
+ * If verbose level messages are lesser than or equals to the current verbose level, 
+ * the message will show on screen; otherwise the message will be ignored and not showing.
+ *
+ * Similarly, the verbose messages can save to log files,
+ * depending on the <i>file verbose level</i>.
+ * If verbose level messages are lesser than or equals to the file verbose level, 
+ * the message will print to the given log file; otherwise the message will not appear in log file.
+ * See  also verboseMsg_print().
+ *
  */
 
 /*
@@ -27,55 +40,94 @@
  * Boston, MA  02111-1307  USA
  */
  
-/**
- * Debug message handling functions
- */
 #ifndef VERBOSEMSG_H_
 #define VERBOSEMSG_H_
 #include <stdio.h>
 /**
- * Available verboseLevel:
- * <ol>
- *  <li> VERBOSE_MSG_NONE        -1
- *  <li> VERBOSE_MSG_CRITICAL    0 (default)
- *  <li> VERBOSE_MSG_ERROR       1
- *  <li> VERBOSE_MSG_WARNING     2
- *  <li> VERBOSE_MSG_INFO1       3
- *  <li> VERBOSE_MSG_INFO2       4
- *  <li> VERBOSE_MSG_INFO3       5
- *  <li> VERBOSE_MSG_INFO4       6
- *  <li> VERBOSE_MSG_INFO5       7
- * </ol>
+ * @name Available verboseLevel
+ *
+ * Predefined verbose levels. 
+ *
+ * You can define more levels by yourself if necessary.
+ * @{
  */
-#define VERBOSE_MSG_NONE        -1
-#define VERBOSE_MSG_CRITICAL    0
-#define VERBOSE_MSG_ERROR       1
-#define VERBOSE_MSG_WARNING     2
-#define VERBOSE_MSG_INFO1       3
-#define VERBOSE_MSG_INFO2       4
-#define VERBOSE_MSG_INFO3       5
-#define VERBOSE_MSG_INFO4       6
-#define VERBOSE_MSG_INFO5       7
+#define VERBOSE_MSG_NONE        -1 //!< No debug message output.
+#define VERBOSE_MSG_CRITICAL    0  //!< Output critical messages.
+#define VERBOSE_MSG_ERROR       1  //!< Output general errors and above.
+#define VERBOSE_MSG_WARNING     2  //!< Output warning messages and above.
+#define VERBOSE_MSG_INFO1       3  //!< Output the information message level 1 and above.
+#define VERBOSE_MSG_INFO2       4  //!< Output the information message level 2 and above.
+#define VERBOSE_MSG_INFO3       5  //!< Output the information message level 3 and above.
+#define VERBOSE_MSG_INFO4       6  //!< Output the information message level 4 and above.
+#define VERBOSE_MSG_INFO5       7  //!< Output the information message level 5 and above.
+#define VERBOSE_MSG_INFO6       8  //!< Output the information message level 6 and above.
 
-int verboseMsg_get_level();
-void verboseMsg_set_level(int verboseLevel);
+/**
+ * @}
+ */
 
-int verboseMsg_get_fileLevel();
-void verboseMsg_set_fileLevel(int fileVerboseLevel);
+/**
+ * Get the current verbose level.
+ *
+ * @return current verbose level.
+ */
+gint verboseMsg_get_level();
 
+/**
+ * Set the current verbose level.
+ *
+ * @param verboseLevel the verbose level to be set as current verbose level.
+ */
+void verboseMsg_set_level(gint verboseLevel);
+
+/**
+ * Get the file verbose level.
+ * 
+ * @return file verbose level.
+ */
+gint verboseMsg_get_fileLevel();
+
+/**
+ * Set the file verbose level.
+ *
+ * @param fileVerboseLevel the verbose level to be set as file verbose level.
+ */
+void verboseMsg_set_fileLevel(gint fileVerboseLevel);
+
+/**
+ * Set the log file.
+ * 
+ * @param outputFile Output file.
+ */
 void verboseMsg_set_logFile(FILE *outputFile);
 
 
 /**
- * Verbose message output.
- * It is actually a wrapper of printf and fprintf
- * @param _verboseLevel
+ * Output Verbose message.
+ *
+ * This function prints the verbose to screen, and log files.
+ *  if the \a outputFile in verboseMsg_set_logFile() is given.
+ * The message will be displayed on screen if \a verboseLevel is lesser or equal to current verbose level.
+ * The message will also be printed to the log if the \a outputFile is given and
+ *  \a verboseLevel is lesser or equal to file verbose level.
+ *
+ * The rest of this function works like fprintf.
+ * @param verboseLevel
  * @param format
  * @param ...
  * @returns same as printf/fprintf 
+ * @see verboseMsg_set_logFile()
  */
-int verboseMsg_print(int verboseLevel, const char *format, ...);
+gint verboseMsg_print(gint verboseLevel, const gchar *format, ...);
 
-void verboseMsg_increase_level(int difference);
+/**
+ * Increase or decrease verbose level.
+ *
+ * This function can increase the verbose level by setting a positive \a difference;
+ * while setting a negative \a difference decrease the verbose level.
+ *
+ * @param difference The amount of verbose level be changed.
+ */
+void verboseMsg_increase_level(gint difference);
 
 #endif /*VERBOSEMSG_H_*/

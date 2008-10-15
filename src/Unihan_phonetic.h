@@ -39,14 +39,14 @@
 #define UNIHAN_PHONETIC_H_
 
 #include <sqlite3.h>
+
 /**
- * Spaces that PinYin might occupy.
- *
+ * Maximum length of pinyin in byte.
  */
 #define PINYIN_MAX_LENGTH 9
 
 /**
- * Spaces that ZhuYin might occupy.
+ * Maximum length of zhuyin in byte.
  */
 #define ZHUYIN_MAX_LENGTH 13
 

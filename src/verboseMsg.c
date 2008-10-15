@@ -23,23 +23,23 @@
 #include <stdarg.h>
 #include "verboseMsg.h" 
 
-int _verboseLevel=VERBOSE_MSG_CRITICAL;
-int _fileVerboseLevel=VERBOSE_MSG_NONE;
+gint _verboseLevel=VERBOSE_MSG_CRITICAL;
+gint _fileVerboseLevel=VERBOSE_MSG_NONE;
 FILE *_outputFile;
 
-int verboseMsg_get_level(){
+gint verboseMsg_get_level(){
     return _verboseLevel;
 }
 
-void verboseMsg_set_level(int verboseLevel){
+void verboseMsg_set_level(gint verboseLevel){
     _verboseLevel=verboseLevel;
 }
 
-int verboseMsg_get_fileLevel(){
+gint verboseMsg_get_fileLevel(){
     return _fileVerboseLevel;
 }
 
-void verboseMsg_set_fileLevel(int fileVerboseLevel){
+void verboseMsg_set_fileLevel(gint fileVerboseLevel){
     _fileVerboseLevel=fileVerboseLevel;
 }
 
@@ -49,7 +49,7 @@ void verboseMsg_set_logFile(FILE *outputFile){
 
 
 
-int verboseMsg_print(int verboseLevel, const char *format, ...){
+gint verboseMsg_print(gint verboseLevel, const gchar *format, ...){
     int ret=0;
     va_list ap;
     if (_verboseLevel>=verboseLevel){
@@ -66,7 +66,7 @@ int verboseMsg_print(int verboseLevel, const char *format, ...){
     return ret;
 }
 
-void verboseMsg_increase_level(int difference){
+void verboseMsg_increase_level(gint difference){
     _verboseLevel+=difference;
     _fileVerboseLevel+=difference;
 }

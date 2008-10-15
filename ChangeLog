@@ -1,7 +1,12 @@
 - New Features:
 - Fixed:
 - Changed:
-  + In collection.h, G_ARRAY_COPY is renamed as G_ARRAY_CONCAT to reflect its real functionality.
+  + collection.h: 
+    - G_ARRAY_COPY is renamed as G_ARRAY_CONCAT to reflect its real functionality.
+    - hashSet_new_full() now only takes 4 parameters because value value_destroy_func is not required,
+      as in hashSet, key == value.
+  + file_functions.h:
+  - search_file_given_paths() is replaced by filename_search_paths()
 
 
 
