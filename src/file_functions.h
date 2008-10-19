@@ -166,8 +166,7 @@ gchar*
 filename_search_paths_mode(const gchar *filename,const gchar* search_paths,guint access_mode_mask);
 
 /**
- * Prototype of callback function for filename_get_user_chosen.
- *
+ * Prototype of callback function for choosing a file name filename_get_user_chosen.
  *
  * Note that the callback function should be capable of checking whether
  * the selected files are readable (for file opening) or 
@@ -176,47 +175,12 @@ filename_search_paths_mode(const gchar *filename,const gchar* search_paths,guint
  * @param filename pre-selected filename. Can be NULL.
  * @param extensions acceptable file extensions. NULL for don't care.
  * @param prompt the string to be shown in UI, usually shown as dialog title for GUI.
+ * @param access_mode_mask the required access mode mask defined in #FileAccessMode.
  * @param option Other custom option.
  * @return The filename of selection.
  */
 typedef gchar* (* ChooseFilenameFunc) 
-(const gchar *defaultFilename, const gchar** extensions,const gchar * prompt,gpointer option);
-
-/**
- * Call text UI to select open file.
- *
- * Unlike its GUI counterparts, it merely tests the readability of filename.
- *
- *
- * @param defaultFilename pre-selected filename. Can be NULL.
- * @param extensions acceptable file extensions. NULL for don't care.
- * @param prompt the string to be shown in UI, usually shown as dialog title for GUI.
- * @param access_mode_mask
- * @param option Other custom option.
- *
- *
- * @return Returns the filename if it is readable; NULL otherwise.
- */
-gchar *filename_get_user_chosen_callback_open_TUI
-(const gchar *defaultFilename, const gchar** extensions, const gchar * prompt,gpointer option);
-
-
-/**
- * Call text UI to select saving file.
- *
- * Unlike its GUI counterparts, it merely tests the writability of filename.
- * 
- * @param defaultFilename pre-selected filename. Can be NULL.
- * @param extensions acceptable file extensions. NULL for don't care.
- * @param prompt the string to be shown in UI, usually shown as dialog title for GUI.
- * @param access_mode_mask the required access mode mask defined in #FileAccessMode.
- * @param option Other custom option.
- *
- *
- * @returns: Returns the filename if it is readable; NULL otherwise.
- */
-gchar *filename_get_user_chosen_callback_save_TUI
-(const gchar *defaultFilename, const gchar** extensions,const gchar * prompt,guint access_mode_mask,gpointer option);
+(gchar *defaultFilename, const gchar** extensions,const gchar * prompt,guint access_mode_mask, gpointer option);
 
 gchar *filename_determine(gchar* filenameBuf,const gchar* defaultFilename,
 	const gchar** extensions,
