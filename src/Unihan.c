@@ -643,7 +643,7 @@ const char* unihanLocale_to_string(UnihanLocale locale){
 }
 
 gboolean unihanChar_is_common_in_locale(gunichar code, UnihanLocale locale){
-    UnihanIRG_Source source;
+    UnihanIRG_Source source=UNIHAN_INVALID_SOURCEID;
     switch(locale){
 	case UNIHAN_LOCALE_JA_JP:
 	    source=unihanChar_is_in_sources(code, LOCALE_JA_JP_SOURCES_COMMON);

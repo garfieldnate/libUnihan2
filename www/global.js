@@ -171,7 +171,7 @@ function dumpObjectByName(objName,showValue){
    if (obj==null){
      document.write("<b>"+objName+"</b>: no such object!\n<BR>");
    }
-   return showObject(obj,objName,showValue);
+   return dumpObject(obj,objName,showValue);
 }
 
 function dumpObjectById(objId,showValue){

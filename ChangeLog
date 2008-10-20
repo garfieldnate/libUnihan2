@@ -1,4 +1,6 @@
 * Mon Oct 20 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.5.3-0
+- New Features:
+  collection.h, file_function.h and verboseMsg.h is in API.
 - Fixed:
   Missing documents in 0.5.2
 - Changed:

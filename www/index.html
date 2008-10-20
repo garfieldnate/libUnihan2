@@ -86,7 +86,7 @@ themeStart(getLanguageObject("title",getLanguageIndex(preferredLanguage)));
 	  a C API for SQLized Unihan character database is more convenient for  C developers.
 	  </li>
 	  <li><b>What the database schema for libUnihan?</b><br />
-	  See the <a href="api/Unihan_8h.html#482d204b9220c7394b44e6bf1196e401">table</a> and <a href="api/Unihan_8h.html#369221e7c16046dd6bd43a7423b96b84">field</a> description for details.</li>
+	  See the <a href="api/Unihan__enum_8h.html#482d204b9220c7394b44e6bf1196e401">table</a> and <a href="api/Unihan__enum_8h.html#369221e7c16046dd6bd43a7423b96b84">field</a> descriptions for details.</li>
 	  <li><b>Can libUnihan tell whether the which region/country does the character belongs to?</b><br />
 	  Not exactly, because usually a character appears in many
 	  regions. For example, U+4E94 (五) can appears in China, Japan, Korea and Vietnam.
@@ -127,7 +127,7 @@ themeStart(getLanguageObject("title",getLanguageIndex(preferredLanguage)));
 
 	  <li><b>Can we use Python or other language to access the database?</b><br />
 	  Yes, the libUnihan database is based on SQLite, so it can be accessed by any languages that 
-	  provide SQLite binding. See the <a href="api/Unihan__enum_8h.html#482d204b9220c7394b44e6bf1196e401">table</a> and <a href="api/Unihan__enum_8h.html#369221e7c16046dd6bd43a7423b96b84">field</a> description for details.
+	  provide SQLite binding. See the <a href="api/Unihan__enum_8h.html#482d204b9220c7394b44e6bf1196e401">table</a> and <a href="api/Unihan__enum_8h.html#369221e7c16046dd6bd43a7423b96b84">field</a> descriptions for details.
 	      Nevertheless, the libUnihan provide various C functions for convenient.
           </li>
 
@@ -137,6 +137,10 @@ themeStart(getLanguageObject("title",getLanguageIndex(preferredLanguage)));
   </div>
   <div id="newsEn" style="position: relative; ">
       <h1>News</h1>
+      <h2>Version 0.5.3 Released: 2008-10-20</h2>
+      <p>This release fixes the no API documents, also correct some functions in 
+         collection.[ch], file_functions.[ch] for prepareation of libUnihan 0.6</p>
+
       <h2>Version 0.5.2 Released: 2008-10-06</h2>
       <p>This release provides further support of ZhuYin and PinYin, such as ZhuYin pseudo field,
       and new unihan_query options:  <code>-Z, -z, -P, -p</code>.</p>

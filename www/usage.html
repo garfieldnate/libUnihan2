@@ -34,12 +34,23 @@
 		    <h1>Installation</h1>
 		    <h2>From RPM</h2>
 		    <ol>
-			<li>Download latest UnihanDb RPM from 
-			<a href="http://sourceforge.net/project/showfiles.php?group_id=231871">
-			    download page</a>.</li>
-			<li>Download libUnihan RPMs that suit your architecture.</li>
-			<li><code>rpm -hiv *.rpm</code></li>
+			<li>Download the latest libUnihan and UnihanDb RPMs from <a href="https://sourceforge.net/project/showfiles.php?group_id=231871">here</a>.</li>
+			<li>Suppose the downloaded packages are at <code>/tmp</code>,
+			    
+			<ul>
+			    <li>If previous version is installed, then	    
+			    <code>cd /tmp; sudo rpm -hUv *.rpm</code> </li>
+			    <li>else		    
+			    <code>cd /tmp; sudo rpm -hiv *.rpm</code> </li>
+			</ul>    
 		    </ol>
+		    <h2>From Yum</h2>
+			<ul>
+			    <li>If previous version is installed, then	    
+			    <code>yum update libUnihan UnihanDb</code> </li>
+			    <li>else		    
+			    <code>yum install libUnihan UnihanDb</code> </li>
+			</ul>    
 		    <h2>Build from Source</h2>
 		    <p>Requires following package to be build:  
 		    glib2-devel &gt;= 2.4, cmake &gt;= 2.4, sqlite-devel &gt;= 3.0

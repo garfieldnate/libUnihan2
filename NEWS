@@ -1,3 +1,8 @@
+====== 2008-10-20 libUnihan 0.5.3 released ====
+This release fixes the no API documents, also corrects some functions in 
+collection.[ch], file_functions.[ch] for prepareation of libUnihan 0.6.
+
+
 ====== 2008-10-06 libUnihan 0.5.2 released ====
 This release provides further support of ZhuYin and PinYin, such as
 ZhuYin pseudo field, and new unihan_query options:  -Z, -z, -P, -p.

@@ -41,6 +41,8 @@ ADD_DEFINITIONS(-DUNIHAN_DEFAULT_DB='"${DB_DIR}/${DB_NAME}"')
 #
 #  Note: CMake 2.4 does not support STRING(STRIP ..)
 
+CONFIGURE_FILE(SPECS/libUnihan.spec.in SPECS/libUnihan.spec)
+
 EXECUTE_PROCESS(COMMAND rpm -q --qf "%{release} " --specfile SPECS/${PROJECT_NAME}.spec 
     COMMAND head -n 1
     COMMAND sed -e "s/ .*//"
@@ -95,7 +97,6 @@ PKG_CHECK_MODULES(SQLITE3 sqlite3)
 
 CONFIGURE_FILE(Doxyfile.in Doxyfile)
 CONFIGURE_FILE(UploadPkg.batch.in UploadPkg.batch)
-CONFIGURE_FILE(SPECS/libUnihan.spec.in SPECS/libUnihan.spec)
 
 ADD_CUSTOM_TARGET(${DB_NAME}
     COMMAND /bin/ln -sf ${DB_NAME}.${DB_VER}-${DB_PATCH_LEVEL} ${DB_NAME}
@@ -138,6 +139,7 @@ SET(PRJ_COMMON_IGNORE_FILES ${COMMON_IGNORE_FILES} ${RPM_IGNORE_FILES}
     "/doc/"  "/www/" ".vis$"
     ".db$" "test/check_phonetic$" "test/check_toneMark$"
     "test/unihan_field_validation$" "Doxyfile$" "UploadPkg.batch$"
+    "libUnihan.spec$"
     "DEVELOPER_SETTING")
 
 SET(CPACK_SOURCE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/bin/" ".db" "-db")
@@ -269,8 +271,8 @@ ADD_DEPENDENCIES(rpm_db package_db_doc)
 # Test Suites.
 #
 ENABLE_TESTING()
-ADD_TEST(check_functions_0 
-    ${PROJECT_BINARY_DIR}/test/check_functions 0)
+ADD_TEST(check_unihan_functions_0 
+    ${PROJECT_BINARY_DIR}/test/check_unihan_functions 0)
 
 ADD_TEST(check_phonetic_pinyin_always 
     ${PROJECT_BINARY_DIR}/test/check_phonetic 0) 
