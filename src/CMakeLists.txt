@@ -22,7 +22,7 @@ SET(supporting_SRCS allocate.c allocate.h
     verboseMsg.c verboseMsg.h)
 
 SET(DOCUMENTED_HEADERS Unihan.h Unihan_enum.h Unihan_phonetic.h 
-   allocate.h sqlite_functions.h str_functions.h)
+    allocate.h collection.h file_functions.h sqlite_functions.h str_functions.h verboseMsg.h)
 
 ADD_LIBRARY(Unihan SHARED ${libUnihan_SRCS} ${supporting_SRCS})
 SET_TARGET_PROPERTIES(Unihan PROPERTIES 

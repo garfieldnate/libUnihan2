@@ -7,8 +7,8 @@
 #include <unistd.h>
 #include <libgen.h>
 #include <string.h>
+#include "allocate.h"
 #include "file_functions.h"
-#include "str_functions.h"
 #include "verboseMsg.h"
 
 gchar*
@@ -168,44 +168,28 @@ gchar *filename_get_user_chosen_callback_save_TUI
     return g_strdup(defaultFilename);
 }
 
-gchar *filename_determine(gchar* filenameBuf,const gchar* defaultFilename,
-	const gchar** extensions,
-	const gchar* prompt, ChooseFilenameFunc callback, gpointer option,gboolean isRead){
-    gchar *resultName=NULL;
-    gchar tmpBuf[PATH_MAX];
-    if (isEmptyString(filenameBuf)){
-	resultName=callback(defaultFilename, extensions,
-		prompt,option);
-    }else{
-	truepath(filenameBuf,tmpBuf);
-	if (isRead){
-	    if (isReadable(tmpBuf))
-		resultName=tmpBuf;
-	}else{
-	    if (isWritable(tmpBuf))
-		resultName=tmpBuf;
+gchar *filename_choose(const gchar *filename_default, guint filename_len, StringList *extensions,
+ guint access_mode_mask, const gchar * prompt, gpointer option, ChooseFilenameFunc callback){
+    gchar *resultName=NEW_ARRAY_INSTANCE(filename_len,gchar);
+    initString(resultName);
+    if (!isEmptyString(filename_default)){
+	truepath(filename_default,resultName);
+	if (filename_meets_accessMode(resultName,access_mode_mask)){
+	    return resultName;
 	}
     }
-    if (resultName==NULL){
-	return NULL;
+    int ret;
+    while(TRUE){
+	ret=callback(resultName, filename_len, extensions, 
+		access_mode_mask, prompt, option);
+	if (ret==TASK_COMPLETED){
+	    return resultName;
+	}else if (ret==TASK_CANCELED){
+	    break;
+	}
     }
-    strcpy(filenameBuf,resultName);
-    return filenameBuf;
+    g_free(resultName);
+    return NULL;
 }
 
-gchar *filename_determine_readable(gchar* filenameBuf,
-	const gchar* defaultFilename,
-	const gchar** extensions, const gchar* prompt, 
-	ChooseFilenameFunc callback, gpointer option){
-    return filename_determine(filenameBuf,defaultFilename,extensions, prompt,
-	    callback,option, TRUE);
-}
-
-gchar *filename_determine_writable(gchar* filenameBuf,
-	const gchar* defaultFilename,
-	const gchar** extensions, const gchar* prompt, 
-	ChooseFilenameFunc callback, gpointer option){
-    return filename_determine(filenameBuf,defaultFilename,extensions, prompt,
-	    callback,option, TRUE);
-}
 

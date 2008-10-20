@@ -86,7 +86,7 @@ typedef gboolean (* ForeachCallbackFunc) (gpointer data, gpointer userdata);
  *
  * This function returns a new HashSet with default handling functions.
  * Specifically:
- * <table border="1">
+ * <table border="1" width="100%">
  * <tr><th>ElementType</th><th>hash_func</th><th>element_equal_func</th>
  *     <th>element_destroy_func</th><th>value_destroy_func</th></tr>
  * <tr><td>ELEMENTS_TYPE_INTEGER</td><td>g_int_hash()</td><td>g_int_equal()</td>

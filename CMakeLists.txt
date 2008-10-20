@@ -9,7 +9,7 @@ PROJECT(libUnihan)
 SET(CMAKE_C_FLAGS "-Wall")
 SET(PRJ_VER_MAJOR "0")
 SET(PRJ_VER_MINOR "5")
-SET(PRJ_VER_PATCH "2")
+SET(PRJ_VER_PATCH "3")
 SET(PRJ_VER ${PRJ_VER_MAJOR}.${PRJ_VER_MINOR}.${PRJ_VER_PATCH})
 SET(DB_VER "5.1.0")
 SET(DB_PATCH_LEVEL "7")
@@ -80,7 +80,6 @@ IF(EXISTS  DEVELOPER_SETTING)
     ENDIF(COMMAND  "grep SSH_ARGS DEVELOPER_SETTING")
 ENDIF(EXISTS  DEVELOPER_SETTING)
 
-#MESSAGE("SSH_USER=|${SSH_USER}| SSH_ARGS=${SSH_ARGS} DEVELOPER_SETTING=${DEVELOPER_SETTING}")
 
 ###==================================================================
 # Source code subdirectories
@@ -96,6 +95,7 @@ PKG_CHECK_MODULES(SQLITE3 sqlite3)
 
 CONFIGURE_FILE(Doxyfile.in Doxyfile)
 CONFIGURE_FILE(UploadPkg.batch.in UploadPkg.batch)
+CONFIGURE_FILE(SPECS/libUnihan.spec.in SPECS/libUnihan.spec)
 
 ADD_CUSTOM_TARGET(${DB_NAME}
     COMMAND /bin/ln -sf ${DB_NAME}.${DB_VER}-${DB_PATCH_LEVEL} ${DB_NAME}

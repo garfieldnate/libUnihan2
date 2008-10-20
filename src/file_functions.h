@@ -34,6 +34,7 @@
 #include <stdbool.h>
 #include <limits.h>
 #include <glib.h>
+#include "str_functions.h"
 
 /**
  * DIRECTORY_SEPARATOR is the separator for splits the directories in paths.
@@ -46,6 +47,20 @@
 #else
 #define DIRECTORY_SEPARATOR '/'
 #endif
+
+/**
+ * An enumeration of task running status.
+ *
+ * This enumeration lists the task running status.
+ * It can be used as function return values, or as concurrent process running status.
+ */
+typedef enum{
+    TASK_RUNNING, //! < The task is still running, usually this for concurrent process.
+    TASK_CANCELED, //! < The task is canceled.
+    TASK_FAILED,   //! < The task is failed.
+    TASK_COMPLETED //! < The task is complete.
+} TaskStatus;
+
 
 /**
  * PATH_SEPARATOR is the separator for splits the paths in configuration files or environment variables.
@@ -105,9 +120,10 @@ isWritable(const gchar *filename);
  * 
  * @{
  */
-#define FILE_MODE_EXIST    8  //!< Test for existence.
-#define FILE_MODE_READ     4  //!< Test for read permission.
-#define FILE_MODE_WRITE    2  //!< Test for write permission.
+#define FILE_MODE_EXIST    1<<4  //!< Test for existence.
+#define FILE_MODE_DIRECTORY   1<<3  //!< Test whether the 'file' is directory.
+#define FILE_MODE_READ     1<<2  //!< Test for read permission.
+#define FILE_MODE_WRITE    1<<1  //!< Test for write permission.
 #define FILE_MODE_EXECUTE  1  //!< Test for execute permission.
 /**
  * @}
@@ -126,7 +142,7 @@ isWritable(const gchar *filename);
  * Use \c FILE_MODE_EXIST|FILE_MODE_WRITE the check the write permission of existing file.
  *
  * @param filename The filename to be checked.
- * @param access_mode_mask the required access mode mask defined in #FileAccessMode.
+ * @param access_mode_mask the required access mode mask defined in \ref FileAccessMode.
  */
 gboolean filename_meets_accessMode(const gchar *filename, guint access_mode_mask);
 
@@ -155,46 +171,85 @@ filename_search_paths(const gchar *filename,const gchar* search_paths);
  *
  * @param filename The filename to be located.
  * @param search_paths The paths to be searched.
- * @param access_mode_mask the required access mode mask defined in #FileAccessMode.
+ * @param access_mode_mask the required access mode mask defined in \ref FileAccessMode.
  * @return A newly allocated string of the exact location of the file 
  * if the file is found and it match the requirement;
  * otherwise NULL is returned.
- * @see FileAccessMode.
+ * @see \ref FileAccessMode.
  * @see filename_meets_accessMode()
  */
 gchar*
 filename_search_paths_mode(const gchar *filename,const gchar* search_paths,guint access_mode_mask);
 
 /**
- * Prototype of callback function for choosing a file name filename_get_user_chosen.
+ * Prototype of callback function for choosing a filename.
  *
- * Note that the callback function should be capable of checking whether
- * the selected files are readable (for file opening) or 
- * writable (for file saving).
+ * This callback function should provide an UI for user select a filename.
+ * It should return:
  *
- * @param filename pre-selected filename. Can be NULL.
+ * - \c TASK_COMPLETED if a suitable file is chosen, and the chosen filename is in \a filename_buf.
+ * - \c TASK_CANCELED if user canceled the operation.
+ * - \c TAKS_FAILED   if user selected an unsuitable file, or encounter I/O error, 
+ *                    the selected file should be in \a filename_buf
+ * .
+ * 
+ *
+ * The parameter \a filename_buf is a buffer that hold the result filename. 
+ * and \a filename_len is the buffer size.
+ * The present content of \a filename_buf will be default filename.
+ *
+ * Parameter \a extensions for available extension filename, assign NULL if no need to have a specific extension.
+ * Use \a access_modes_mask to filter the files that has suitable access mode and permission.
+ *
+ * Value in \a prompt is to be show in UI, such as dialog title or textual prompt in CLI.
+ * Use \a option to pass other data to the callback function.
+ *
+ * @param filename_buf Buffer that holds the filename, the present content will be default filename.
+ * @param filename_len pre-selected filename. Can be NULL.
  * @param extensions acceptable file extensions. NULL for don't care.
+ * @param access_mode_mask the required access mode mask defined in \ref FileAccessMode.
  * @param prompt the string to be shown in UI, usually shown as dialog title for GUI.
- * @param access_mode_mask the required access mode mask defined in #FileAccessMode.
  * @param option Other custom option.
- * @return The filename of selection.
+ * @retval TASK_COMPLETED if a suitable file is chosen, and the chosen filename is in \a filename_buf.
+ * @retval TASK_CANCELED if user canceled the operation.
+ * @retval TAKS_FAILED   if user selected an unsuitable file, or encounter I/O error, the selected file should be in \a filename_buf
+ * @see filename_meets_accessMode()
+ * @see filename_choose()
  */
-typedef gchar* (* ChooseFilenameFunc) 
-(gchar *defaultFilename, const gchar** extensions,const gchar * prompt,guint access_mode_mask, gpointer option);
+typedef TaskStatus (* ChooseFilenameFunc) (gchar *filename_buf, guint filename_len, StringList *extensions, guint access_mode_mask, const gchar * prompt, gpointer option);
 
-gchar *filename_determine(gchar* filenameBuf,const gchar* defaultFilename,
-	const gchar** extensions,
-	const gchar* prompt, ChooseFilenameFunc callback, gpointer option,gboolean isRead);
+/**
+ * Choose a suitable filename if default one is not.
+ *
+ * This function returns either a newly allocated filename string that meets the \a access_mode_mask,
+ * or NULL if user cancel the process.
+ *
+ * This function firstly try the filename given by a non-NULL \a filename_default, if it does not meet 
+ * \a access_mode_make, then it will keep calling \a callback() to open an UI for user input until:
+ *
+ * - user inputs a valid filename, or
+ * - user cancels the operation (usually by clicking "cancel" button.)
+ * .
+ *
+ * If \a filename_default is NULL, this function will call \a callback() directly for user input.
+ *
+ * @param filename_default The default filename to be check, NULL or "" if no default filename.
+ * @param filename_len pre-selected filename. Can be NULL.
+ * @param extensions acceptable file extensions. NULL for don't care.
+ * @param access_mode_mask the required access mode mask defined in \ref FileAccessMode.
+ * @param prompt the string to be shown in UI, usually shown as dialog title for GUI.
+ * @param option Other custom option.
+ * @param callback a ChooseFilenameFunc callback that open a UI for filename input.
+ * @return a newly allocated filename string that meets the \a access_mode_mask; NULL otherwise.
+ *
+ * @see ChooseFilenameFunc()
+ * @see filename_meets_accessMode()
+ */
+gchar *filename_choose
+(const gchar *filename_default, guint filename_len, StringList *extensions,
+ guint access_mode_mask, const gchar * prompt, gpointer option, ChooseFilenameFunc callback);
 
-gchar *filename_determine_readable(gchar* filenameBuf,
-	const gchar* defaultFilename,
-	const gchar** extensions, const gchar* prompt, 
-	ChooseFilenameFunc callback, gpointer option);
 
-gchar *filename_determine_writable(gchar* filenameBuf,
-	const gchar* defaultFilename,
-	const gchar** extensions, const gchar* prompt, 
-	ChooseFilenameFunc callback, gpointer option);
 
 #endif /*FILE_FUNCTIONS_H_*/
 

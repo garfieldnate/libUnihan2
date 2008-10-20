@@ -43,6 +43,7 @@
 #ifndef VERBOSEMSG_H_
 #define VERBOSEMSG_H_
 #include <stdio.h>
+#include <glib.h>
 /**
  * @name Available verboseLevel
  *

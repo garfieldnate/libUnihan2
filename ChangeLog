@@ -1,5 +1,6 @@
-- New Features:
+* Mon Oct 20 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.5.3-0
 - Fixed:
+  Missing documents in 0.5.2
 - Changed:
   + collection.h: 
     - G_ARRAY_COPY is renamed as G_ARRAY_CONCAT to reflect its real functionality.
@@ -7,6 +8,7 @@
       as in hashSet, key == value.
   + file_functions.h:
   - search_file_given_paths() is replaced by filename_search_paths()
+  - replace file_determine() with file_choose()
 
 
 
