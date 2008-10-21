@@ -1,39 +1,51 @@
-cmake_minimum_required(VERSION 2.4)
-if(COMMAND cmake_policy)
-      cmake_policy(SET CMP0003 NEW)
-      cmake_policy(SET CMP0005 OLD)
-endif(COMMAND cmake_policy)
-
-#Project name
+####################################################################
+# Project basic information
+####################################################################
 PROJECT(libUnihan)
 SET(CMAKE_C_FLAGS "-Wall")
 SET(PRJ_VER_MAJOR "0")
 SET(PRJ_VER_MINOR "5")
 SET(PRJ_VER_PATCH "3")
+SET(PRJ_VER_RELEASE "3")
 SET(PRJ_VER ${PRJ_VER_MAJOR}.${PRJ_VER_MINOR}.${PRJ_VER_PATCH})
 SET(DB_VER "5.1.0")
-SET(DB_PATCH_LEVEL "7")
+SET(DB_RELEASE "7")
 SET(DB_PRJ_NAME  "UnihanDb")
 SET(DB_NAME "Unihan.db")
+
+SET(SUPPORTED_DIST_TAGS F-9 F-10 EL-5) 
+SET(BODHI_DIST_TAGS fc9 fc10)
+
+# For CVS changelog
+SET(CVS_CHANGELOG "This release fixes the no API documents, also corrects some functions in  collection.[ch], file_functions.[ch]")
+
+
+
+####################################################################
+# Project independent
+####################################################################
+
+cmake_minimum_required(VERSION 2.4)
+if(COMMAND cmake_policy)
+      cmake_policy(SET CMP0003 NEW)
+      cmake_policy(SET CMP0005 OLD)
+endif(COMMAND cmake_policy)
+SET(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS ON)
 
 IF(NOT DEFINED CMAKE_INSTALL_PREFIX)
     ADD_DEFINITIONS(-DCMAKE_INSTALL_PREFIX='"/usr"')
     SET(CMAKE_INSTALL_PREFIX /usr)
-ENDIF(NOT DEFINED CMAKE_INSTALL_PREFIX)
+ENDIF()
 
 IF(NOT DEFINED datadir)
     ADD_DEFINITIONS(-Ddatadir='"${CMAKE_INSTALL_PREFIX}/share"')
     SET(datadir ${CMAKE_INSTALL_PREFIX}/share)
-ENDIF(NOT DEFINED datadir)
+ENDIF()
 
 IF(NOT DEFINED docdir)
     ADD_DEFINITIONS(-Ddocdir='"${datadir}/doc"')
     SET(docdir ${datadir}/doc)
-ENDIF(NOT DEFINED docdir)
-
-
-SET(DB_DIR ${datadir}/${DB_PRJ_NAME})
-ADD_DEFINITIONS(-DUNIHAN_DEFAULT_DB='"${DB_DIR}/${DB_NAME}"')
+ENDIF()
 
 
 ###==================================================================
@@ -41,6 +53,7 @@ ADD_DEFINITIONS(-DUNIHAN_DEFAULT_DB='"${DB_DIR}/${DB_NAME}"')
 #
 #  Note: CMake 2.4 does not support STRING(STRIP ..)
 
+SET (SPEC_FILE_WARNING "This file is generated, please modified the .spec.in file instead!")
 CONFIGURE_FILE(SPECS/libUnihan.spec.in SPECS/libUnihan.spec)
 
 EXECUTE_PROCESS(COMMAND rpm -q --qf "%{release} " --specfile SPECS/${PROJECT_NAME}.spec 
@@ -56,6 +69,9 @@ EXECUTE_PROCESS(COMMAND rpm -q --qf "%{release} " --specfile SPECS/${PROJECT_NAM
 #  DEVELOPER_SETTING format
 #  SSH_USER=<user_name>
 #  SSH_ARGS=<additional args>
+#  KOJI_CVS_PATH=<path for koji CVS>
+#
+#  KOJI_CVS_PATH is for Fedora/EPEL users, it has no effect on other systems.
 #
 
 IF(EXISTS  DEVELOPER_SETTING)
@@ -65,22 +81,64 @@ IF(EXISTS  DEVELOPER_SETTING)
 	COMMAND sed  -e s/\\t//
 	OUTPUT_VARIABLE SSH_USER
 	)
-    IF(COMMAND  "grep SSH_ARGS DEVELOPER_SETTING")
-	EXECUTE_PROCESS(COMMAND  grep SSH_ARGS DEVELOPER_SETTING
-	    COMMAND sed -e "s/SSH_ARGS=//"
-	    COMMAND tr \\n \\t
-	    COMMAND sed  -e s/\\t//
-	    OUTPUT_VARIABLE SSH_ARGS
-	    )
-	IF (${SSH_ARGS} STREQUAL "")
+
+    EXECUTE_PROCESS(COMMAND  grep SSH_ARGS DEVELOPER_SETTING
+	COMMAND sed -e "s/SSH_ARGS=//"
+	COMMAND tr \\n \\t
+	COMMAND sed  -e s/\\t//
+	OUTPUT_VARIABLE SSH_ARGS
+	RESULT_VARIABLE NO_SSH_ARGS
+	)
+    IF(NOT ${NO_SSH_ARGS})
+	IF ("${SSH_ARGS}" STREQUAL "")
 	    SET(SFTP_SSH_ARGS "")
-	ELSE (${SSH_ARGS} STREQUAL "")
+	ELSE ()
 	    SET(SFTP_SSH_ARGS -F ${SSH_ARGS})
-	ENDIF (${SSH_ARGS} STREQUAL "")
-    ELSE (COMMAND  "grep SSH_ARGS DEVELOPER_SETTING")
+	    MESSAGE("SFTP_SSH_ARGS=${SFTP_SSH_ARGS}")
+	ENDIF ()
+    ELSE()
 	SET(SFTP_SSH_ARGS "")
-    ENDIF(COMMAND  "grep SSH_ARGS DEVELOPER_SETTING")
+    ENDIF()
+
+    EXECUTE_PROCESS(COMMAND  grep KOJI_CVS_PATH DEVELOPER_SETTING
+	COMMAND sed -e "s/KOJI_CVS_PATH=//"
+	COMMAND tr \\n \\t
+	COMMAND sed  -e s/\\t//
+	OUTPUT_VARIABLE KOJI_CVS_PATH
+	RESULT_VARIABLE NO_KOJI_CVS_PATH
+	)
+    IF(${NO_KOJI_CVS_PATH})
+	SET(KOJI_CVS_PATH "./")
+    ENDIF ()
+
+    IF(${KOJI_CVS_PATH} STREQUAL "")
+	SET(KOJI_CVS_PATH "./")
+    ENDIF ()
+
 ENDIF(EXISTS  DEVELOPER_SETTING)
+
+CONFIGURE_FILE(Doxyfile.in Doxyfile)
+CONFIGURE_FILE(UploadPkg.batch.in UploadPkg.batch)
+
+#====================================================================
+# CPack configuration
+#
+SET(COMMON_IGNORE_FILES "/CMakeFiles/" "_CPack_Packages/" "/Testing/"
+    ".cmake$"   ".directory$" "CMakeCache.txt"
+    "/.svn/"  "/CVS/" "~$" ".swp$" ".log$" ".gz$"
+    "/src/config.h$") 
+
+SET(RPM_IGNORE_FILES "/SOURCES/" "/SRPMS/" "/RPMS/" "/BUILD/")
+
+
+
+####################################################################
+# Project specific
+####################################################################
+
+SET(DB_DIR ${datadir}/${DB_PRJ_NAME})
+ADD_DEFINITIONS(-DUNIHAN_DEFAULT_DB='"${DB_DIR}/${DB_NAME}"')
+
 
 
 ###==================================================================
@@ -95,12 +153,10 @@ FIND_PACKAGE(PkgConfig)
 PKG_CHECK_MODULES(GLIB2 glib-2.0)
 PKG_CHECK_MODULES(SQLITE3 sqlite3)
 
-CONFIGURE_FILE(Doxyfile.in Doxyfile)
-CONFIGURE_FILE(UploadPkg.batch.in UploadPkg.batch)
 
 ADD_CUSTOM_TARGET(${DB_NAME}
-    COMMAND /bin/ln -sf ${DB_NAME}.${DB_VER}-${DB_PATCH_LEVEL} ${DB_NAME}
-    DEPENDS ${DB_NAME}.${DB_VER}-${DB_PATCH_LEVEL})
+    COMMAND /bin/ln -sf ${DB_NAME}.${DB_VER}-${DB_RELEASE} ${DB_NAME}
+    DEPENDS ${DB_NAME}.${DB_VER}-${DB_RELEASE})
 
 
 
@@ -114,7 +170,7 @@ INSTALL(FILES ${MAIN_DOCS}
 #    DEPENDS ${DB_NAME}.${DB_VER})
 # COMMAND(ln -s  ${DB_NAME}.${DB_VER} ${DB_NAME})
 
-###==================================================================
+#====================================================================
 # CPack configuration
 #
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "libUnihan")
@@ -128,13 +184,6 @@ SET(CPACK_RESOURCE_FILE_LICENSE
 SET(CPACK_PACKAGE_VERSION_MAJOR ${PRJ_VER_MAJOR})
 SET(CPACK_PACKAGE_VERSION_MINOR ${PRJ_VER_MINOR})
 SET(CPACK_PACKAGE_VERSION_PATCH ${PRJ_VER_PATCH})
-SET(COMMON_IGNORE_FILES "/CMakeFiles/" "_CPack_Packages/" "/Testing/"
-    ".cmake$"   ".directory$" "CMakeCache.txt"
-    "/.svn/"  "/CVS/" "~$" ".swp$" ".log$" ".gz$"
-    "/src/config.h$") 
-
-SET(RPM_IGNORE_FILES "/SOURCES/" "/SRPMS/" "/RPMS/" "/BUILD/")
-
 SET(PRJ_COMMON_IGNORE_FILES ${COMMON_IGNORE_FILES} ${RPM_IGNORE_FILES}
     "/doc/"  "/www/" ".vis$"
     ".db$" "test/check_phonetic$" "test/check_toneMark$"
@@ -149,6 +198,16 @@ SET(CPACK_SOURCE_GENERATOR "TGZ")
 
 
 INCLUDE(CPack)
+
+ADD_CUSTOM_TARGET(pkg_remove_old find . 
+    -name '${PROJECT_NAME}*.tar.gz' ! -name '${PROJECT_NAME}-${PRJ_VER}-*.tar.gz'
+    -print -delete
+    COMMAND find . 
+    -name '${PROJECT_NAME}*.rpm' ! -name
+    '${PROJECT_NAME}*-${PRJ_VER}-${PRJ_VER_RELEASE}.*.rpm'
+    -print -delete
+    COMMENT "Removing the old tar.gz and rpms.."
+    )
 
 
 ###==================================================================
@@ -179,13 +238,14 @@ ADD_CUSTOM_TARGET(uninstall
 # RPM targets
 #
 
+SET (SRPM_FILE SRPMS/${PROJECT_NAME}-${PRJ_VER}-${RPM_RELEASE}.src.rpm)
 
 ADD_CUSTOM_TARGET(srpm
     COMMAND make package_source
     COMMAND mkdir -p SOURCES
     COMMAND ln -sf ../${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz SOURCES/${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz
     COMMAND mkdir -p SRPMS
-    COMMAND rpmbuild -bs SPECS/libUnihan.spec --rcfile rpmrc
+    COMMAND rpmbuild -bs SPECS/${PROJECT_NAME}.spec --rcfile rpmrc
     )
 
 ADD_CUSTOM_TARGET(rpm
@@ -196,22 +256,82 @@ ADD_CUSTOM_TARGET(rpm
     COMMAND mkdir -p RPMS/i386
     COMMAND mkdir -p RPMS/x86_64
     COMMAND mkdir -p BUILD
-    COMMAND rpmbuild -ba SPECS/libUnihan.spec --rcfile rpmrc
+    COMMAND rpmbuild -ba SPECS/${PROJECT_NAME}.spec --rcfile rpmrc
     )
 
-ADD_CUSTOM_TARGET(rpm-mock-i386 make srpm
+ADD_CUSTOM_TARGET(rpm_mock_i386 make srpm
     COMMAND mkdir -p RPMS/i386
-    COMMAND mock -r  fedora-9-i386 --resultdir=RPMS/i386
-    SRPMS/${PROJECT_NAME}-${PRJ_VER}-${RPM_RELEASE}.src.rpm
+    COMMAND mock -r  fedora-9-i386 --resultdir=RPMS/i386 ${SRPM_FILE}
 )
 
-ADD_CUSTOM_TARGET(rpm-mock-x86_64 make srpm
+ADD_CUSTOM_TARGET(rpm_mock_x86_64 make srpm
     COMMAND mkdir -p RPMS/x86_64
-    COMMAND mock -r  fedora-9-x86_64 --resultdir=RPMS/x86_64
-    SRPMS/${PROJECT_NAME}-${PRJ_VER}-${RPM_RELEASE}.src.rpm
+    COMMAND mock -r  fedora-9-x86_64 --resultdir=RPMS/x86_64 ${SRPM_FILE}
 )
 
+ADD_CUSTOM_TARGET(rpmlint find . 
+    -name '${PROJECT_NAME}*-${PRJ_VER}-${RPM_RELEASE}.*.rpm' 
+    -print -exec rpmlint '{}' '\\;'
+    )
 
+
+#====================================================================
+# Koji (Fedora build system)
+#
+SET(KOJI_SUBMISSION_CMD "")
+IF (NOT DEFINED ${KOJI_CVS_PATH})
+    SET(KOJI_BUILD_CMD "")
+ELSE (NOT DEFINED ${KOJI_CVS_PATH})
+    SET(KOJI_BUILD_CMD "cd ${KOJI_CVS_PATH}; ")
+ENDIF (NOT DEFINED ${KOJI_CVS_PATH})
+
+SET (KOJI_SUBMISSION_CMD
+    "${KOJI_CVS_PATH}/${PROJECT_NAME}/common/cvs-import.sh -m \"${CVS_CHANGELOG}\" ${SRPM_FILE}" )
+
+SET (KOJI_BUILD_CMD
+    "cd ${KOJI_CVS_PATH}/${PROJECT_NAME} && cd devel && make build && cd ..")
+
+FOREACH(DIST_TAG ${SUPPORTED_DIST_TAGS})
+    SET (KOJI_SUBMISSION_CMD 
+	"${KOJI_SUBMISSION_CMD}\; ${KOJI_CVS_PATH}/${PROJECT_NAME}/common/cvs-import.sh -b ${DIST_TAG} -m \"${CVS_CHANGELOG}\" ${SRPM_FILE}")
+
+    SET (KOJI_BUILD_CMD
+	"${KOJI_BUILD_CMD} && cd ${DIST_TAG} && make build && cd ..")
+ENDFOREACH(DIST_TAG ${SUPPORTED_DIST_TAGS})
+
+#MESSAGE(KOJI_SUBMISSION_CMD=${KOJI_SUBMISSION_CMD})
+ADD_CUSTOM_TARGET(koji_submit
+    COMMAND eval ${KOJI_SUBMISSION_CMD}
+    COMMAND cd ${KOJI_CVS_PATH}/${PROJECT_NAME} &&  cvs up
+    DEPENDS DEVELOPER_SETTING  ${SRPM_FILE} ${KOJI_CVS_PATH}
+    COMMENT "Submitting to Koji"
+    VERBATIM
+    )
+
+#MESSAGE("KOJI_BUILD_CMD=${KOJI_BUILD_CMD}")
+ADD_CUSTOM_TARGET(koji_build
+    COMMAND eval "${KOJI_BUILD_CMD}"
+    COMMENT "Building on Koji"
+    VERBATIM
+    )
+
+FOREACH(BODHI_TAG ${BODHI_DIST_TAGS})
+    IF (DEFINED BODHI_NEW_CMD)
+	SET (BODHI_NEW_CMD "${BODHI_NEW_CMD} && ")
+    ELSE ()
+	SET (BODHI_NEW_CMD "")
+    ENDIF ()
+    SET (BODHI_NEW_CMD 
+	"${BODHI_NEW_CMD} bodhi --new --type=bugfix --comment=\"${CVS_CHANGELOG}\" ${PROJECT_NAME}-${PRJ_VER}-${PRJ_VER_RELEASE}.${BODHI_TAG}")
+ENDFOREACH(BODHI_TAG ${BODHI_DIST_TAGS})
+
+
+#MESSAGE(BODHI_NEW_CMD=${BODHI_NEW_CMD})
+ADD_CUSTOM_TARGET(bodhi_new
+    COMMAND eval "${BODHI_NEW_CMD}"
+    COMMENT "Send the new package to bodhi"
+    VERBATIM
+    )
 
 ###==================================================================
 # Upload the package releases to hosting service provider (Source forge).
@@ -236,17 +356,17 @@ ADD_CUSTOM_TARGET(package_db_doc
     )
 
 ADD_CUSTOM_TARGET(package_db
-    COMMAND mkdir -p "${DB_PRJ_NAME}-${DB_VER}-${DB_PATCH_LEVEL}" 
-    COMMAND cp "${DB_NAME}.${DB_VER}-${DB_PATCH_LEVEL}" "${DB_PRJ_NAME}-${DB_VER}-${DB_PATCH_LEVEL}" 
-    COMMAND cp ${DB_DOCS}  "${DB_PRJ_NAME}-${DB_VER}-${DB_PATCH_LEVEL}" 
-    COMMAND /bin/tar czvf "${DB_PRJ_NAME}-${DB_VER}-${DB_PATCH_LEVEL}.tar.gz" "${DB_PRJ_NAME}-${DB_VER}-${DB_PATCH_LEVEL}"
-    COMMAND rm -fr "${DB_PRJ_NAME}-${DB_VER}-${DB_PATCH_LEVEL}"
+    COMMAND mkdir -p "${DB_PRJ_NAME}-${DB_VER}-${DB_RELEASE}" 
+    COMMAND cp "${DB_NAME}.${DB_VER}-${DB_RELEASE}" "${DB_PRJ_NAME}-${DB_VER}-${DB_RELEASE}" 
+    COMMAND cp ${DB_DOCS}  "${DB_PRJ_NAME}-${DB_VER}-${DB_RELEASE}" 
+    COMMAND /bin/tar czvf "${DB_PRJ_NAME}-${DB_VER}-${DB_RELEASE}.tar.gz" "${DB_PRJ_NAME}-${DB_VER}-${DB_RELEASE}"
+    COMMAND rm -fr "${DB_PRJ_NAME}-${DB_VER}-${DB_RELEASE}"
     )
 
 ADD_CUSTOM_TARGET(install_db
     COMMAND mkdir -p "${DB_DIR}" 
-    COMMAND cp "${DB_NAME}.${DB_VER}-${DB_PATCH_LEVEL}" ${DB_DIR}
-    COMMAND ln -sf "${DB_NAME}.${DB_VER}-${DB_PATCH_LEVEL}" ${DB_DIR}/${DB_NAME}
+    COMMAND cp "${DB_NAME}.${DB_VER}-${DB_RELEASE}" ${DB_DIR}
+    COMMAND ln -sf "${DB_NAME}.${DB_VER}-${DB_RELEASE}" ${DB_DIR}/${DB_NAME}
     COMMAND mkdir -p "${docdir}/${DB_PRJ_NAME}" 
     COMMAND cp README-db "${docdir}/${DB_PRJ_NAME}" 
     COMMAND cp ChangLog-db "${docdir}/${DB_PRJ_NAME}" 

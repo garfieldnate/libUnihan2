@@ -1,8 +1,11 @@
+###
+# @SPEC_FILE_WARNING@
+
 Name:           libUnihan
 %define         libUnihan_ver_major @PRJ_VER_MAJOR@
 %define         libUnihan_ver_minor @PRJ_VER_MINOR@
 Version:        %{libUnihan_ver_major}.%{libUnihan_ver_minor}.@PRJ_VER_PATCH@
-Release:        0%{?dist}
+Release:        @PRJ_VER_RELEASE@%{?dist}
 Group:          System Environment/Libraries
 License:        LGPLv2+
 Summary:        C library for Unihan character database in fifth normal form 
@@ -11,7 +14,6 @@ Summary(zh_TW): 用於符合第五正規化之統漢字(Unihan)資料庫的 C �
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  glib2-devel  sqlite-devel  cmake >= 2.4
-#Requires:       glib2  sqlite
 
 URL:            http://sourceforge.net/projects/libunihan
 Source0:        http://downloads.sourceforge.net/libunihan/%{name}-%{version}-Source.tar.gz
@@ -87,6 +89,8 @@ rm -rf $RPM_BUILD_ROOT
 %doc doc/html
 
 %changelog
+* Tue Oct 21 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.5.3-3
+- Add following make targets: rpm_lint, koji_submit, koji_build,  pkg_remove_old.
 
 * Mon Oct 20 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.5.3-0
 - New Features:
