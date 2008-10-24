@@ -11,6 +11,7 @@
 #include "file_functions.h"
 #include "verboseMsg.h"
 
+
 gchar*
 truepath(const gchar *path, gchar *resolved_path){
     gchar workingPath[PATH_MAX];

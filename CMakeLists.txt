@@ -5,9 +5,10 @@ PROJECT(libUnihan)
 SET(CMAKE_C_FLAGS "-Wall")
 SET(PRJ_VER_MAJOR "0")
 SET(PRJ_VER_MINOR "5")
-SET(PRJ_VER_PATCH "3")
-SET(PRJ_VER_RELEASE "3")
+SET(PRJ_VER_PATCH "4")
+SET(PRJ_VER_RELEASE "0")
 SET(PRJ_VER ${PRJ_VER_MAJOR}.${PRJ_VER_MINOR}.${PRJ_VER_PATCH})
+SET(PRJ_VER_FULL  ${PRJ_VER_MAJOR}.${PRJ_VER_MINOR}.${PRJ_VER_PATCH}-${PRJ_VER_RELEASE})
 SET(DB_VER "5.1.0")
 SET(DB_RELEASE "7")
 SET(DB_PRJ_NAME  "UnihanDb")
@@ -61,7 +62,7 @@ EXECUTE_PROCESS(COMMAND rpm -q --qf "%{release} " --specfile SPECS/${PROJECT_NAM
     COMMAND sed -e "s/ .*//"
     OUTPUT_VARIABLE RPM_RELEASE)
 
-##
+#====================================================================
 #  Developer can edit a DEVELOPER_SETTING file, 
 #  which defines the developer specific information,
 #  So they can upload to hosting service provider.
@@ -129,6 +130,59 @@ SET(COMMON_IGNORE_FILES "/CMakeFiles/" "_CPack_Packages/" "/Testing/"
 
 SET(RPM_IGNORE_FILES "/SOURCES/" "/SRPMS/" "/RPMS/" "/BUILD/")
 
+#==================================================================
+# Make uninstall
+#
+CONFIGURE_FILE(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+    IMMEDIATE @ONLY)
+
+ADD_CUSTOM_TARGET(uninstall
+    "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+    )
+
+#====================================================================
+# RPM targets
+#
+
+SET (SRPM_FILE SRPMS/${PROJECT_NAME}-${PRJ_VER}-${RPM_RELEASE}.src.rpm)
+
+ADD_CUSTOM_TARGET(srpm
+    COMMAND make package_source
+    COMMAND mkdir -p SOURCES
+    COMMAND ln -sf ../${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz SOURCES/${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz
+    COMMAND mkdir -p SRPMS
+    COMMAND rpmbuild -bs SPECS/${PROJECT_NAME}.spec --rcfile rpmrc
+    )
+
+ADD_CUSTOM_TARGET(rpm
+    COMMAND make package_source
+    COMMAND mkdir -p SOURCES
+    COMMAND ln -sf ../${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz SOURCES/${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz
+    COMMAND mkdir -p SRPMS
+    COMMAND mkdir -p RPMS/i386
+    COMMAND mkdir -p RPMS/x86_64
+    COMMAND mkdir -p BUILD
+    COMMAND rpmbuild -ba SPECS/${PROJECT_NAME}.spec --rcfile rpmrc
+    )
+
+ADD_CUSTOM_TARGET(rpm_mock_i386 make srpm
+    COMMAND mkdir -p RPMS/i386
+    COMMAND mock -r  fedora-9-i386 --resultdir=RPMS/i386 ${SRPM_FILE}
+    )
+
+ADD_CUSTOM_TARGET(rpm_mock_x86_64 make srpm
+    COMMAND mkdir -p RPMS/x86_64
+    COMMAND mock -r  fedora-9-x86_64 --resultdir=RPMS/x86_64 ${SRPM_FILE}
+    )
+
+ADD_CUSTOM_TARGET(rpmlint find . 
+    -name '${PROJECT_NAME}*-${PRJ_VER}-${RPM_RELEASE}.*.rpm' 
+    -print -exec rpmlint '{}' '\\;'
+    )
+
+
 
 
 ####################################################################
@@ -136,11 +190,13 @@ SET(RPM_IGNORE_FILES "/SOURCES/" "/SRPMS/" "/RPMS/" "/BUILD/")
 ####################################################################
 
 SET(DB_DIR ${datadir}/${DB_PRJ_NAME})
+ADD_DEFINITIONS(-DPRJ_VER='"${PRJ_VER_FULL}"')
 ADD_DEFINITIONS(-DUNIHAN_DEFAULT_DB='"${DB_DIR}/${DB_NAME}"')
+ADD_DEFINITIONS(-DUNIHAN_DEFAULT_DB_PATH='"${DB_DIR}"')
 
 
 
-###==================================================================
+#==================================================================
 # Source code subdirectories
 #
 ADD_SUBDIRECTORY(src bin)
@@ -158,16 +214,11 @@ ADD_CUSTOM_TARGET(${DB_NAME}
     DEPENDS ${DB_NAME}.${DB_VER}-${DB_RELEASE})
 
 
-
 SET(MAIN_DOCS AUTHORS README ChangeLog NEWS COPYING COPYING.LESSER )
 
 INSTALL(FILES ${MAIN_DOCS} 
     DESTINATION "${docdir}/${PROJECT_NAME}-${PRJ_VER}")
 
-#ADD_CUSTOM_COMMAND(OUTPUT ${DB_NAME}
-#    COMMAND /bin/ln -sf ${DB_NAME}.${DB_VER} ${DB_NAME}
-#    DEPENDS ${DB_NAME}.${DB_VER})
-# COMMAND(ln -s  ${DB_NAME}.${DB_VER} ${DB_NAME})
 
 #====================================================================
 # CPack configuration
@@ -203,13 +254,12 @@ ADD_CUSTOM_TARGET(pkg_remove_old find .
     -print -delete
     COMMAND find . 
     -name '${PROJECT_NAME}*.rpm' ! -name
-    '${PROJECT_NAME}*-${PRJ_VER}-${PRJ_VER_RELEASE}.*.rpm'
+    '${PROJECT_NAME}*-${PRJ_VER_FULL}.*.rpm'
     -print -delete
     COMMENT "Removing the old tar.gz and rpms.."
     )
 
-
-###==================================================================
+#====================================================================
 # Document generation
 #
 FIND_PACKAGE(Doxygen)
@@ -221,57 +271,6 @@ IF (EXISTS ${DOXYGEN})
     DESTINATION "${docdir}/${PROJECT_NAME}-${PRJ_VER}"
   )
 ENDIF (EXISTS ${DOXYGEN})
-
-### For Uninstall
-CONFIGURE_FILE(
-  "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
-  IMMEDIATE @ONLY)
-
-ADD_CUSTOM_TARGET(uninstall
-  "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
-)
-
-
-###==================================================================
-# RPM targets
-#
-
-SET (SRPM_FILE SRPMS/${PROJECT_NAME}-${PRJ_VER}-${RPM_RELEASE}.src.rpm)
-
-ADD_CUSTOM_TARGET(srpm
-    COMMAND make package_source
-    COMMAND mkdir -p SOURCES
-    COMMAND ln -sf ../${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz SOURCES/${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz
-    COMMAND mkdir -p SRPMS
-    COMMAND rpmbuild -bs SPECS/${PROJECT_NAME}.spec --rcfile rpmrc
-    )
-
-ADD_CUSTOM_TARGET(rpm
-    COMMAND make package_source
-    COMMAND mkdir -p SOURCES
-    COMMAND ln -sf ../${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz SOURCES/${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz
-    COMMAND mkdir -p SRPMS
-    COMMAND mkdir -p RPMS/i386
-    COMMAND mkdir -p RPMS/x86_64
-    COMMAND mkdir -p BUILD
-    COMMAND rpmbuild -ba SPECS/${PROJECT_NAME}.spec --rcfile rpmrc
-    )
-
-ADD_CUSTOM_TARGET(rpm_mock_i386 make srpm
-    COMMAND mkdir -p RPMS/i386
-    COMMAND mock -r  fedora-9-i386 --resultdir=RPMS/i386 ${SRPM_FILE}
-)
-
-ADD_CUSTOM_TARGET(rpm_mock_x86_64 make srpm
-    COMMAND mkdir -p RPMS/x86_64
-    COMMAND mock -r  fedora-9-x86_64 --resultdir=RPMS/x86_64 ${SRPM_FILE}
-)
-
-ADD_CUSTOM_TARGET(rpmlint find . 
-    -name '${PROJECT_NAME}*-${PRJ_VER}-${RPM_RELEASE}.*.rpm' 
-    -print -exec rpmlint '{}' '\\;'
-    )
 
 
 #====================================================================
@@ -323,7 +322,7 @@ IF (DEFINED KOJI_CVS_PATH)
 	    SET (BODHI_NEW_CMD "")
 	ENDIF ()
 	SET (BODHI_NEW_CMD 
-	    "${BODHI_NEW_CMD} bodhi --new --type=bugfix --comment=\"${CVS_CHANGELOG}\" ${PROJECT_NAME}-${PRJ_VER}-${PRJ_VER_RELEASE}.${BODHI_TAG}")
+	    "${BODHI_NEW_CMD} bodhi --new --type=bugfix --comment=\"${CVS_CHANGELOG}\" ${PROJECT_NAME}-${PRJ_VER_FULL}.${BODHI_TAG}")
     ENDFOREACH(BODHI_TAG ${BODHI_DIST_TAGS})
 
 
@@ -339,7 +338,7 @@ ENDIF(DEFINED KOJI_CVS_PATH)
 # Upload the package releases to hosting service provider (Source forge).
 #
 
-IF(DEFINED $(SSH_USER})
+IF(DEFINED ${SSH_USER})
     SET(UPLOAD_SITE frs.sourceforge.net)
     SET(HOSTING_SERVICE_PROVIDER "Source forge")
 
@@ -348,9 +347,9 @@ IF(DEFINED $(SSH_USER})
 	DEPENDS DEVELOPER_SETTING UploadPkg.batch.in
 	COMMENT "Uploading the package releases to ${HOSTING_SERVICE_PROVIDER}...")
 
-ENDIF(DEFINED $(SSH_USER})
+ENDIF(DEFINED ${SSH_USER})
 
-###==================================================================
+#====================================================================
 # Database related targets.
 #
 SET(DB_DOCS README-db ChangeLog-db)

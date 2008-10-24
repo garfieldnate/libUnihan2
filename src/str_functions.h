@@ -40,15 +40,16 @@
  * StringList provides convenient index access and length information for a 
  * <a href="http://library.gnome.org/devel/glib/stable/glib-String-Chunks.html#GStringChunk">GStringChunk</a>.
  *
- * However, instead of return char pointers, StringList functions return the
- * indexes of the strings because returning char pointers might cause more
- * confusion.
+ * However, instead of returning char pointers, StringList functions return the
+ * indexes of the strings, which can be used later on to located inserted
+ * strings.
  */
 typedef struct {
     GStringChunk *chunk; //!< GStringChunk that actually stores the strings.
     GPtrArray *ptrArray; //!< A array of char* that points to the strings.
-    GArray *constArray;  //!< Stores the indexes of strings which are inserted constantly.
+    GHashTable *hTable;  //!< Hash table for constant insert. String is key , and pointer of the string is the value.
     guint len;		 //!< Number of strings in the StringList.
+    size_t chunk_size_inital;  //!< @internal Size of the GStringChunk.
 } StringList;
 
 /**
@@ -66,10 +67,9 @@ StringList *stringList_new();
  *
  * @param chunk_size Size in bytes required for string storage.
  * @param element_count Number of strings.
- * @param const_count Number of constant strings (strings without duplication).
  * @return the pointer to the allocated space.
  */
-StringList *stringList_sized_new(size_t chunk_size, size_t element_count, size_t const_count);
+StringList *stringList_sized_new(size_t chunk_size, size_t element_count);
 
 /**
  * Clear all content of Stringlist.
@@ -114,12 +114,15 @@ char **stringList_to_charPointerPointer(StringList *sList);
 const char *stringList_index(StringList *sList,guint index);
 
 /**
- * Insert a string to StringList.
+ * Adds a copy of string to the StringList.
  *
- * This functions copies the str to the string list.
- * It behaves like g_string_chunk_insert(), that is, it does not check for the
- * duplicates. 
- * However, it returns the index instead of char pointer of inserted string.
+ * This function inserts a copy of  \a str to the string list, and return the index of
+ * the string, which is also the last element in the string list.
+ *
+ * It calls g_string_chunk_insert() to insert a copy to string,
+ * then appends the returned pointer from g_string_chunk_insert() to
+ * the pointer array.
+ * After that, this function return the index of the appended string pointer.
  *
  * The difference between this function and stringList_insert_const() is that
  * each inserted identical string will have it own spaces.
@@ -132,15 +135,24 @@ const char *stringList_index(StringList *sList,guint index);
 guint stringList_insert(StringList *sList, const char *str);
 
 /**
- * Insert a constant string to StringList.
+ * Adds a copy of string to the StringList, unless the identical string has already 
+ * been added to the StringList with stringList_insert_const().
  *
- * This functions copies the str to the string list.
- * It behaves like g_string_chunk_insert_const(), that is, it checks for the
- * duplicates. 
- * However, it returns the index instead of char pointer of inserted string.
+ * This function inserts a copy \a str to the string list, 
+ * unless the identical string has already been previous inserted 
+ * by this function. Useful if you do not want to spend extra space to store
+ * identical strings.
  *
- * The difference between this function and stringList_insert() is that
- * each inserted identical string will share the same space.
+ * If identical string is previous inserted by this function,
+ * which means the string is in the const hash table, 
+ * the pointer to the previous inserted string is append to the pointer array;
+ * if no identical string is inserted, then a copy of \a str will be inserted,
+ * to the string list by g_string_chunk_insert_const(), 
+ * then the returned pointer is inserted to the pointer array.
+ * After that, this function return the index of the appended string pointer.
+ *
+ * \note It will not check the duplicate strings inserted by 
+ *  stringList_insert().
  *
  * @param sList The StringList to be processed.
  * @param str String to be inserted. 

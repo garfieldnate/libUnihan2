@@ -43,13 +43,17 @@
 #include "verboseMsg.h"
 
 #define USAGE_MSG "Usage: \n\
-    Field Query: unihan_query [-V] [-LUTz] [-Z 0-3] [-P 0-5] <given_field> <given_value> <query_on_field>\n\
-    SQL Query: unihan_query [-V] -S <SQL clause>\n"
+    Field Query: unihan_query [-V num] [-LUTvz] [-Z 0-3] [-P 0-5] <given_field> <given_value> <query_on_field>\n\
+    SQL Query: unihan_query [-V num] -S <SQL clause>\n\
+    Other Info: unihan_query [-h] [-v] \n"
 
 #define CMD_OPTIONS "\
 Options: \n\
 \t-h: show this help.\n\
-\t-V: increase the verbose level.\n\
+\t-V num: Specify verbose level, the higher the num, the more detail is shown. \n\
+\t   Default is 2 (show warning). \n\
+\t-v: Show libUnihan version number.\n\
+\n\
 \t-S: pass SQL clause.\n\
 \n\
  Field query only options:\n\
@@ -188,7 +192,7 @@ static gboolean is_valid_arguments(int argc, char **argv) {
     int opt;
     int option_index=0;
 
-    while ((opt = getopt_long(argc, argv, "tarpfhUVLS:OP:TZ:z",longOptions,&option_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "tarpfhUV:vLS:OP:TZ:z",longOptions,&option_index)) != -1) {
 	switch (opt) {
 	    case 'h':
 		printUsage();
@@ -203,8 +207,11 @@ static gboolean is_valid_arguments(int argc, char **argv) {
 		qOption |= UNIHAN_QUERY_OPTION_SCALAR_STRING;
 		break;
 	    case 'V':
-		verboseLevel++;
+		verboseLevel=atoi(optarg);
 		break;
+	    case 'v':
+		printf("libUnihan %s\n",PRJ_VER);
+		exit(0);
 	    case 'O':
 		qOption |= UNIHAN_QUERY_OPTION_SHOW_GIVEN_FIELD;
 		break;

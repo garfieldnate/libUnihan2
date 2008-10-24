@@ -29,9 +29,9 @@
 SQL_Result *sql_result_new(){
     SQL_Result *sResult=NEW_INSTANCE(SQL_Result);
     sResult->fieldList=stringList_sized_new(SQL_RESULT_FIELD_CHUNK_SIZE,
-	    SQL_RESULT_FIELD_ELEMENT_COUNT,SQL_RESULT_FIELD_CONST_COUNT);
+	    SQL_RESULT_FIELD_ELEMENT_COUNT);
     sResult->resultList=stringList_sized_new(SQL_RESULT_RESULT_CHUNK_SIZE,
-	    SQL_RESULT_RESULT_ELEMENT_COUNT,SQL_RESULT_RESULT_CONST_COUNT);
+	    SQL_RESULT_RESULT_ELEMENT_COUNT);
     sResult->colCount=0;
     sResult->execResult=-1; 
     sResult->errMsg=NULL;

@@ -1,3 +1,13 @@
+/** 
+ * @file unihan_converter.c
+ * @brief Convert original Unihan.txt to SQL database.
+ *
+ * This program converts original Unihan.txt to SQL database.
+ * If calling this program with _validation postfix (e.g. unihan_field_validation),
+ * it will verify the generated Unihan database by comparing the field values 
+ * from the database and original Unihan.txt
+ */
+
 /*
  * Copyright © 2008  Red Hat, Inc. All rights reserved.
  * Copyright © 2008  Ding-Yi Chen <dchen at redhat dot com>
@@ -26,15 +36,17 @@
 #include <unistd.h>
 #include <glib/gprintf.h>
 #include "allocate.h"
-#include "str_functions.h"
 #include "verboseMsg.h"
 #include "Unihan.h"
 
-#define USAGE_MSG "Usage: %s [-V] <Unihan.txt> <Unihan.db>\n"
+#define USAGE_MSG "Usage: %s [-h] [-V num] -v <Unihan.txt> <Unihan.db>\n"
 #define BUFFER_SIZE 2000
 FILE *logFile=NULL;
 gboolean testMode=FALSE;
 
+static void printUsage(char **argv){
+    printf(USAGE_MSG,argv[0]);
+}
 
 int create_table(UnihanTable table){
     char *zErrMsg = NULL;
@@ -313,17 +325,20 @@ static gboolean is_valid_arguments(int argc, char **argv) {
     int opt;
     int verboseLevel=VERBOSE_MSG_WARNING;
     if (!argc){
-	printf("%s\n",USAGE_MSG);
+	printUsage(argv);
 	exit(0);
     }
-    while ((opt = getopt(argc, argv, "V")) != -1) {
+    while ((opt = getopt(argc, argv, "hV:v")) != -1) {
 	switch (opt) {
 	    case 'h':
-		printf("%s\n",USAGE_MSG);
+		printUsage(argv);
 		exit(0);
 	    case 'V':
-		verboseLevel++;
+		verboseLevel=atoi(optarg);
 		break;
+	    case 'v':
+		printf("libUnihan %s\n",PRJ_VER);
+		exit(0);
 	    default: /* ’? */
 		printf("Unrecognized Option -%c\n\n",opt);
 		return FALSE;
@@ -340,7 +355,7 @@ static gboolean is_valid_arguments(int argc, char **argv) {
 
 int main(int argc,char** argv){
     if (!is_valid_arguments(argc, argv)){
-	printf(USAGE_MSG,argv[0]);
+	printUsage(argv);
 	exit(-1);
     }
     FILE *inF=NULL;

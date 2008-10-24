@@ -390,23 +390,17 @@ int perform_test(int test_index){
 }
 
 int main(int argc, char** argv){
+    int verboseLevel=VERBOSE_MSG_WARNING;
     if (argc<2){
-	printf("Usage: %s [-V1] [-V2] <test num> \n",argv[0]);
+	printf("Usage: %s [-V num] <test num> \n",argv[0]);
 	return 1;
     }
     int argIndex=1;
     if (strcmp(argv[argIndex],"-V")==0){
-	verboseMsg_set_level(VERBOSE_MSG_WARNING);
+	verboseLevel=atoi(argv[++argIndex]);
 	argIndex++;
-    }else if (strcmp(argv[argIndex],"-V1")==0){
-	verboseMsg_set_level(VERBOSE_MSG_INFO1);
-	argIndex++;
-    }else if (strcmp(argv[argIndex],"-V2")==0){
-	verboseMsg_set_level(VERBOSE_MSG_INFO2);
-	argIndex++;
-    }else{
-	verboseMsg_set_level(VERBOSE_MSG_WARNING);
     }
+    verboseMsg_set_level(verboseLevel);
     int test_index=atoi(argv[argIndex++]);
     if (test_index>=TEST_NUM || test_index<0){
 	fprintf(stderr,"Invalid test number.\n");

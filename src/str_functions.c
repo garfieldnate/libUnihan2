@@ -40,31 +40,33 @@
 StringList *stringList_new(){
     StringList *sList=NEW_INSTANCE(StringList);
     sList->chunk=g_string_chunk_new(DEFAULT_G_STRING_CHUNK_SIZE);
-    sList->constArray=g_array_new(TRUE,TRUE,sizeof(guint));
+    sList->hTable=g_hash_table_new(g_str_hash,g_str_equal);
     sList->ptrArray=g_ptr_array_new();
+    sList->chunk_size_inital=DEFAULT_G_STRING_CHUNK_SIZE;
     sList->len=0;
     return sList;
 }
 
-StringList *stringList_sized_new(size_t chunk_size, size_t element_count, size_t const_count){
+StringList *stringList_sized_new(size_t chunk_size, size_t element_count){
     StringList *sList=NEW_INSTANCE(StringList);
     sList->chunk=g_string_chunk_new(chunk_size);
     sList->ptrArray=g_ptr_array_sized_new(element_count);
-    sList->constArray=g_array_sized_new(FALSE,FALSE,sizeof(guint),const_count);
+    sList->hTable=g_hash_table_new(g_str_hash,g_str_equal);
     sList->len=0;
+    sList->chunk_size_inital= chunk_size;
     return sList;
 }
 
 void stringList_clear(StringList *sList){
     g_assert(sList);
     sList->len=0;
-    G_ARRAY_REMOVE_ALL(sList->constArray);
     G_PTR_ARRAY_REMOVE_ALL(sList->ptrArray);
+    g_hash_table_remove_all(sList->hTable);
 #ifdef HAVE_G_STRING_CHUNK_CLEAR
     g_string_chunk_clear(sList->chunk);
 #else
     g_string_chunk_free(sList->chunk);
-    sList->chunk=g_string_chunk_new(DEFAULT_G_STRING_CHUNK_SIZE);
+    sList->chunk=g_string_chunk_new(sList->chunk_size_inital);
 #endif    
 }
 
@@ -95,39 +97,26 @@ guint stringList_insert(StringList *sList, const char *str){
 	g_ptr_array_add(sList->ptrArray,NULL);
     }
     sList->len++;
-    return sList->len-1;    
+    return sList->len-1;
 
 
 }
 
 guint stringList_insert_const(StringList *sList, const char *str){
-    gchar *ptr=NULL;
-    guint i;
-    guint index=0;
-    gboolean matched=FALSE;
-    if (str){
-	ptr=g_string_chunk_insert_const (sList->chunk,str);
+    gchar *strPtr=(gchar *) g_hash_table_lookup(sList->hTable,str);
+
+    if (!strPtr){
+	strPtr=g_string_chunk_insert_const (sList->chunk,str);
     }
-    for(i=0;i<sList->constArray->len;i++){
-	index=g_array_index(sList->constArray,guint,i);
-	if (stringList_index(sList,index)==ptr){
-	    matched=TRUE;
-	    break;
-	}
-    }
-    g_ptr_array_add(sList->ptrArray,ptr);
-    g_array_append_val(sList->constArray,sList->len);
-    if (!matched){
-	index=sList->len;
-    }
+    g_ptr_array_add(sList->ptrArray,strPtr);
     sList->len++;
-    return index;
+    return sList->len-1;
 }
 
 void stringList_free(StringList *sList){
     g_assert(sList);
     g_ptr_array_free(sList->ptrArray,TRUE);
-    g_array_free(sList->constArray,TRUE);
+    g_hash_table_destroy(sList->hTable);
     g_string_chunk_free(sList->chunk);
     g_free(sList);
 }

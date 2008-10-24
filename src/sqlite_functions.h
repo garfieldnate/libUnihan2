@@ -111,12 +111,6 @@
 #   define SQL_RESULT_RESULT_ELEMENT_COUNT 512
 #endif 
 
-#ifndef SQL_RESULT_RESULT_CONST_COUNT
-/**
- * Number of constant results.
- */
-#   define SQL_RESULT_RESULT_CONST_COUNT 0
-#endif 
 /**
  * @}
  */
