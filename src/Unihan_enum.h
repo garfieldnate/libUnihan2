@@ -42,29 +42,29 @@
  * field is pseudo.
  *
  * Frequently used fields:
- * <ol>
- *    <li>UNIHAN_FIELD_CODE: Unicode point of this character in integer.</li>
- *    <li>UNIHAN_FIELD_UTF8: UTF8 representation of the character. Useful for showing the character.</li>
- *    <li>UNIHAN_FIELD_KDEFINITION: An English definition of the character, convenient for dictionaries.</li>
- *    <li>De facto standards:</li>
- *    <ol>
- *       <li>UNIHAN_FIELD_KBIGFIVE: Big5</li>
- *       <li>UNIHAN_FIELD_KGB0: GB 2312-80</li>
- *       <li>UNIHAN_FIELD_KJIS0: GB 0208-1990</li>
- *       <li>UNIHAN_FIELD_KKSC0: KS X 1001:1992</li>
- *    </ol>
- *    <li>Pronunciations:</li>
- *    <ol>
- *        <li>UNIHAN_FIELD_KCANTONESE: Cantonese pronunciation</li>
- *        <li>UNIHAN_FIELD_KJAPANESEKUN: Japanese pronunciation</li>
- *        <li>UNIHAN_FIELD_KMANDARIN: Mandarin pronunciation in Hanyu  Pinyin</li>
- *        <li>UNIHAN_FIELD_ZHUYIN: Mandarin pronunciation as in Zhuyin</li>
- *
- *    </ol>
- *    <li>UNIHAN_INVALID_FIELD: For error output of end of Unihan field array.</li>
- * </ol>
+ * 
+ *    -# \c UNIHAN_FIELD_CODE: Unicode point of this character in integer.
+ *    -# \c UNIHAN_FIELD_UTF8: UTF8 representation of the character. Useful for showing the character.
+ *    -# \c UNIHAN_FIELD_KDEFINITION: An English definition of the character, convenient for dictionaries.
+ *    -# De facto standards:
+ *    
+ *       -# \c UNIHAN_FIELD_KBIGFIVE: Big5
+ *       -# \c UNIHAN_FIELD_KGB0: GB 2312-80
+ *       -# \c UNIHAN_FIELD_KJIS0: GB 0208-1990
+ *       -# \c UNIHAN_FIELD_KKSC0: KS X 1001:1992
+ *       .
+ *    -# Pronunciations:
+ *        -# \c UNIHAN_FIELD_KCANTONESE: Cantonese pronunciation
+ *        -# \c UNIHAN_FIELD_KJAPANESEKUN: Japanese pronunciation
+ *        -# \c UNIHAN_FIELD_KMANDARIN: Mandarin pronunciation in Hanyu  Pinyin
+ *        -# \c UNIHAN_FIELD_ZHUYIN: Mandarin pronunciation as in Zhuyin
+ *        .
+ *    -# \c UNIHAN_FIELD_NOT_INSTALLED: The field name is recognized, but not installed in this system.
+ *    -# \c UNIHAN_INVALID_FIELD: For error output of end of Unihan field array.
+ *    .
  */
 typedef enum{
+    UNIHAN_FIELD_NOT_INSTALLED=-2,	//!< The table have not been installed.
     UNIHAN_INVALID_FIELD=-1,		//!< End of an Unihan Field array or indicate invalid field.
     UNIHAN_FIELD_CODE,			//!< Unicode code point in integer.
     UNIHAN_FIELD_KACCOUNTINGNUMERIC,	//!< Character when used in the writing of accounting numerals.

@@ -107,13 +107,12 @@ IF(EXISTS  DEVELOPER_SETTING)
 	OUTPUT_VARIABLE KOJI_CVS_PATH
 	RESULT_VARIABLE NO_KOJI_CVS_PATH
 	)
-    IF(${NO_KOJI_CVS_PATH})
+    
+    IF(NOT DEFINED ${KOJI_CVS_PATH})
 	SET(KOJI_CVS_PATH "./")
-    ENDIF ()
-
-    IF(${KOJI_CVS_PATH} STREQUAL "")
+    ELSEIF (${KOJI_CVS_PATH} STREQUAL "")
 	SET(KOJI_CVS_PATH "./")
-    ENDIF ()
+    ENDIF()
 
 ENDIF(EXISTS  DEVELOPER_SETTING)
 
@@ -278,73 +277,78 @@ ADD_CUSTOM_TARGET(rpmlint find .
 #====================================================================
 # Koji (Fedora build system)
 #
-SET(KOJI_SUBMISSION_CMD "")
-IF (NOT DEFINED ${KOJI_CVS_PATH})
-    SET(KOJI_BUILD_CMD "")
-ELSE (NOT DEFINED ${KOJI_CVS_PATH})
-    SET(KOJI_BUILD_CMD "cd ${KOJI_CVS_PATH}; ")
-ENDIF (NOT DEFINED ${KOJI_CVS_PATH})
 
-SET (KOJI_SUBMISSION_CMD
-    "${KOJI_CVS_PATH}/${PROJECT_NAME}/common/cvs-import.sh -m \"${CVS_CHANGELOG}\" ${SRPM_FILE}" )
+IF (DEFINED KOJI_CVS_PATH)
+    SET(KOJI_SUBMISSION_CMD "")
+    IF (NOT DEFINED ${KOJI_CVS_PATH})
+	SET(KOJI_BUILD_CMD "")
+    ELSE (NOT DEFINED ${KOJI_CVS_PATH})
+	SET(KOJI_BUILD_CMD "cd ${KOJI_CVS_PATH}; ")
+    ENDIF (NOT DEFINED ${KOJI_CVS_PATH})
 
-SET (KOJI_BUILD_CMD
-    "cd ${KOJI_CVS_PATH}/${PROJECT_NAME} && cd devel && make build && cd ..")
-
-FOREACH(DIST_TAG ${SUPPORTED_DIST_TAGS})
-    SET (KOJI_SUBMISSION_CMD 
-	"${KOJI_SUBMISSION_CMD}\; ${KOJI_CVS_PATH}/${PROJECT_NAME}/common/cvs-import.sh -b ${DIST_TAG} -m \"${CVS_CHANGELOG}\" ${SRPM_FILE}")
+    SET (KOJI_SUBMISSION_CMD
+	"${KOJI_CVS_PATH}/${PROJECT_NAME}/common/cvs-import.sh -m \"${CVS_CHANGELOG}\" ${SRPM_FILE}" )
 
     SET (KOJI_BUILD_CMD
-	"${KOJI_BUILD_CMD} && cd ${DIST_TAG} && make build && cd ..")
-ENDFOREACH(DIST_TAG ${SUPPORTED_DIST_TAGS})
+	"cd ${KOJI_CVS_PATH}/${PROJECT_NAME} && cd devel && make build && cd ..")
 
-#MESSAGE(KOJI_SUBMISSION_CMD=${KOJI_SUBMISSION_CMD})
-ADD_CUSTOM_TARGET(koji_submit
-    COMMAND eval ${KOJI_SUBMISSION_CMD}
-    COMMAND cd ${KOJI_CVS_PATH}/${PROJECT_NAME} &&  cvs up
-    DEPENDS DEVELOPER_SETTING  ${SRPM_FILE} ${KOJI_CVS_PATH}
-    COMMENT "Submitting to Koji"
-    VERBATIM
-    )
+    FOREACH(DIST_TAG ${SUPPORTED_DIST_TAGS})
+	SET (KOJI_SUBMISSION_CMD 
+	    "${KOJI_SUBMISSION_CMD}\; ${KOJI_CVS_PATH}/${PROJECT_NAME}/common/cvs-import.sh -b ${DIST_TAG} -m \"${CVS_CHANGELOG}\" ${SRPM_FILE}")
 
-#MESSAGE("KOJI_BUILD_CMD=${KOJI_BUILD_CMD}")
-ADD_CUSTOM_TARGET(koji_build
-    COMMAND eval "${KOJI_BUILD_CMD}"
-    COMMENT "Building on Koji"
-    VERBATIM
-    )
+	SET (KOJI_BUILD_CMD
+	    "${KOJI_BUILD_CMD} && cd ${DIST_TAG} && make build && cd ..")
+    ENDFOREACH(DIST_TAG ${SUPPORTED_DIST_TAGS})
 
-FOREACH(BODHI_TAG ${BODHI_DIST_TAGS})
-    IF (DEFINED BODHI_NEW_CMD)
-	SET (BODHI_NEW_CMD "${BODHI_NEW_CMD} && ")
-    ELSE ()
-	SET (BODHI_NEW_CMD "")
-    ENDIF ()
-    SET (BODHI_NEW_CMD 
-	"${BODHI_NEW_CMD} bodhi --new --type=bugfix --comment=\"${CVS_CHANGELOG}\" ${PROJECT_NAME}-${PRJ_VER}-${PRJ_VER_RELEASE}.${BODHI_TAG}")
-ENDFOREACH(BODHI_TAG ${BODHI_DIST_TAGS})
+    #MESSAGE(KOJI_SUBMISSION_CMD=${KOJI_SUBMISSION_CMD})
+    ADD_CUSTOM_TARGET(koji_submit
+	COMMAND eval ${KOJI_SUBMISSION_CMD}
+	COMMAND cd ${KOJI_CVS_PATH}/${PROJECT_NAME} &&  cvs up
+	DEPENDS DEVELOPER_SETTING  ${SRPM_FILE} ${KOJI_CVS_PATH}
+	COMMENT "Submitting to Koji"
+	VERBATIM
+	)
+
+    #MESSAGE("KOJI_BUILD_CMD=${KOJI_BUILD_CMD}")
+    ADD_CUSTOM_TARGET(koji_build
+	COMMAND eval "${KOJI_BUILD_CMD}"
+	COMMENT "Building on Koji"
+	VERBATIM
+	)
+
+    FOREACH(BODHI_TAG ${BODHI_DIST_TAGS})
+	IF (DEFINED BODHI_NEW_CMD)
+	    SET (BODHI_NEW_CMD "${BODHI_NEW_CMD} && ")
+	ELSE ()
+	    SET (BODHI_NEW_CMD "")
+	ENDIF ()
+	SET (BODHI_NEW_CMD 
+	    "${BODHI_NEW_CMD} bodhi --new --type=bugfix --comment=\"${CVS_CHANGELOG}\" ${PROJECT_NAME}-${PRJ_VER}-${PRJ_VER_RELEASE}.${BODHI_TAG}")
+    ENDFOREACH(BODHI_TAG ${BODHI_DIST_TAGS})
 
 
-#MESSAGE(BODHI_NEW_CMD=${BODHI_NEW_CMD})
-ADD_CUSTOM_TARGET(bodhi_new
-    COMMAND eval "${BODHI_NEW_CMD}"
-    COMMENT "Send the new package to bodhi"
-    VERBATIM
-    )
+    #MESSAGE(BODHI_NEW_CMD=${BODHI_NEW_CMD})
+    ADD_CUSTOM_TARGET(bodhi_new
+	COMMAND eval "${BODHI_NEW_CMD}"
+	COMMENT "Send the new package to bodhi"
+	VERBATIM
+	)
+ENDIF(DEFINED KOJI_CVS_PATH)
 
 ###==================================================================
 # Upload the package releases to hosting service provider (Source forge).
 #
-SET(UPLOAD_SITE frs.sourceforge.net)
-SET(HOSTING_SERVICE_PROVIDER "Source forge")
 
-ADD_CUSTOM_TARGET(upload_pkg_release
-    COMMAND  sftp -b UploadPkg.batch ${SFTP_SSH_ARGS} ${SSH_USER}@${UPLOAD_SITE}
-    DEPENDS DEVELOPER_SETTING UploadPkg.batch.in
-    COMMENT "Uploading the package releases to ${HOSTING_SERVICE_PROVIDER}...")
+IF(DEFINED $(SSH_USER})
+    SET(UPLOAD_SITE frs.sourceforge.net)
+    SET(HOSTING_SERVICE_PROVIDER "Source forge")
 
+    ADD_CUSTOM_TARGET(upload_pkg_release
+	COMMAND  sftp -b UploadPkg.batch ${SFTP_SSH_ARGS} ${SSH_USER}@${UPLOAD_SITE}
+	DEPENDS DEVELOPER_SETTING UploadPkg.batch.in
+	COMMENT "Uploading the package releases to ${HOSTING_SERVICE_PROVIDER}...")
 
+ENDIF(DEFINED $(SSH_USER})
 
 ###==================================================================
 # Database related targets.
