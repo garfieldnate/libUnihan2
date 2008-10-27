@@ -1,6 +1,7 @@
 - New Features:
-  Option -v is available for all programs.
+  Option -v (version) is available for all programs.
 - Fixed:
+  + unihan_find_firstMatched() is corrected as unihan_find_first_matched()
 - Changed:
   + All programs are use [-V number] instead of multiple V.
   + Argument const_count in stringList_sized_new() is removed.

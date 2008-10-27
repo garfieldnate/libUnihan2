@@ -62,6 +62,11 @@
  *    -# \c UNIHAN_FIELD_NOT_INSTALLED: The field name is recognized, but not installed in this system.
  *    -# \c UNIHAN_INVALID_FIELD: For error output of end of Unihan field array.
  *    .
+ *   
+ *  From 0.6, a new value  \c UNIHAN_FIELD_3RD_PARTY is used for third-party fields (fields which are 
+ *  from third party database) handling.
+ *  A UnihanField is greater than or equal to \c UNIHAN_FIELD_3RD_PARTY if and only if 
+ *  it is a third party field.
  */
 typedef enum{
     UNIHAN_FIELD_NOT_INSTALLED=-2,	//!< The table have not been installed.
@@ -188,13 +193,15 @@ typedef enum{
 
     UNIHAN_FIELD_ZVARIANT_SOURCE, 	//!< The "Source" of Z variants, such as "kHKGlyph" 
 
-    UNIHAN_FIELD_ZHUYIN			//!< ZhuYin field.
+    UNIHAN_FIELD_ZHUYIN,		//!< ZhuYin field.
+
+    UNIHAN_FIELD_3RD_PARTY		//!< 3RD party fields.
 } UnihanField;
 
 /**
  * Number of recognized Unihan fields.
  */
-#define UNIHAN_FIELDS_COUNT	UNIHAN_FIELD_ZHUYIN+1 
+#define UNIHAN_FIELDS_COUNT	UNIHAN_FIELD_3RD_PARTY 
 
 
 /**
@@ -341,13 +348,14 @@ typedef enum{
     UNIHAN_TABLE_IRG_SOURCE_MAPPING,	//!< Table for IRG Sources and its mapping/code.
     UNIHAN_TABLE_KSEMANTICVARIANT_EXTRA,  //!< Table for dictionary that states the semantical relationship.
     UNIHAN_TABLE_KSPECIALIZEDSEMANTICVARIANT_EXTRA, //!< Table for dictionary that states the semantical relationship.
-    UNIHAN_TABLE_KZVARIANT_EXTRA	//!< Table for the source of Z variant.
+    UNIHAN_TABLE_KZVARIANT_EXTRA,	//!< Table for the source of Z variant.
+    UNIHAN_TABLE_3RD_PARTY		//!< Third party table.
 } UnihanTable;
 
 /**
  * Number of tables in database.
  */
-#define UNIHAN_TABLES_COUNT	UNIHAN_TABLE_KZVARIANT_EXTRA +1
+#define UNIHAN_TABLES_COUNT	UNIHAN_TABLE_3RD_PARTY
 
 /**
  * Enumeration of IRG Source.

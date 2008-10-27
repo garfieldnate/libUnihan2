@@ -249,7 +249,26 @@ gchar *filename_choose
 (const gchar *filename_default, guint filename_len, StringList *extensions,
  guint access_mode_mask, const gchar * prompt, gpointer option, ChooseFilenameFunc callback);
 
-
+/**
+ * List files with given pattern and access modes in given directory.
+ *
+ * This function returns all files that match the pattern \a glob and the
+ * access mode \a access_mode_mask; \c NULL if error occurred.
+ *
+ * The pattern  \a glob is matched in the same way as in shell.
+ *
+ * Use stringList_free() to free the result StringList.
+ *
+ * @param dir Directory to be listed.
+ * @param glob Glob/Shell pattern such as "*.*"
+ * @param access_mode_mask the required access mode mask defined in \ref FileAccessMode.
+ * @param keepPath TRUE to concatenate \a dir to each string in the returned
+ * StringList; FALSE for the filename only (without path).
+ *
+ * @return A newly allocate StringList instance which contains the matched
+ * filename; NULL if error occurred.
+ */
+StringList *lsDir(const gchar* dir, const gchar *glob, guint access_mode_mask, gboolean keepPath);
 
 #endif /*FILE_FUNCTIONS_H_*/
 

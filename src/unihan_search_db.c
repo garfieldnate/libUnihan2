@@ -40,12 +40,13 @@
 #include "allocate.h"
 #include "verboseMsg.h"
 #include "file_functions.h"
+#include "str_functions.h"
 #include "Unihan.h"
 
 #define USAGE_MSG "Search and collect the fields and tables in Unihan database files from given paths.\n\
 Usage: %s [-h] [-V num] [-v] [SEARCH_PATH]\n\
    Specify SEARCH_PATH to search with custom search path,\n\
-   otherwise default search path " UNIHAN_DEFAULT_DB_PATH " will be used.\n\
+   otherwise default search path " UNIHAN_DB_SEARCH_PATH " will be used.\n\
    Use '%c' as path separater.\n\
 Options:\
    -h: Show this help message.\n\
@@ -55,10 +56,13 @@ Options:\
 
 #define BUFFER_SIZE 2000
 
+gchar *searchPath=NULL;
+
+gchar *outputDir=NULL;
+
 static void printUsage(char **argv){
     printf(USAGE_MSG,argv[0],PATH_SEPARATOR);
 }
-
 
 /**
  * Whether the command line options are valid.
@@ -66,15 +70,20 @@ static void printUsage(char **argv){
 static gboolean is_valid_arguments(int argc, char **argv) {
     int opt;
     int verboseLevel=VERBOSE_MSG_WARNING;
+    outputDir=UNIHAN_DB_DEFAULT_PATH;
+    searchPath=UNIHAN_DB_SEARCH_PATH;
+
     if (!argc){
 	printUsage(argv);
 	exit(0);
     }
-    while ((opt = getopt(argc, argv, "hV:v")) != -1) {
+    while ((opt = getopt(argc, argv, "ho:V:v")) != -1) {
 	switch (opt) {
 	    case 'h':
 		printUsage(argv);
 		exit(0);
+	    case 'o':
+
 	    case 'V':
 		verboseLevel=atoi(optarg);
 		break;
@@ -86,9 +95,11 @@ static gboolean is_valid_arguments(int argc, char **argv) {
 		return FALSE;
 	}
     }
-    if (argc >=  optind+1){
+    if (argc >  optind+1){
 	printf("Invalid number of options. argc=%d, optind=%d\n",argc,optind);
 	return FALSE;
+    }else if (argc == optind+1){
+	searchPath=argv[optind];
     }
     verboseMsg_set_level(verboseLevel);
     return TRUE;
@@ -99,6 +110,11 @@ int main(int argc,char** argv){
     if (!is_valid_arguments(argc, argv)){
 	printUsage(argv);
 	exit(-1);
+    }
+    StringList *sList=lsDir(searchPath, "*.db*", FILE_MODE_READ, TRUE);
+    int i;
+    for(i=0;i<sList->len;i++){
+	printf("File=%s\n",stringList_index(sList,i));
     }
     
     return 0;

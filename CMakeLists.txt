@@ -192,7 +192,18 @@ ADD_CUSTOM_TARGET(rpmlint find .
 SET(DB_DIR ${datadir}/${DB_PRJ_NAME})
 ADD_DEFINITIONS(-DPRJ_VER='"${PRJ_VER_FULL}"')
 ADD_DEFINITIONS(-DUNIHAN_DEFAULT_DB='"${DB_DIR}/${DB_NAME}"')
-ADD_DEFINITIONS(-DUNIHAN_DEFAULT_DB_PATH='"${DB_DIR}"')
+
+#
+# UNIHAN_DB_DEFAULT_PATH stores the system-wide setting DB files.
+#
+ADD_DEFINITIONS(-DUNIHAN_DB_DEFAULT_PATH='"${DB_DIR}"')
+
+#
+# DB files in UNIHAN_DB_SEARCH_PATH will be searched and set by unihan_search_db.
+# Use path separator (';' for Windows, while ':' for Unix and others) to 
+# separate multiple directories.
+#
+ADD_DEFINITIONS(-DUNIHAN_DB_SEARCH_PATH='"${DB_DIR}"')
 
 
 

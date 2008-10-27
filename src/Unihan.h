@@ -176,12 +176,12 @@ SQL_Result *unihan_find_all_matched(UnihanField givenField, const char *givenVal
  * @param givenField the given (input) field.
  * @param givenValue the given value of the field.
  * @param queryField the result field.
- * @param qOption    the ::UnihanQueryOption.
+ * @param qOption    the #UnihanQueryOption.
  * @return the first matched result string. NULL if nothing matched.
  *
  * @see unihan_find_all_matched()
  */
-char* unihan_find_firstMatched(UnihanField givenField, const char* givenValue, 
+char* unihan_find_first_matched(UnihanField givenField, const char* givenValue, 
 	UnihanField queryField, UnihanQueryOption qOption );
 
 /**
@@ -528,7 +528,7 @@ gboolean unihanField_is_case_no_change(UnihanField field);
  *
  * However, there are exceptions such as field \c UNIHAN_FIELD_KCANTONESE 
  * which always stores as lowercase; 
- * while field \c UNIHAN_FIELD_KDEFINITIONon the other hand, may have uppercase
+ * while field \c UNIHAN_FIELD_KDEFINITION, on the other hand, may have uppercase
  * and lowercase characters.
  *
  * @param field the UnihanField

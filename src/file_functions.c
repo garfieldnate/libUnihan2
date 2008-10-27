@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include <libgen.h>
 #include <string.h>
+#include <fnmatch.h>
+#include <dirent.h>
 #include "allocate.h"
 #include "file_functions.h"
 #include "verboseMsg.h"
@@ -191,6 +193,52 @@ gchar *filename_choose(const gchar *filename_default, guint filename_len, String
     }
     g_free(resultName);
     return NULL;
+}
+
+static const gchar *glob_tmp;
+
+static int lsDir_filter(const struct dirent *dent){
+    if (fnmatch(glob_tmp,dent->d_name,FNM_PATHNAME)==0){
+	/* Matched */
+	return 1;
+    }
+    return 0;
+}
+
+StringList *lsDir(const gchar* dir, const gchar *glob, guint access_mode_mask, gboolean keepPath){
+    struct dirent **namelist;
+    gchar path_tmp[PATH_MAX];
+    glob_tmp=glob;
+    int n = scandir(dir, &namelist, lsDir_filter, alphasort);
+    if (n < 0){
+	return NULL;
+    }
+    StringList *sList=stringList_new();
+    int i;
+    gboolean trimDirSeparator=FALSE;
+    i=strlen(dir);
+    if (i>0){
+	if (dir[i-1]==DIRECTORY_SEPARATOR){
+	    trimDirSeparator=TRUE;
+	}
+    }
+
+    for(i=0;i<n;i++){
+	if (trimDirSeparator){
+	    g_snprintf(path_tmp,PATH_MAX,"%s%s",dir,namelist[i]->d_name);
+	}else{
+	    g_snprintf(path_tmp,PATH_MAX,"%s%c%s",dir,DIRECTORY_SEPARATOR,namelist[i]->d_name);
+	}
+	if (filename_meets_accessMode(path_tmp,access_mode_mask)){
+	    if (keepPath){
+		stringList_insert(sList,path_tmp);
+	    }else{
+		stringList_insert(sList,namelist[i]->d_name);
+	    }
+	}
+    }
+    g_free(namelist);
+    return sList;
 }
 
 
