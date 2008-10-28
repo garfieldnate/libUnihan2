@@ -34,7 +34,10 @@
 #include <sqlite3.h>
 #include "str_functions.h"
 
+
 /**
+ * @defgroup SQL_fileAccessFlags SQL file access flags.
+ * @{
  * @name SQL file access flags.
  *
  * These flags are for SQLite 3.3.X and earlier, as those versions do not have following definitions.
@@ -57,18 +60,24 @@
 
 #ifndef SQLITE_OPEN_CREATE
 /**
- * The database is opened for reading and writing, and is creates it if  it does not already exist. 
+ * The database is created if it does not already exist. 
  *
- * This is the behavior that is always used for  sqlite3_open().
+ * This flag indicates that the database should be created if it does not
+ * already exist. Usually use with \c SQLITE_OPEN_READWRITE.
+ *
+ * The flags for sqlite3_open() are <code>SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE</code>.
  */
 #define SQLITE_OPEN_CREATE           0x00000004
 #endif
 
 /**
  * @}
+ * @}
  */
 
+
 /**
+ * @defgroup SQL_initialParameter SQL_Result initial parameters.
  * @name SQL_Result initial parameters.
  *
  * These parameters define the initial size of SQL_Result.
@@ -113,8 +122,28 @@
 
 /**
  * @}
+ * @}
  */
 
+
+/**
+ * Open a sqlite database.
+ *
+ * This function is very similar to sqlite3_open_v2(). Except:
+ * -# This function does not have argument \a zVfs.
+ * -# It provide SQL file access \a flags for SQLite 3.3.X and eariler.
+ *
+ * @param filename The SQLite database to be opened.
+ * @param ppDb Returned pointer to database connection handle.
+ * @param flags SQL file access flags, see SQL_fileAccessFlags.
+ * @return SQLITE_OK if success; otherwise returns corresponding 
+ * <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite error code</a>.
+ *
+ * @see sqlite3_open()
+ * @see sqlite3_open_v2()
+ * @see SQL_fileAccessFlags.
+ */
+int sqlite_open(const char *filename,  sqlite3 **ppDb,  int flags);
 
 /**
  * Data structure that holds the result of SQL functions and command.

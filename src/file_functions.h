@@ -120,6 +120,7 @@ isWritable(const gchar *filename);
  * 
  * @{
  */
+#define FILE_MODE_NO_SYMLINK  1<<5  //!< Test whether the file is not symbol link.
 #define FILE_MODE_EXIST    1<<4  //!< Test for existence.
 #define FILE_MODE_DIRECTORY   1<<3  //!< Test whether the 'file' is directory.
 #define FILE_MODE_READ     1<<2  //!< Test for read permission.
@@ -260,7 +261,8 @@ gchar *filename_choose
  * Use stringList_free() to free the result StringList.
  *
  * @param dir Directory to be listed.
- * @param glob Glob/Shell pattern such as "*.*"
+ * @param globStr Glob/Shell pattern such as "*.*", use space to separate
+ * multiple patterns.
  * @param access_mode_mask the required access mode mask defined in \ref FileAccessMode.
  * @param keepPath TRUE to concatenate \a dir to each string in the returned
  * StringList; FALSE for the filename only (without path).
@@ -268,7 +270,7 @@ gchar *filename_choose
  * @return A newly allocate StringList instance which contains the matched
  * filename; NULL if error occurred.
  */
-StringList *lsDir(const gchar* dir, const gchar *glob, guint access_mode_mask, gboolean keepPath);
+StringList *lsDir(const gchar* dir, const gchar *globStr, guint access_mode_mask, gboolean keepPath);
 
 #endif /*FILE_FUNCTIONS_H_*/
 

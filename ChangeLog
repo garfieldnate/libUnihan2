@@ -1,7 +1,10 @@
 - New Features:
   Option -v (version) is available for all programs.
+- New Functions:
+  file_functions.h: lsDir().
 - Fixed:
   + unihan_find_firstMatched() is corrected as unihan_find_first_matched()
+  + The field index kCheungBauer and kCheungBauerIndex are corrected.
 - Changed:
   + All programs are use [-V number] instead of multiple V.
   + Argument const_count in stringList_sized_new() is removed.

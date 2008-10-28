@@ -20,11 +20,49 @@
  * Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
 #include <glib.h>
 #include "allocate.h"
 #include "sqlite_functions.h"
-#include "str_functions.h"
+#include "file_functions.h"
 #include "verboseMsg.h"
+
+int sqlite_open(const char *filename,  sqlite3 **ppDb,  int flags){
+    int ret;
+#ifdef HAVE_SQLITE3_OPEN_V2    
+    ret = sqlite3_open_v2(filename, ppDb, flags, NULL);
+#else
+    if (flags & SQLITE_OPEN_READONLY ){
+	if (!isReadable(filename)){
+	    verboseMsg_print(VERBOSE_MSG_ERROR, "sqlite_open(%s,%d): File is not readable\n", 
+		    filename,flags);
+	    return -1;
+	}
+    }else if (flags & SQLITE_OPEN_CREATE){
+	if (!isWritable(filename)){
+	    verboseMsg_print(VERBOSE_MSG_ERROR, "sqlite_open(%s,%d): File is not writable\n", 
+		    filename,flags);
+	    return -2;
+	}
+    }else if (flags & SQLITE_OPEN_READWRITE ){
+	if (!isReadable(filename)){
+	    verboseMsg_print(VERBOSE_MSG_ERROR, "sqlite_open(%s,%d): File is not readable\n", 
+		    filename,flags);
+	    return -1;
+	}
+	if (!isWritable(filename)){
+	    verboseMsg_print(VERBOSE_MSG_ERROR, "sqlite_open(%s,%d): File is not writable\n", 
+		    filename,flags);
+	    return -2;
+	}
+    }
+    ret=sqlite3_open(filename, ppDb);
+#endif
+    return ret;
+
+}
+
+
 
 SQL_Result *sql_result_new(){
     SQL_Result *sResult=NEW_INSTANCE(SQL_Result);

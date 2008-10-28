@@ -3,11 +3,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <pwd.h>
 #include <unistd.h>
 #include <libgen.h>
 #include <string.h>
-#include <fnmatch.h>
+#include <glob.h>
 #include <dirent.h>
 #include "allocate.h"
 #include "file_functions.h"
@@ -111,6 +112,15 @@ gboolean filename_meets_accessMode(const gchar *filename, guint access_mode_mask
 	    return FALSE;
 	}
     }
+    if (access_mode_mask & FILE_MODE_NO_SYMLINK){
+	struct stat st;
+	if (lstat(filename,&st)){
+	    /* Error on lstat() */
+	    return FALSE;
+	}
+	if (S_ISLNK(st.st_mode))
+	    return FALSE;
+    }
     return TRUE;
 }
 
@@ -195,49 +205,55 @@ gchar *filename_choose(const gchar *filename_default, guint filename_len, String
     return NULL;
 }
 
-static const gchar *glob_tmp;
-
-static int lsDir_filter(const struct dirent *dent){
-    if (fnmatch(glob_tmp,dent->d_name,FNM_PATHNAME)==0){
-	/* Matched */
-	return 1;
-    }
-    return 0;
-}
-
-StringList *lsDir(const gchar* dir, const gchar *glob, guint access_mode_mask, gboolean keepPath){
-    struct dirent **namelist;
+StringList *lsDir(const gchar* dir, const gchar *globStr, guint access_mode_mask, gboolean keepPath){
     gchar path_tmp[PATH_MAX];
-    glob_tmp=glob;
-    int n = scandir(dir, &namelist, lsDir_filter, alphasort);
-    if (n < 0){
-	return NULL;
-    }
-    StringList *sList=stringList_new();
     int i;
-    gboolean trimDirSeparator=FALSE;
+    gboolean hasDirSeparator=FALSE;
     i=strlen(dir);
     if (i>0){
 	if (dir[i-1]==DIRECTORY_SEPARATOR){
-	    trimDirSeparator=TRUE;
+	    hasDirSeparator=TRUE;
 	}
     }
+    gchar **globs= g_strsplit_set(globStr," ",-1);
+    glob_t globbuf;
+    glob_t *globptr=&globbuf;
 
-    for(i=0;i<n;i++){
-	if (trimDirSeparator){
-	    g_snprintf(path_tmp,PATH_MAX,"%s%s",dir,namelist[i]->d_name);
+    globptr->gl_offs=0;
+
+
+
+    int globFlag= GLOB_DOOFFS | GLOB_TILDE | GLOB_NOESCAPE;
+    int ret=GLOB_NOMATCH;
+    for(i=0;globs[i]!=NULL;i++){
+	if (hasDirSeparator){
+	    g_snprintf(path_tmp,PATH_MAX,"%s%s",dir,globs[i]);
 	}else{
-	    g_snprintf(path_tmp,PATH_MAX,"%s%c%s",dir,DIRECTORY_SEPARATOR,namelist[i]->d_name);
+	    g_snprintf(path_tmp,PATH_MAX,"%s%c%s",dir,DIRECTORY_SEPARATOR,globs[i]);
 	}
-	if (filename_meets_accessMode(path_tmp,access_mode_mask)){
+	if (i==1){
+	    globFlag|= GLOB_APPEND;
+	}
+	ret=glob(path_tmp,globFlag,NULL, &globbuf);
+	if (ret==GLOB_ABORTED || ret == GLOB_NOSPACE)
+	    break;
+    }
+    if (ret==GLOB_ABORTED || ret == GLOB_NOSPACE){
+	globfree(globptr);
+	return NULL;
+    }
+
+    StringList *sList=stringList_new();
+    for(i=0;i<globptr->gl_pathc;i++){
+	if (filename_meets_accessMode(globptr->gl_pathv[i],access_mode_mask)){
 	    if (keepPath){
-		stringList_insert(sList,path_tmp);
+		stringList_insert(sList,globptr->gl_pathv[i]);
 	    }else{
-		stringList_insert(sList,namelist[i]->d_name);
+		stringList_insert(sList,globptr->gl_pathv[i]);
 	    }
 	}
     }
-    g_free(namelist);
+    globfree(globptr);
     return sList;
 }
 

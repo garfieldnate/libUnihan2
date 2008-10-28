@@ -4,9 +4,13 @@ INCLUDE_DIRECTORIES(${GLIB2_INCLUDE_DIRS} ${SQLITE3_INCLUDE_DIRS})
 # Library location for the linker
 LINK_DIRECTORIES(${GLIB2_LIBRARY_DIRS} ${SQLITE3_LIBRARY_DIRS})
 
-INCLUDE (CheckFunctionExists)
-CHECK_FUNCTION_EXISTS(g_string_chunk_clear HAVE_G_STRING_CHUNK_CLEAR)
-CHECK_FUNCTION_EXISTS(sqlite3_open_v2  HAVE_SQLITE3_OPEN_V2)
+#==================================================================
+# Function check
+#
+
+INCLUDE (CheckLibraryExists)
+CHECK_LIBRARY_EXISTS(glib-2.0 g_string_chunk_clear "" HAVE_G_STRING_CHUNK_CLEAR)
+CHECK_LIBRARY_EXISTS(sqlite3 sqlite3_open_v2 "" HAVE_SQLITE3_OPEN_V2)
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/config.h)
 
 

@@ -59,9 +59,9 @@ static void unihan_generate_select_field_clause(GString *strBuf, UnihanField giv
 		g_string_append_printf(strBuf,"%s.%s",UNIHAN_TABLE_NAMES[givenTable],UNIHAN_FIELD_NAMES[UNIHAN_FIELD_CODE]);
 	    }
 	    break;
-	case UNIHAN_FIELD_KCOMPATIBILITYVARIANT:
-	case UNIHAN_FIELD_KSIMPLIFIEDVARIANT:
-	case UNIHAN_FIELD_KTRADITIONALVARIANT:
+	case UNIHAN_FIELD_kCOMPATIBILITYVARIANT:
+	case UNIHAN_FIELD_kSIMPLIFIEDVARIANT:
+	case UNIHAN_FIELD_kTRADITIONALVARIANT:
 
 	case UNIHAN_FIELD_VARIANT_CODE:
 	    if (qOption & UNIHAN_QUERY_OPTION_SCALAR_STRING){
@@ -77,18 +77,18 @@ static void unihan_generate_select_field_clause(GString *strBuf, UnihanField giv
 			UNIHAN_FIELD_NAMES[UNIHAN_FIELD_VARIANT_CODE]);
 	    }
 	    break;
-	case UNIHAN_FIELD_KIRG_HSOURCE:
-	case UNIHAN_FIELD_KIRG_USOURCE:
+	case UNIHAN_FIELD_kIRG_HSOURCE:
+	case UNIHAN_FIELD_kIRG_USOURCE:
 	    g_string_append_printf(strBuf,"%s.%s",
 		    UNIHAN_TABLE_NAMES[UNIHAN_TABLE_IRG_SOURCE_MAPPING],
 		    UNIHAN_FIELD_NAMES[UNIHAN_FIELD_IRG_SOURCE_MAPPING]);
 	    break;
-	case UNIHAN_FIELD_KIRG_GSOURCE:
-	case UNIHAN_FIELD_KIRG_JSOURCE:
-	case UNIHAN_FIELD_KIRG_KPSOURCE:
-	case UNIHAN_FIELD_KIRG_KSOURCE:
-	case UNIHAN_FIELD_KIRG_TSOURCE:
-	case UNIHAN_FIELD_KIRG_VSOURCE:
+	case UNIHAN_FIELD_kIRG_GSOURCE:
+	case UNIHAN_FIELD_kIRG_JSOURCE:
+	case UNIHAN_FIELD_kIRG_KPSOURCE:
+	case UNIHAN_FIELD_kIRG_KSOURCE:
+	case UNIHAN_FIELD_kIRG_TSOURCE:
+	case UNIHAN_FIELD_kIRG_VSOURCE:
 	    g_string_append_printf(strBuf,"IRG_SOURCE_VALUE_CONCAT(%s.%s,%s.%s)%c AS %s",
 		    UNIHAN_TABLE_NAMES[fromTable],
 		    UNIHAN_FIELD_NAMES[UNIHAN_FIELD_IRG_SOURCE_SHORT_NAME],
@@ -98,8 +98,8 @@ static void unihan_generate_select_field_clause(GString *strBuf, UnihanField giv
 		    UNIHAN_FIELD_NAMES[queryField]);
 	    need_right_parenthesis=FALSE;
 	    break;
-	case UNIHAN_FIELD_KIRGKANGXI:
-	case UNIHAN_FIELD_KKANGXI:
+	case UNIHAN_FIELD_kIRGKANGXI:
+	case UNIHAN_FIELD_kKANGXI:
 	    g_string_append_printf(strBuf,"KANGXI_VALUE_CONCAT(%s, %s, %s)%c AS %s",
 		    UNIHAN_FIELD_NAMES[UNIHAN_FIELD_KANGXI_PAGE],
 		    UNIHAN_FIELD_NAMES[UNIHAN_FIELD_KANGXI_CHARNUM],
@@ -108,7 +108,7 @@ static void unihan_generate_select_field_clause(GString *strBuf, UnihanField giv
 		    UNIHAN_FIELD_NAMES[queryField]);
 	    need_right_parenthesis=FALSE;
 	    break;
-	case UNIHAN_FIELD_KHANYUPINLU:
+	case UNIHAN_FIELD_kHANYUPINLU:
 	    g_string_append_printf(strBuf,"HANYU_PINLU_VALUE_CONCAT(%s, %s, %d)%c AS %s",
 		    UNIHAN_FIELD_NAMES[UNIHAN_FIELD_PINYIN],
 		    UNIHAN_FIELD_NAMES[UNIHAN_FIELD_PINYIN_FREQ],
@@ -117,7 +117,7 @@ static void unihan_generate_select_field_clause(GString *strBuf, UnihanField giv
 		    UNIHAN_FIELD_NAMES[queryField]);
 	    need_right_parenthesis=FALSE;
 	    break;
-	case UNIHAN_FIELD_KRSADOBE_JAPAN1_6:
+	case UNIHAN_FIELD_kRSADOBE_JAPAN1_6:
 	    g_string_append_printf(strBuf,"ADOBE_RADICAL_STROKE_VALUE_CONCAT(%s, %s, %s, %s, %s)%c AS %s",
 		    UNIHAN_FIELD_NAMES[UNIHAN_FIELD_ADOBE_CID_CV],
 		    UNIHAN_FIELD_NAMES[UNIHAN_FIELD_ADOBE_CID],
@@ -128,11 +128,11 @@ static void unihan_generate_select_field_clause(GString *strBuf, UnihanField giv
 		    UNIHAN_FIELD_NAMES[queryField]);
 	    need_right_parenthesis=FALSE;
 	    break;
-	case UNIHAN_FIELD_KRSJAPANESE:
-	case UNIHAN_FIELD_KRSKANGXI:
-	case UNIHAN_FIELD_KRSKANWA:
-	case UNIHAN_FIELD_KRSKOREAN:
-	case UNIHAN_FIELD_KRSUNICODE:
+	case UNIHAN_FIELD_kRSJAPANESE:
+	case UNIHAN_FIELD_kRSKANGXI:
+	case UNIHAN_FIELD_kRSKANWA:
+	case UNIHAN_FIELD_kRSKOREAN:
+	case UNIHAN_FIELD_kRSUNICODE:
 	    g_string_append_printf(strBuf,"RADICAL_STROKE_VALUE_CONCAT(%s, %s)%c AS %s",
 		    UNIHAN_FIELD_NAMES[UNIHAN_FIELD_RADICAL_INDEX],
 		    UNIHAN_FIELD_NAMES[UNIHAN_FIELD_ADDITIONAL_STROKE_COUNT],
@@ -140,8 +140,8 @@ static void unihan_generate_select_field_clause(GString *strBuf, UnihanField giv
 		    UNIHAN_FIELD_NAMES[queryField]);
 	    need_right_parenthesis=FALSE;
 	    break;
-	case UNIHAN_FIELD_KSEMANTICVARIANT:
-	case UNIHAN_FIELD_KSPECIALIZEDSEMANTICVARIANT:
+	case UNIHAN_FIELD_kSEMANTICVARIANT:
+	case UNIHAN_FIELD_kSPECIALIZEDSEMANTICVARIANT:
 	    g_string_append_printf(strBuf,"SEMANTIC_VARIANT_VALUE_CONCAT(%s.%s, %s, %s, %s, %s)%c AS %s",
 		    UNIHAN_TABLE_NAMES[fromTable],
 		    UNIHAN_FIELD_NAMES[UNIHAN_FIELD_VARIANT_CODE],
@@ -153,7 +153,7 @@ static void unihan_generate_select_field_clause(GString *strBuf, UnihanField giv
 		    UNIHAN_FIELD_NAMES[queryField]);
 	    need_right_parenthesis=FALSE;
 	    break;
-	case UNIHAN_FIELD_KZVARIANT:
+	case UNIHAN_FIELD_kZVARIANT:
 	    g_string_append_printf(strBuf,"Z_VARIANT_VALUE_CONCAT(%s.%s, %s)%c AS %s",
 		    UNIHAN_TABLE_NAMES[fromTable],
 		    UNIHAN_FIELD_NAMES[UNIHAN_FIELD_VARIANT_CODE],
@@ -166,8 +166,8 @@ static void unihan_generate_select_field_clause(GString *strBuf, UnihanField giv
 	    if (unihanField_is_mandarin(queryField)){
 		if (queryField==UNIHAN_FIELD_ZHUYIN || (qOption & UNIHAN_QUERY_OPTION_ZHUYIN_FORCE_DISPLAY)){
 		    g_string_append_printf(strBuf,"PINYIN_TO_ZHUYIN(%s.%s, %d)",
-			    UNIHAN_TABLE_NAMES[UNIHAN_TABLE_KMANDARIN],
-			    UNIHAN_FIELD_NAMES[UNIHAN_FIELD_KMANDARIN],
+			    UNIHAN_TABLE_NAMES[UNIHAN_TABLE_kMANDARIN],
+			    UNIHAN_FIELD_NAMES[UNIHAN_FIELD_kMANDARIN],
 			    UNIHAN_QUERY_OPTION_GET_ZHUYIN_FORMAT(qOption));
 		}else{
 		    g_string_append_printf(strBuf,
@@ -225,8 +225,8 @@ static char *unihan_generate_from_clause(UnihanField givenField,UnihanField quer
 		    UNIHAN_FIELD_NAMES[UNIHAN_FIELD_IRG_SOURCE_SHORT_NAME]);
 	}else{
 	    switch(queryField){
-		case UNIHAN_FIELD_KSEMANTICVARIANT:
-		case UNIHAN_FIELD_KSPECIALIZEDSEMANTICVARIANT:
+		case UNIHAN_FIELD_kSEMANTICVARIANT:
+		case UNIHAN_FIELD_kSPECIALIZEDSEMANTICVARIANT:
 		    extraTable=unihanField_get_extra_table(queryField);
 		    g_string_append_printf(strBuf," LEFT JOIN %s ON %s.code=%s.code AND %s.%s=%s.%s ",
 			    UNIHAN_TABLE_NAMES[extraTable],
@@ -238,7 +238,7 @@ static char *unihan_generate_from_clause(UnihanField givenField,UnihanField quer
 			    UNIHAN_FIELD_NAMES[UNIHAN_FIELD_VARIANT_CODE]
 			    );
 		    break;
-                case UNIHAN_FIELD_KZVARIANT:
+                case UNIHAN_FIELD_kZVARIANT:
 		    extraTable=unihanField_get_extra_table(queryField);
 		    g_string_append_printf(strBuf," LEFT JOIN %s ON %s.code=%s.code AND %s.%s=%s.%s",
 			    UNIHAN_TABLE_NAMES[extraTable],
@@ -274,8 +274,8 @@ static char *unihan_generate_from_clause(UnihanField givenField,UnihanField quer
 			UNIHAN_FIELD_NAMES[UNIHAN_FIELD_IRG_SOURCE_SHORT_NAME]);
 	    }else{
 		switch(givenField){
-		    case UNIHAN_FIELD_KSEMANTICVARIANT:
-		    case UNIHAN_FIELD_KSPECIALIZEDSEMANTICVARIANT:
+		    case UNIHAN_FIELD_kSEMANTICVARIANT:
+		    case UNIHAN_FIELD_kSPECIALIZEDSEMANTICVARIANT:
 			extraTable=unihanField_get_extra_table(givenField);
 			g_string_append_printf(strBuf," LEFT JOIN %s ON %s.code=%s.code AND %s.%s=%s.%s",
 				UNIHAN_TABLE_NAMES[extraTable],
@@ -287,7 +287,7 @@ static char *unihan_generate_from_clause(UnihanField givenField,UnihanField quer
 				UNIHAN_FIELD_NAMES[UNIHAN_FIELD_VARIANT_CODE]
 				);
 			break;
-		    case UNIHAN_FIELD_KZVARIANT:
+		    case UNIHAN_FIELD_kZVARIANT:
 			extraTable=unihanField_get_extra_table(givenField);
 			g_string_append_printf(strBuf," LEFT JOIN %s ON %s.code=%s.code AND %s.%s=%s.%s",
 				UNIHAN_TABLE_NAMES[extraTable],
@@ -549,7 +549,7 @@ static void unihan_append_zvariant_where_clause(GString *strBuf, UnihanField fie
     g_assert(subFieldArray[0]);
     gunichar variantCode=unihanChar_parse(subFieldArray[0]);
     g_string_append_printf(strBuf," %s.%s=%d",
-	    UNIHAN_TABLE_NAMES[UNIHAN_TABLE_KZVARIANT],
+	    UNIHAN_TABLE_NAMES[UNIHAN_TABLE_kZVARIANT],
 	    UNIHAN_FIELD_NAMES[UNIHAN_FIELD_VARIANT_CODE],
 	    variantCode);
     if (!isEmptyString(subFieldArray[1])){
@@ -635,43 +635,43 @@ static char *unihan_generate_where_clause(UnihanField givenField, const char *va
 			    relStr, valueTmp);
 		}
 		break;
-	    case UNIHAN_FIELD_KIRGKANGXI:
-	    case UNIHAN_FIELD_KKANGXI:
+	    case UNIHAN_FIELD_kIRGKANGXI:
+	    case UNIHAN_FIELD_kKANGXI:
 		unihan_append_kangXi_where_clause(strBuf,givenField,valueTmp);
 		break;
-	    case UNIHAN_FIELD_KHANYUPINLU:
+	    case UNIHAN_FIELD_kHANYUPINLU:
 		unihan_append_pinYinFreq_where_clause(strBuf,givenField,valueTmp);
 		break;
-	    case UNIHAN_FIELD_KRSADOBE_JAPAN1_6:
+	    case UNIHAN_FIELD_kRSADOBE_JAPAN1_6:
 		unihan_append_adobe_japan1_6_where_clause(strBuf,valueTmp);
 		break;
-	    case UNIHAN_FIELD_KRSJAPANESE:
-	    case UNIHAN_FIELD_KRSKANGXI:
-	    case UNIHAN_FIELD_KRSKANWA:
-	    case UNIHAN_FIELD_KRSKOREAN:
-	    case UNIHAN_FIELD_KRSUNICODE:
+	    case UNIHAN_FIELD_kRSJAPANESE:
+	    case UNIHAN_FIELD_kRSKANGXI:
+	    case UNIHAN_FIELD_kRSKANWA:
+	    case UNIHAN_FIELD_kRSKOREAN:
+	    case UNIHAN_FIELD_kRSUNICODE:
 		unihan_append_radical_stroke_where_clause(strBuf, givenField, valueTmp);
 		break;
-	    case UNIHAN_FIELD_KSEMANTICVARIANT:
-	    case UNIHAN_FIELD_KSPECIALIZEDSEMANTICVARIANT:
+	    case UNIHAN_FIELD_kSEMANTICVARIANT:
+	    case UNIHAN_FIELD_kSPECIALIZEDSEMANTICVARIANT:
 		unihan_append_semantic_where_clause(strBuf, givenField, valueTmp);
 		break;
-	    case UNIHAN_FIELD_KCOMPATIBILITYVARIANT:
-	    case UNIHAN_FIELD_KSIMPLIFIEDVARIANT:
-	    case UNIHAN_FIELD_KTRADITIONALVARIANT:
+	    case UNIHAN_FIELD_kCOMPATIBILITYVARIANT:
+	    case UNIHAN_FIELD_kSIMPLIFIEDVARIANT:
+	    case UNIHAN_FIELD_kTRADITIONALVARIANT:
 		strTmp=sqlite3_mprintf("%s.%s=SCALAR_STRING_PARSE(%Q)",
 			UNIHAN_TABLE_NAMES[fromTable],
 			UNIHAN_FIELD_NAMES[UNIHAN_FIELD_VARIANT_CODE],
 			valueTmp);
 		break;
-	    case UNIHAN_FIELD_KZVARIANT:
+	    case UNIHAN_FIELD_kZVARIANT:
 		unihan_append_zvariant_where_clause(strBuf, givenField, valueTmp);
 		break;
 	    case UNIHAN_FIELD_ZHUYIN:
 		pinYinTmp=zhuYin_to_pinYin(valueTmp,PINYIN_ACCENT_UNIHAN,TRUE);
 		strTmp=sqlite3_mprintf("%s.%s %s %Q",
-			UNIHAN_TABLE_NAMES[UNIHAN_TABLE_KMANDARIN],
-			UNIHAN_FIELD_NAMES[UNIHAN_FIELD_KMANDARIN],
+			UNIHAN_TABLE_NAMES[UNIHAN_TABLE_kMANDARIN],
+			UNIHAN_FIELD_NAMES[UNIHAN_FIELD_kMANDARIN],
 			relStr,
 			pinYinTmp,
 			valueTmp);
@@ -727,8 +727,8 @@ SQL_Result *unihan_find_all_matched(UnihanField givenField, const char *givenVal
 
 	/* Group by */
 	switch(queryField){
-	    case UNIHAN_FIELD_KSEMANTICVARIANT:
-	    case UNIHAN_FIELD_KSPECIALIZEDSEMANTICVARIANT:
+	    case UNIHAN_FIELD_kSEMANTICVARIANT:
+	    case UNIHAN_FIELD_kSPECIALIZEDSEMANTICVARIANT:
 		table=unihanField_get_table(queryField);
 		g_string_append_printf(strBuf," GROUP BY %s.%s",
 			UNIHAN_TABLE_NAMES[table],
@@ -982,10 +982,10 @@ int unihan_insert_value(gunichar code, UnihanField field, const char *value){
 	unihanIRG_SourceRec_free(rec);
     }else if (unihanField_array_index(field,UNIHAN_KVARIANT_FIELDS)>=0){
 	switch(field){
-	    case UNIHAN_FIELD_KSEMANTICVARIANT:
-	    case UNIHAN_FIELD_KSPECIALIZEDSEMANTICVARIANT:
+	    case UNIHAN_FIELD_kSEMANTICVARIANT:
+	    case UNIHAN_FIELD_kSPECIALIZEDSEMANTICVARIANT:
 		return insert_semanticVariant(code, field, value);
-	    case UNIHAN_FIELD_KZVARIANT:
+	    case UNIHAN_FIELD_kZVARIANT:
 		return insert_zVariant(code, field, value);
 	    default:
 		variantCode=unihanChar_parse(value);
@@ -997,7 +997,7 @@ int unihan_insert_value(gunichar code, UnihanField field, const char *value){
 	}
     }else  if (unihanField_array_index(field,UNIHAN_KRS_FIELDS)>=0){
 	switch(field){
-	    case UNIHAN_FIELD_KRSADOBE_JAPAN1_6:
+	    case UNIHAN_FIELD_kRSADOBE_JAPAN1_6:
 		subFieldArray=g_strsplit_set(value,".+",-1);
 		g_snprintf(buf,20,"%d",code);
 
@@ -1019,7 +1019,7 @@ int unihan_insert_value(gunichar code, UnihanField field, const char *value){
 	}
 	g_assert(subFieldArray);
 	g_free(subFieldArray);
-    }else if (field==UNIHAN_FIELD_KMANDARIN){
+    }else if (field==UNIHAN_FIELD_kMANDARIN){
 	if (lastCode!=code){
 	    freqRank=1;
 	    lastCode=code;
@@ -1030,7 +1030,7 @@ int unihan_insert_value(gunichar code, UnihanField field, const char *value){
 	g_snprintf(buf,20,"%d",freqRank);
 	stringList_insert(sList,buf);
 	freqRank++;
-    }else if (field==UNIHAN_FIELD_KHANYUPINLU){
+    }else if (field==UNIHAN_FIELD_kHANYUPINLU){
 	g_snprintf(buf,20,"%d",code);
 	stringList_insert(sList,buf);
 	GArray *pfArray=pinYinFreqRec_parse(value);
@@ -1041,7 +1041,7 @@ int unihan_insert_value(gunichar code, UnihanField field, const char *value){
 	    stringList_insert(sList,buf);
 	}
 	g_array_free(pfArray,TRUE);
-    }else if (field==UNIHAN_FIELD_KIRGKANGXI || field==UNIHAN_FIELD_KKANGXI){
+    }else if (field==UNIHAN_FIELD_kIRGKANGXI || field==UNIHAN_FIELD_kKANGXI){
 	g_snprintf(buf,20,"%d",code);
 	stringList_insert(sList,buf);
 	GArray *kArray=kangXiRec_parse(value);
@@ -1067,7 +1067,7 @@ int unihan_insert_value(gunichar code, UnihanField field, const char *value){
 
 int unihan_insert_no_duplicate(UnihanTable table, StringList *valueList){
     if (unihan_count_matched_record(table,valueList)>0){
-	if (table==UNIHAN_TABLE_KSEMANTICVARIANT || table == UNIHAN_TABLE_KSPECIALIZEDSEMANTICVARIANT){
+	if (table==UNIHAN_TABLE_kSEMANTICVARIANT || table == UNIHAN_TABLE_kSPECIALIZEDSEMANTICVARIANT){
 	    verboseMsg_print(VERBOSE_MSG_WARNING,"code %s is already inserted in table %s, no need to insert again.\n",
 		    stringList_index(valueList,0),UNIHAN_TABLE_NAMES[table]);
 	}else{

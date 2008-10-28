@@ -28,25 +28,27 @@ SET(CVS_CHANGELOG "This release fixes the no API documents, also corrects some f
 
 cmake_minimum_required(VERSION 2.4)
 if(COMMAND cmake_policy)
-      cmake_policy(SET CMP0003 NEW)
-      cmake_policy(SET CMP0005 OLD)
+    cmake_policy(SET CMP0003 NEW)
+    cmake_policy(SET CMP0005 OLD)
 endif(COMMAND cmake_policy)
 SET(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS ON)
 
 IF(NOT DEFINED CMAKE_INSTALL_PREFIX)
-    ADD_DEFINITIONS(-DCMAKE_INSTALL_PREFIX='"/usr"')
     SET(CMAKE_INSTALL_PREFIX /usr)
+    ADD_DEFINITIONS(-DCMAKE_INSTALL_PREFIX='"${CMAKE_INSTALL_PREFIX}"')
 ENDIF()
 
 IF(NOT DEFINED datadir)
-    ADD_DEFINITIONS(-Ddatadir='"${CMAKE_INSTALL_PREFIX}/share"')
     SET(datadir ${CMAKE_INSTALL_PREFIX}/share)
+    ADD_DEFINITIONS(-Ddatadir='"${datadir}"')
 ENDIF()
 
 IF(NOT DEFINED docdir)
-    ADD_DEFINITIONS(-Ddocdir='"${datadir}/doc"')
     SET(docdir ${datadir}/doc)
+    ADD_DEFINITIONS(-Ddocdir='"${docdir}"')
 ENDIF()
+
+
 
 
 ###==================================================================
@@ -121,10 +123,11 @@ CONFIGURE_FILE(Doxyfile.in Doxyfile)
 CONFIGURE_FILE(UploadPkg.batch.in UploadPkg.batch)
 
 #====================================================================
-# CPack configuration
+# CPack exclusion file pattern
 #
 SET(COMMON_IGNORE_FILES "/CMakeFiles/" "_CPack_Packages/" "/Testing/"
-    ".cmake$"   ".directory$" "CMakeCache.txt"
+    ".cmake$"   ".directory$" "CMakeCache.txt$"
+    "/install_manifest.txt$"
     "/.svn/"  "/CVS/" "~$" ".swp$" ".log$" ".gz$"
     "/src/config.h$") 
 
@@ -219,7 +222,6 @@ FIND_PACKAGE(PkgConfig)
 PKG_CHECK_MODULES(GLIB2 glib-2.0)
 PKG_CHECK_MODULES(SQLITE3 sqlite3)
 
-
 ADD_CUSTOM_TARGET(${DB_NAME}
     COMMAND /bin/ln -sf ${DB_NAME}.${DB_VER}-${DB_RELEASE} ${DB_NAME}
     DEPENDS ${DB_NAME}.${DB_VER}-${DB_RELEASE})
@@ -234,7 +236,7 @@ INSTALL(FILES ${MAIN_DOCS}
 #====================================================================
 # CPack configuration
 #
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "libUnihan")
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "libUnihan: A C library for Unihan Database")
 SET(CPACK_PACKAGE_VENDOR "Red Hat, APAC, Inc.")
 SET(CPACK_GENERATOR "TGZ")
 SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README")

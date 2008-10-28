@@ -45,18 +45,18 @@
  * 
  *    -# \c UNIHAN_FIELD_CODE: Unicode point of this character in integer.
  *    -# \c UNIHAN_FIELD_UTF8: UTF8 representation of the character. Useful for showing the character.
- *    -# \c UNIHAN_FIELD_KDEFINITION: An English definition of the character, convenient for dictionaries.
+ *    -# \c UNIHAN_FIELD_kDEFINITION: An English definition of the character, convenient for dictionaries.
  *    -# De facto standards:
  *    
- *       -# \c UNIHAN_FIELD_KBIGFIVE: Big5
- *       -# \c UNIHAN_FIELD_KGB0: GB 2312-80
- *       -# \c UNIHAN_FIELD_KJIS0: GB 0208-1990
- *       -# \c UNIHAN_FIELD_KKSC0: KS X 1001:1992
+ *       -# \c UNIHAN_FIELD_kBIGFIVE: Big5
+ *       -# \c UNIHAN_FIELD_kGB0: GB 2312-80
+ *       -# \c UNIHAN_FIELD_kJIS0: GB 0208-1990
+ *       -# \c UNIHAN_FIELD_kKSC0: KS X 1001:1992
  *       .
  *    -# Pronunciations:
- *        -# \c UNIHAN_FIELD_KCANTONESE: Cantonese pronunciation
- *        -# \c UNIHAN_FIELD_KJAPANESEKUN: Japanese pronunciation
- *        -# \c UNIHAN_FIELD_KMANDARIN: Mandarin pronunciation in Hanyu  Pinyin
+ *        -# \c UNIHAN_FIELD_kCANTONESE: Cantonese pronunciation
+ *        -# \c UNIHAN_FIELD_kJAPANESEKUN: Japanese pronunciation
+ *        -# \c UNIHAN_FIELD_kMANDARIN: Mandarin pronunciation in Hanyu  Pinyin
  *        -# \c UNIHAN_FIELD_ZHUYIN: Mandarin pronunciation as in Zhuyin
  *        .
  *    -# \c UNIHAN_FIELD_NOT_INSTALLED: The field name is recognized, but not installed in this system.
@@ -69,98 +69,98 @@
  *  it is a third party field.
  */
 typedef enum{
-    UNIHAN_FIELD_NOT_INSTALLED=-2,	//!< The table have not been installed.
+    UNIHAN_FIELD_NOT_INSTALLED=-2,	//!< The field have not been installed.
     UNIHAN_INVALID_FIELD=-1,		//!< End of an Unihan Field array or indicate invalid field.
     UNIHAN_FIELD_CODE,			//!< Unicode code point in integer.
-    UNIHAN_FIELD_KACCOUNTINGNUMERIC,	//!< Character when used in the writing of accounting numerals.
-    UNIHAN_FIELD_KBIGFIVE, 		//!< Big5 Encoding
-    UNIHAN_FIELD_KCANGJIE,		//!< Cangjie input code.
-    UNIHAN_FIELD_KCANTONESE,		//!< Cantonese pronunciation(s) using the jyutping romanization.
-    UNIHAN_FIELD_KCCCII,   		//!< Chinese Character Code for Information Interchange
-    UNIHAN_FIELD_KCHEUNGBAUER,		//!< Data regarding the Cheung and Bauer, The Representation of Cantonese with Chinese Characters
-    UNIHAN_FIELD_KCHEUNGBAUERINDEX,	//!< The position of the character in Cheung and Bauer, "The Representation of Cantonese with Chinese Characters".
-    UNIHAN_FIELD_KCIHAIT,		//!< The position of this character in the Cihai (辭海) dictionary.
-    UNIHAN_FIELD_KCNS1986, 		//!< CNS 11643-1986
-    UNIHAN_FIELD_KCNS1992, 		//!< CNS 11643-1992
-    UNIHAN_FIELD_KCOMPATIBILITYVARIANT, //!< The compatibility decomposition for this ideograph.
-    UNIHAN_FIELD_KCOWLES,		//!< in Cowles, "A Pocket Dictionary of Cantonese".
-    UNIHAN_FIELD_KDAEJAWEON,		//!< in the Dae Jaweon (Korean) dictionary.
-    UNIHAN_FIELD_KDEFINITION,		//!< An English definition for this character.
-    UNIHAN_FIELD_KEACC,			//!< EACC mapping for this character in hex.
-    UNIHAN_FIELD_KFENN,			//!< from Fenn's Chinese-English Pocket Dictionary.
-    UNIHAN_FIELD_KFENNINDEX,		//!< The position in Fenn's Chinese-English Pocket Dictionary by Courtenay.
-    UNIHAN_FIELD_KFOURCORNERCODE,	//!< The four-corner code(s) for the character.  
-    UNIHAN_FIELD_KFREQUENCY,		//!< A rough frequency measurement for the character based on analysis of traditional Chinese USENET postings.
-    UNIHAN_FIELD_KGB0,			//!< GB 2312-80
-    UNIHAN_FIELD_KGB1,			//!< GB 12345-90
-    UNIHAN_FIELD_KGB3,			//!< GB 7589-87
-    UNIHAN_FIELD_KGB5,			//!< GB 7590-87
-    UNIHAN_FIELD_KGB7,			//!< General Purpose Hanzi List for Modern Chinese Language, and General List of Simplified Hanzi
-    UNIHAN_FIELD_KGB8, 			//!< GB 8565-89
-    //    UNIHAN_FIELD_KGB9, 		//!< GB18030-2000
-    UNIHAN_FIELD_KGRADELEVEL,		//!< The primary grade in the Hong Kong school system by which a student is expected to know the character.
-    UNIHAN_FIELD_KGSR,			//!< in Bernhard Karlgren's Grammata Serica Recensa.
-    UNIHAN_FIELD_KHANGUL,		//!< modern Korean pronunciation(s)  in Hangul.
-    UNIHAN_FIELD_KHANYU,		//!< in Hanyu Da Zidian (HDZ) Chinese character dictionary.
-    UNIHAN_FIELD_KHANYUPINLU,		//!< in Xiandai Hanyu Pinlu Cidian  [Modern Standard Beijing Chinese Frequency Dictionary].
-    UNIHAN_FIELD_KHDZRADBREAK,		//!< Indicates that 《漢語大字典》 Hanyu Da Zidian has a radical break beginning at this character's position.
-    UNIHAN_FIELD_KHKGLYPH,		//!< The index of the character in 常用字字形表 (二零零零年修訂本),香港: 香港教育學院
-    UNIHAN_FIELD_KHKSCS,   		//!< Big5 extended code points for the HK Supplementary Character Set.
-    UNIHAN_FIELD_KIBMJAPAN,		//!< IBM Japanese mapping for this character in hexadecimal.
-    UNIHAN_FIELD_KIICORE,		//!< IICore, the IRG-produced minimal set of required ideographs for East Asian use.
-    UNIHAN_FIELD_KIRGDAEJAWEON,		//!< in Dae Jaweon (Korean) dictionary  used in the four-dictionary sorting algorithm.
-    UNIHAN_FIELD_KIRGDAIKANWAZITEN,	//!< in Dai Kanwa Ziten, aka Morohashi dictionary (Japanese)  used in the four-dictionary sorting algorithm.   
-    UNIHAN_FIELD_KIRGHANYUDAZIDIAN,	//!< in Hanyu Da Zidian (PRC) used in the four-dictionary sorting algorithm.
-    UNIHAN_FIELD_KIRGKANGXI,		//!< in KangXi dictionary.
-    UNIHAN_FIELD_KIRG_GSOURCE, 	//!< PRC/Singapore sources
-    UNIHAN_FIELD_KIRG_HSOURCE, 	//!< Hong Kong sources
-    UNIHAN_FIELD_KIRG_JSOURCE, 	//!< Japanese sources
-    UNIHAN_FIELD_KIRG_KPSOURCE, 	//!< North Korean sources
-    UNIHAN_FIELD_KIRG_KSOURCE, 		//!< South Korean sources
-    UNIHAN_FIELD_KIRG_TSOURCE, 		//!< Taiwan sources
-    UNIHAN_FIELD_KIRG_USOURCE, 		//!< Unicode/USA sources
-    UNIHAN_FIELD_KIRG_VSOURCE, 		//!< Vietname sources
-    UNIHAN_FIELD_KJAPANESEKUN,		//!< Japanese pronunciation(s).
-    UNIHAN_FIELD_KJAPANESEON,		//!< Sino-Japanese pronunciation(s) of this character.
-    UNIHAN_FIELD_KJIS0213,		//!< JIS X 0213-2000
-    UNIHAN_FIELD_KJIS0,			//!< JIS X 0208-1990
-    UNIHAN_FIELD_KJIS1,			//!< JIS X 0212-1990
-    UNIHAN_FIELD_KKANGXI,		//!< in KangXi dictionary used in the four-dictionary sorting algorithm.
-    UNIHAN_FIELD_KKARLGREN,		//!< in Analytic Dictionary of Chinese and Sino-Japanese by Bernhard Karlgren.
-    UNIHAN_FIELD_KKOREAN,		//!< The Korean pronunciation(s) of this character.
-    UNIHAN_FIELD_KKPS0,		//!< KPS 9566-97
-    UNIHAN_FIELD_KKPS1,		//!< KPS 10721-2000
-    UNIHAN_FIELD_KKSC0,		//!< KS X 1001:1992 (KS C 5601-1989)
-    UNIHAN_FIELD_KKSC1,		//!< KS X 1002:1991 (KS C 5657-1991)
-    UNIHAN_FIELD_KLAU,			//!< A Practical Cantonese-English Dictionary by Sidney Lau.
-    UNIHAN_FIELD_KMAINLANDTELEGRAPH,	//!< PRC telegraph code for this character.
-    UNIHAN_FIELD_KMANDARIN,		//!< Mandarin pronunciation(s) for this character in pinyin.
-    UNIHAN_FIELD_KMATTHEWS,		//!< in Mathews' Chinese-English Dictionary.
-    UNIHAN_FIELD_KMEYERWEMPE,		//!< Student's Cantonese-English Dictionary.
-    UNIHAN_FIELD_KMOROHASHI,		//!< Dae Kanwa Ziten, aka Morohashi dictionary (Japanese).
-    UNIHAN_FIELD_KNELSON,		//!< The Modern Reader's Japanese-English Character Dictionary.
-    UNIHAN_FIELD_KOTHERNUMERIC,		//!< The numeric value for the character in certain unusual, specialized contexts.
-    UNIHAN_FIELD_KPHONETIC,		//!< The phonetic index for the character from Ten Thousand Characters: An Analytic Dictionary.
-    UNIHAN_FIELD_KPRIMARYNUMERIC,	//!< The value of the character when used in the writing of numbers in the standard fashion.
-    UNIHAN_FIELD_KPSEUDOGB1, 		//!< A "GB 12345-90" code point assigned this character for the purposes of including it within Unihan. 
-    UNIHAN_FIELD_KRSADOBE_JAPAN1_6,	//!< Information on the glyphs in Adobe-Japan1-6 as contributed by Adobe.
-    UNIHAN_FIELD_KRSJAPANESE,		//!< A Japanese radical/stroke count.
-    UNIHAN_FIELD_KRSKANGXI,		//!< The KangXi radical/stroke count.
-    UNIHAN_FIELD_KRSKANWA,		//!< A Morohashi radical/stroke count.
-    UNIHAN_FIELD_KRSKOREAN,		//!< A Korean radical/stroke count.
-    UNIHAN_FIELD_KRSUNICODE,		//!< A standard radical/stroke count.
-    UNIHAN_FIELD_KSBGY,			//!< Song Ben Guang Yun (SBGY) 《宋本廣韻》 Medieval Chinese character dictionary.
-    UNIHAN_FIELD_KSEMANTICVARIANT,	//!< The Unicode value for a semantic variant for this character.
-    UNIHAN_FIELD_KSIMPLIFIEDVARIANT,	//!< The Unicode value for the simplified Chinese variant for this character (if any).
-    UNIHAN_FIELD_KSPECIALIZEDSEMANTICVARIANT, //!< The Unicode value for a specialized semantic variant for this character.
-    UNIHAN_FIELD_KTAIWANTELEGRAPH,	//!< Taiwanese telegraph code for this character.
-    UNIHAN_FIELD_KTANG,		//!< T'ang Poetic Vocabulary.
-    UNIHAN_FIELD_KTOTALSTROKES,	//!< The total number of strokes in the character (including the radical).
-    UNIHAN_FIELD_KTRADITIONALVARIANT,	//!< The Unicode value(s) for the traditional Chinese variant(s) for this character.
-    UNIHAN_FIELD_KVIETNAMESE,		//!< character's pronunciation(s) in in Quốc ngữ.
-    UNIHAN_FIELD_KXEROX,		//!< The Xerox code for this character.
-    UNIHAN_FIELD_KXHC1983,		//!< One or more Hanyu pinyin reading as given in Xiandai Hanyu Ciden.
-    UNIHAN_FIELD_KZVARIANT,		//!< The Unicode value(s) for known z-variants of this character.
+    UNIHAN_FIELD_kACCOUNTINGNUMERIC,	//!< Character when used in the writing of accounting numerals.
+    UNIHAN_FIELD_kBIGFIVE, 		//!< Big5 Encoding
+    UNIHAN_FIELD_kCANGJIE,		//!< Cangjie input code.
+    UNIHAN_FIELD_kCANTONESE,		//!< Cantonese pronunciation(s) using the jyutping romanization.
+    UNIHAN_FIELD_kCCCII,   		//!< Chinese Character Code for Information Interchange
+    UNIHAN_FIELD_kCHEUNGBAUER,		//!< Data regarding the Cheung and Bauer, The Representation of Cantonese with Chinese Characters
+    UNIHAN_FIELD_kCHEUNGBAUERINDEX,	//!< The position of the character in Cheung and Bauer, "The Representation of Cantonese with Chinese Characters".
+    UNIHAN_FIELD_kCIHAIT,		//!< The position of this character in the Cihai (辭海) dictionary.
+    UNIHAN_FIELD_kCNS1986, 		//!< CNS 11643-1986
+    UNIHAN_FIELD_kCNS1992, 		//!< CNS 11643-1992
+    UNIHAN_FIELD_kCOMPATIBILITYVARIANT, //!< The compatibility decomposition for this ideograph.
+    UNIHAN_FIELD_kCOWLES,		//!< in Cowles, "A Pocket Dictionary of Cantonese".
+    UNIHAN_FIELD_kDAEJAWEON,		//!< in the Dae Jaweon (Korean) dictionary.
+    UNIHAN_FIELD_kDEFINITION,		//!< An English definition for this character.
+    UNIHAN_FIELD_kEACC,			//!< EACC mapping for this character in hex.
+    UNIHAN_FIELD_kFENN,			//!< from Fenn's Chinese-English Pocket Dictionary.
+    UNIHAN_FIELD_kFENNINDEX,		//!< The position in Fenn's Chinese-English Pocket Dictionary by Courtenay.
+    UNIHAN_FIELD_kFOURCORNERCODE,	//!< The four-corner code(s) for the character.  
+    UNIHAN_FIELD_kFREQUENCY,		//!< A rough frequency measurement for the character based on analysis of traditional Chinese USENET postings.
+    UNIHAN_FIELD_kGB0,			//!< GB 2312-80
+    UNIHAN_FIELD_kGB1,			//!< GB 12345-90
+    UNIHAN_FIELD_kGB3,			//!< GB 7589-87
+    UNIHAN_FIELD_kGB5,			//!< GB 7590-87
+    UNIHAN_FIELD_kGB7,			//!< General Purpose Hanzi List for Modern Chinese Language, and General List of Simplified Hanzi
+    UNIHAN_FIELD_kGB8, 			//!< GB 8565-89
+    //    UNIHAN_FIELD_kGB9, 		//!< GB18030-2000
+    UNIHAN_FIELD_kGRADELEVEL,		//!< The primary grade in the Hong Kong school system by which a student is expected to know the character.
+    UNIHAN_FIELD_kGSR,			//!< in Bernhard Karlgren's Grammata Serica Recensa.
+    UNIHAN_FIELD_kHANGUL,		//!< modern Korean pronunciation(s)  in Hangul.
+    UNIHAN_FIELD_kHANYU,		//!< in Hanyu Da Zidian (HDZ) Chinese character dictionary.
+    UNIHAN_FIELD_kHANYUPINLU,		//!< in Xiandai Hanyu Pinlu Cidian  [Modern Standard Beijing Chinese Frequency Dictionary].
+    UNIHAN_FIELD_kHDZRADBREAK,		//!< Indicates that 《漢語大字典》 Hanyu Da Zidian has a radical break beginning at this character's position.
+    UNIHAN_FIELD_kHKGLYPH,		//!< The index of the character in 常用字字形表 (二零零零年修訂本),香港: 香港教育學院
+    UNIHAN_FIELD_kHKSCS,   		//!< Big5 extended code points for the HK Supplementary Character Set.
+    UNIHAN_FIELD_kIBMJAPAN,		//!< IBM Japanese mapping for this character in hexadecimal.
+    UNIHAN_FIELD_kIICORE,		//!< IICore, the IRG-produced minimal set of required ideographs for East Asian use.
+    UNIHAN_FIELD_kIRGDAEJAWEON,		//!< in Dae Jaweon (Korean) dictionary  used in the four-dictionary sorting algorithm.
+    UNIHAN_FIELD_kIRGDAIKANWAZITEN,	//!< in Dai Kanwa Ziten, aka Morohashi dictionary (Japanese)  used in the four-dictionary sorting algorithm.   
+    UNIHAN_FIELD_kIRGHANYUDAZIDIAN,	//!< in Hanyu Da Zidian (PRC) used in the four-dictionary sorting algorithm.
+    UNIHAN_FIELD_kIRGKANGXI,		//!< in KangXi dictionary.
+    UNIHAN_FIELD_kIRG_GSOURCE, 	//!< PRC/Singapore sources
+    UNIHAN_FIELD_kIRG_HSOURCE, 	//!< Hong Kong sources
+    UNIHAN_FIELD_kIRG_JSOURCE, 	//!< Japanese sources
+    UNIHAN_FIELD_kIRG_KPSOURCE, 	//!< North Korean sources
+    UNIHAN_FIELD_kIRG_KSOURCE, 		//!< South Korean sources
+    UNIHAN_FIELD_kIRG_TSOURCE, 		//!< Taiwan sources
+    UNIHAN_FIELD_kIRG_USOURCE, 		//!< Unicode/USA sources
+    UNIHAN_FIELD_kIRG_VSOURCE, 		//!< Vietname sources
+    UNIHAN_FIELD_kJAPANESEKUN,		//!< Japanese pronunciation(s).
+    UNIHAN_FIELD_kJAPANESEON,		//!< Sino-Japanese pronunciation(s) of this character.
+    UNIHAN_FIELD_kJIS0213,		//!< JIS X 0213-2000
+    UNIHAN_FIELD_kJIS0,			//!< JIS X 0208-1990
+    UNIHAN_FIELD_kJIS1,			//!< JIS X 0212-1990
+    UNIHAN_FIELD_kKANGXI,		//!< in KangXi dictionary used in the four-dictionary sorting algorithm.
+    UNIHAN_FIELD_kKARLGREN,		//!< in Analytic Dictionary of Chinese and Sino-Japanese by Bernhard Karlgren.
+    UNIHAN_FIELD_kKOREAN,		//!< The Korean pronunciation(s) of this character.
+    UNIHAN_FIELD_kKPS0,		//!< KPS 9566-97
+    UNIHAN_FIELD_kKPS1,		//!< KPS 10721-2000
+    UNIHAN_FIELD_kKSC0,		//!< KS X 1001:1992 (KS C 5601-1989)
+    UNIHAN_FIELD_kKSC1,		//!< KS X 1002:1991 (KS C 5657-1991)
+    UNIHAN_FIELD_kLAU,			//!< A Practical Cantonese-English Dictionary by Sidney Lau.
+    UNIHAN_FIELD_kMAINLANDTELEGRAPH,	//!< PRC telegraph code for this character.
+    UNIHAN_FIELD_kMANDARIN,		//!< Mandarin pronunciation(s) for this character in pinyin.
+    UNIHAN_FIELD_kMATTHEWS,		//!< in Mathews' Chinese-English Dictionary.
+    UNIHAN_FIELD_kMEYERWEMPE,		//!< Student's Cantonese-English Dictionary.
+    UNIHAN_FIELD_kMOROHASHI,		//!< Dae Kanwa Ziten, aka Morohashi dictionary (Japanese).
+    UNIHAN_FIELD_kNELSON,		//!< The Modern Reader's Japanese-English Character Dictionary.
+    UNIHAN_FIELD_kOTHERNUMERIC,		//!< The numeric value for the character in certain unusual, specialized contexts.
+    UNIHAN_FIELD_kPHONETIC,		//!< The phonetic index for the character from Ten Thousand Characters: An Analytic Dictionary.
+    UNIHAN_FIELD_kPRIMARYNUMERIC,	//!< The value of the character when used in the writing of numbers in the standard fashion.
+    UNIHAN_FIELD_kPSEUDOGB1, 		//!< A "GB 12345-90" code point assigned this character for the purposes of including it within Unihan. 
+    UNIHAN_FIELD_kRSADOBE_JAPAN1_6,	//!< Information on the glyphs in Adobe-Japan1-6 as contributed by Adobe.
+    UNIHAN_FIELD_kRSJAPANESE,		//!< A Japanese radical/stroke count.
+    UNIHAN_FIELD_kRSKANGXI,		//!< The KangXi radical/stroke count.
+    UNIHAN_FIELD_kRSKANWA,		//!< A Morohashi radical/stroke count.
+    UNIHAN_FIELD_kRSKOREAN,		//!< A Korean radical/stroke count.
+    UNIHAN_FIELD_kRSUNICODE,		//!< A standard radical/stroke count.
+    UNIHAN_FIELD_kSBGY,			//!< Song Ben Guang Yun (SBGY) 《宋本廣韻》 Medieval Chinese character dictionary.
+    UNIHAN_FIELD_kSEMANTICVARIANT,	//!< The Unicode value for a semantic variant for this character.
+    UNIHAN_FIELD_kSIMPLIFIEDVARIANT,	//!< The Unicode value for the simplified Chinese variant for this character (if any).
+    UNIHAN_FIELD_kSPECIALIZEDSEMANTICVARIANT, //!< The Unicode value for a specialized semantic variant for this character.
+    UNIHAN_FIELD_kTAIWANTELEGRAPH,	//!< Taiwanese telegraph code for this character.
+    UNIHAN_FIELD_kTANG,		//!< T'ang Poetic Vocabulary.
+    UNIHAN_FIELD_kTOTALSTROKES,	//!< The total number of strokes in the character (including the radical).
+    UNIHAN_FIELD_kTRADITIONALVARIANT,	//!< The Unicode value(s) for the traditional Chinese variant(s) for this character.
+    UNIHAN_FIELD_kVIETNAMESE,		//!< character's pronunciation(s) in in Quốc ngữ.
+    UNIHAN_FIELD_kXEROX,		//!< The Xerox code for this character.
+    UNIHAN_FIELD_kXHC1983,		//!< One or more Hanyu pinyin reading as given in Xiandai Hanyu Ciden.
+    UNIHAN_FIELD_kZVARIANT,		//!< The Unicode value(s) for known z-variants of this character.
 
     UNIHAN_FIELD_UTF8,			//!< UTF8 representation of the character.
 
@@ -220,13 +220,13 @@ typedef enum{
  * the other fields stores parts of Unihan tag value.
  *
  * Normally, each Unihan tag has a corresponding table, for example, 
- * UNIHAN_TABLE_KDEFINITION ("kDefinitionTable") has UNIHAN_FIELD_CODE and
- * UNIHAN_FIELD_KDEFITION which stores the value of the kDefinition tag.
+ * UNIHAN_TABLE_kDEFINITION ("kDefinitionTable") has UNIHAN_FIELD_CODE and
+ * UNIHAN_FIELD_kDEFITION which stores the value of the kDefinition tag.
  *
  * If a tag value is splittable and the parts are often utilized, 
  * the value is store in multiple fields.
  * For example, tag kHanyuPinlu has 2 parts, pinyin and its Pinlu (frequency).
- * Thus table UNIHAN_TABLE_KHANYU_PINLU ("kHanyuPinluTable")  has three fields:
+ * Thus table UNIHAN_TABLE_kHANYU_PINLU ("kHanyuPinluTable")  has three fields:
  * UNIHAN_FIELD_CODE, UNIHAN_FIELD_PINYIN, and UNIHAN_FIELD_PINYIN_FREQ,
  * where UNIHAN_FIELD_PINYIN and UNIHAN_FIELD_PINYIN_FREQ store pinyin and 
  * its frequency respectively.
@@ -262,93 +262,93 @@ typedef enum{
     UNIHAN_NOT_A_TABLE=-3,		//!< Return value for pseudo fields with unihanField_get_table(), as they are derived from database functions but not table fields.
     UNIHAN_INVALID_TABLE=-2,		//!< End of an Unihan table array or indicate invalid table.
     UNIHAN_AMBIGUOUS_TABLE=-1,		//!< Cannot decide which table is more appropriate, usually because it appears in multiple tables, such as UNIHAN_FIELD_CODE.
-    UNIHAN_TABLE_KACCOUNTINGNUMERIC,	//!< Table for accounting numberic.
-    UNIHAN_TABLE_KBIGFIVE, 		//!< Table for Big 5
-    UNIHAN_TABLE_KCANGJIE,		//!< Table for Cangjie
-    UNIHAN_TABLE_KCANTONESE,		//!< Table for Cantonese prouncation
-    UNIHAN_TABLE_KCCCII,   		//!< Table for Chinese Character Code for Information Interchange.
-    UNIHAN_TABLE_KCHEUNGBAUER,		//!< Table for data regarding the Cheung and Bauer, The Representation of Cantonese with Chinese Characters.
-    UNIHAN_TABLE_KCHEUNGBAUERINDEX,	//!< Table for the position of characters in Cheung and Bauer, The Representation of Cantonese with Chinese Characters.
-    UNIHAN_TABLE_KCIHAIT,		//!< Table for the position of characters in the Cihai (辭海) dictionary.
-    UNIHAN_TABLE_KCNS1986, 		//!< Table for CNS 11643-1986.
-    UNIHAN_TABLE_KCNS1992,		//!< Table for CNS 11643-1992.
-    UNIHAN_TABLE_KCOMPATIBILITYVARIANT, //!< Table for the compatibility decomposition for ideographs.
-    UNIHAN_TABLE_KCOWLES,		//!< Table for Cowles, "A Pocket Dictionary of Cantonese".
-    UNIHAN_TABLE_KDAEJAWEON,		//!< Table for Dae Jaweon (Korean) dictionary.
-    UNIHAN_TABLE_KDEFINITION,		//!< Table for English definition for characters.
-    UNIHAN_TABLE_KEACC,			//!< Table for EACC mapping for characters in hex.
-    UNIHAN_TABLE_KFENN,			//!< Table for Fenn's Chinese-English Pocket Dictionary by Courtenay.
-    UNIHAN_TABLE_KFENNINDEX,		//!< Table for the position in Fenn's Chinese-English Pocket Dictionary by Courtenay.
-    UNIHAN_TABLE_KFOURCORNERCODE,	//!< Table for the four-corner codes.  
-    UNIHAN_TABLE_KFREQUENCY,		//!< Table for a rough frequency measurement for characters based on analysis of traditional Chinese USENET postings.
-    UNIHAN_TABLE_KGB0,			//!< Table for GB 2312-80
-    UNIHAN_TABLE_KGB1,			//!< Table for GB 12345-90
-    UNIHAN_TABLE_KGB3,			//!< Table for GB 7589-87
-    UNIHAN_TABLE_KGB5,			//!< Table for GB 7590-87
-    UNIHAN_TABLE_KGB7,			//!< Table for General Purpose Hanzi List for Modern Chinese Language, and General List of Simplified Hanzi.
-    UNIHAN_TABLE_KGB8, 			//!< Table for GB 8565-89
-    UNIHAN_TABLE_KGRADELEVEL,		//!< Table for primary grade in the Hong Kong school system by which a student is expected to know the characters.
-    UNIHAN_TABLE_KGSR,			//!< Table for Bernhard Karlgren's Grammata Serica Recensa.
-    UNIHAN_TABLE_KHANGUL,		//!< Table for modern Korean pronunciation(s)  in Hangul.
-    UNIHAN_TABLE_KHANYU,		//!< Table for Hanyu Da Zidian (HDZ) Chinese character dictionary.
-    UNIHAN_TABLE_KHANYUPINLU,		//!< Table for Xiandai Hanyu Pinlu Cidian.
-    UNIHAN_TABLE_KHDZRADBREAK,		//!< Table for Indicates that Hanyu Da Zidian 《漢語大字典》 has a radical break beginning at characters position.
-    UNIHAN_TABLE_KHKGLYPH,		//!< Table for the index of characters in 常用字字形表 (二零零零年修訂本),香港: 香港教育學院
-    UNIHAN_TABLE_KHKSCS,   		//!< Table for Big5 extended code points for the HK Supplementary Character Set.
-    UNIHAN_TABLE_KIBMJAPAN,		//!< Table for IBM Japanese mapping for characters in hexadecimal.
-    UNIHAN_TABLE_KIICORE,		//!< Table for IICore, the IRG-produced minimal set of required ideographs for East Asian use.
-    UNIHAN_TABLE_KIRGDAEJAWEON,	        //!< Table for Dae Jaweon (Korean) dictionary  used in the four-dictionary sorting algorithm.
-    UNIHAN_TABLE_KIRGDAIKANWAZITEN,	//!< Table for Dai Kanwa Ziten, aka Morohashi dictionary (Japanese)  used in the four-dictionary sorting algorithm.   
-    UNIHAN_TABLE_KIRGHANYUDAZIDIAN,	//!< Table for Hanyu Da Zidian (PRC) used in the four-dictionary sorting algorithm.
-    UNIHAN_TABLE_KIRGKANGXI,		//!< Table for KangXi dictionary.
-    UNIHAN_TABLE_KJAPANESEKUN,		//!< Table for Japanese pronunciation(s).
-    UNIHAN_TABLE_KJAPANESEON,		//!< Table for Sino-Japanese pronunciation(s) of characters.
-    UNIHAN_TABLE_KJIS0213,		//!< Table for JIS X 0213-2000
-    UNIHAN_TABLE_KJIS0,			//!< Table for JIS X 0208-1990
-    UNIHAN_TABLE_KJIS1,			//!< Table for JIS X 0212-1990
-    UNIHAN_TABLE_KKANGXI,		//!< Table for KangXi dictionary used in the four-dictionary sorting algorithm.
-    UNIHAN_TABLE_KKARLGREN,		//!< Table for Analytic Dictionary of Chinese and Sino-Japanese by Bernhard Karlgren.
-    UNIHAN_TABLE_KKOREAN,		//!< Table for Korean pronunciation(s).
-    UNIHAN_TABLE_KKPS0,			//!< Table for KPS 9566-97.
-    UNIHAN_TABLE_KKPS1,			//!< Table for KPS 10721-2000.
-    UNIHAN_TABLE_KKSC0,			//!< Table for KS X 1001:1992 (KS C 5601-1989).
-    UNIHAN_TABLE_KKSC1,			//!< Table for KS X 1002:1991 (KS C 5657-1991).
-    UNIHAN_TABLE_KLAU,			//!< Table for Practical Cantonese-English Dictionary by Sidney Lau.
-    UNIHAN_TABLE_KMAINLANDTELEGRAPH,	//!< Table for PRC telegraph code for this character.
-    UNIHAN_TABLE_KMANDARIN,		//!< Table for Mandarin pronunciation(s) for this character in pinyin.
-    UNIHAN_TABLE_KMATTHEWS,		//!< Table for Mathews' Chinese-English Dictionary.
-    UNIHAN_TABLE_KMEYERWEMPE,		//!< Table for Student's Cantonese-English Dictionary.
-    UNIHAN_TABLE_KMOROHASHI,		//!< Table for Dae Kanwa Ziten, aka Morohashi dictionary (Japanese).
-    UNIHAN_TABLE_KNELSON,		//!< Table for Modern Reader's Japanese-English Character Dictionary.
-    UNIHAN_TABLE_KOTHERNUMERIC,		//!< Table for numeric values for characters in certain unusual, specialized contexts.
-    UNIHAN_TABLE_KPHONETIC,		//!< Table for the phonetic index of characters from Ten Thousand Characters: An Analytic Dictionary.
-    UNIHAN_TABLE_KPRIMARYNUMERIC,	//!< Table for values of characters when used in the writing of numbers in the standard fashion.
-    UNIHAN_TABLE_KPSEUDOGB1, 		//!< Table for "GB 12345-90" code points  for the purposes of including it within Unihan. 
-    UNIHAN_TABLE_KRSADOBE_JAPAN1_6,	//!< Table for Information on the glyphs in Adobe-Japan1-6 as contributed by Adobe.
-    UNIHAN_TABLE_KRSJAPANESE,		//!< Table for Japanese radical/stroke count.
-    UNIHAN_TABLE_KRSKANGXI,		//!< Table for KangXi radical/stroke count.
-    UNIHAN_TABLE_KRSKANWA,		//!< Table for Morohashi radical/stroke count.
-    UNIHAN_TABLE_KRSKOREAN,		//!< Table for Korean radical/stroke count.
-    UNIHAN_TABLE_KRSUNICODE,		//!< Table for standard radical/stroke count.
-    UNIHAN_TABLE_KSBGY,			//!< Table for Song Ben Guang Yun (SBGY) 《宋本廣韻》 Medieval Chinese character dictionary.
-    UNIHAN_TABLE_KSEMANTICVARIANT,	//!< Table for Unicode value for a semantic variant characters.
-    UNIHAN_TABLE_KSIMPLIFIEDVARIANT,	//!< Table for Unicode value for the simplified Chinese variant characters.
-    UNIHAN_TABLE_KSPECIALIZEDSEMANTICVARIANT, //!< Table for Unicode value for a specialized semantic variant characters.
-    UNIHAN_TABLE_KTAIWANTELEGRAPH,	//!< Table for Taiwanese telegraph code for this character.
-    UNIHAN_TABLE_KTANG,			//!< Table for T'ang Poetic Vocabulary.
-    UNIHAN_TABLE_KTOTALSTROKES,		//!< Table for total number of strokes of characters.(including the radical).
-    UNIHAN_TABLE_KTRADITIONALVARIANT,   //!< Table for Unicode value(s) for the traditional Chinese variant characters.
-    UNIHAN_TABLE_KVIETNAMESE,		//!< Table for characters' pronunciations in in Quốc ngữ.
-    UNIHAN_TABLE_KXEROX,		//!< Table for Xerox codes.
-    UNIHAN_TABLE_KXHC1983,		//!< Table for One or more Hanyu pinyin reading as given in Xiandai Hanyu Ciden.
-    UNIHAN_TABLE_KZVARIANT,		//!< Table for Z-variants.
+    UNIHAN_TABLE_kACCOUNTINGNUMERIC,	//!< Table for accounting numberic.
+    UNIHAN_TABLE_kBIGFIVE, 		//!< Table for Big 5
+    UNIHAN_TABLE_kCANGJIE,		//!< Table for Cangjie
+    UNIHAN_TABLE_kCANTONESE,		//!< Table for Cantonese prouncation
+    UNIHAN_TABLE_kCCCII,   		//!< Table for Chinese Character Code for Information Interchange.
+    UNIHAN_TABLE_kCHEUNGBAUER,		//!< Table for data regarding the Cheung and Bauer, The Representation of Cantonese with Chinese Characters.
+    UNIHAN_TABLE_kCHEUNGBAUERINDEX,	//!< Table for the position of characters in Cheung and Bauer, The Representation of Cantonese with Chinese Characters.
+    UNIHAN_TABLE_kCIHAIT,		//!< Table for the position of characters in the Cihai (辭海) dictionary.
+    UNIHAN_TABLE_kCNS1986, 		//!< Table for CNS 11643-1986.
+    UNIHAN_TABLE_kCNS1992,		//!< Table for CNS 11643-1992.
+    UNIHAN_TABLE_kCOMPATIBILITYVARIANT, //!< Table for the compatibility decomposition for ideographs.
+    UNIHAN_TABLE_kCOWLES,		//!< Table for Cowles, "A Pocket Dictionary of Cantonese".
+    UNIHAN_TABLE_kDAEJAWEON,		//!< Table for Dae Jaweon (Korean) dictionary.
+    UNIHAN_TABLE_kDEFINITION,		//!< Table for English definition for characters.
+    UNIHAN_TABLE_kEACC,			//!< Table for EACC mapping for characters in hex.
+    UNIHAN_TABLE_kFENN,			//!< Table for Fenn's Chinese-English Pocket Dictionary by Courtenay.
+    UNIHAN_TABLE_kFENNINDEX,		//!< Table for the position in Fenn's Chinese-English Pocket Dictionary by Courtenay.
+    UNIHAN_TABLE_kFOURCORNERCODE,	//!< Table for the four-corner codes.  
+    UNIHAN_TABLE_kFREQUENCY,		//!< Table for a rough frequency measurement for characters based on analysis of traditional Chinese USENET postings.
+    UNIHAN_TABLE_kGB0,			//!< Table for GB 2312-80
+    UNIHAN_TABLE_kGB1,			//!< Table for GB 12345-90
+    UNIHAN_TABLE_kGB3,			//!< Table for GB 7589-87
+    UNIHAN_TABLE_kGB5,			//!< Table for GB 7590-87
+    UNIHAN_TABLE_kGB7,			//!< Table for General Purpose Hanzi List for Modern Chinese Language, and General List of Simplified Hanzi.
+    UNIHAN_TABLE_kGB8, 			//!< Table for GB 8565-89
+    UNIHAN_TABLE_kGRADELEVEL,		//!< Table for primary grade in the Hong Kong school system by which a student is expected to know the characters.
+    UNIHAN_TABLE_kGSR,			//!< Table for Bernhard Karlgren's Grammata Serica Recensa.
+    UNIHAN_TABLE_kHANGUL,		//!< Table for modern Korean pronunciation(s)  in Hangul.
+    UNIHAN_TABLE_kHANYU,		//!< Table for Hanyu Da Zidian (HDZ) Chinese character dictionary.
+    UNIHAN_TABLE_kHANYUPINLU,		//!< Table for Xiandai Hanyu Pinlu Cidian.
+    UNIHAN_TABLE_kHDZRADBREAK,		//!< Table for Indicates that Hanyu Da Zidian 《漢語大字典》 has a radical break beginning at characters position.
+    UNIHAN_TABLE_kHKGLYPH,		//!< Table for the index of characters in 常用字字形表 (二零零零年修訂本),香港: 香港教育學院
+    UNIHAN_TABLE_kHKSCS,   		//!< Table for Big5 extended code points for the HK Supplementary Character Set.
+    UNIHAN_TABLE_kIBMJAPAN,		//!< Table for IBM Japanese mapping for characters in hexadecimal.
+    UNIHAN_TABLE_kIICORE,		//!< Table for IICore, the IRG-produced minimal set of required ideographs for East Asian use.
+    UNIHAN_TABLE_kIRGDAEJAWEON,	        //!< Table for Dae Jaweon (Korean) dictionary  used in the four-dictionary sorting algorithm.
+    UNIHAN_TABLE_kIRGDAIKANWAZITEN,	//!< Table for Dai Kanwa Ziten, aka Morohashi dictionary (Japanese)  used in the four-dictionary sorting algorithm.   
+    UNIHAN_TABLE_kIRGHANYUDAZIDIAN,	//!< Table for Hanyu Da Zidian (PRC) used in the four-dictionary sorting algorithm.
+    UNIHAN_TABLE_kIRGKANGXI,		//!< Table for KangXi dictionary.
+    UNIHAN_TABLE_kJAPANESEKUN,		//!< Table for Japanese pronunciation(s).
+    UNIHAN_TABLE_kJAPANESEON,		//!< Table for Sino-Japanese pronunciation(s) of characters.
+    UNIHAN_TABLE_kJIS0213,		//!< Table for JIS X 0213-2000
+    UNIHAN_TABLE_kJIS0,			//!< Table for JIS X 0208-1990
+    UNIHAN_TABLE_kJIS1,			//!< Table for JIS X 0212-1990
+    UNIHAN_TABLE_kKANGXI,		//!< Table for KangXi dictionary used in the four-dictionary sorting algorithm.
+    UNIHAN_TABLE_kKARLGREN,		//!< Table for Analytic Dictionary of Chinese and Sino-Japanese by Bernhard Karlgren.
+    UNIHAN_TABLE_kKOREAN,		//!< Table for Korean pronunciation(s).
+    UNIHAN_TABLE_kKPS0,			//!< Table for KPS 9566-97.
+    UNIHAN_TABLE_kKPS1,			//!< Table for KPS 10721-2000.
+    UNIHAN_TABLE_kKSC0,			//!< Table for KS X 1001:1992 (KS C 5601-1989).
+    UNIHAN_TABLE_kKSC1,			//!< Table for KS X 1002:1991 (KS C 5657-1991).
+    UNIHAN_TABLE_kLAU,			//!< Table for Practical Cantonese-English Dictionary by Sidney Lau.
+    UNIHAN_TABLE_kMAINLANDTELEGRAPH,	//!< Table for PRC telegraph code for this character.
+    UNIHAN_TABLE_kMANDARIN,		//!< Table for Mandarin pronunciation(s) for this character in pinyin.
+    UNIHAN_TABLE_kMATTHEWS,		//!< Table for Mathews' Chinese-English Dictionary.
+    UNIHAN_TABLE_kMEYERWEMPE,		//!< Table for Student's Cantonese-English Dictionary.
+    UNIHAN_TABLE_kMOROHASHI,		//!< Table for Dae Kanwa Ziten, aka Morohashi dictionary (Japanese).
+    UNIHAN_TABLE_kNELSON,		//!< Table for Modern Reader's Japanese-English Character Dictionary.
+    UNIHAN_TABLE_kOTHERNUMERIC,		//!< Table for numeric values for characters in certain unusual, specialized contexts.
+    UNIHAN_TABLE_kPHONETIC,		//!< Table for the phonetic index of characters from Ten Thousand Characters: An Analytic Dictionary.
+    UNIHAN_TABLE_kPRIMARYNUMERIC,	//!< Table for values of characters when used in the writing of numbers in the standard fashion.
+    UNIHAN_TABLE_kPSEUDOGB1, 		//!< Table for "GB 12345-90" code points  for the purposes of including it within Unihan. 
+    UNIHAN_TABLE_kRSADOBE_JAPAN1_6,	//!< Table for Information on the glyphs in Adobe-Japan1-6 as contributed by Adobe.
+    UNIHAN_TABLE_kRSJAPANESE,		//!< Table for Japanese radical/stroke count.
+    UNIHAN_TABLE_kRSKANGXI,		//!< Table for KangXi radical/stroke count.
+    UNIHAN_TABLE_kRSKANWA,		//!< Table for Morohashi radical/stroke count.
+    UNIHAN_TABLE_kRSKOREAN,		//!< Table for Korean radical/stroke count.
+    UNIHAN_TABLE_kRSUNICODE,		//!< Table for standard radical/stroke count.
+    UNIHAN_TABLE_kSBGY,			//!< Table for Song Ben Guang Yun (SBGY) 《宋本廣韻》 Medieval Chinese character dictionary.
+    UNIHAN_TABLE_kSEMANTICVARIANT,	//!< Table for Unicode value for a semantic variant characters.
+    UNIHAN_TABLE_kSIMPLIFIEDVARIANT,	//!< Table for Unicode value for the simplified Chinese variant characters.
+    UNIHAN_TABLE_kSPECIALIZEDSEMANTICVARIANT, //!< Table for Unicode value for a specialized semantic variant characters.
+    UNIHAN_TABLE_kTAIWANTELEGRAPH,	//!< Table for Taiwanese telegraph code for this character.
+    UNIHAN_TABLE_kTANG,			//!< Table for T'ang Poetic Vocabulary.
+    UNIHAN_TABLE_kTOTALSTROKES,		//!< Table for total number of strokes of characters.(including the radical).
+    UNIHAN_TABLE_kTRADITIONALVARIANT,   //!< Table for Unicode value(s) for the traditional Chinese variant characters.
+    UNIHAN_TABLE_kVIETNAMESE,		//!< Table for characters' pronunciations in in Quốc ngữ.
+    UNIHAN_TABLE_kXEROX,		//!< Table for Xerox codes.
+    UNIHAN_TABLE_kXHC1983,		//!< Table for One or more Hanyu pinyin reading as given in Xiandai Hanyu Ciden.
+    UNIHAN_TABLE_kZVARIANT,		//!< Table for Z-variants.
 
     UNIHAN_TABLE_UTF8,			//!< Table for UTF-8.
     UNIHAN_TABLE_IRG_SOURCE,		//!< Table for IRG Sources.
     UNIHAN_TABLE_IRG_SOURCE_MAPPING,	//!< Table for IRG Sources and its mapping/code.
-    UNIHAN_TABLE_KSEMANTICVARIANT_EXTRA,  //!< Table for dictionary that states the semantical relationship.
-    UNIHAN_TABLE_KSPECIALIZEDSEMANTICVARIANT_EXTRA, //!< Table for dictionary that states the semantical relationship.
-    UNIHAN_TABLE_KZVARIANT_EXTRA,	//!< Table for the source of Z variant.
+    UNIHAN_TABLE_kSEMANTICVARIANT_EXTRA,  //!< Table for dictionary that states the semantical relationship.
+    UNIHAN_TABLE_kSPECIALIZEDSEMANTICVARIANT_EXTRA, //!< Table for dictionary that states the semantical relationship.
+    UNIHAN_TABLE_kZVARIANT_EXTRA,	//!< Table for the source of Z variant.
     UNIHAN_TABLE_3RD_PARTY		//!< Third party table.
 } UnihanTable;
 

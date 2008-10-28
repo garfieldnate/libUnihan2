@@ -187,8 +187,8 @@ int unihan_test_record(gunichar code, UnihanField field, char *value){
 
     for(i=0;i<totalCount;i++){
         switch(field){
-            case UNIHAN_FIELD_KSEMANTICVARIANT:
-            case UNIHAN_FIELD_KSPECIALIZEDSEMANTICVARIANT:
+            case UNIHAN_FIELD_kSEMANTICVARIANT:
+            case UNIHAN_FIELD_kSPECIALIZEDSEMANTICVARIANT:
                 found=isKSemanticValue_matched(value,stringList_index(sResult->resultList,(i+1)*colCount-1));
                 break;
             default:
@@ -219,9 +219,9 @@ int unihan_test_record(gunichar code, UnihanField field, char *value){
     found=FALSE;
 
     switch(field){
-	case UNIHAN_FIELD_KCOMPATIBILITYVARIANT:
-	case UNIHAN_FIELD_KSIMPLIFIEDVARIANT:
-	case UNIHAN_FIELD_KTRADITIONALVARIANT:
+	case UNIHAN_FIELD_kCOMPATIBILITYVARIANT:
+	case UNIHAN_FIELD_kSIMPLIFIEDVARIANT:
+	case UNIHAN_FIELD_kTRADITIONALVARIANT:
 	    c=unihanChar_parse(value);
 	    g_snprintf(buf,1000,"%d",c);
 	    break;

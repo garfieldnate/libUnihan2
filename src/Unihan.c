@@ -144,50 +144,10 @@ char *unihanChar_to_scalar_string(gunichar code){
 /*=================================
  * Sqlite DB file functions.
  */
-#ifndef SQLITE_OPEN_READONLY
-#define SQLITE_OPEN_READONLY         0x00000001
-#endif
-
-#ifndef SQLITE_OPEN_READWRITE
-#define SQLITE_OPEN_READWRITE        0x00000002
-#endif
-
-#ifndef SQLITE_OPEN_CREATE
-#define SQLITE_OPEN_CREATE           0x00000004
-#endif
 
 
 int unihanDb_open(const char *filename, int flags){
-    int ret=0;
-#ifdef HAVE_SQLITE3_OPEN_V2    
-    ret = sqlite3_open_v2(filename, &unihanDb, flags, NULL);
-#else
-    if (flags & SQLITE_OPEN_READONLY ){
-	if (!isReadable(filename)){
-	    verboseMsg_print(VERBOSE_MSG_ERROR, "unihanDb_open(%s,%d): File is not readable\n", 
-		    filename,flags);
-	    return -1;
-	}
-    }else if (flags & SQLITE_OPEN_CREATE){
-	if (!isWritable(filename)){
-	    verboseMsg_print(VERBOSE_MSG_ERROR, "unihanDb_open(%s,%d): File is not writable\n", 
-		    filename,flags);
-	    return -2;
-	}
-    }else if (flags & SQLITE_OPEN_READWRITE ){
-	if (!isReadable(filename)){
-	    verboseMsg_print(VERBOSE_MSG_ERROR, "unihanDb_open(%s,%d): File is not readable\n", 
-		    filename,flags);
-	    return -1;
-	}
-	if (!isWritable(filename)){
-	    verboseMsg_print(VERBOSE_MSG_ERROR, "unihanDb_open(%s,%d): File is not writable\n", 
-		    filename,flags);
-	    return -2;
-	}
-    }
-    sqlite3_open(filename, &unihanDb);
-#endif
+    int ret=sqlite_open(filename,&unihanDb,flags);
 
     if (ret) {
 	verboseMsg_print(VERBOSE_MSG_ERROR, "unihanDb_open(%s,%d): %s\n", 
@@ -264,7 +224,7 @@ UnihanTable unihanField_get_table(UnihanField field){
 
 	    case UNIHAN_FIELD_PINYIN:
 	    case UNIHAN_FIELD_PINYIN_FREQ:
-		return UNIHAN_TABLE_KHANYUPINLU;
+		return UNIHAN_TABLE_kHANYUPINLU;
 
 	    case UNIHAN_FIELD_IRG_SOURCE_SHORT_NAME:
 		return UNIHAN_TABLE_IRG_SOURCE;
@@ -287,15 +247,15 @@ UnihanTable unihanField_get_table(UnihanField field){
 	    case UNIHAN_FIELD_ADOBE_CID_CV:
 	    case UNIHAN_FIELD_ADOBE_CID:
 	    case UNIHAN_FIELD_ADOBE_CID_RADICAL_STROKE_COUNT:
-		return UNIHAN_TABLE_KRSADOBE_JAPAN1_6;
+		return UNIHAN_TABLE_kRSADOBE_JAPAN1_6;
 
 	    case UNIHAN_FIELD_FREQ_RANK:
-		return UNIHAN_TABLE_KMANDARIN;
+		return UNIHAN_TABLE_kMANDARIN;
 	    case UNIHAN_FIELD_ZVARIANT_SOURCE:
-		return UNIHAN_TABLE_KZVARIANT_EXTRA;
+		return UNIHAN_TABLE_kZVARIANT_EXTRA;
 	    case UNIHAN_FIELD_ZHUYIN:
 		/* Zhuyin is converted from kMandarin */
-		return UNIHAN_TABLE_KMANDARIN;
+		return UNIHAN_TABLE_kMANDARIN;
 	    default:
 		break;
 	}
@@ -322,33 +282,33 @@ UnihanTable *unihanField_get_all_tables(UnihanField field){
 	case UNIHAN_FIELD_KANGXI_PAGE:
 	case UNIHAN_FIELD_KANGXI_CHARNUM:
 	case UNIHAN_FIELD_KANGXI_VIRTUAL:
-	    tables[i++]=UNIHAN_TABLE_KIRGKANGXI;
-	    tables[i++]=UNIHAN_TABLE_KKANGXI;
+	    tables[i++]=UNIHAN_TABLE_kIRGKANGXI;
+	    tables[i++]=UNIHAN_TABLE_kKANGXI;
 	    break;
 
 	case UNIHAN_FIELD_VARIANT_CODE:
-	    tables[i++]=UNIHAN_TABLE_KCOMPATIBILITYVARIANT;
-	    tables[i++]=UNIHAN_TABLE_KSIMPLIFIEDVARIANT;
-	    tables[i++]=UNIHAN_TABLE_KTRADITIONALVARIANT;
-	    tables[i++]=UNIHAN_TABLE_KSEMANTICVARIANT;
-	    tables[i++]=UNIHAN_TABLE_KSPECIALIZEDSEMANTICVARIANT;
-	    tables[i++]=UNIHAN_TABLE_KZVARIANT;
+	    tables[i++]=UNIHAN_TABLE_kCOMPATIBILITYVARIANT;
+	    tables[i++]=UNIHAN_TABLE_kSIMPLIFIEDVARIANT;
+	    tables[i++]=UNIHAN_TABLE_kTRADITIONALVARIANT;
+	    tables[i++]=UNIHAN_TABLE_kSEMANTICVARIANT;
+	    tables[i++]=UNIHAN_TABLE_kSPECIALIZEDSEMANTICVARIANT;
+	    tables[i++]=UNIHAN_TABLE_kZVARIANT;
 	    break;
 	case UNIHAN_FIELD_FROM_DICT:
 	case UNIHAN_FIELD_SEMANTIC_T:
 	case UNIHAN_FIELD_SEMANTIC_B:
 	case UNIHAN_FIELD_SEMANTIC_Z:
-	    tables[i++]=UNIHAN_TABLE_KSEMANTICVARIANT;
-	    tables[i++]=UNIHAN_TABLE_KSPECIALIZEDSEMANTICVARIANT;
+	    tables[i++]=UNIHAN_TABLE_kSEMANTICVARIANT;
+	    tables[i++]=UNIHAN_TABLE_kSPECIALIZEDSEMANTICVARIANT;
 	    break;
 	case UNIHAN_FIELD_RADICAL_INDEX:
 	case UNIHAN_FIELD_ADDITIONAL_STROKE_COUNT:
-	    tables[i++]=UNIHAN_TABLE_KRSADOBE_JAPAN1_6;
-	    tables[i++]=UNIHAN_TABLE_KRSJAPANESE;	
-	    tables[i++]=UNIHAN_TABLE_KRSKANGXI;	
-	    tables[i++]=UNIHAN_TABLE_KRSKANWA;	
-	    tables[i++]=UNIHAN_TABLE_KRSKOREAN;
-	    tables[i++]=UNIHAN_TABLE_KRSUNICODE;
+	    tables[i++]=UNIHAN_TABLE_kRSADOBE_JAPAN1_6;
+	    tables[i++]=UNIHAN_TABLE_kRSJAPANESE;	
+	    tables[i++]=UNIHAN_TABLE_kRSKANGXI;	
+	    tables[i++]=UNIHAN_TABLE_kRSKANWA;	
+	    tables[i++]=UNIHAN_TABLE_kRSKOREAN;
+	    tables[i++]=UNIHAN_TABLE_kRSUNICODE;
 	    break;
 	default:
 	    tables[i++]=unihanField_get_table(field);
@@ -362,12 +322,12 @@ UnihanTable unihanField_get_extra_table(UnihanField field){
     if (unihanField_is_IRG_Source(field))
 	return UNIHAN_TABLE_IRG_SOURCE_MAPPING;
     switch(field){
-	case UNIHAN_FIELD_KSEMANTICVARIANT:
-	    return UNIHAN_TABLE_KSEMANTICVARIANT_EXTRA;
-	case UNIHAN_FIELD_KSPECIALIZEDSEMANTICVARIANT:
-	    return UNIHAN_TABLE_KSPECIALIZEDSEMANTICVARIANT_EXTRA;
-	case UNIHAN_FIELD_KZVARIANT:
-	    return UNIHAN_TABLE_KZVARIANT_EXTRA;
+	case UNIHAN_FIELD_kSEMANTICVARIANT:
+	    return UNIHAN_TABLE_kSEMANTICVARIANT_EXTRA;
+	case UNIHAN_FIELD_kSPECIALIZEDSEMANTICVARIANT:
+	    return UNIHAN_TABLE_kSPECIALIZEDSEMANTICVARIANT_EXTRA;
+	case UNIHAN_FIELD_kZVARIANT:
+	    return UNIHAN_TABLE_kZVARIANT_EXTRA;
 	default:
 	    break;
     }
@@ -385,7 +345,7 @@ gboolean unihanField_is_indexed(UnihanField field){
     if (unihanField_is_pseudo(field)){
 	return FALSE;
     }
-    if (field==UNIHAN_FIELD_KDEFINITION)
+    if (field==UNIHAN_FIELD_kDEFINITION)
 	return FALSE;
     return TRUE;
 }
@@ -439,9 +399,9 @@ gboolean unihanField_is_pseudo(UnihanField field){
 	return TRUE;
     }
     switch(field){
-	case UNIHAN_FIELD_KHANYUPINLU:
-	case UNIHAN_FIELD_KIRGKANGXI:
-	case UNIHAN_FIELD_KKANGXI:
+	case UNIHAN_FIELD_kHANYUPINLU:
+	case UNIHAN_FIELD_kIRGKANGXI:
+	case UNIHAN_FIELD_kKANGXI:
 	    return TRUE;
 	case UNIHAN_FIELD_ZHUYIN:
 	    return TRUE;
@@ -520,7 +480,7 @@ UnihanIRG_SourceRec *unihanIRG_SourceRec_parse(UnihanField field,const char *val
     char  **valueArray=NULL;
     gboolean invalidValue=FALSE;
     switch(field){
-	case UNIHAN_FIELD_KIRG_GSOURCE:
+	case UNIHAN_FIELD_kIRG_GSOURCE:
 	    valueArray=g_strsplit(value,"-",2);
 	    rec=NEW_INSTANCE(UnihanIRG_SourceRec);
 	    g_snprintf(buf,20,"G%s",valueArray[0]);
@@ -532,12 +492,12 @@ UnihanIRG_SourceRec *unihanIRG_SourceRec_parse(UnihanField field,const char *val
 		rec->sourceMapping=g_strdup(valueArray[1]);
 	    }
 	    break;
-	case UNIHAN_FIELD_KIRG_HSOURCE:
+	case UNIHAN_FIELD_kIRG_HSOURCE:
 	    rec=NEW_INSTANCE(UnihanIRG_SourceRec);
 	    rec->sourceId= UNIHAN_SOURCE_H;
 	    rec->sourceMapping=g_strdup(value);
 	    break;
-	case UNIHAN_FIELD_KIRG_JSOURCE:
+	case UNIHAN_FIELD_kIRG_JSOURCE:
 	    valueArray=g_strsplit(value,"-",2);
 	    rec=NEW_INSTANCE(UnihanIRG_SourceRec);
 	    g_snprintf(buf,20,"J%s",valueArray[0]);
@@ -549,7 +509,7 @@ UnihanIRG_SourceRec *unihanIRG_SourceRec_parse(UnihanField field,const char *val
 		rec->sourceMapping=g_strdup(valueArray[1]);
 	    }
 	    break;
-	case UNIHAN_FIELD_KIRG_KPSOURCE:
+	case UNIHAN_FIELD_kIRG_KPSOURCE:
 	    valueArray=g_strsplit(value,"-",2);
 	    g_snprintf(buf,20,"%s",valueArray[0]);
 	    rec=NEW_INSTANCE(UnihanIRG_SourceRec);
@@ -562,7 +522,7 @@ UnihanIRG_SourceRec *unihanIRG_SourceRec_parse(UnihanField field,const char *val
 		rec->sourceMapping=g_strdup(valueArray[1]);
 	    }
 	    break;
-	case UNIHAN_FIELD_KIRG_KSOURCE:
+	case UNIHAN_FIELD_kIRG_KSOURCE:
 	    valueArray=g_strsplit(value,"-",2);
 	    g_snprintf(buf,20,"K%s",valueArray[0]);
 	    rec=NEW_INSTANCE(UnihanIRG_SourceRec);
@@ -574,7 +534,7 @@ UnihanIRG_SourceRec *unihanIRG_SourceRec_parse(UnihanField field,const char *val
 		rec->sourceMapping=g_strdup(valueArray[1]);
 	    }
 	    break;
-	case UNIHAN_FIELD_KIRG_TSOURCE:
+	case UNIHAN_FIELD_kIRG_TSOURCE:
 	    valueArray=g_strsplit(value,"-",2);
 	    g_snprintf(buf,20,"T%s",valueArray[0]);
 	    rec=NEW_INSTANCE(UnihanIRG_SourceRec);
@@ -586,12 +546,12 @@ UnihanIRG_SourceRec *unihanIRG_SourceRec_parse(UnihanField field,const char *val
 		rec->sourceMapping=g_strdup(valueArray[1]);
 	    }
 	    break;
-	case UNIHAN_FIELD_KIRG_USOURCE:
+	case UNIHAN_FIELD_kIRG_USOURCE:
 	    rec=NEW_INSTANCE(UnihanIRG_SourceRec);
 	    rec->sourceId= UNIHAN_SOURCE_U;
 	    rec->sourceMapping=g_strdup(value);
 	    break;
-	case UNIHAN_FIELD_KIRG_VSOURCE:
+	case UNIHAN_FIELD_kIRG_VSOURCE:
 	    valueArray=g_strsplit(value,"-",2);
 	    g_snprintf(buf,20,"V%s",valueArray[0]);
 	    rec=NEW_INSTANCE(UnihanIRG_SourceRec);
@@ -737,20 +697,20 @@ UnihanField* unihanTable_get_fields(UnihanTable table){
     const char *tableName=UNIHAN_TABLE_NAMES[table];
     char buf[50];
     switch(table){
-	case UNIHAN_TABLE_KCOMPATIBILITYVARIANT:
-	case UNIHAN_TABLE_KSIMPLIFIEDVARIANT:
-	case UNIHAN_TABLE_KSEMANTICVARIANT:
-	case UNIHAN_TABLE_KSPECIALIZEDSEMANTICVARIANT:
-	case UNIHAN_TABLE_KTRADITIONALVARIANT:
-	case UNIHAN_TABLE_KZVARIANT:
+	case UNIHAN_TABLE_kCOMPATIBILITYVARIANT:
+	case UNIHAN_TABLE_kSIMPLIFIEDVARIANT:
+	case UNIHAN_TABLE_kSEMANTICVARIANT:
+	case UNIHAN_TABLE_kSPECIALIZEDSEMANTICVARIANT:
+	case UNIHAN_TABLE_kTRADITIONALVARIANT:
+	case UNIHAN_TABLE_kZVARIANT:
 	    fields[i++]=UNIHAN_FIELD_VARIANT_CODE;
 	    break;
-	case UNIHAN_TABLE_KHANYUPINLU:
+	case UNIHAN_TABLE_kHANYUPINLU:
 	    fields[i++]=UNIHAN_FIELD_PINYIN;
 	    fields[i++]=UNIHAN_FIELD_PINYIN_FREQ;
 	    break;
-	case UNIHAN_TABLE_KIRGKANGXI:
-	case UNIHAN_TABLE_KKANGXI:
+	case UNIHAN_TABLE_kIRGKANGXI:
+	case UNIHAN_TABLE_kKANGXI:
 	    fields[i++]=UNIHAN_FIELD_KANGXI_PAGE;
 	    fields[i++]=UNIHAN_FIELD_KANGXI_CHARNUM;
 	    fields[i++]=UNIHAN_FIELD_KANGXI_VIRTUAL;
@@ -762,35 +722,35 @@ UnihanField* unihanTable_get_fields(UnihanTable table){
 	    fields[i++]=UNIHAN_FIELD_IRG_SOURCE_SHORT_NAME;
 	    fields[i++]=UNIHAN_FIELD_IRG_SOURCE_MAPPING;
 	    break;
-	case UNIHAN_TABLE_KRSADOBE_JAPAN1_6:
+	case UNIHAN_TABLE_kRSADOBE_JAPAN1_6:
 	    fields[i++]=UNIHAN_FIELD_ADOBE_CID_CV;
 	    fields[i++]=UNIHAN_FIELD_ADOBE_CID;
 	    fields[i++]=UNIHAN_FIELD_RADICAL_INDEX;
 	    fields[i++]=UNIHAN_FIELD_ADOBE_CID_RADICAL_STROKE_COUNT;
 	    fields[i++]=UNIHAN_FIELD_ADDITIONAL_STROKE_COUNT;
 	    break;
-	case UNIHAN_TABLE_KRSJAPANESE:
-	case UNIHAN_TABLE_KRSKANGXI:
-	case UNIHAN_TABLE_KRSKANWA:
-	case UNIHAN_TABLE_KRSKOREAN:
-	case UNIHAN_TABLE_KRSUNICODE:
+	case UNIHAN_TABLE_kRSJAPANESE:
+	case UNIHAN_TABLE_kRSKANGXI:
+	case UNIHAN_TABLE_kRSKANWA:
+	case UNIHAN_TABLE_kRSKOREAN:
+	case UNIHAN_TABLE_kRSUNICODE:
 	    fields[i++]=UNIHAN_FIELD_RADICAL_INDEX;
 	    fields[i++]=UNIHAN_FIELD_ADDITIONAL_STROKE_COUNT;
 	    break;
-	case UNIHAN_TABLE_KSEMANTICVARIANT_EXTRA:
-	case UNIHAN_TABLE_KSPECIALIZEDSEMANTICVARIANT_EXTRA:
+	case UNIHAN_TABLE_kSEMANTICVARIANT_EXTRA:
+	case UNIHAN_TABLE_kSPECIALIZEDSEMANTICVARIANT_EXTRA:
 	    fields[i++]=UNIHAN_FIELD_VARIANT_CODE;
 	    fields[i++]=UNIHAN_FIELD_FROM_DICT;
 	    fields[i++]=UNIHAN_FIELD_SEMANTIC_T;
 	    fields[i++]=UNIHAN_FIELD_SEMANTIC_B;
 	    fields[i++]=UNIHAN_FIELD_SEMANTIC_Z;
 	    break;
-	case UNIHAN_TABLE_KZVARIANT_EXTRA:
+	case UNIHAN_TABLE_kZVARIANT_EXTRA:
 	    fields[i++]=UNIHAN_FIELD_VARIANT_CODE;
 	    fields[i++]=UNIHAN_FIELD_ZVARIANT_SOURCE;
 	    break;
-	case UNIHAN_TABLE_KMANDARIN:
-	    fields[i++]=UNIHAN_FIELD_KMANDARIN;
+	case UNIHAN_TABLE_kMANDARIN:
+	    fields[i++]=UNIHAN_FIELD_kMANDARIN;
 	    fields[i++]=UNIHAN_FIELD_FREQ_RANK;
 	    break;
 	default:
@@ -821,39 +781,39 @@ UnihanField* unihanTable_get_primary_key_fields(UnihanTable table){
 	case UNIHAN_TABLE_IRG_SOURCE_MAPPING:
 	    fields[i++]=UNIHAN_FIELD_IRG_SOURCE_SHORT_NAME;
 	    break;
-	case UNIHAN_TABLE_KCOMPATIBILITYVARIANT:
-	case UNIHAN_TABLE_KSIMPLIFIEDVARIANT:
-	case UNIHAN_TABLE_KTRADITIONALVARIANT:
-	case UNIHAN_TABLE_KSEMANTICVARIANT:
-	case UNIHAN_TABLE_KSPECIALIZEDSEMANTICVARIANT:
-	case UNIHAN_TABLE_KZVARIANT:
+	case UNIHAN_TABLE_kCOMPATIBILITYVARIANT:
+	case UNIHAN_TABLE_kSIMPLIFIEDVARIANT:
+	case UNIHAN_TABLE_kTRADITIONALVARIANT:
+	case UNIHAN_TABLE_kSEMANTICVARIANT:
+	case UNIHAN_TABLE_kSPECIALIZEDSEMANTICVARIANT:
+	case UNIHAN_TABLE_kZVARIANT:
 	    fields[i++]=UNIHAN_FIELD_VARIANT_CODE;
 	    break;
-	case UNIHAN_TABLE_KHANYUPINLU:
+	case UNIHAN_TABLE_kHANYUPINLU:
 	    fields[i++]=UNIHAN_FIELD_PINYIN;
 	    break;
-	case UNIHAN_TABLE_KIRGKANGXI:
-	case UNIHAN_TABLE_KKANGXI:
+	case UNIHAN_TABLE_kIRGKANGXI:
+	case UNIHAN_TABLE_kKANGXI:
 	    break;
-	case UNIHAN_TABLE_KRSADOBE_JAPAN1_6:
+	case UNIHAN_TABLE_kRSADOBE_JAPAN1_6:
 	    fields[i++]=UNIHAN_FIELD_ADOBE_CID;
 	    fields[i++]=UNIHAN_FIELD_RADICAL_INDEX;
 	    fields[i++]=UNIHAN_FIELD_ADDITIONAL_STROKE_COUNT;
 	    break;
-	case UNIHAN_TABLE_KRSJAPANESE:
-	case UNIHAN_TABLE_KRSKANGXI:
-	case UNIHAN_TABLE_KRSKANWA:
-	case UNIHAN_TABLE_KRSKOREAN:	
-        case UNIHAN_TABLE_KRSUNICODE:
+	case UNIHAN_TABLE_kRSJAPANESE:
+	case UNIHAN_TABLE_kRSKANGXI:
+	case UNIHAN_TABLE_kRSKANWA:
+	case UNIHAN_TABLE_kRSKOREAN:	
+        case UNIHAN_TABLE_kRSUNICODE:
 	    fields[i++]=UNIHAN_FIELD_RADICAL_INDEX;
 	    fields[i++]=UNIHAN_FIELD_ADDITIONAL_STROKE_COUNT;
 	    break;
-        case UNIHAN_TABLE_KSEMANTICVARIANT_EXTRA:
-        case UNIHAN_TABLE_KSPECIALIZEDSEMANTICVARIANT_EXTRA:
+        case UNIHAN_TABLE_kSEMANTICVARIANT_EXTRA:
+        case UNIHAN_TABLE_kSPECIALIZEDSEMANTICVARIANT_EXTRA:
 	    fields[i++]=UNIHAN_FIELD_VARIANT_CODE;
 	    fields[i++]=UNIHAN_FIELD_FROM_DICT;
 	    break;
-       case UNIHAN_TABLE_KZVARIANT_EXTRA:
+       case UNIHAN_TABLE_kZVARIANT_EXTRA:
 	    fields[i++]=UNIHAN_FIELD_VARIANT_CODE;
 	    break;
 

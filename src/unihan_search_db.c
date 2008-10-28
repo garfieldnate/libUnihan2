@@ -44,12 +44,14 @@
 #include "Unihan.h"
 
 #define USAGE_MSG "Search and collect the fields and tables in Unihan database files from given paths.\n\
-Usage: %s [-h] [-V num] [-v] [SEARCH_PATH]\n\
+Usage: %s [-h] [-l] [-O outputPath] [-V num] [-v] [searchPath]\n\
    Specify SEARCH_PATH to search with custom search path,\n\
    otherwise default search path " UNIHAN_DB_SEARCH_PATH " will be used.\n\
    Use '%c' as path separater.\n\
 Options:\
    -h: Show this help message.\n\
+   -l: Search symbolic linked db as well.\n\
+   -O outputPath: specify the directory to put the cache datbases.\n\
    -V [num]: Specify verbose level, the higher the num, the more detail is shown. \n\
       Default is 2 (show warning). \n\
    -v: Show libUnihan version number.\n"
@@ -59,6 +61,8 @@ Options:\
 gchar *searchPath=NULL;
 
 gchar *outputDir=NULL;
+
+guint fileMode= FILE_MODE_READ | FILE_MODE_NO_SYMLINK; 
 
 static void printUsage(char **argv){
     printf(USAGE_MSG,argv[0],PATH_SEPARATOR);
@@ -77,13 +81,17 @@ static gboolean is_valid_arguments(int argc, char **argv) {
 	printUsage(argv);
 	exit(0);
     }
-    while ((opt = getopt(argc, argv, "ho:V:v")) != -1) {
+    while ((opt = getopt(argc, argv, "hlO:V:v")) != -1) {
 	switch (opt) {
 	    case 'h':
 		printUsage(argv);
 		exit(0);
-	    case 'o':
-
+	    case 'l':
+		fileMode &= ~ FILE_MODE_NO_SYMLINK;
+		break;
+	    case 'O':
+		outputDir=optarg;
+		break;
 	    case 'V':
 		verboseLevel=atoi(optarg);
 		break;
@@ -111,10 +119,29 @@ int main(int argc,char** argv){
 	printUsage(argv);
 	exit(-1);
     }
-    StringList *sList=lsDir(searchPath, "*.db*", FILE_MODE_READ, TRUE);
-    int i;
+    verboseMsg_print(VERBOSE_MSG_INFO3,"searchPath=%s outputDir=%s\n",searchPath,outputDir);
+
+    StringList *sList=lsDir(searchPath, "*.db *.db.*", fileMode, TRUE);
+    if (sList==NULL){
+	fprintf(stderr,"Error in finding files.\n");
+	exit(-1);
+    }
+    if (sList->len<=0){
+	fprintf(stderr,"No file matched.\n");
+	exit(-2);
+    }
+    int i,ret;
+    sqlite3 *db;
     for(i=0;i<sList->len;i++){
-	printf("File=%s\n",stringList_index(sList,i));
+	verboseMsg_print(VERBOSE_MSG_INFO1,"Reading %s \t",stringList_index(sList,i));
+	ret=sqlite_open(stringList_index(sList,i),&db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
+	if (ret){
+	    verboseMsg_print(VERBOSE_MSG_ERROR,"Error:%s\n",sqlite3_errmsg(db));
+	    sqlite3_close(db);
+	    continue;
+	}
+	sqlite3_close(db);
+	verboseMsg_print(VERBOSE_MSG_INFO1,"Done.\n",stringList_index(sList,i));
     }
     
     return 0;

@@ -13,7 +13,7 @@ Summary(zh_CN): 用于符合第五正规化之统汉字(Unihan)数据库的 C �
 Summary(zh_TW): 用於符合第五正規化之統漢字(Unihan)資料庫的 C 函式庫
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires:  glib2-devel  sqlite-devel  cmake >= 2.4
+BuildRequires:  glib2-devel  sqlite-devel >= 3.3 cmake >= 2.4
 
 URL:            http://sourceforge.net/projects/libunihan
 Source0:        http://downloads.sourceforge.net/libunihan/%{name}-%{version}-Source.tar.gz
