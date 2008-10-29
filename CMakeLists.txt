@@ -13,12 +13,14 @@ SET(DB_VER "5.1.0")
 SET(DB_RELEASE "7")
 SET(DB_PRJ_NAME  "UnihanDb")
 SET(DB_NAME "Unihan.db")
+SET(AUTHORS "Ding-Yi Chen")
+SET(MAINTAINER_EMAIL "<dchen at redhat dot com>")
 
 SET(SUPPORTED_DIST_TAGS F-9 F-10 EL-5) 
 SET(BODHI_DIST_TAGS fc9 fc10)
 
 # For CVS changelog
-SET(CVS_CHANGELOG "This release fixes the no API documents, also corrects some functions in  collection.[ch], file_functions.[ch]")
+SET(CHANGE_SUMMARY "This release fixes the no API documents, also corrects some functions in  collection.[ch], file_functions.[ch]")
 
 
 
@@ -56,13 +58,22 @@ ENDIF()
 #
 #  Note: CMake 2.4 does not support STRING(STRIP ..)
 
-SET (SPEC_FILE_WARNING "This file is generated, please modified the .spec.in file instead!")
-CONFIGURE_FILE(SPECS/libUnihan.spec.in SPECS/libUnihan.spec)
 
-EXECUTE_PROCESS(COMMAND rpm -q --qf "%{release} " --specfile SPECS/${PROJECT_NAME}.spec 
+EXECUTE_PROCESS(COMMAND  date -R
     COMMAND head -n 1
-    COMMAND sed -e "s/ .*//"
-    OUTPUT_VARIABLE RPM_RELEASE)
+    COMMAND sed -e "s/,//"
+    COMMAND tr \\n \\t
+    COMMAND sed  -e s/\\t//
+    OUTPUT_VARIABLE DATE
+    )
+
+EXECUTE_PROCESS(COMMAND rpm --showrc
+    #COMMAND grep -e "dist"
+    COMMAND grep -E "dist[[:space:]]*\\."
+    COMMAND sed -e "s/^.*dist\\s*\\.//"
+    COMMAND tr \\n \\t
+    COMMAND sed  -e s/\\t//
+    OUTPUT_VARIABLE FEDORA_RELEASE)
 
 #====================================================================
 #  Developer can edit a DEVELOPER_SETTING file, 
@@ -149,7 +160,9 @@ ADD_CUSTOM_TARGET(uninstall
 # RPM targets
 #
 
-SET (SRPM_FILE SRPMS/${PROJECT_NAME}-${PRJ_VER}-${RPM_RELEASE}.src.rpm)
+SET (SPEC_FILE_WARNING "This file is generated, please modified the .spec.in file instead!")
+
+SET (SRPM_FILE SRPMS/${PROJECT_NAME}-${PRJ_VER_FULL}.${FEDORA_RELEASE}.src.rpm)
 
 ADD_CUSTOM_TARGET(srpm
     COMMAND make package_source
@@ -181,7 +194,7 @@ ADD_CUSTOM_TARGET(rpm_mock_x86_64 make srpm
     )
 
 ADD_CUSTOM_TARGET(rpmlint find . 
-    -name '${PROJECT_NAME}*-${PRJ_VER}-${RPM_RELEASE}.*.rpm' 
+    -name '${PROJECT_NAME}*-${PRJ_VER_FULL}.*.rpm' 
     -print -exec rpmlint '{}' '\\;'
     )
 
@@ -214,6 +227,7 @@ ADD_DEFINITIONS(-DUNIHAN_DB_SEARCH_PATH='"${DB_DIR}"')
 # Source code subdirectories
 #
 ADD_SUBDIRECTORY(src bin)
+ADD_SUBDIRECTORY(SPECS)
 ADD_SUBDIRECTORY(test)
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR})
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR})
@@ -299,14 +313,14 @@ IF (DEFINED KOJI_CVS_PATH)
     ENDIF (NOT DEFINED ${KOJI_CVS_PATH})
 
     SET (KOJI_SUBMISSION_CMD
-	"${KOJI_CVS_PATH}/${PROJECT_NAME}/common/cvs-import.sh -m \"${CVS_CHANGELOG}\" ${SRPM_FILE}" )
+	"${KOJI_CVS_PATH}/${PROJECT_NAME}/common/cvs-import.sh -m \"${CHANGE_SUMMARY}\" ${SRPM_FILE}" )
 
     SET (KOJI_BUILD_CMD
 	"cd ${KOJI_CVS_PATH}/${PROJECT_NAME} && cd devel && make build && cd ..")
 
     FOREACH(DIST_TAG ${SUPPORTED_DIST_TAGS})
 	SET (KOJI_SUBMISSION_CMD 
-	    "${KOJI_SUBMISSION_CMD}\; ${KOJI_CVS_PATH}/${PROJECT_NAME}/common/cvs-import.sh -b ${DIST_TAG} -m \"${CVS_CHANGELOG}\" ${SRPM_FILE}")
+	    "${KOJI_SUBMISSION_CMD}\; ${KOJI_CVS_PATH}/${PROJECT_NAME}/common/cvs-import.sh -b ${DIST_TAG} -m \"${CHANGE_SUMMARY}\" ${SRPM_FILE}")
 
 	SET (KOJI_BUILD_CMD
 	    "${KOJI_BUILD_CMD} && cd ${DIST_TAG} && make build && cd ..")
@@ -335,7 +349,7 @@ IF (DEFINED KOJI_CVS_PATH)
 	    SET (BODHI_NEW_CMD "")
 	ENDIF ()
 	SET (BODHI_NEW_CMD 
-	    "${BODHI_NEW_CMD} bodhi --new --type=bugfix --comment=\"${CVS_CHANGELOG}\" ${PROJECT_NAME}-${PRJ_VER_FULL}.${BODHI_TAG}")
+	    "${BODHI_NEW_CMD} bodhi --new --type=bugfix --comment=\"${CHANGE_SUMMARY}\" ${PROJECT_NAME}-${PRJ_VER_FULL}.${BODHI_TAG}")
     ENDFOREACH(BODHI_TAG ${BODHI_DIST_TAGS})
 
 
