@@ -14,7 +14,7 @@ SET(DB_RELEASE "7")
 SET(DB_PRJ_NAME  "UnihanDb")
 SET(DB_NAME "Unihan.db")
 SET(AUTHORS "Ding-Yi Chen")
-SET(MAINTAINER_EMAIL "<dchen at redhat dot com>")
+SET(MAINTAINER_EMAIL "dchen at redhat dot com")
 
 SET(SUPPORTED_DIST_TAGS F-9 F-10 EL-5) 
 SET(BODHI_DIST_TAGS fc9 fc10)
@@ -58,14 +58,14 @@ ENDIF()
 #
 #  Note: CMake 2.4 does not support STRING(STRIP ..)
 
-
-EXECUTE_PROCESS(COMMAND  date -R
-    COMMAND head -n 1
-    COMMAND sed -e "s/,//"
+SET($ENV{LC_TIME} "C")
+EXECUTE_PROCESS(
+    COMMAND date +"%a %b %d %Y"
     COMMAND tr \\n \\t
     COMMAND sed  -e s/\\t//
     OUTPUT_VARIABLE DATE
     )
+MESSAGE("DATE=${DATE}+")
 
 EXECUTE_PROCESS(COMMAND rpm --showrc
     #COMMAND grep -e "dist"
@@ -130,8 +130,12 @@ IF(EXISTS  DEVELOPER_SETTING)
 
 ENDIF(EXISTS  DEVELOPER_SETTING)
 
+#==================================================================
+# Configure files
+#
 CONFIGURE_FILE(Doxyfile.in Doxyfile)
 CONFIGURE_FILE(UploadPkg.batch.in UploadPkg.batch)
+CONFIGURE_FILE(SPECS/${PROJECT_NAME}.spec.in SPECS/${PROJECT_NAME}.spec.NO_BACKUP)
 
 #====================================================================
 # CPack exclusion file pattern
@@ -140,7 +144,7 @@ SET(COMMON_IGNORE_FILES "/CMakeFiles/" "_CPack_Packages/" "/Testing/"
     ".cmake$"   ".directory$" "CMakeCache.txt$"
     "/install_manifest.txt$"
     "/.svn/"  "/CVS/" "~$" ".swp$" ".log$" ".gz$"
-    "/src/config.h$") 
+    "/src/config.h$" "NO_BACKUP") 
 
 SET(RPM_IGNORE_FILES "/SOURCES/" "/SRPMS/" "/RPMS/" "/BUILD/")
 
@@ -161,19 +165,22 @@ ADD_CUSTOM_TARGET(uninstall
 #
 
 SET (SPEC_FILE_WARNING "This file is generated, please modified the .spec.in file instead!")
-
 SET (SRPM_FILE SRPMS/${PROJECT_NAME}-${PRJ_VER_FULL}.${FEDORA_RELEASE}.src.rpm)
 
+ADD_CUSTOM_COMMAND(OUTPUT SPECS/${PROJECT_NAME}.spec
+    COMMAND cat SPECS/${PROJECT_NAME}.spec.NO_BACKUP ChangeLog > SPECS/${PROJECT_NAME}.spec
+    DEPENDS SPECS/${PROJECT_NAME}.spec.in ChangeLog
+    )
+
 ADD_CUSTOM_TARGET(srpm
-    COMMAND make package_source
     COMMAND mkdir -p SOURCES
     COMMAND ln -sf ../${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz SOURCES/${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz
     COMMAND mkdir -p SRPMS
     COMMAND rpmbuild -bs SPECS/${PROJECT_NAME}.spec --rcfile rpmrc
+    DEPENDS SPECS/${PROJECT_NAME}.spec
     )
 
 ADD_CUSTOM_TARGET(rpm
-    COMMAND make package_source
     COMMAND mkdir -p SOURCES
     COMMAND ln -sf ../${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz SOURCES/${PROJECT_NAME}-${PRJ_VER}-Source.tar.gz
     COMMAND mkdir -p SRPMS
@@ -181,14 +188,15 @@ ADD_CUSTOM_TARGET(rpm
     COMMAND mkdir -p RPMS/x86_64
     COMMAND mkdir -p BUILD
     COMMAND rpmbuild -ba SPECS/${PROJECT_NAME}.spec --rcfile rpmrc
+    DEPENDS SPECS/${PROJECT_NAME}.spec
     )
 
-ADD_CUSTOM_TARGET(rpm_mock_i386 make srpm
+ADD_CUSTOM_TARGET(rpm_mock_i386 
     COMMAND mkdir -p RPMS/i386
     COMMAND mock -r  fedora-9-i386 --resultdir=RPMS/i386 ${SRPM_FILE}
     )
 
-ADD_CUSTOM_TARGET(rpm_mock_x86_64 make srpm
+ADD_CUSTOM_TARGET(rpm_mock_x86_64
     COMMAND mkdir -p RPMS/x86_64
     COMMAND mock -r  fedora-9-x86_64 --resultdir=RPMS/x86_64 ${SRPM_FILE}
     )
@@ -198,8 +206,8 @@ ADD_CUSTOM_TARGET(rpmlint find .
     -print -exec rpmlint '{}' '\\;'
     )
 
-
-
+ADD_DEPENDENCIES(rpm_mock_i386 srpm)
+ADD_DEPENDENCIES(rpm_mock_x86_64 srpm)
 
 ####################################################################
 # Project specific
@@ -250,6 +258,8 @@ INSTALL(FILES ${MAIN_DOCS}
 #====================================================================
 # CPack configuration
 #
+
+
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "libUnihan: A C library for Unihan Database")
 SET(CPACK_PACKAGE_VENDOR "Red Hat, APAC, Inc.")
 SET(CPACK_GENERATOR "TGZ")
@@ -270,11 +280,33 @@ SET(PRJ_COMMON_IGNORE_FILES ${COMMON_IGNORE_FILES} ${RPM_IGNORE_FILES}
 
 SET(CPACK_SOURCE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/bin/" ".db" "-db")
 SET(CPACK_PACKAGE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/src/" "/test/"
-    ".spec$" "Doxyfile.in$")
+    ".spec$" ".in$" )
 SET(CPACK_SOURCE_GENERATOR "TGZ")
 
 
 INCLUDE(CPack)
+
+SET_SOURCE_FILES_PROPERTIES(ChangeLog, SPECS/${PROJECT_NAME}.spec
+    PROPERTIES GENERATED TRUE
+    )
+
+ADD_CUSTOM_COMMAND(OUTPUT ChangeLog
+    COMMAND echo "* ${DATE} - ${AUTHORS} <${MAINTAINER_EMAIL}> - ${PRJ_VER_FULL}" > ChangeLog
+    COMMAND cat ChangeLog.in >> ChangeLog
+    DEPENDS ChangeLog.in
+    COMMENT "Making ChangeLog"
+    VERBATIM
+    )
+
+ADD_CUSTOM_TARGET(pack_src
+    COMMAND make package_source
+    COMMENT "Packaging Source files"
+    DEPENDS ChangeLog
+    VERBATIM
+    )
+
+ADD_DEPENDENCIES(srpm pack_src)
+ADD_DEPENDENCIES(rpm pack_src)
 
 ADD_CUSTOM_TARGET(pkg_remove_old find . 
     -name '${PROJECT_NAME}*.tar.gz' ! -name '${PROJECT_NAME}-${PRJ_VER}-*.tar.gz'
