@@ -50,25 +50,21 @@ IF(NOT DEFINED docdir)
     ADD_DEFINITIONS(-Ddocdir='"${docdir}"')
 ENDIF()
 
-
-
+SET(ENV{LC_ALL} "C")
 
 ###==================================================================
 # Find parameters configuration
 #
 #  Note: CMake 2.4 does not support STRING(STRIP ..)
 
-SET($ENV{LC_TIME} "C")
 EXECUTE_PROCESS(
-    COMMAND date +"%a %b %d %Y"
+    COMMAND date "+%a %b %d %Y"
     COMMAND tr \\n \\t
     COMMAND sed  -e s/\\t//
     OUTPUT_VARIABLE DATE
     )
-MESSAGE("DATE=${DATE}+")
 
 EXECUTE_PROCESS(COMMAND rpm --showrc
-    #COMMAND grep -e "dist"
     COMMAND grep -E "dist[[:space:]]*\\."
     COMMAND sed -e "s/^.*dist\\s*\\.//"
     COMMAND tr \\n \\t
@@ -278,7 +274,7 @@ SET(PRJ_COMMON_IGNORE_FILES ${COMMON_IGNORE_FILES} ${RPM_IGNORE_FILES}
     "libUnihan.spec$"
     "DEVELOPER_SETTING")
 
-SET(CPACK_SOURCE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/bin/" ".db" "-db")
+SET(CPACK_SOURCE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/bin/" ".db-"  "-db$")
 SET(CPACK_PACKAGE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/src/" "/test/"
     ".spec$" ".in$" )
 SET(CPACK_SOURCE_GENERATOR "TGZ")
@@ -286,11 +282,11 @@ SET(CPACK_SOURCE_GENERATOR "TGZ")
 
 INCLUDE(CPack)
 
-SET_SOURCE_FILES_PROPERTIES(ChangeLog, SPECS/${PROJECT_NAME}.spec
+SET_SOURCE_FILES_PROPERTIES(SPECS/${PROJECT_NAME}.spec
     PROPERTIES GENERATED TRUE
     )
 
-ADD_CUSTOM_COMMAND(OUTPUT ChangeLog
+ADD_CUSTOM_TARGET(ChangeLog
     COMMAND echo "* ${DATE} - ${AUTHORS} <${MAINTAINER_EMAIL}> - ${PRJ_VER_FULL}" > ChangeLog
     COMMAND cat ChangeLog.in >> ChangeLog
     DEPENDS ChangeLog.in
@@ -305,6 +301,7 @@ ADD_CUSTOM_TARGET(pack_src
     VERBATIM
     )
 
+ADD_DEPENDENCIES(pack_src ChangeLog)
 ADD_DEPENDENCIES(srpm pack_src)
 ADD_DEPENDENCIES(rpm pack_src)
 
