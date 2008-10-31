@@ -76,19 +76,6 @@ typedef enum{
 
 
 /**
- * Return the canonicalized absolute pathname.
- *
- * It works exactly the same with realpath(3), except this function can handle the path with ~,
- * where realpath cannot.
- *
- * @param path The path to be resolved.
- * @param resolved_path Buffer for holding the resolved_path.
- * @return resolved path, NULL is the resolution is not sucessful.
- */
-gchar*
-truepath(const gchar *path, gchar *resolved_path);
-
-/**
  * Whether the file is readable.
  *
  * @param filename The path name of the file.
@@ -251,7 +238,7 @@ gchar *filename_choose
  guint access_mode_mask, const gchar * prompt, gpointer option, ChooseFilenameFunc callback);
 
 /**
- * List files with given pattern and access modes in given directory.
+ * List files which meet the given pattern and access modes in a directory.
  *
  * This function returns all files that match the pattern \a glob and the
  * access mode \a access_mode_mask; \c NULL if error occurred.
@@ -269,8 +256,70 @@ gchar *filename_choose
  *
  * @return A newly allocate StringList instance which contains the matched
  * filename; NULL if error occurred.
+ * @see lsDir_append()
  */
 StringList *lsDir(const gchar* dir, const gchar *globStr, guint access_mode_mask, gboolean keepPath);
 
+/**
+ * Append the files which meet the given pattern and access modes in a directory to
+ * the existing list.
+ *
+ * This function appends the files it found to the existing list \a sList,
+ * and return it, otherwise it is similar with lsDir().
+ *
+ * @param sList existing list.
+ * @param dir Directory to be listed.
+ * @param globStr Glob/Shell pattern such as "*.*", use space to separate
+ * multiple patterns.
+ * @param access_mode_mask the required access mode mask defined in \ref FileAccessMode.
+ * @param keepPath TRUE to concatenate \a dir to each string in the returned
+ * StringList; FALSE for the filename only (without path).
+ *
+ * @return The modified \a sList, or NULL if error occurred.
+ * @see lsDir()
+ */
+StringList *lsDir_append(StringList *sList,const gchar* dir, const gchar *globStr, guint access_mode_mask, gboolean keepPath);
+
+/**
+ * Split a composite path string by path separator.
+ *
+ * This function splits a string that has multiple paths (composite path string) separated by
+ * \c PATH_SEPARATOR into individual paths. These paths will be returned as
+ * \c StringList.
+ *
+ * @param path The composite path.
+ * @return A newly allocated StringList instance that holds the split paths.
+ */
+StringList *path_split(const gchar *path);
+
+/**
+ * Concatenate two path strings.
+ *
+ * This function concatenate to path strings, a \c DIRECTORY_SEPARATOR is
+ * inserted between \a dest and \a src if \a dest does not ended with a \c DIRECTORY_SEPARATOR.
+ * The result string will be returned.
+ *
+ * @param dest 	destination buffer, already containing one nul-terminated string
+ * @param src string to be appended to \a dest.
+ * @param destSize length of dest buffer in bytes (not length of existing string inside dest).
+ * @return The result string \a dest.
+ */
+gchar *path_concat(gchar *dest, const gchar *src, gsize destSize);
+
+/**
+ * Return the canonicalized absolute pathname.
+ *
+ * It works exactly the same with realpath(3), except this function can handle the path with ~,
+ * where realpath cannot.
+ *
+ * @param path The path to be resolved.
+ * @param resolved_path Buffer for holding the resolved_path.
+ * @return resolved path, NULL is the resolution is not sucessful.
+ */
+gchar*
+truepath(const gchar *path, gchar *resolved_path);
+
+
 #endif /*FILE_FUNCTIONS_H_*/
+
 

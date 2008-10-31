@@ -37,6 +37,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <glib/gprintf.h>
+#include <glib/gstdio.h>
+#include <libgen.h>
 #include "allocate.h"
 #include "verboseMsg.h"
 #include "file_functions.h"
@@ -57,6 +59,13 @@ Options:\
    -v: Show libUnihan version number.\n"
 
 #define BUFFER_SIZE 2000
+#define FIELD_CACHE_DB "field.cache"
+#define PSEUDO_CACHE_DB "pseudo.cache"
+#define FIELD_DB_POSTFIX ".db"
+#define PSEUDO_DB_POSTFIX ".pseudo"
+#define FIELD_DB_PATTERNS "*.db *.db*"
+#define PSEUDO_DB_PATTERNS "*.pseudo *.pseudo*"
+
 
 gchar *searchPath=NULL;
 
@@ -113,6 +122,152 @@ static gboolean is_valid_arguments(int argc, char **argv) {
     return TRUE;
 }
 
+static StringList * get_tableNames(sqlite3 *db){
+    SQL_Result *sResult=sqlite_get_tableNames(db);
+    if (sResult->execResult){
+	verboseMsg_print(VERBOSE_MSG_CRITICAL, "Cannot get table names. %s\n",sResult->errMsg);
+	sql_result_free(sResult,TRUE);
+	exit (-1);
+    }
+    return sql_result_free(sResult,FALSE);
+}
+
+static gchar* getDbName(gchar *buf, const gchar* dbFilename){
+    gchar buf2[PATH_MAX];
+    g_strlcpy(buf2,dbFilename,PATH_MAX);
+    gchar *orig=basename(buf2);
+
+    gchar *found=g_strrstr(orig,".db");
+    if (!found){
+	return buf;
+    }
+    char *ptr;
+    int i=0;
+    for(ptr=orig;ptr<found;ptr++){
+	buf[i]=*ptr;
+	i++;
+    }
+    buf[i]='\0';
+    return buf;
+}
+
+
+static int create_fieldCacheTable(sqlite3 *field_cache_db, StringList *dbFile_list){
+    int i,j,k,ret;
+    UnihanField field,field_tmp;
+    UnihanField field_3rdParty_index=UNIHAN_FIELD_3RD_PARTY;
+
+    sqlite3 *db;
+    StringList *tableList=NULL,*fieldList=NULL;
+    char sqlCmd_buf[BUFFER_SIZE];
+    char dbName[PATH_MAX];
+    char *errMsg_ptr;
+
+    ret=sqlite3_exec(field_cache_db,"CREATE TABLE FieldCacheTable "
+	    "(FieldId integer NOT NULL, FieldName text NOT NULL,"
+	    "TableName text NOT NULL,  DBName text NOT NULL, DBPath text NOT NULL, "
+	    "PRIMARY KEY(FieldName, TableName, DBName));",NULL,NULL,&errMsg_ptr);
+    if (ret){
+	verboseMsg_print(VERBOSE_MSG_ERROR,"Field cache DB create table error:%s\n",sqlite3_errmsg(field_cache_db));
+	sqlite3_close(field_cache_db);
+	return 2;
+    }
+
+
+    for(i=0;i<dbFile_list->len;i++){
+	verboseMsg_print(VERBOSE_MSG_INFO1,"Opening %s \t",stringList_index(dbFile_list,i));
+	ret=sqlite_open(stringList_index(dbFile_list,i),&db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
+	if (ret){
+	    verboseMsg_print(VERBOSE_MSG_ERROR,"DB open error:%s\n",sqlite3_errmsg(db));
+	    sqlite3_close(db);
+	    continue;
+	}
+	verboseMsg_print(VERBOSE_MSG_INFO1,"OK.\n",stringList_index(dbFile_list,i));
+
+	tableList=get_tableNames(db);
+	for(j=0;j<tableList->len;j++){
+	    g_snprintf(sqlCmd_buf,BUFFER_SIZE,"SELECT * FROM %s;",stringList_index(tableList,j));
+	    fieldList=sqlite_get_fieldNames(db, sqlCmd_buf , &ret, &errMsg_ptr);
+	    if (ret){
+		verboseMsg_print(VERBOSE_MSG_ERROR," SQL Error:%s msg:%s\n",sqlite3_errmsg(db),errMsg_ptr);
+		continue;
+	    }
+	    for(k=0; k<fieldList->len; k++){
+		field_tmp=unihanField_parse(stringList_index(fieldList,k));
+		if (field_tmp>=0){
+		    field=field_tmp;
+		}else{
+		    /* Not found in build in database,should be 3rd party. */
+		    field=field_3rdParty_index++;
+		}
+
+		sqlite3_snprintf(BUFFER_SIZE,sqlCmd_buf,
+			"INSERT INTO FieldCacheTable VALUES (%d, %Q, %Q, %Q, %Q);",
+			field,	
+			stringList_index(fieldList,k),
+			stringList_index(tableList,j),
+			getDbName(dbName,stringList_index(dbFile_list,i)),
+			stringList_index(dbFile_list,i)
+			);
+		verboseMsg_print(VERBOSE_MSG_INFO2,"%s\n",sqlCmd_buf);
+		ret=sqlite3_exec(field_cache_db,sqlCmd_buf,NULL,NULL,&errMsg_ptr);
+		if (ret){
+		    verboseMsg_print(VERBOSE_MSG_ERROR,"Field cache DB insert error:%s\n",sqlite3_errmsg(field_cache_db));
+		    sqlite3_close(field_cache_db);
+		    return 3;
+		}
+	    }
+	    stringList_free(fieldList);
+	}
+	stringList_free(tableList);
+	sqlite3_close(db);
+    }
+    ret=sqlite3_exec(field_cache_db, "CREATE INDEX FieldCacheIndex ON FieldCacheTable (FieldId, FieldName, TableName);",NULL,NULL,&errMsg_ptr);
+    if (ret){
+	verboseMsg_print(VERBOSE_MSG_ERROR,"Field cache DB index error:%s\n",sqlite3_errmsg(field_cache_db));
+	sqlite3_close(field_cache_db);
+	return 3;
+    }
+
+    verboseMsg_print(VERBOSE_MSG_CRITICAL,"Done.\n",stringList_index(dbFile_list,i));
+
+    return 0;
+}
+
+static StringList *find_dbs(const char *searchPath, const gchar *file_pattern){
+    StringList *path_list=path_split(searchPath);
+    int i;
+    StringList *dbFile_list=NULL,*result=NULL;
+    dbFile_list=stringList_new();
+    for (i=0;i<path_list->len;i++){
+	result=lsDir_append(dbFile_list,stringList_index(path_list,i), file_pattern, fileMode, TRUE);
+	if (result==NULL){
+	    fprintf(stderr,"Error in finding files in %s\n",stringList_index(path_list,i));
+	}
+    }
+    stringList_free(path_list);
+    return dbFile_list;
+}
+
+static sqlite3 *backup_and_create_cache_db(const gchar *cacheFilename){
+    char path_tmp[PATH_MAX],path_orig_tmp[PATH_MAX];
+    /* Rename the orig DB_CACHE file */
+    g_strlcpy(path_tmp,outputDir,PATH_MAX);
+    path_concat(path_tmp,cacheFilename,PATH_MAX);
+    g_snprintf(path_orig_tmp,PATH_MAX,"%s.orig",path_tmp);
+    if (filename_meets_accessMode(path_tmp, FILE_MODE_EXIST| FILE_MODE_WRITE)){
+	g_rename(path_tmp, path_orig_tmp);
+    }
+    sqlite3 *db=NULL;
+
+    int ret=sqlite_open(path_tmp,&db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
+    if (ret){
+	verboseMsg_print(VERBOSE_MSG_ERROR,"DB create error on %s: %s\n",cacheFilename,sqlite3_errmsg(db));
+	sqlite3_close(db);
+	return NULL;
+    }
+    return db;
+}
 
 int main(int argc,char** argv){
     if (!is_valid_arguments(argc, argv)){
@@ -121,29 +276,25 @@ int main(int argc,char** argv){
     }
     verboseMsg_print(VERBOSE_MSG_INFO3,"searchPath=%s outputDir=%s\n",searchPath,outputDir);
 
-    StringList *sList=lsDir(searchPath, "*.db *.db.*", fileMode, TRUE);
-    if (sList==NULL){
-	fprintf(stderr,"Error in finding files.\n");
-	exit(-1);
-    }
-    if (sList->len<=0){
+    /* Create field cache db */
+    StringList *fieldDb_list=find_dbs(searchPath, FIELD_DB_PATTERNS);
+    if (fieldDb_list->len<=0){
 	fprintf(stderr,"No file matched.\n");
-	exit(-2);
+	return -2;
     }
-    int i,ret;
-    sqlite3 *db;
-    for(i=0;i<sList->len;i++){
-	verboseMsg_print(VERBOSE_MSG_INFO1,"Reading %s \t",stringList_index(sList,i));
-	ret=sqlite_open(stringList_index(sList,i),&db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
-	if (ret){
-	    verboseMsg_print(VERBOSE_MSG_ERROR,"Error:%s\n",sqlite3_errmsg(db));
-	    sqlite3_close(db);
-	    continue;
-	}
-	sqlite3_close(db);
-	verboseMsg_print(VERBOSE_MSG_INFO1,"Done.\n",stringList_index(sList,i));
-    }
-    
-    return 0;
 
+    sqlite3 *field_cache_db=backup_and_create_cache_db(FIELD_CACHE_DB);
+    if (!field_cache_db){
+	verboseMsg_print(VERBOSE_MSG_ERROR,"Field cache DB create error.\n");
+	return 1;
+    }
+
+    int ret=create_fieldCacheTable(field_cache_db,fieldDb_list);
+    sqlite3_close(field_cache_db);
+    if (ret){
+	return ret;
+    }
+
+    stringList_free(fieldDb_list);
+    return 0;
 }

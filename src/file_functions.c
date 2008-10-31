@@ -14,53 +14,6 @@
 #include "file_functions.h"
 #include "verboseMsg.h"
 
-
-gchar*
-truepath(const gchar *path, gchar *resolved_path){
-    gchar workingPath[PATH_MAX];
-    gchar fullPath[PATH_MAX];
-    gchar *result=NULL;
-    g_strlcpy(workingPath,path,PATH_MAX);
-    
-//     printf("*** path=%s \n",path);
-        
-    if ( workingPath[0] != '~' ){
-        result = realpath(workingPath, resolved_path);
-    }else{
-        gchar *firstSlash, *suffix, *homeDirStr;
-        struct passwd *pw;
-        
-        // initialize variables
-        firstSlash = suffix = homeDirStr = NULL;
-        
-	firstSlash = strchr(workingPath, DIRECTORY_SEPARATOR);
-        if (firstSlash == NULL)
-            suffix = "";
-        else
-        {
-            *firstSlash = 0;    // so userName is null terminated
-            suffix = firstSlash + 1;
-        }
-        
-        if (workingPath[1] == '\0')
-            pw = getpwuid( getuid() );
-        else
-            pw = getpwnam( &workingPath[1] );
-        
-        if (pw != NULL)
-            homeDirStr = pw->pw_dir;
-        
-        if (homeDirStr != NULL){
-	    gint ret=g_sprintf(fullPath, "%s%c%s", homeDirStr, DIRECTORY_SEPARATOR, suffix);
-	    if (ret>0){
-		result = realpath(fullPath, resolved_path);
-	    }
-
-	}
-    }
-    return result;
-}
-
 gboolean
 isReadable(const gchar *filename){
     return (access(filename, R_OK) == 0)? TRUE: FALSE;
@@ -139,11 +92,8 @@ gchar *filename_search_paths_mode(const gchar *filename,const gchar *search_path
     gint i,len;
     for(i=0;searchDir[i]!=NULL;i++){
 	len=strlen(searchDir[i]);
-	if ((searchDir[i][len-1]==DIRECTORY_SEPARATOR) ){
-	    g_snprintf(currPath,PATH_MAX,"%s%s",searchDir[i],filename);
-	}else{
-	    g_snprintf(currPath,PATH_MAX,"%s%c%s",searchDir[i],DIRECTORY_SEPARATOR,filename);
-	}
+	g_strlcpy(currPath,searchDir[i],PATH_MAX);
+	path_concat(currPath,filename,PATH_MAX);
 	if (truepath(currPath,currPath_full)==NULL){
 	    continue;
 	}
@@ -206,31 +156,28 @@ gchar *filename_choose(const gchar *filename_default, guint filename_len, String
 }
 
 StringList *lsDir(const gchar* dir, const gchar *globStr, guint access_mode_mask, gboolean keepPath){
+    StringList *sList=stringList_new();
+    if (!lsDir_append(sList, dir, globStr, access_mode_mask, keepPath)){
+	stringList_free(sList);
+	return NULL;
+    }
+    return sList;
+}
+
+StringList *lsDir_append(StringList *sList,const gchar* dir, const gchar *globStr, guint access_mode_mask, gboolean keepPath){
     gchar path_tmp[PATH_MAX];
     int i;
-    gboolean hasDirSeparator=FALSE;
-    i=strlen(dir);
-    if (i>0){
-	if (dir[i-1]==DIRECTORY_SEPARATOR){
-	    hasDirSeparator=TRUE;
-	}
-    }
     gchar **globs= g_strsplit_set(globStr," ",-1);
     glob_t globbuf;
     glob_t *globptr=&globbuf;
 
     globptr->gl_offs=0;
 
-
-
     int globFlag= GLOB_DOOFFS | GLOB_TILDE | GLOB_NOESCAPE;
     int ret=GLOB_NOMATCH;
     for(i=0;globs[i]!=NULL;i++){
-	if (hasDirSeparator){
-	    g_snprintf(path_tmp,PATH_MAX,"%s%s",dir,globs[i]);
-	}else{
-	    g_snprintf(path_tmp,PATH_MAX,"%s%c%s",dir,DIRECTORY_SEPARATOR,globs[i]);
-	}
+	g_strlcpy(path_tmp,dir,PATH_MAX);
+	path_concat(path_tmp,globs[i],PATH_MAX);
 	if (i==1){
 	    globFlag|= GLOB_APPEND;
 	}
@@ -243,7 +190,6 @@ StringList *lsDir(const gchar* dir, const gchar *globStr, guint access_mode_mask
 	return NULL;
     }
 
-    StringList *sList=stringList_new();
     for(i=0;i<globptr->gl_pathc;i++){
 	if (filename_meets_accessMode(globptr->gl_pathv[i],access_mode_mask)){
 	    if (keepPath){
@@ -255,6 +201,89 @@ StringList *lsDir(const gchar* dir, const gchar *globStr, guint access_mode_mask
     }
     globfree(globptr);
     return sList;
+}
+
+
+
+gchar *path_concat(gchar *dest, const gchar *src,gsize destSize){
+    int len=strlen(dest);
+    if (len>0){
+	if (dest[len-1]==DIRECTORY_SEPARATOR){
+	    /* hasDirSeparator already */
+	}else if (len<destSize-1){
+	    dest[len]=DIRECTORY_SEPARATOR;
+	    dest[++len]='\0';
+	}else{
+	    return dest;
+	}
+    }
+    g_strlcat(dest,src,destSize);
+    return dest;
+}
+
+StringList *path_split(const gchar *path){
+    gchar delimiter[6];
+    g_sprintf(delimiter,"%c",PATH_SEPARATOR);
+    gchar ** strs=g_strsplit(path,delimiter,-1);
+    int i;
+    StringList *sList=NULL;
+    for(i=0;strs[i]!=NULL;i++){
+	if (i==0){
+	    sList=stringList_new();
+	}
+	string_trim(strs[i]);
+	stringList_insert(sList,strs[i]);
+    }
+    g_strfreev(strs);
+    return sList;
+}
+
+
+
+gchar*
+truepath(const gchar *path, gchar *resolved_path){
+    gchar workingPath[PATH_MAX];
+    gchar fullPath[PATH_MAX];
+    gchar *result=NULL;
+    g_strlcpy(workingPath,path,PATH_MAX);
+
+    //     printf("*** path=%s \n",path);
+
+    if ( workingPath[0] != '~' ){
+	result = realpath(workingPath, resolved_path);
+    }else{
+	gchar *firstSlash, *suffix, *homeDirStr;
+	struct passwd *pw;
+
+	// initialize variables
+	firstSlash = suffix = homeDirStr = NULL;
+
+	firstSlash = strchr(workingPath, DIRECTORY_SEPARATOR);
+	if (firstSlash == NULL)
+	    suffix = "";
+	else
+	{
+	    *firstSlash = 0;    // so userName is null terminated
+	    suffix = firstSlash + 1;
+	}
+
+	if (workingPath[1] == '\0')
+	    pw = getpwuid( getuid() );
+	else
+	    pw = getpwnam( &workingPath[1] );
+
+	if (pw != NULL)
+	    homeDirStr = pw->pw_dir;
+
+	if (homeDirStr != NULL){
+	    gint ret=g_sprintf(fullPath, "%s%c%s", homeDirStr, DIRECTORY_SEPARATOR, suffix);
+	    if (ret>0){
+		result = realpath(fullPath, resolved_path);
+	    }
+
+	}
+    }
+    return result;
 }
 
 

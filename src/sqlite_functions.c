@@ -167,6 +167,8 @@ StringList *sqlite_get_fieldNames(sqlite3 *db,const char * sqlClause, int *execR
     if (*execResult_ptr==SQLITE_ABORT){
 	/* Just run once, no need to run all the records. */
 	sqlite3_free(*errMsg_ptr);
+	/* Got result, change the result code as SQLITE_OK */
+	*execResult_ptr=SQLITE_OK;
 	*errMsg_ptr=NULL;
     }else{
 	verboseMsg_print(VERBOSE_MSG_ERROR,"sqlite_get_fieldNames(): %s\n",*errMsg_ptr);
