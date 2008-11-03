@@ -1,0 +1,6 @@
+cd uploads
+put @PROJECT_NAME@-@PRJ_VER@-Source.tar.gz
+put SRPMS/@PROJECT_NAME@-@PRJ_VER_FULL@.*.src.rpm
+put RPMS/noarch/@PROJECT_NAME@-@PRJ_VER_FULL@.*.noarch.rpm
+bye
+

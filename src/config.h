@@ -3,7 +3,7 @@
 
 /* #undef HAVE_HAVE_G_STRING_CHUNK_CLEAR */
 
-#define HAVE_SQLITE3_OPEN_V2
+/* #undef HAVE_SQLITE3_OPEN_V2 */
 
 #endif /* CONFIG_H_*/
 

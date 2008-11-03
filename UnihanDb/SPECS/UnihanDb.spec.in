@@ -1,7 +1,9 @@
+###
+# @SPEC_FILE_WARNING@
+
 Name:           UnihanDb
-%define         UnihanDb_name Unihan.db
-%define         rel_num 7
-Version:        5.1.0
+%define         rel_num @PRJ_VER_RELEASE@
+Version:        @PRJ_VER@
 Release:        %{rel_num}%{?dist}
 Group:          System Environment/Libraries
 License:        MIT
@@ -33,42 +35,19 @@ standard it follows.
 
 
 %build
-unihan_converter Unihan.txt %{UnihanDb_name}.%{version}-%{rel_num}
+unihan_converter Unihan.txt .
 
 %install
 rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/%{_datadir}/%{name}
-cp %{UnihanDb_name}.%{version}-%{rel_num} $RPM_BUILD_ROOT/%{_datadir}/%{name}
-ln -sf %{UnihanDb_name}.%{version}-%{rel_num} $RPM_BUILD_ROOT/%{_datadir}/%{name}/%{UnihanDb_name}
+cp *.db $RPM_BUILD_ROOT/%{_datadir}/%{name}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root,-)
-%doc README-db ChangeLog-db
+%doc README ChangeLog NEWS
 %{_datadir}/%{name}
 
 %changelog
-* Tue Sep 23 2008 Ding-Yi Chen <dchen at redhat dot com> - 5.1.0-7
-- Correct counting in FreqRank field of kMandarin table.
-
-* Thu Aug 14 2008 Ding-Yi Chen <dchen at redhat dot com> - 5.1.0-4
-- Change the license to MIT.
-
-* Mon Aug 11 2008 Ding-Yi Chen <dchen at redhat dot com> - 5.1.0-3
-- Sync with upstream version.
-- UnihanDb-doc version has changed from {version}-{rel} to {version}.
-
-* Fri Aug 01 2008 Ding-Yi Chen <dchen at redhat dot com> - 5.1-2
-- Field kIRGKangXi and kKangXi are split into kangXi_page, kangXi_charNum, and
-kangXi_virtrul
-- Field kHanyuPinlu are split into pinyin and pinyin_freq
-
-* Fri Jul 04 2008 Ding-Yi Chen <dchen at redhat dot com> - 5.1-1
-- Add kMandarin frequency rank support.
-
-
-* Tue Jul 01 2008 Ding-Yi Chen <dchen at redhat dot com> - 5.1-0
-- Initial public release.
-

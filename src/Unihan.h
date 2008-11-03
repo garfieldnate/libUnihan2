@@ -33,6 +33,7 @@
 #include "sqlite_functions.h"
 #include "str_functions.h"
 
+
 /**
  * Prototype of callback function for SQL execution.
  */
@@ -775,7 +776,4 @@ UnihanField* unihanTable_get_fields(UnihanTable table);
  * @return		all primary key fields of the given table in an UnihanField array.
  */
 UnihanField* unihanTable_get_primary_key_fields(UnihanTable table);
-
-
-
 #endif /* UNIHAN_H */

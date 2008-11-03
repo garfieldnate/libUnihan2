@@ -37,14 +37,12 @@ SET_TARGET_PROPERTIES(Unihan PROPERTIES
 # executable built from some source
 ADD_EXECUTABLE(unihan_converter  unihan_converter.c)
 ADD_EXECUTABLE(unihan_query	 unihan_query.c)
-ADD_EXECUTABLE(unihan_search_db  unihan_search_db.c)
 
 # Link the executable to the library.
 TARGET_LINK_LIBRARIES(Unihan ${SQLITE3_LIBRARIES}
     ${GLIB2_LIBRARIES})
 TARGET_LINK_LIBRARIES(unihan_converter Unihan)
 TARGET_LINK_LIBRARIES(unihan_query Unihan)
-TARGET_LINK_LIBRARIES(unihan_search_db Unihan)
 
 
 IF(NOT DEFINED LIB_INSTALL_DIR)

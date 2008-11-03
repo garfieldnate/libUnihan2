@@ -1,0 +1,28 @@
+####################################################################
+# libUnihan & UnihanDb common
+####################################################################
+
+SET(AUTHORS "Ding-Yi Chen")
+SET(MAINTAINER_EMAIL "dchen at redhat dot com")
+
+
+SET(DB_DIR ${datadir}/UnihanDb)
+#
+# UNIHAN_DB_DEFAULT_PATH stores the system-wide setting DB files.
+#
+IF(NOT DEFINED UNIHAN_DB_DB_DEFAULT_PATH)
+    SET(UNIHAN_DB_DEFAULT_PATH  ${DB_DIR})
+    ADD_DEFINITIONS(-DUNIHAN_DB_DEFAULT_PATH='"${UNIHAN_DB_DEFAULT_PATH}"')
+ENDIF()
+
+#
+# DB files in UNIHAN_DB_SEARCH_PATH will be searched and set by unihan_search_db.
+# Use path separator (';' for Windows, while ':' for Unix and others) to 
+# separate multiple directories.
+#
+IF(NOT DEFINED UNIHAN_DB_DB_SEARCH_PATH)
+    SET(UNIHAN_DB_DB_SEARCH_PATH ${DB_DIR})
+    ADD_DEFINITIONS(-DUNIHAN_DB_SEARCH_PATH='"${UNIHAN_DB_DB_SEARCH_PATH}"')
+ENDIF()
+
+

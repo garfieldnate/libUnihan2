@@ -50,7 +50,7 @@ The libUnihan C API documents in Doxygen style.
 %setup -q -n %{name}-%{version}-Source
 
 %build
-%cmake .
+%cmake -DCMAKE_INSTALL_PREFIX=%{_usr}
 cmake .
 make VERBOSE=1 C_DEFINES="$RPM_OPT_FLAGS" %{?_smp_mflags}
 make doxygen
@@ -89,4 +89,3 @@ rm -rf $RPM_BUILD_ROOT
 %doc doc/html
 
 %changelog
-* @DATE@ - @AUTHORS@ @MAINTAINER_EMAIL@ - @PRJ_VER_FULL@
