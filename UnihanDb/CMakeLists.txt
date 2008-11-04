@@ -13,16 +13,15 @@ SET(PRJ_VER_RELEASE "8")
 # For CVS changelog
 SET(CHANGE_SUMMARY "This release fixes the no API documents, also corrects some functions in  collection.[ch], file_functions.[ch]")
 
+SET(SUPPORTED_DIST_TAGS F-9 F-10 EL-5) 
+SET(BODHI_DIST_TAGS fc9 fc10)
+
 
 ####################################################################
 # Includes
 ####################################################################
 
 
-#==================================================================
-# Include libUnihan-common.CMakeLists.txt
-#
-INCLUDE(libUnihan-common.CMakeLists.txt)
 
 #==================================================================
 # Include common.CMakeLists.txt
@@ -35,6 +34,10 @@ INCLUDE(common.CMakeLists.txt)
 SET(DB_DIR ${datadir}/${DB_PRJ_NAME})
 ADD_DEFINITIONS(-DPRJ_VER='"${PRJ_VER_FULL}"')
 
+#==================================================================
+# Include libUnihan-common.CMakeLists.txt
+#
+INCLUDE(libUnihan-common.CMakeLists.txt)
 
 
 ####################################################################

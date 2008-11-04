@@ -60,7 +60,6 @@ Options:\
    -v: Show libUnihan version number.\n"
 
 #define BUFFER_SIZE 2000
-#define FIELD_CACHE_DB "field.cache"
 #define PSEUDO_CACHE_DB "pseudo.cache"
 #define FIELD_DB_POSTFIX ".db"
 #define PSEUDO_DB_POSTFIX ".pseudo"
@@ -152,6 +151,43 @@ static gchar* getDbName(gchar *buf, const gchar* dbFilename){
     return buf;
 }
 
+static int create_fieldCacheDb_tables(sqlite3 *field_cache_db){
+    /* Create DbFileTable */
+    if (sqlite_exec_handle_error(field_cache_db,"CREATE TABLE DbFileTable "
+	    "(DbName text NOT NULL, DBPath text NOT NULL,"
+	    "PRIMARY KEY(DbName));",NULL,NULL,
+	    sqlite_error_callback_hide_constraint_error,"Error on creating DbFileTable")){
+	return 2;
+    }
+
+    /* Create TableIdTable */
+    if (sqlite_exec_handle_error(field_cache_db,"CREATE TABLE TableIdTable "
+	    "(TableId integer NOT NULL, TableName text NOT NULL,"
+	    "PRIMARY KEY(TableId));",NULL,NULL,
+	    sqlite_error_callback_hide_constraint_error,"Error on creating TableIdTable")){
+	return 3;
+    }
+
+    /* Create RealFieldIdTable */
+    if (sqlite_exec_handle_error(field_cache_db,"CREATE TABLE RealFieldIdTable "
+	    "(FieldId integer NOT NULL, FieldName text NOT NULL,"
+	    "PRIMARY KEY(FieldId));",NULL,NULL,
+	    sqlite_error_callback_hide_constraint_error,"Error on creating RealFieldIdTable")){
+	return 4;
+    }
+
+
+    /* Create RealFieldTable */
+    if (sqlite_exec_handle_error(field_cache_db,"CREATE TABLE RealFieldTable "
+	    "(FieldId integer NOT NULL, TableId integer NOT NULL, "
+	    " DBName text NOT NULL, Preferred integer NOT NULL,"
+	    "PRIMARY KEY(FieldId, TableId, DBName));",NULL,NULL,
+	    sqlite_error_callback_hide_constraint_error,"Error on creating RealFieldIdTable")){	    
+	return 5;
+    }
+    return 0;
+
+}
 
 static int create_fieldCacheDb(sqlite3 *field_cache_db, StringList *dbFile_list){
     int i,j,k,ret;
@@ -166,50 +202,12 @@ static int create_fieldCacheDb(sqlite3 *field_cache_db, StringList *dbFile_list)
     char dbName[PATH_MAX];
     char *errMsg_ptr;
 
+    ret=create_fieldCacheDb_tables(field_cache_db);
+    if (ret){
+	return ret;
+    }
+
     
-
-    /* Create DbFileTable */
-    ret=sqlite3_exec(field_cache_db,"CREATE TABLE DbFileTable "
-	    "(DbName text NOT NULL, DBPath text NOT NULL,"
-	    "PRIMARY KEY(DbName));",NULL,NULL,&errMsg_ptr);
-    if (ret){
-	verboseMsg_print(VERBOSE_MSG_ERROR,"DbFileTable table error:%s\n",errMsg_ptr);
-	sqlite3_close(field_cache_db);
-	return 2;
-    }
-
-    /* Create TableIdTable */
-    ret=sqlite3_exec(field_cache_db,"CREATE TABLE TableIdTable "
-	    "(TableId integer NOT NULL, TableName text NOT NULL,"
-	    "PRIMARY KEY(TableId));",NULL,NULL,&errMsg_ptr);
-    if (ret){
-	verboseMsg_print(VERBOSE_MSG_ERROR,"TableIdTable table error:%s\n",errMsg_ptr);
-	sqlite3_close(field_cache_db);
-	return 2;
-    }
-
-
-    /* Create RealFieldIdTable */
-    ret=sqlite3_exec(field_cache_db,"CREATE TABLE RealFieldIdTable "
-	    "(FieldId integer NOT NULL, FieldName text NOT NULL,"
-	    "PRIMARY KEY(FieldId));",NULL,NULL,&errMsg_ptr);
-    if (ret){
-	verboseMsg_print(VERBOSE_MSG_ERROR,"RealFieldIdTable table error:%s\n",errMsg_ptr);
-	sqlite3_close(field_cache_db);
-	return 2;
-    }
-
-    /* Create RealFieldTable */
-    ret=sqlite3_exec(field_cache_db,"CREATE TABLE RealFieldTable "
-	    "(FieldId integer NOT NULL, TableId integer NOT NULL, "
-	    " DBName text NOT NULL, Preferred integer NOT NULL,"
-	    "PRIMARY KEY(FieldId, TableId, DBName));",NULL,NULL,&errMsg_ptr);
-    if (ret){
-	verboseMsg_print(VERBOSE_MSG_ERROR,"RealFieldTable table error:%s\n",errMsg_ptr);
-	sqlite3_close(field_cache_db);
-	return 2;
-    }
-
     for(i=0;i<dbFile_list->len;i++){
 	verboseMsg_print(VERBOSE_MSG_INFO1,"Opening %s \t",stringList_index(dbFile_list,i));
 	ret=sqlite_open(stringList_index(dbFile_list,i),&db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
@@ -222,7 +220,8 @@ static int create_fieldCacheDb(sqlite3 *field_cache_db, StringList *dbFile_list)
 
 	tableList=get_tableNames(db);
 	for(j=0;j<tableList->len;j++){
-	    table_tmp=unihanTable_parse(stringList_index(fieldList,k));
+	    table_tmp=unihanTable_parse(stringList_index(tableList,j));
+
 	    if (table_tmp>=0){
 		table=table_tmp;
 	    }else{
@@ -236,16 +235,6 @@ static int create_fieldCacheDb(sqlite3 *field_cache_db, StringList *dbFile_list)
 		continue;
 	    }
 
-	    /* Insert to TableIdTable */
-	    sqlite3_snprintf(BUFFER_SIZE,sqlCmd_buf,
-		    "INSERT INTO TableIdTable VALUES (%d, %Q);",
-		    table, stringList_index(tableList,j) );
-	    ret=sqlite3_exec(field_cache_db,sqlCmd_buf,NULL,NULL,&errMsg_ptr);
-
-	    g_snprintf(sqlCmd_buf,BUFFER_SIZE,"SELECT * FROM %s;",stringList_index(tableList,j));
-
-
-	    ret=sqlite3_exec(field_cache_db,sqlCmd)
 	    for(k=0; k<fieldList->len; k++){
 		field_tmp=unihanField_parse(stringList_index(fieldList,k));
 		if (field_tmp>=0){
@@ -255,33 +244,70 @@ static int create_fieldCacheDb(sqlite3 *field_cache_db, StringList *dbFile_list)
 		    field=field_3rdParty_index++;
 		}
 
-		sqlite3_snprintf(BUFFER_SIZE,sqlCmd_buf,
-			"INSERT INTO RealFieldTable VALUES (%d, %d, %Q, %Q);",
-			field,	
-			stringList_index(fieldList,k),
-			stringList_index(tableList,j),
-			getDbName(dbName,stringList_index(dbFile_list,i)),
-			stringList_index(dbFile_list,i)
-			);
-		verboseMsg_print(VERBOSE_MSG_INFO2,"%s\n",sqlCmd_buf);
-		ret=sqlite3_exec(field_cache_db,sqlCmd_buf,NULL,NULL,&errMsg_ptr);
-		if (ret){
-		    verboseMsg_print(VERBOSE_MSG_ERROR,"Field cache DB insert error:%s\n",sqlite3_errmsg(field_cache_db));
-		    sqlite3_close(field_cache_db);
-		    return 3;
+		if (j==0){
+		    /* 
+		     * Only insert to DbFileTable if there are at least one
+		     * fields
+		     */
+		    getDbName(dbName,stringList_index(dbFile_list,i));
+		    sqlite3_snprintf(BUFFER_SIZE,sqlCmd_buf,
+			    "INSERT INTO DbFileTable VALUES (%Q, %Q);",
+			    dbName, stringList_index(dbFile_list,i) );
+		    ret=sqlite_exec_handle_error(field_cache_db,sqlCmd_buf,NULL,NULL,
+			    sqlite_error_callback_hide_constraint_error,"TableIdTable insert");
+		    verboseMsg_print(VERBOSE_MSG_INFO2,"%s\n",sqlCmd_buf);
+
 		}
+		if (k==0){
+		    /* 
+		     * Only insert to TableIdTable if there are at least one
+		     * fields
+		     */
+		    sqlite3_snprintf(BUFFER_SIZE,sqlCmd_buf,
+			    "INSERT INTO TableIdTable VALUES (%d, %Q);",
+			    table, stringList_index(tableList,j) );
+		    ret=sqlite_exec_handle_error(field_cache_db,sqlCmd_buf,NULL,NULL,
+			    sqlite_error_callback_hide_constraint_error,"TableIdTable insert");
+		    verboseMsg_print(VERBOSE_MSG_INFO2,"%s\n",sqlCmd_buf);
+
+		}
+
+		sqlite3_snprintf(BUFFER_SIZE,sqlCmd_buf,
+			"INSERT INTO RealFieldIdTable VALUES (%d, %Q);",
+			table, stringList_index(tableList,j) );
+		ret=sqlite_exec_handle_error(field_cache_db,sqlCmd_buf,NULL,NULL,
+			sqlite_error_callback_hide_constraint_error,"RealFieldIdTable insert");
+		verboseMsg_print(VERBOSE_MSG_INFO2,"%s\n",sqlCmd_buf);
+
+
+		sqlite3_snprintf(BUFFER_SIZE,sqlCmd_buf,
+			"INSERT INTO RealFieldTable VALUES (%d, %d, %Q, %d);",
+			field, table, dbName, 0);	
+		verboseMsg_print(VERBOSE_MSG_INFO2,"%s\n",sqlCmd_buf);
+		ret=sqlite_exec_handle_error(field_cache_db,sqlCmd_buf,NULL,NULL,
+			sqlite_error_callback_hide_constraint_error,"RealFieldTable insert");
 	    }
 	    stringList_free(fieldList);
 	}
 	stringList_free(tableList);
 	sqlite3_close(db);
     }
-    ret=sqlite3_exec(field_cache_db, "CREATE INDEX FieldCacheIndex ON FieldCacheTable (FieldId, TableId, TableName);",NULL,NULL,&errMsg_ptr);
-    if (ret){
-	verboseMsg_print(VERBOSE_MSG_ERROR,"Field cache DB index error:%s\n",sqlite3_errmsg(field_cache_db));
-	sqlite3_close(field_cache_db);
-	return 3;
-    }
+    ret=sqlite_exec_handle_error(field_cache_db,"CREATE INDEX DbFileIndex ON DbFileTable (DbName);"
+	    ,NULL,NULL,
+	    sqlite_error_callback_hide_constraint_error,"DbFileIndex create");
+
+    ret=sqlite_exec_handle_error(field_cache_db,"CREATE INDEX TableIdIndex ON TableIdTable (TableId);"
+	    ,NULL,NULL,
+	    sqlite_error_callback_hide_constraint_error,"TableIdIndex create");
+
+    ret=sqlite_exec_handle_error(field_cache_db,"CREATE INDEX RealFieldIdIndex ON RealFieldIdTable (FieldId);"
+	    ,NULL,NULL,
+	    sqlite_error_callback_hide_constraint_error,"RealFieldIdIndex create");
+
+    ret=sqlite_exec_handle_error(field_cache_db,
+	    "CREATE INDEX RealFieldIndex ON RealFieldTable (FieldId, TableId, DbName);"
+	    ,NULL,NULL,
+	    sqlite_error_callback_hide_constraint_error,"RealFieldIndex create");
 
     verboseMsg_print(VERBOSE_MSG_CRITICAL,"Done.\n",stringList_index(dbFile_list,i));
 
