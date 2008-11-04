@@ -243,7 +243,7 @@ ADD_CUSTOM_TARGET(pkg_remove_old find .
 #====================================================================
 # Document generation
 #
-IF (EXISTS ${DOXYGEN})
+IF (EXISTS Doxyfile)
     FIND_PACKAGE(Doxygen)
     ADD_CUSTOM_TARGET(doxygen    
 	    COMMAND "${DOXYGEN}" "Doxyfile"
@@ -251,7 +251,7 @@ IF (EXISTS ${DOXYGEN})
     INSTALL(DIRECTORY doc/html
 	    DESTINATION "${docdir}/${PROJECT_NAME}-${PRJ_VER}"
 	    )
-ENDIF (EXISTS ${DOXYGEN})
+ENDIF ()
 
 #====================================================================
 # Koji (Fedora build system)

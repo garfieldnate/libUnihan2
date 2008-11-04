@@ -8,6 +8,8 @@
 - Changed:
   + All programs are use [-V number] instead of multiple V.
   + Argument const_count in stringList_sized_new() is removed.
+- Removed:
+  + No more UNIHAN_DEFAULT_DB
 
 * Tue Oct 21 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.5.3-3
 - Add following make targets: rpm_lint, koji_submit, koji_build,  pkg_remove_old.

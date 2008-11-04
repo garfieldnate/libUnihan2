@@ -1,9 +1,3 @@
-/usr/share/doc/libUnihan-0.5.4/AUTHORS
-/usr/share/doc/libUnihan-0.5.4/README
-/usr/share/doc/libUnihan-0.5.4/ChangeLog
-/usr/share/doc/libUnihan-0.5.4/NEWS
-/usr/share/doc/libUnihan-0.5.4/COPYING
-/usr/share/doc/libUnihan-0.5.4/COPYING.LESSER
 /usr/share/doc/libUnihan-0.5.4/html/sqlite__functions_8h-source.html
 /usr/share/doc/libUnihan-0.5.4/html/globals_defs.html
 /usr/share/doc/libUnihan-0.5.4/html/globals_eval_0x70.html
@@ -28,6 +22,7 @@
 /usr/share/doc/libUnihan-0.5.4/html/annotated.html
 /usr/share/doc/libUnihan-0.5.4/html/str__functions_8h.html
 /usr/share/doc/libUnihan-0.5.4/html/globals_0x69.html
+/usr/share/doc/libUnihan-0.5.4/html/group__SQL__fileAccessFlags.html
 /usr/share/doc/libUnihan-0.5.4/html/globals_eval_0x75.html
 /usr/share/doc/libUnihan-0.5.4/html/Unihan__phonetic_8c.html
 /usr/share/doc/libUnihan-0.5.4/html/modules.html
@@ -80,6 +75,7 @@
 /usr/share/doc/libUnihan-0.5.4/html/globals_0x75.html
 /usr/share/doc/libUnihan-0.5.4/html/structDatabaseFuncStru.html
 /usr/share/doc/libUnihan-0.5.4/html/Unihan__enum_8h.html
+/usr/share/doc/libUnihan-0.5.4/html/group__SQL__initialParameter.html
 /usr/share/doc/libUnihan-0.5.4/html/collection_8h-source.html
 /usr/share/doc/libUnihan-0.5.4/html/globals_eval_0x7a.html
 /usr/share/doc/libUnihan-0.5.4/html/ftv2node.png
@@ -87,9 +83,15 @@
 /usr/share/doc/libUnihan-0.5.4/html/structStringList.html
 /usr/share/doc/libUnihan-0.5.4/html/globals_eval.html
 /usr/share/doc/libUnihan-0.5.4/html/Unihan__phonetic_8h-source.html
+/usr/share/doc/libUnihan-0.5.4/AUTHORS
+/usr/share/doc/libUnihan-0.5.4/README
+/usr/share/doc/libUnihan-0.5.4/ChangeLog
+/usr/share/doc/libUnihan-0.5.4/NEWS
+/usr/share/doc/libUnihan-0.5.4/COPYING
+/usr/share/doc/libUnihan-0.5.4/COPYING.LESSER
 /usr/bin/unihan_converter
 /usr/bin/unihan_query
-/usr/lib64/libUnihan.so.0.5
+/usr/lib64/libUnihan.so.0.6
 /usr/lib64/libUnihan.so.0
 /usr/lib64/libUnihan.so
 /usr/include/libUnihan/Unihan.h

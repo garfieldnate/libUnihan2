@@ -5,9 +5,6 @@
 SET(AUTHORS "Ding-Yi Chen")
 SET(MAINTAINER_EMAIL "dchen at redhat dot com")
 
-SET(SUPPORTED_DIST_TAGS F-9 F-10 EL-5) 
-SET(BODHI_DIST_TAGS fc9 fc10)
-
 
 SET(DB_DIR ${datadir}/UnihanDb)
 #
