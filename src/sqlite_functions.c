@@ -113,17 +113,26 @@ int sqlite_count_matches(sqlite3 *db,const char * sqlClause,char **errMsg_ptr){
 }
 
 
-void sqlite_error_callback_print_messsage(sqlite3 *db, const gchar *sqlClause, gint error_code, 
-	const gchar error_msg, gpointer prompt){
-    verboseMsg_print(VERBOSE_MSG_ERROR,"%s: Error on SQL statement: %s\n",prompt,sqlClause);
-    verboseMsg_print(VERBOSE_MSG_ERROR,"Error code:%d message %s.\n",error_code,error_msg);
+void sqlite_error_callback_hide_constraint_error(sqlite3 *db, const gchar *sqlClause, gint error_code, 
+	const gchar *error_msg, gpointer prompt){
+    if (error_code!= SQLITE_CONSTRAINT){
+	sqlite_error_callback_print_message(db,sqlClause,error_code,error_msg,prompt);
+    }
+}
+
+void sqlite_error_callback_print_message(sqlite3 *db, const gchar *sqlClause, gint error_code, 
+	const gchar *error_msg, gpointer prompt){
+    gchar *prompt_str=(gchar *) prompt;
+    verboseMsg_print(VERBOSE_MSG_ERROR,"%s: Error on SQL statement: %s\n",prompt_str,sqlClause);
+    verboseMsg_print(VERBOSE_MSG_ERROR,"Error code:%d ",error_code);
+    verboseMsg_print(VERBOSE_MSG_ERROR,"message %s.\n",error_msg);
 }
 
 
 int sqlite_exec_handle_error(sqlite3 *db, const gchar *sqlClause, sqlite_exec_callback exec_func, 
 	gpointer exec_option, sqlite_error_callback error_func, gpointer error_option ){
     char *errMsg_ptr=NULL;
-    int ret=sqlite3_exec(db,sqlClause,exec_func, exec_option, &errMsg_ptr);
+    gint ret=sqlite3_exec(db,sqlClause,exec_func, exec_option, &errMsg_ptr);
     if (ret){
 	error_func(db,sqlClause,ret,errMsg_ptr,error_option);
     }

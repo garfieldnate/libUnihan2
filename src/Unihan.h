@@ -34,6 +34,12 @@
 #include "str_functions.h"
 
 /**
+ * The default field cache file.
+ *
+ */
+#define FIELD_CACHE_DB "field.cache"
+
+/**
  * IRG source data.
  *
  * This struct contains a short source name and the corresponding description.

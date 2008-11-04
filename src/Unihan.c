@@ -174,7 +174,7 @@ int unihanDb_open(const char *filename, int flags){
 }
 
 int unihanDb_open_default(){
-    return unihanDb_open(UNIHAN_DEFAULT_DB, SQLITE_OPEN_READONLY);
+    return unihanDb_open(UNIHAN_DB_DEFAULT_PATH, SQLITE_OPEN_READONLY);
 }
 
 sqlite3 *unihanDb_get(){

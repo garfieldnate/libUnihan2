@@ -49,7 +49,7 @@ typedef struct {
     GPtrArray *ptrArray; //!< A array of char* that points to the strings.
     GHashTable *hTable;  //!< Hash table for constant insert. String is key , and pointer of the string is the value.
     guint len;		 //!< Number of strings in the StringList.
-    size_t chunk_size_inital;  //!< @internal Size of the GStringChunk.
+    size_t chunk_size_inital;  //!< Size of the GStringChunk.
 } StringList;
 
 /**

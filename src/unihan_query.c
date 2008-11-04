@@ -117,7 +117,7 @@ static void printTables(){
     int i;
     int ret=unihanDb_open_default();
     if (ret){
-	fprintf(stderr, "Unable to open database " UNIHAN_DEFAULT_DB ".\n");
+	fprintf(stderr, "Unable to open database " UNIHAN_DB_DEFAULT_PATH ".\n");
 	exit(ret);
     }
     StringList *sList=get_tableNames();
@@ -153,7 +153,7 @@ static void printFields(char modeChar){
 	    printf("Real fields:\n");
 	    int ret=unihanDb_open_default();
 	    if (ret){
-		fprintf(stderr, "Unable to open database " UNIHAN_DEFAULT_DB ".\n");
+		fprintf(stderr, "Unable to open database from " UNIHAN_DB_DEFAULT_PATH ".\n");
 		exit(ret);
 	    }
 	    sList=get_tableNames();
@@ -348,7 +348,7 @@ int main(int argc, char** argv){
     }
     ret=unihanDb_open_default();
     if (ret){
-	fprintf(stderr, "Unable to open database " UNIHAN_DEFAULT_DB ".\n");
+	fprintf(stderr, "Unable to open database " UNIHAN_DB_DEFAULT_PATH ".\n");
 	exit(ret);
     }
     SQL_Result *sResult=NULL;

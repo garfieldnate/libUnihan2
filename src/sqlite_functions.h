@@ -148,7 +148,7 @@ typedef int (*sqlite_exec_callback)(gpointer user_option,gint col_num,gchar **re
  *
  *
  */
-typedef void (*sqlite_error_callback)(sqlite3 *db, const gchar *sqlClause, gint error_code, const gchar error_msg, gpointer error_option); 
+typedef void (*sqlite_error_callback)(sqlite3 *db, const gchar *sqlClause, gint error_code, const gchar *error_msg, gpointer error_option); 
 
 
 /**
@@ -231,7 +231,30 @@ int sqlite_count_matches(sqlite3 *db,const char * sqlClause,char **errMsg_ptr);
 
 
 /**
- * An sqlite error callback function that print error message.
+ * An sqlite error callback function that print all error message except
+ * constraint error.
+ *
+ * This function is just like sqlite_error_callback_print_message(),
+ * except the constraint error messages are hidden. This is useful
+ * when the invalid records (which do not meet the constraint) are expected
+ * and skipped.
+ *
+*
+ * @param db The \a db from from sqlite_exec_handle_error().
+ * @param sqlClause The original \a sqlClause from from sqlite_exec_handle_error().
+ * @param error_code Return value of sqlite3_exec().
+ * @param error_msg Error message from sqlite3_exec().
+ * @param prompt  Prompt of error message.
+ *
+ * @see sqlite_error_callback
+ * @see sqlite_exec_handle_error()
+ * @see sqlite_error_callback_print_message()
+ */
+void sqlite_error_callback_hide_constraint_error(sqlite3 *db, const gchar *sqlClause, gint error_code, 
+	const gchar *error_msg, gpointer prompt);
+
+/**
+ * An sqlite error callback function that print error messages.
  *
  * This function is an implementation of sqlite_error_callback, 
  * which can be called by sqlite_exec_handle_error().
@@ -241,8 +264,6 @@ int sqlite_count_matches(sqlite3 *db,const char * sqlClause,char **errMsg_ptr);
  * \a prompt: Error on SQL statement: \a sqlClause.
  * Error code: \a error_code message: \a error_msg.
  *
- *
- *
  * @param db The \a db from from sqlite_exec_handle_error().
  * @param sqlClause The original \a sqlClause from from sqlite_exec_handle_error().
  * @param error_code Return value of sqlite3_exec().
@@ -251,10 +272,10 @@ int sqlite_count_matches(sqlite3 *db,const char * sqlClause,char **errMsg_ptr);
  *
  * @see sqlite_error_callback
  * @see sqlite_exec_handle_error()
- *
+ * @see sqlite_error_callback_hide_constraint_error()
  */
-void sqlite_error_callback_print_messsage(sqlite3 *db, const gchar *sqlClause, gint error_code, 
-	const gchar error_msg, gpointer prompt);
+void sqlite_error_callback_print_message(sqlite3 *db, const gchar *sqlClause, gint error_code, 
+	const gchar *error_msg, gpointer prompt);
 
 
 /**
@@ -277,7 +298,8 @@ void sqlite_error_callback_print_messsage(sqlite3 *db, const gchar *sqlClause, g
  * @see <a href="http://www.sqlite.org/c3ref/exec.html">sqlite3_exec()</a>
  * @see sqlite_exec_callback
  * @see sqlite_error_callback
- *
+ * @see sqlite_error_callback_print_message()
+ * @see sqlite_error_callback_hide_constraint_error()
  */
 int sqlite_exec_handle_error(sqlite3 *db, const gchar *sqlClause, sqlite_exec_callback exec_func, 
 	gpointer exec_option, sqlite_error_callback error_func, gpointer error_option);
