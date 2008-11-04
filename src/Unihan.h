@@ -33,13 +33,6 @@
 #include "sqlite_functions.h"
 #include "str_functions.h"
 
-
-/**
- * Prototype of callback function for SQL execution.
- */
-typedef int (*UnihanCallback)(void* userOption,int col_num,char** results,char** col_names);
-
-
 /**
  * IRG source data.
  *
@@ -676,7 +669,7 @@ int unihanSql_count_matches(const char * sqlClause, char **errMsg_ptr);
  * @return <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite result codes</a>
  * @see <a href="http://www.sqlite.org/c3ref/exec.html">sqlite3_exec()</a>
  */
-int unihanSql_exec(char *sqlClause, UnihanCallback callback, 
+int unihanSql_exec(char *sqlClause, sqlite_exec_callback callback, 
  void *callbackOption,  char **errMsg_ptr);
 
 /**

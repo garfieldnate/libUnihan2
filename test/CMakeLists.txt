@@ -2,7 +2,7 @@
 INCLUDE_DIRECTORIES(${GLIB2_INCLUDE_DIRS} ${SQLITE3_INCLUDE_DIRS} ../src)
 
 # Library location for the linker
-LINK_DIRECTORIES(${GLIB2_LIBRARY_DIRS} ${SQLITE3_LIBRARY_DIRS} ../lib)
+LINK_DIRECTORIES(${GLIB2_LIBRARY_DIRS} ${SQLITE3_LIBRARY_DIRS} ../bin)
 
 # Test programs
 ADD_EXECUTABLE(check_unihan_functions  check_unihan_functions.c)

@@ -30,8 +30,8 @@ SET(DOCUMENTED_HEADERS Unihan.h Unihan_enum.h Unihan_phonetic.h
 
 ADD_LIBRARY(Unihan SHARED ${libUnihan_SRCS} ${supporting_SRCS})
 SET_TARGET_PROPERTIES(Unihan PROPERTIES 
-    VERSION "${PRJ_VER_MAJOR}.${PRJ_VER_MINOR}"
-    SOVERSION "${PRJ_VER_MAJOR}")
+    VERSION "${SO_VER_MAJOR}.${SO_VER_MINOR}"
+    SOVERSION "${SO_VER_MAJOR}")
 
 
 # executable built from some source

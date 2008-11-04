@@ -113,6 +113,23 @@ int sqlite_count_matches(sqlite3 *db,const char * sqlClause,char **errMsg_ptr){
 }
 
 
+void sqlite_error_callback_print_messsage(sqlite3 *db, const gchar *sqlClause, gint error_code, 
+	const gchar error_msg, gpointer prompt){
+    verboseMsg_print(VERBOSE_MSG_ERROR,"%s: Error on SQL statement: %s\n",prompt,sqlClause);
+    verboseMsg_print(VERBOSE_MSG_ERROR,"Error code:%d message %s.\n",error_code,error_msg);
+}
+
+
+int sqlite_exec_handle_error(sqlite3 *db, const gchar *sqlClause, sqlite_exec_callback exec_func, 
+	gpointer exec_option, sqlite_error_callback error_func, gpointer error_option ){
+    char *errMsg_ptr=NULL;
+    int ret=sqlite3_exec(db,sqlClause,exec_func, exec_option, &errMsg_ptr);
+    if (ret){
+	error_func(db,sqlClause,ret,errMsg_ptr,error_option);
+    }
+    return ret;
+}
+
 static int sqlite_get_sql_result_callback(void *data,int colCount,char** value_array,char **fieldName_array){
     if (data==NULL){
 	return SQLITE_ABORT;
@@ -232,6 +249,7 @@ int sqlite_create_concat_aggregation_function(sqlite3 *db, const char *function_
     return sqlite3_create_function(db, function_name, 2,SQLITE_UTF8,NULL,
 	    NULL,sqlite_concat_aggregation_step_Func,sqlite_concat_aggregation_finalized_Func);
 }
+
 
 char *sqlite_value_signed_text_buffer(char *buf,sqlite3_value *value){
     return unsignedStr_to_signedStr_buffer(buf, sqlite3_value_text(value));

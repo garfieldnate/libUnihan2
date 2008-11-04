@@ -1087,7 +1087,7 @@ int unihan_insert_no_duplicate(UnihanTable table, StringList *valueList){
  * SQL wrapper functions.
  */
 
-int unihanSql_exec(char *sqlClause, UnihanCallback callback, 
+int unihanSql_exec(char *sqlClause, sqlite_exec_callback callback, 
 	void *callbackOption,  char **errMsg_ptr){
     return sqlite3_exec(unihanDb, sqlClause, callback, callbackOption, errMsg_ptr);
 }

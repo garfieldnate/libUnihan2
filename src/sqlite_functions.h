@@ -125,6 +125,31 @@
  * @}
  */
 
+/**
+ * Prototype of callback function for SQL execution (sqlite3_exec).
+ */
+typedef int (*sqlite_exec_callback)(gpointer user_option,gint col_num,gchar **results,gchar **col_names); 
+
+/**
+ * Prototype of error handling callback function for sqlite_exec_handle_error().
+ *
+ * This function prototype abstracts the sqlite_exec_handle_error() error
+ * handling functions.
+ *
+ * A implementing function will be called if an error occurs in sqlite_exec_handle_error().
+ *
+ *
+ * @param db The \a db from from sqlite_exec_handle_error().
+ * @param sqlClause The original \a sqlClause from from sqlite_exec_handle_error().
+ * @param error_code Return value of sqlite3_exec().
+ * @param error_msg Error message from sqlite3_exec().
+ * @param error_option Other option that the callback function needs, come
+ * from error_option of sqlite_exec_handle_error() .
+ *
+ *
+ */
+typedef void (*sqlite_error_callback)(sqlite3 *db, const gchar *sqlClause, gint error_code, const gchar error_msg, gpointer error_option); 
+
 
 /**
  * Open a sqlite database.
@@ -203,6 +228,59 @@ StringList *sql_result_free(SQL_Result *sResult, gboolean freeResult);
  * @return 0 if no matches found. Positive number is number of  matched founded. Negative number is  sqlite3_exec result code multiplied by -1.
  */
 int sqlite_count_matches(sqlite3 *db,const char * sqlClause,char **errMsg_ptr);
+
+
+/**
+ * An sqlite error callback function that print error message.
+ *
+ * This function is an implementation of sqlite_error_callback, 
+ * which can be called by sqlite_exec_handle_error().
+ *
+ * It outputs error message in following format:
+ * 
+ * \a prompt: Error on SQL statement: \a sqlClause.
+ * Error code: \a error_code message: \a error_msg.
+ *
+ *
+ *
+ * @param db The \a db from from sqlite_exec_handle_error().
+ * @param sqlClause The original \a sqlClause from from sqlite_exec_handle_error().
+ * @param error_code Return value of sqlite3_exec().
+ * @param error_msg Error message from sqlite3_exec().
+ * @param prompt  Prompt of error message.
+ *
+ * @see sqlite_error_callback
+ * @see sqlite_exec_handle_error()
+ *
+ */
+void sqlite_error_callback_print_messsage(sqlite3 *db, const gchar *sqlClause, gint error_code, 
+	const gchar error_msg, gpointer prompt);
+
+
+/**
+ * Sqlite exec function with error handling.
+ * 
+ * This function adds error handle to sqlite3_exec().
+ *
+ * It calls sqlite3_exec() for DB operations. 
+ * When encounter error, \a error_func will be called for error handling.
+ * See sqlite_error_callback for the function prototype.
+ *
+ *
+ * @param db Database for DB operation.
+ * @param sqlClause SQL caluse
+ * @param exec_func Callback function for sqlite3_exec().
+ * @param exec_option Option for \a exec_func.
+ * @param error_func Error handling callback function.
+ * @param error_option Option for \a err_func
+ * @return <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite result codes</a>
+ * @see <a href="http://www.sqlite.org/c3ref/exec.html">sqlite3_exec()</a>
+ * @see sqlite_exec_callback
+ * @see sqlite_error_callback
+ *
+ */
+int sqlite_exec_handle_error(sqlite3 *db, const gchar *sqlClause, sqlite_exec_callback exec_func, 
+	gpointer exec_option, sqlite_error_callback error_func, gpointer error_option);
 
 /**
  * Get the results of SQL clause.

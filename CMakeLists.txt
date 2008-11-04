@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 2.4)
+
 ####################################################################
 # Project basic information
 ####################################################################
@@ -7,21 +9,27 @@ SET(PRJ_VER_MAJOR "0")
 SET(PRJ_VER_MINOR "5")
 SET(PRJ_VER_PATCH "4")
 SET(PRJ_VER_RELEASE "0")
-SET(DB_VER "5.1.0")
-SET(DB_RELEASE "7")
-SET(DB_PRJ_NAME  "UnihanDb")
-SET(DB_NAME "Unihan.db")
-
-SET(SUPPORTED_DIST_TAGS F-9 F-10 EL-5) 
-SET(BODHI_DIST_TAGS fc9 fc10)
+SET(SO_VER_MAJOR "0")
+SET(SO_VER_MINOR "6")
 
 # For CVS changelog
 SET(CHANGE_SUMMARY "This release fixes the no API documents, also corrects some functions in  collection.[ch], file_functions.[ch]")
 
 
+
 ####################################################################
+# Includes
+####################################################################
+
+#==================================================================
+# Include libUnihan-common.CMakeLists.txt
+#
+INCLUDE(libUnihan-common.CMakeLists.txt)
+
+#==================================================================
 # Include common.CMakeLists.txt
-####################################################################
+#
+
 SET(GENERATE_DOXYFILE TRUE )
 SET(GENERATE_UPLOADPKG_BATCH TRUE)
 SET(GENERATE_SPEC TRUE)
@@ -29,10 +37,7 @@ INCLUDE(common.CMakeLists.txt)
 MESSAGE("PRJ_VER_FULL=${PRJ_VER_FULL}")
 ADD_DEFINITIONS(-DPRJ_VER='"${PRJ_VER_FULL}"')
 
-####################################################################
-# Include libUnihan-common.CMakeLists.txt
-####################################################################
-INCLUDE(libUnihan-common.CMakeLists.txt)
+
 
 
 

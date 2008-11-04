@@ -43,6 +43,7 @@
 #include "verboseMsg.h"
 #include "file_functions.h"
 #include "str_functions.h"
+#include "sqlite_functions.h"
 #include "Unihan.h"
 
 #define USAGE_MSG "Search and collect the fields and tables in Unihan database files from given paths.\n\
@@ -152,10 +153,12 @@ static gchar* getDbName(gchar *buf, const gchar* dbFilename){
 }
 
 
-static int create_fieldCacheTable(sqlite3 *field_cache_db, StringList *dbFile_list){
+static int create_fieldCacheDb(sqlite3 *field_cache_db, StringList *dbFile_list){
     int i,j,k,ret;
     UnihanField field,field_tmp;
     UnihanField field_3rdParty_index=UNIHAN_FIELD_3RD_PARTY;
+    UnihanTable table,table_tmp;
+    UnihanField table_3rdParty_index=UNIHAN_TABLE_3RD_PARTY;
 
     sqlite3 *db;
     StringList *tableList=NULL,*fieldList=NULL;
@@ -163,16 +166,49 @@ static int create_fieldCacheTable(sqlite3 *field_cache_db, StringList *dbFile_li
     char dbName[PATH_MAX];
     char *errMsg_ptr;
 
-    ret=sqlite3_exec(field_cache_db,"CREATE TABLE FieldCacheTable "
-	    "(FieldId integer NOT NULL, FieldName text NOT NULL,"
-	    "TableName text NOT NULL,  DBName text NOT NULL, DBPath text NOT NULL, "
-	    "PRIMARY KEY(FieldName, TableName, DBName));",NULL,NULL,&errMsg_ptr);
+    
+
+    /* Create DbFileTable */
+    ret=sqlite3_exec(field_cache_db,"CREATE TABLE DbFileTable "
+	    "(DbName text NOT NULL, DBPath text NOT NULL,"
+	    "PRIMARY KEY(DbName));",NULL,NULL,&errMsg_ptr);
     if (ret){
-	verboseMsg_print(VERBOSE_MSG_ERROR,"Field cache DB create table error:%s\n",sqlite3_errmsg(field_cache_db));
+	verboseMsg_print(VERBOSE_MSG_ERROR,"DbFileTable table error:%s\n",errMsg_ptr);
 	sqlite3_close(field_cache_db);
 	return 2;
     }
 
+    /* Create TableIdTable */
+    ret=sqlite3_exec(field_cache_db,"CREATE TABLE TableIdTable "
+	    "(TableId integer NOT NULL, TableName text NOT NULL,"
+	    "PRIMARY KEY(TableId));",NULL,NULL,&errMsg_ptr);
+    if (ret){
+	verboseMsg_print(VERBOSE_MSG_ERROR,"TableIdTable table error:%s\n",errMsg_ptr);
+	sqlite3_close(field_cache_db);
+	return 2;
+    }
+
+
+    /* Create RealFieldIdTable */
+    ret=sqlite3_exec(field_cache_db,"CREATE TABLE RealFieldIdTable "
+	    "(FieldId integer NOT NULL, FieldName text NOT NULL,"
+	    "PRIMARY KEY(FieldId));",NULL,NULL,&errMsg_ptr);
+    if (ret){
+	verboseMsg_print(VERBOSE_MSG_ERROR,"RealFieldIdTable table error:%s\n",errMsg_ptr);
+	sqlite3_close(field_cache_db);
+	return 2;
+    }
+
+    /* Create RealFieldTable */
+    ret=sqlite3_exec(field_cache_db,"CREATE TABLE RealFieldTable "
+	    "(FieldId integer NOT NULL, TableId integer NOT NULL, "
+	    " DBName text NOT NULL, Preferred integer NOT NULL,"
+	    "PRIMARY KEY(FieldId, TableId, DBName));",NULL,NULL,&errMsg_ptr);
+    if (ret){
+	verboseMsg_print(VERBOSE_MSG_ERROR,"RealFieldTable table error:%s\n",errMsg_ptr);
+	sqlite3_close(field_cache_db);
+	return 2;
+    }
 
     for(i=0;i<dbFile_list->len;i++){
 	verboseMsg_print(VERBOSE_MSG_INFO1,"Opening %s \t",stringList_index(dbFile_list,i));
@@ -186,23 +222,41 @@ static int create_fieldCacheTable(sqlite3 *field_cache_db, StringList *dbFile_li
 
 	tableList=get_tableNames(db);
 	for(j=0;j<tableList->len;j++){
+	    table_tmp=unihanTable_parse(stringList_index(fieldList,k));
+	    if (table_tmp>=0){
+		table=table_tmp;
+	    }else{
+		/* Not found in built-in record, should be 3rd party. */
+		table=table_3rdParty_index++;
+	    }
 	    g_snprintf(sqlCmd_buf,BUFFER_SIZE,"SELECT * FROM %s;",stringList_index(tableList,j));
 	    fieldList=sqlite_get_fieldNames(db, sqlCmd_buf , &ret, &errMsg_ptr);
 	    if (ret){
 		verboseMsg_print(VERBOSE_MSG_ERROR," SQL Error:%s msg:%s\n",sqlite3_errmsg(db),errMsg_ptr);
 		continue;
 	    }
+
+	    /* Insert to TableIdTable */
+	    sqlite3_snprintf(BUFFER_SIZE,sqlCmd_buf,
+		    "INSERT INTO TableIdTable VALUES (%d, %Q);",
+		    table, stringList_index(tableList,j) );
+	    ret=sqlite3_exec(field_cache_db,sqlCmd_buf,NULL,NULL,&errMsg_ptr);
+
+	    g_snprintf(sqlCmd_buf,BUFFER_SIZE,"SELECT * FROM %s;",stringList_index(tableList,j));
+
+
+	    ret=sqlite3_exec(field_cache_db,sqlCmd)
 	    for(k=0; k<fieldList->len; k++){
 		field_tmp=unihanField_parse(stringList_index(fieldList,k));
 		if (field_tmp>=0){
 		    field=field_tmp;
 		}else{
-		    /* Not found in build in database,should be 3rd party. */
+		    /* Not found in built-in record, should be 3rd party. */
 		    field=field_3rdParty_index++;
 		}
 
 		sqlite3_snprintf(BUFFER_SIZE,sqlCmd_buf,
-			"INSERT INTO FieldCacheTable VALUES (%d, %Q, %Q, %Q, %Q);",
+			"INSERT INTO RealFieldTable VALUES (%d, %d, %Q, %Q);",
 			field,	
 			stringList_index(fieldList,k),
 			stringList_index(tableList,j),
@@ -222,7 +276,7 @@ static int create_fieldCacheTable(sqlite3 *field_cache_db, StringList *dbFile_li
 	stringList_free(tableList);
 	sqlite3_close(db);
     }
-    ret=sqlite3_exec(field_cache_db, "CREATE INDEX FieldCacheIndex ON FieldCacheTable (FieldId, FieldName, TableName);",NULL,NULL,&errMsg_ptr);
+    ret=sqlite3_exec(field_cache_db, "CREATE INDEX FieldCacheIndex ON FieldCacheTable (FieldId, TableId, TableName);",NULL,NULL,&errMsg_ptr);
     if (ret){
 	verboseMsg_print(VERBOSE_MSG_ERROR,"Field cache DB index error:%s\n",sqlite3_errmsg(field_cache_db));
 	sqlite3_close(field_cache_db);
@@ -289,7 +343,7 @@ int main(int argc,char** argv){
 	return 1;
     }
 
-    int ret=create_fieldCacheTable(field_cache_db,fieldDb_list);
+    int ret=create_fieldCacheDb(field_cache_db,fieldDb_list);
     sqlite3_close(field_cache_db);
     if (ret){
 	return ret;

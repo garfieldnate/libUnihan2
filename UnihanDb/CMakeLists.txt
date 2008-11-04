@@ -10,16 +10,23 @@ SET(PRJ_VER_MINOR "1")
 SET(PRJ_VER_PATCH "0")
 SET(PRJ_VER_RELEASE "8")
 
-SET(SUPPORTED_DIST_TAGS F-9 F-10 EL-5) 
-SET(BODHI_DIST_TAGS fc9 fc10)
-
 # For CVS changelog
 SET(CHANGE_SUMMARY "This release fixes the no API documents, also corrects some functions in  collection.[ch], file_functions.[ch]")
 
 
 ####################################################################
-# Include common.CMakeLists.txt
+# Includes
 ####################################################################
+
+
+#==================================================================
+# Include libUnihan-common.CMakeLists.txt
+#
+INCLUDE(libUnihan-common.CMakeLists.txt)
+
+#==================================================================
+# Include common.CMakeLists.txt
+#
 SET(IS_NOARCH)
 SET(GENERATE_UPLOADPKG_BATCH TRUE)
 SET(GENERATE_SPEC TRUE)
@@ -28,11 +35,16 @@ INCLUDE(common.CMakeLists.txt)
 SET(DB_DIR ${datadir}/${DB_PRJ_NAME})
 ADD_DEFINITIONS(-DPRJ_VER='"${PRJ_VER_FULL}"')
 
-####################################################################
-# Include libUnihan-common.CMakeLists.txt
-####################################################################
-INCLUDE(libUnihan-common.CMakeLists.txt)
 
+
+####################################################################
+# Required header files and library
+####################################################################
+
+
+FIND_PACKAGE(PkgConfig)
+PKG_CHECK_MODULES(GLIB2 glib-2.0)
+PKG_CHECK_MODULES(SQLITE3 sqlite3)
 
 FIND_PATH(UNIHAN_H_DIR NAMES Unihan.h PATHS /usr/include /usr/include/libUnihan
     /usr/local/include /usr/local/include/libUnihan)
@@ -41,9 +53,16 @@ INCLUDE_DIRECTORIES(${GLIB2_INCLUDE_DIRS} ${SQLITE3_INCLUDE_DIRS} ../src
     ${UNIHAN_H_DIR})
 
 
+# Library location for the linker
+LINK_DIRECTORIES(${GLIB2_LIBRARY_DIRS} ${SQLITE3_LIBRARY_DIRS} ../bin)
+
+
 #==================================================================
 # Source code and documents
 #
+
+SET(EXECUTABLE_OUTPUT_PATH bin)
+SET(LIBRARY_OUTPUT_PATH bin)
 
 SET(UnihanDb_SRCS unihan_search_db.c)
 
