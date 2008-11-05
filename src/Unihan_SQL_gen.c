@@ -1089,11 +1089,11 @@ int unihan_insert_no_duplicate(UnihanTable table, StringList *valueList){
 
 int unihanSql_exec(char *sqlClause, sqlite_exec_callback callback, 
 	void *callbackOption,  char **errMsg_ptr){
-    return sqlite3_exec(unihanDb, sqlClause, callback, callbackOption, errMsg_ptr);
+    return sqlite3_exec(fieldCacheDb, sqlClause, callback, callbackOption, errMsg_ptr);
 }
 
 int unihanSql_count_matches(const char * sqlClause, char **errMsg_ptr){
-    int ret=sqlite_count_matches(unihanDb,sqlClause,errMsg_ptr);
+    int ret=sqlite_count_matches(fieldCacheDb,sqlClause,errMsg_ptr);
     if (ret<0){
 	verboseMsg_print(VERBOSE_MSG_ERROR, "Database error: %s\n", *errMsg_ptr);
     }
@@ -1101,7 +1101,7 @@ int unihanSql_count_matches(const char * sqlClause, char **errMsg_ptr){
 }
 
 SQL_Result *unihanSql_get_sql_result(const char *sqlClause){
-    return sqlite_get_sql_result(unihanDb, sqlClause);
+    return sqlite_get_sql_result(fieldCacheDb, sqlClause);
 }
 
 

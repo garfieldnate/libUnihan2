@@ -30,7 +30,7 @@
 #include "Unihan_phonetic.h"
 
 #define MAX_BUFFER_SIZE 2000
-static sqlite3 *unihanDb=NULL;
+static sqlite3 *fieldCacheDb=NULL;
 
 #include "Unihan_SQL_funcs.c"
 #include "Unihan_SQL_gen.c"
@@ -147,26 +147,26 @@ char *unihanChar_to_scalar_string(gunichar code){
 
 
 int unihanDb_open(const char *filename, int flags){
-    int ret=sqlite_open(filename,&unihanDb,flags);
+    int ret=sqlite_open(filename,&fieldCacheDb,flags);
 
     if (ret) {
-	verboseMsg_print(VERBOSE_MSG_ERROR, "unihanDb_open(%s,%d): %s\n", 
-		filename,flags,sqlite3_errmsg(unihanDb));
-	sqlite3_close(unihanDb);
-	unihanDb=NULL;
+	verboseMsg_print(VERBOSE_MSG_ERROR, "fieldCacheDb_open(%s,%d): %s\n", 
+		filename,flags,sqlite3_errmsg(fieldCacheDb));
+	sqlite3_close(fieldCacheDb);
+	fieldCacheDb=NULL;
 	return ret;
     }
 
     int i=0;
     for(i=0; DATABASE_FUNCS[i].argc!=0;i++){
-	ret = sqlite3_create_function(unihanDb,DATABASE_FUNCS[i].funcName,
+	ret = sqlite3_create_function(fieldCacheDb,DATABASE_FUNCS[i].funcName,
 		DATABASE_FUNCS[i].argc,SQLITE_UTF8,NULL,
 		DATABASE_FUNCS[i].func,DATABASE_FUNCS[i].stepFunc,DATABASE_FUNCS[i].finalizeFunc);
 	if (ret) {
-	    verboseMsg_print(VERBOSE_MSG_ERROR, "unihanDb_open(%s,%d): Cannot set function %s, Msg:%s\n",
-		    filename,flags,DATABASE_FUNCS[i].funcName,sqlite3_errmsg(unihanDb));
-	    sqlite3_close(unihanDb);
-	    unihanDb=NULL;
+	    verboseMsg_print(VERBOSE_MSG_ERROR, "fieldCacheDb_open(%s,%d): Cannot set function %s, Msg:%s\n",
+		    filename,flags,DATABASE_FUNCS[i].funcName,sqlite3_errmsg(fieldCacheDb));
+	    sqlite3_close(fieldCacheDb);
+	    fieldCacheDb=NULL;
 	}
     }
 
@@ -174,20 +174,23 @@ int unihanDb_open(const char *filename, int flags){
 }
 
 int unihanDb_open_default(){
-    return unihanDb_open(UNIHAN_DB_DEFAULT_PATH, SQLITE_OPEN_READONLY);
+    gchar path[PATH_MAX];
+    g_strlcpy(path,UNIHAN_DB_DEFAULT_PATH,PATH_MAX);
+    path_concat(path,FIELD_CACHE_DB,PATH_MAX);
+    return unihanDb_open(path , SQLITE_OPEN_READONLY);
 }
 
 sqlite3 *unihanDb_get(){
-    return unihanDb;
+    return fieldCacheDb;
 }
 
 SQL_Result *unihanDb_get_tableNames(){
-    g_assert(unihanDb);
-    return sqlite_get_tableNames(unihanDb);
+    g_assert(fieldCacheDb);
+    return sqlite_get_tableNames(fieldCacheDb);
 }
 
 int unihanDb_close(){
-    return sqlite3_close(unihanDb);
+    return sqlite3_close(fieldCacheDb);
 }
 
 /*=================================
@@ -672,7 +675,7 @@ UnihanField* unihanTable_get_db_fields(UnihanTable table){
     UnihanField *fields=NEW_ARRAY_INSTANCE(UNIHAN_FIELD_ARRAY_MAX_LEN,UnihanField);
     GString *strBuf=g_string_new("SELECT * FROM ");
     g_string_append(strBuf,unihanTable_to_string(table));
-    StringList *sList=sqlite_get_fieldNames(unihanDb,strBuf->str,&execResult, &errMsg);
+    StringList *sList=sqlite_get_fieldNames(fieldCacheDb,strBuf->str,&execResult, &errMsg);
     guint counter=0;
     if (sList){
 	for(counter=0;counter< sList->len; counter++){

@@ -1,13 +1,16 @@
-- New Features:
+- New Features for user:
   Option -v (version) is available for all programs.
-- New Functions:
+- New stuff for developer:
   file_functions.h: lsDir().
 - Fixed:
   + unihan_find_firstMatched() is corrected as unihan_find_first_matched()
   + The field index kCheungBauer and kCheungBauerIndex are corrected.
 - Changed:
-  + All programs are use [-V number] instead of multiple V.
+  + All programs now use [-V number] instead of multiple V.
   + Argument const_count in stringList_sized_new() is removed.
+  + The behavior of unihanDb_open_default() and unihan_open() has changed:
+    now unihanDb_open() opens the user-defined cache and the db it mentions;
+    while unihanDb_open_default() opens the system cache and the db it mentions.
 - Removed:
   + No more UNIHAN_DEFAULT_DB
 
