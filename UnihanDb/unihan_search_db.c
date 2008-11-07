@@ -73,6 +73,20 @@ gchar *outputDir=NULL;
 
 guint fileMode= FILE_MODE_READ | FILE_MODE_NO_SYMLINK; 
 
+UnihanTable installedBuiltInTables[UNIHAN_TABLES_COUNT];
+guint installedBuiltInTableIndex=0;
+
+
+static gboolean unihanTable_exists(UnihanTable table ){
+    int i;
+    for(i=0;i<installedBuiltInTableIndex;i++){
+	if (installedBuiltInTables[i]==table){
+	    return TRUE;
+	}
+    }
+    return FALSE;
+}
+
 static void printUsage(char **argv){
     printf(USAGE_MSG,argv[0],PATH_SEPARATOR);
 }
@@ -168,11 +182,12 @@ static int create_fieldCacheDb_tables(sqlite3 *field_cache_db){
 	return 3;
     }
 
-    /* Create RealFieldIdTable */
-    if (sqlite_exec_handle_error(field_cache_db,"CREATE TABLE RealFieldIdTable "
-	    "(FieldId integer NOT NULL, FieldName text NOT NULL,"
+    /* Create FieldIdTable */
+    if (sqlite_exec_handle_error(field_cache_db,"CREATE TABLE FieldIdTable "
+	    "(FieldId integer NOT NULL, FieldName text NOT NULL, "
+	    "Pseudo integer NOT NULL, "
 	    "PRIMARY KEY(FieldId));",NULL,NULL,
-	    sqlite_error_callback_hide_constraint_error,"Error on creating RealFieldIdTable")){
+	    sqlite_error_callback_hide_constraint_error,"Error on creating FieldIdTable")){
 	return 4;
     }
 
@@ -182,12 +197,56 @@ static int create_fieldCacheDb_tables(sqlite3 *field_cache_db){
 	    "(FieldId integer NOT NULL, TableId integer NOT NULL, "
 	    " DBName text NOT NULL, Preferred integer NOT NULL,"
 	    "PRIMARY KEY(FieldId, TableId, DBName));",NULL,NULL,
-	    sqlite_error_callback_hide_constraint_error,"Error on creating RealFieldIdTable")){	    
+	    sqlite_error_callback_hide_constraint_error,"Error on creating RealFieldTable")){	    
+	return 5;
+    }
+
+    /* Create PseudoFieldRequireTable */
+    if (sqlite_exec_handle_error(field_cache_db,"CREATE TABLE PseudoFieldRequireTable "
+		"(FieldId integer NOT NULL, TableId integer NOT NULL, "
+		"PRIMARY KEY(FieldId, TableId));",NULL,NULL,
+		sqlite_error_callback_hide_constraint_error,"Error on creating PseudoFieldRequireTable")){	    
+	return 5;
+    }
+
+    return 0;
+}
+
+static int create_fieldCacheDb_indexes(sqlite3 *field_cache_db){
+    if (sqlite_exec_handle_error(field_cache_db,"CREATE INDEX DbFileIndex ON DbFileTable (DbName);"
+	    ,NULL,NULL,
+	    sqlite_error_callback_hide_constraint_error,"DbFileIndex create")){
+	return 11;
+    }
+
+    if (sqlite_exec_handle_error(field_cache_db,"CREATE INDEX TableIdIndex ON TableIdTable (TableId);"
+	    ,NULL,NULL,
+	    sqlite_error_callback_hide_constraint_error,"TableIdIndex create")){
+	return 12;
+    }
+
+    if (sqlite_exec_handle_error(field_cache_db,"CREATE INDEX RealFieldIdIndex ON FieldIdTable (FieldId);"
+	    ,NULL,NULL,
+	    sqlite_error_callback_hide_constraint_error,"RealFieldIdIndex create")){
+	return 13;
+    }
+
+    if (sqlite_exec_handle_error(field_cache_db,
+	    "CREATE INDEX RealFieldIndex ON RealFieldTable (FieldId, TableId, DbName);"
+	    ,NULL,NULL,
+	    sqlite_error_callback_hide_constraint_error,"RealFieldIndex create")){
+	return 14;
+    }
+
+    if (sqlite_exec_handle_error(field_cache_db,
+		"CREATE INDEX PseudoFieldRequireIndex ON PseudoFieldRequireTable (FieldId, TableId);"
+		,NULL,NULL,
+		sqlite_error_callback_hide_constraint_error,"Error on creating PseudoFieldRequireTable")){	    
 	return 5;
     }
     return 0;
-
 }
+
 
 static int create_fieldCacheDb(sqlite3 *field_cache_db, StringList *dbFile_list){
     int i,j,k,ret;
@@ -224,6 +283,10 @@ static int create_fieldCacheDb(sqlite3 *field_cache_db, StringList *dbFile_list)
 
 	    if (table_tmp>=0){
 		table=table_tmp;
+		if (!unihanTable_exists(table)){
+		    installedBuiltInTables[installedBuiltInTableIndex++]=table;
+		    installedBuiltInTables[installedBuiltInTableIndex]=UNIHAN_INVALID_TABLE;
+		}
 	    }else{
 		/* Not found in built-in record, should be 3rd party. */
 		table=table_3rdParty_index++;
@@ -273,10 +336,10 @@ static int create_fieldCacheDb(sqlite3 *field_cache_db, StringList *dbFile_list)
 		}
 
 		sqlite3_snprintf(BUFFER_SIZE,sqlCmd_buf,
-			"INSERT INTO RealFieldIdTable VALUES (%d, %Q);",
+			"INSERT INTO FieldIdTable VALUES (%d, %Q, 0);",
 			table, stringList_index(tableList,j) );
 		ret=sqlite_exec_handle_error(field_cache_db,sqlCmd_buf,NULL,NULL,
-			sqlite_error_callback_hide_constraint_error,"RealFieldIdTable insert");
+			sqlite_error_callback_hide_constraint_error,"FieldIdTable insert");
 		verboseMsg_print(VERBOSE_MSG_INFO2,"%s\n",sqlCmd_buf);
 
 
@@ -292,24 +355,6 @@ static int create_fieldCacheDb(sqlite3 *field_cache_db, StringList *dbFile_list)
 	stringList_free(tableList);
 	sqlite3_close(db);
     }
-    ret=sqlite_exec_handle_error(field_cache_db,"CREATE INDEX DbFileIndex ON DbFileTable (DbName);"
-	    ,NULL,NULL,
-	    sqlite_error_callback_hide_constraint_error,"DbFileIndex create");
-
-    ret=sqlite_exec_handle_error(field_cache_db,"CREATE INDEX TableIdIndex ON TableIdTable (TableId);"
-	    ,NULL,NULL,
-	    sqlite_error_callback_hide_constraint_error,"TableIdIndex create");
-
-    ret=sqlite_exec_handle_error(field_cache_db,"CREATE INDEX RealFieldIdIndex ON RealFieldIdTable (FieldId);"
-	    ,NULL,NULL,
-	    sqlite_error_callback_hide_constraint_error,"RealFieldIdIndex create");
-
-    ret=sqlite_exec_handle_error(field_cache_db,
-	    "CREATE INDEX RealFieldIndex ON RealFieldTable (FieldId, TableId, DbName);"
-	    ,NULL,NULL,
-	    sqlite_error_callback_hide_constraint_error,"RealFieldIndex create");
-
-    verboseMsg_print(VERBOSE_MSG_CRITICAL,"Done.\n",stringList_index(dbFile_list,i));
 
     return 0;
 }
@@ -349,12 +394,49 @@ static sqlite3 *backup_and_create_cache_db(const gchar *cacheFilename){
     return db;
 }
 
+
+
+static int add_internal_pseudo_fields(sqlite3 *db){
+    int j;
+    UnihanField field;
+    gboolean pass;
+    gchar sqlCmd_buf[BUFFER_SIZE];
+
+    UnihanTable *tables=NULL;
+    for(field=0; field< UNIHAN_FIELD_3RD_PARTY;field++){
+	if (unihanField_is_pseudo(field)){
+	    pass=TRUE;
+	    tables=unihanField_get_required_tables(field);
+	    for(j=0; tables[j]!=UNIHAN_INVALID_TABLE; j++){
+		if (!unihanTable_exists(tables)){
+		    pass=FALSE;
+		    break;
+		}
+	    }
+	    if (pass){
+		for(j=0; tables[j]!=UNIHAN_INVALID_TABLE; j++){
+		    sqlite3_snprintf(BUFFER_SIZE,sqlCmd_buf,
+			    "INSERT INTO PseudoFieldRequireTable VALUES (%d, %d);",
+			    field, tables[j] );
+		}
+		sqlite3_snprintf(BUFFER_SIZE,sqlCmd_buf,
+			"INSERT INTO FieldIdTable VALUES (%d, %Q, 1);",
+			field, unihanField_to_string(field) );
+
+	    }
+	    free(tables);
+	}
+    }
+    return 0;
+}
+
 int main(int argc,char** argv){
     if (!is_valid_arguments(argc, argv)){
 	printUsage(argv);
 	exit(-1);
     }
     verboseMsg_print(VERBOSE_MSG_INFO3,"searchPath=%s outputDir=%s\n",searchPath,outputDir);
+    installedBuiltInTables[0]=UNIHAN_INVALID_TABLE;
 
     /* Create field cache db */
     StringList *fieldDb_list=find_dbs(searchPath, FIELD_DB_PATTERNS);
@@ -370,11 +452,17 @@ int main(int argc,char** argv){
     }
 
     int ret=create_fieldCacheDb(field_cache_db,fieldDb_list);
-    sqlite3_close(field_cache_db);
     if (ret){
 	return ret;
     }
+    
+    ret=create_fieldCacheDb_indexes(field_cache_db);
+    if (ret){
+	return ret;
+    }
+    sqlite3_close(field_cache_db);
 
     stringList_free(fieldDb_list);
+    verboseMsg_print(VERBOSE_MSG_CRITICAL,"Done.\n");
     return 0;
 }

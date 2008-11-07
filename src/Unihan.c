@@ -34,8 +34,8 @@ static sqlite3 *fieldCacheDb=NULL;
 
 #include "Unihan_SQL_funcs.c"
 #include "Unihan_SQL_gen.c"
-#define UNIHAN_FIELD_ARRAY_MAX_LEN 10
-#define UNIHAN_TABLE_ARRAY_MAX_LEN 100
+#define UNIHAN_FIELD_ARRAY_MAX_LEN 200
+#define UNIHAN_TABLE_ARRAY_MAX_LEN 800
 
 /*=================================
  * Unihan character functions.
@@ -337,6 +337,40 @@ UnihanTable unihanField_get_extra_table(UnihanField field){
     return UNIHAN_INVALID_TABLE;
 }
 
+UnihanTable *unihanField_get_required_tables(UnihanField field){
+    UnihanTable *tables=NEW_ARRAY_INSTANCE(UNIHAN_TABLE_ARRAY_MAX_LEN,UnihanTable);
+    int counter=0;
+    int i;
+    if (field>=UNIHAN_FIELD_3RD_PARTY){
+	/* This function does no treat 3rd party table */
+	tables[counter]=UNIHAN_INVALID_TABLE;
+	return tables;
+    }
+    for(i=0; PSEUDO_FIELDS_REQUIRED_TABLES[i].pseudoField != UNIHAN_INVALID_FIELD ; i++){
+	if (PSEUDO_FIELDS_REQUIRED_TABLES[i].pseudoField == field ){
+	    tables[counter++]=PSEUDO_FIELDS_REQUIRED_TABLES[i].requiredTable;
+	    if (counter>=UNIHAN_TABLE_ARRAY_MAX_LEN-1){
+		/* Too long, trim the result. */
+		tables[counter]=UNIHAN_INVALID_TABLE;
+		return tables;
+
+	    }
+	}
+    }
+    if (counter>0){
+	/* Mark the end of UnihanTable */
+	tables[counter]=UNIHAN_INVALID_TABLE;
+	return tables;
+    }
+    tables[counter++]=unihanField_get_table(field);
+    tables[counter]=unihanField_get_extra_table(field);
+    if (tables[counter]!=UNIHAN_INVALID_TABLE){
+	/* Mark the end of UnihanTable */
+	tables[counter+1]=UNIHAN_INVALID_TABLE;
+    }
+    return tables;
+}
+
 gboolean unihanField_is_IRG_Source(UnihanField field){
     if (unihanField_get_IRG_source(field)>=0){
 	return TRUE;
@@ -392,25 +426,13 @@ gboolean unihanField_is_mandarin(UnihanField field){
 }
 
 gboolean unihanField_is_pseudo(UnihanField field){
-    if (unihanField_is_IRG_Source(field)){
-	return TRUE;
-    }
-    if (unihanField_array_index(field,UNIHAN_KVARIANT_FIELDS)>=0){
-	return TRUE;
-    }
-    if (unihanField_array_index(field,UNIHAN_KRS_FIELDS)>=0){
-	return TRUE;
-    }
-    switch(field){
-	case UNIHAN_FIELD_kHANYUPINLU:
-	case UNIHAN_FIELD_kIRGKANGXI:
-	case UNIHAN_FIELD_kKANGXI:
+    int i;
+    for (i=0; PSEUDO_FIELDS[i].pseudoField!=UNIHAN_INVALID_FIELD ; i++){
+	if (PSEUDO_FIELDS[i].pseudoField==field){
 	    return TRUE;
-	case UNIHAN_FIELD_ZHUYIN:
-	    return TRUE;
-	default:
-	    return FALSE;
+	}
     }
+    return FALSE;
 }
 
 gboolean unihanField_is_ucs4(UnihanField field){

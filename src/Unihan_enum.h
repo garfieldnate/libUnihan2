@@ -343,7 +343,7 @@ typedef enum{
     UNIHAN_TABLE_kXHC1983,		//!< Table for One or more Hanyu pinyin reading as given in Xiandai Hanyu Ciden.
     UNIHAN_TABLE_kZVARIANT,		//!< Table for Z-variants.
 
-    UNIHAN_TABLE_UTF8,			//!< Table for UTF-8.
+    UNIHAN_TABLE_CODE,			//!< Table for UTF-8.
     UNIHAN_TABLE_IRG_SOURCE,		//!< Table for IRG Sources.
     UNIHAN_TABLE_IRG_SOURCE_MAPPING,	//!< Table for IRG Sources and its mapping/code.
     UNIHAN_TABLE_kSEMANTICVARIANT_EXTRA,  //!< Table for dictionary that states the semantical relationship.

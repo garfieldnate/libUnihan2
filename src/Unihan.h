@@ -467,6 +467,23 @@ UnihanTable *unihanField_get_all_tables(UnihanField field);
 UnihanTable unihanField_get_extra_table(UnihanField field);
 
 /**
+ * Return the built-in tables that required by the built-in field.
+ *
+ * The function returns built-in tables that required by the specified built-in field.
+ * This function is designed for handling only the build-in fields.
+ * It returns an UnihanTable array with \c UNIHAN_INVALID_TABLE at index 0, 
+ * if 3rd party fields is given.
+ *
+ * Free the returned array with free() or g_free().
+ *
+ * @param field  the UnihanField.
+ * @return An newly allocated array of UnihanTable that \c field requires, terminated by UNIHAN_INVALID_TABLE.
+ * @see unihanField_get_table()
+ * @see unihanField_get_extra_table()
+ */
+UnihanTable *unihanField_get_required_tables(UnihanField field);
+
+/**
  * Whether the field is IRG_Source.
  *
  * It is a convenient wrapper of unihanField_get_IRG_source().
