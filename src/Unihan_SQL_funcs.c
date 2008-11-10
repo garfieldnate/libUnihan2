@@ -21,8 +21,6 @@
  */
 
 
-#include "Unihan_SQL_def.c"
-
 /*=========================================================================
  * Value parsing/toString functions
  */

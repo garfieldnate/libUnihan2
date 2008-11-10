@@ -1,6 +1,10 @@
-- New Features for user:
+- New Features:
   Option -v (version) is available for all programs.
-- New stuff for developer:
+- New Fields:
+  + UNIHAN_FIELD_RADICAL_IS_SIMPLIFIED "radical_is_simplified" .
+  + UNIHAN_FIELD_PINYIN_BASE "pinYin_base".
+  + UNIHAN_FIELD_PINYIN_TONE "pinYin_tone".
+- New functions:
   file_functions.h: lsDir().
 - Fixed:
   + unihan_find_firstMatched() is corrected as unihan_find_first_matched()
@@ -13,6 +17,7 @@
     while unihanDb_open_default() opens the system cache and the db it mentions.
 - Removed:
   + No more UNIHAN_DEFAULT_DB
+  + UNIHAN_FIELD_VARIANT_TYPE is removed.
 
 * Tue Oct 21 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.5.3-3
 - Add following make targets: rpm_lint, koji_submit, koji_build,  pkg_remove_old.

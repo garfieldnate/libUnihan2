@@ -17,7 +17,8 @@ CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/confi
 # Unihan_SQL_gen.c is already included in Unihan.c,
 # no need to be in libUnihan_SRCS
 SET(libUnihan_SRCS Unihan.c Unihan.h Unihan_enum.h 
-    Unihan_phonetic.c Unihan_phonetic.h)
+    Unihan_phonetic.c Unihan_phonetic.h
+)
 SET(supporting_SRCS allocate.c allocate.h
     collection.c collection.h
     file_functions.c file_functions.h
@@ -37,12 +38,17 @@ SET_TARGET_PROPERTIES(Unihan PROPERTIES
 # executable built from some source
 ADD_EXECUTABLE(unihan_converter  unihan_converter.c)
 ADD_EXECUTABLE(unihan_query	 unihan_query.c)
+ADD_EXECUTABLE(unihan_rebuild_cache unihan_rebuild_cache.c)
+
 
 # Link the executable to the library.
-TARGET_LINK_LIBRARIES(Unihan ${SQLITE3_LIBRARIES}
-    ${GLIB2_LIBRARIES})
-TARGET_LINK_LIBRARIES(unihan_converter Unihan)
-TARGET_LINK_LIBRARIES(unihan_query Unihan)
+TARGET_LINK_LIBRARIES(unihan_converter Unihan 
+    ${SQLITE3_LIBRARIES} ${GLIB2_LIBRARIES})
+TARGET_LINK_LIBRARIES(unihan_query Unihan
+    ${SQLITE3_LIBRARIES} ${GLIB2_LIBRARIES})
+TARGET_LINK_LIBRARIES(unihan_rebuild_cache Unihan
+    ${SQLITE3_LIBRARIES} ${GLIB2_LIBRARIES})
+
 
 
 IF(NOT DEFINED LIB_INSTALL_DIR)
@@ -56,7 +62,7 @@ IF(NOT DEFINED LIB_INSTALL_DIR)
 ENDIF(NOT DEFINED LIB_INSTALL_DIR)
 
 
-INSTALL(TARGETS unihan_converter unihan_query Unihan
+INSTALL(TARGETS unihan_converter unihan_query unihan_rebuild_cache Unihan
      RUNTIME DESTINATION bin
      LIBRARY DESTINATION ${LIB_INSTALL_DIR}
 )

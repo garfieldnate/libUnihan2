@@ -177,6 +177,7 @@ typedef enum{
 
     UNIHAN_FIELD_RADICAL_INDEX,		//!< Index of KangXi radical.
     UNIHAN_FIELD_ADDITIONAL_STROKE_COUNT,  //!< Number of strokes of character without radical. As in paper dictionary.
+    UNIHAN_FIELD_RADICAL_IS_SIMPLIFIED,  //!< 1 if radical is simplified, 0 for normal radical.
 
     UNIHAN_FIELD_ADOBE_CID_CV,          //!< C or V. "C" indicates that the Unicode code point maps directly to the Adobe-Japan1-6 CID that appears after it, and "V" indicates that it is considered a variant form, and thus not directly encoded.
     UNIHAN_FIELD_ADOBE_CID,		//!< The Adobe-Japan1-6 CID.
@@ -188,7 +189,9 @@ typedef enum{
 
     UNIHAN_FIELD_FREQ_RANK,		//!< The rank of the frequency, 1 stands for most frequent, 2 for less frequent and so on.
 
-    UNIHAN_FIELD_PINYIN,		//!< HanYu pinyin
+    UNIHAN_FIELD_PINYIN,		//!< HanYu pinYin
+    UNIHAN_FIELD_PINYIN_BASE,		//!< PinYin without tone.
+    UNIHAN_FIELD_PINYIN_TONE,		//!< Tone of PinYin
     UNIHAN_FIELD_PINYIN_FREQ,		//!< Frequency appears in Xiandai Hanyu Pinlu Cidian (現代漢語頻率詞典)
 
     UNIHAN_FIELD_ZVARIANT_SOURCE, 	//!< The "Source" of Z variants, such as "kHKGlyph" 

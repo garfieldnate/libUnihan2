@@ -30,9 +30,6 @@
 #include "Unihan_phonetic.h"
 
 #define MAX_BUFFER_SIZE 2000
-
-#include "Unihan_SQL_funcs.c"
-#include "Unihan_SQL_gen.c"
 #define UNIHAN_FIELD_ARRAY_MAX_LEN 200
 #define UNIHAN_TABLE_ARRAY_MAX_LEN 800
 
@@ -50,11 +47,15 @@ typedef struct {
 
 DbSet *dbSet=NULL;
 
+static void sqlite_close(gpointer db){
+    sqlite3 *database= (sqlite3 *) db;
+    sqlite3_close(database);
+}
 
 static DbSet *dbSet_new(){
     DbSet *dbSet=NEW_INSTANCE(DbSet);
     dbSet->dbName_list=stringList_new();
-    dbSet->dbHandle_hashTable=g_hash_table_new_full (g_str_hash,g_str_equal,NULL,sqlite3_close);
+    dbSet->dbHandle_hashTable=g_hash_table_new_full (g_str_hash,g_str_equal,NULL,sqlite_close);
     return dbSet;
 }
 
@@ -64,6 +65,11 @@ static void dbSet_free(DbSet *dbSet){
     stringList_free(dbSet->dbName_list);
 
 }
+
+#include "Unihan_def.c"
+#include "Unihan_SQL_funcs.c"
+#include "Unihan_SQL_gen.c"
+
 
 /*=================================
  * Unihan character functions.
@@ -183,7 +189,7 @@ static int unihanDb_open_foreach_callback(gpointer user_option,
 	*flags_ptr &= ~ (SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
     }
     sqlite3 *db=NULL;
-    int ret=sqlite_open(results[1],&db,flags);
+    int ret=sqlite_open(results[1],&db,*flags_ptr);
 
     if (ret) {
 	verboseMsg_print(VERBOSE_MSG_ERROR, "Db open(%s,%d): %s\n", 
@@ -191,7 +197,7 @@ static int unihanDb_open_foreach_callback(gpointer user_option,
 	sqlite3_close(db);
 	return ret;
     }
-    int index=stringList_insert(dbSet->dbName_list,result[0]);
+    int index=stringList_insert(dbSet->dbName_list,results[0]);
     g_assert(db);
     g_hash_table_insert(dbSet->dbHandle_hashTable,stringList_index(dbSet->dbName_list,index),db);
 }
