@@ -168,7 +168,7 @@ static gchar* getDbName(gchar *buf, const gchar* dbFilename){
 static int create_fieldCacheDb_tables(sqlite3 *field_cache_db){
     /* Create DbFileTable */
     if (sqlite_exec_handle_error(field_cache_db,"CREATE TABLE DbFileTable "
-	    "(DbName text NOT NULL, DBPath text NOT NULL,"
+	    "(DbName text NOT NULL, DbPath text NOT NULL, DbWritable integer NOT NULL,"
 	    "PRIMARY KEY(DbName));",NULL,NULL,
 	    sqlite_error_callback_hide_constraint_error,"Error on creating DbFileTable")){
 	return 2;
@@ -213,21 +213,21 @@ static int create_fieldCacheDb_tables(sqlite3 *field_cache_db){
 }
 
 static int create_fieldCacheDb_indexes(sqlite3 *field_cache_db){
-    if (sqlite_exec_handle_error(field_cache_db,"CREATE INDEX DbFileIndex ON DbFileTable (DbName);"
+    if (sqlite_exec_handle_error(field_cache_db,"CREATE INDEX DbFileTableIndex ON DbFileTable (DbName);"
 	    ,NULL,NULL,
 	    sqlite_error_callback_hide_constraint_error,"DbFileIndex create")){
 	return 11;
     }
 
-    if (sqlite_exec_handle_error(field_cache_db,"CREATE INDEX TableIdIndex ON TableIdTable (TableId);"
+    if (sqlite_exec_handle_error(field_cache_db,"CREATE INDEX TableIdTableIndex ON TableIdTable (TableId);"
 	    ,NULL,NULL,
 	    sqlite_error_callback_hide_constraint_error,"TableIdIndex create")){
 	return 12;
     }
 
-    if (sqlite_exec_handle_error(field_cache_db,"CREATE INDEX RealFieldIdIndex ON FieldIdTable (FieldId);"
+    if (sqlite_exec_handle_error(field_cache_db,"CREATE INDEX RealFieldIdTableIndex ON FieldIdTable (FieldId);"
 	    ,NULL,NULL,
-	    sqlite_error_callback_hide_constraint_error,"RealFieldIdIndex create")){
+	    sqlite_error_callback_hide_constraint_error,"RealFieldIdTableIndex create")){
 	return 13;
     }
 
@@ -239,7 +239,7 @@ static int create_fieldCacheDb_indexes(sqlite3 *field_cache_db){
     }
 
     if (sqlite_exec_handle_error(field_cache_db,
-		"CREATE INDEX PseudoFieldRequireIndex ON PseudoFieldRequireTable (FieldId, TableId);"
+		"CREATE INDEX PseudoFieldRequireTableIndex ON PseudoFieldRequireTable (FieldId, TableId);"
 		,NULL,NULL,
 		sqlite_error_callback_hide_constraint_error,"Error on creating PseudoFieldRequireTable")){	    
 	return 5;
@@ -260,6 +260,8 @@ static int create_fieldCacheDb(sqlite3 *field_cache_db, StringList *dbFile_list)
     char sqlCmd_buf[BUFFER_SIZE];
     char dbName[PATH_MAX];
     char *errMsg_ptr;
+    int writable;
+    int preferred;
 
     ret=create_fieldCacheDb_tables(field_cache_db);
     if (ret){
@@ -313,9 +315,11 @@ static int create_fieldCacheDb(sqlite3 *field_cache_db, StringList *dbFile_list)
 		     * fields
 		     */
 		    getDbName(dbName,stringList_index(dbFile_list,i));
+		    writable=(isWritable(stringList_index(dbFile_list,i)))? 1: 0;
+
 		    sqlite3_snprintf(BUFFER_SIZE,sqlCmd_buf,
-			    "INSERT INTO DbFileTable VALUES (%Q, %Q);",
-			    dbName, stringList_index(dbFile_list,i) );
+			    "INSERT INTO DbFileTable VALUES (%Q, %Q, %d);",
+			    dbName, stringList_index(dbFile_list,i, writable) );
 		    ret=sqlite_exec_handle_error(field_cache_db,sqlCmd_buf,NULL,NULL,
 			    sqlite_error_callback_hide_constraint_error,"TableIdTable insert");
 		    verboseMsg_print(VERBOSE_MSG_INFO2,"%s\n",sqlCmd_buf);
@@ -337,15 +341,16 @@ static int create_fieldCacheDb(sqlite3 *field_cache_db, StringList *dbFile_list)
 
 		sqlite3_snprintf(BUFFER_SIZE,sqlCmd_buf,
 			"INSERT INTO FieldIdTable VALUES (%d, %Q, 0);",
-			table, stringList_index(tableList,j) );
+			field, stringList_index(fieldList,k) );
 		ret=sqlite_exec_handle_error(field_cache_db,sqlCmd_buf,NULL,NULL,
 			sqlite_error_callback_hide_constraint_error,"FieldIdTable insert");
 		verboseMsg_print(VERBOSE_MSG_INFO2,"%s\n",sqlCmd_buf);
 
 
+		preferred=0;
 		sqlite3_snprintf(BUFFER_SIZE,sqlCmd_buf,
 			"INSERT INTO RealFieldTable VALUES (%d, %d, %Q, %d);",
-			field, table, dbName, 0);	
+			field, table, dbName, preferred);
 		verboseMsg_print(VERBOSE_MSG_INFO2,"%s\n",sqlCmd_buf);
 		ret=sqlite_exec_handle_error(field_cache_db,sqlCmd_buf,NULL,NULL,
 			sqlite_error_callback_hide_constraint_error,"RealFieldTable insert");
@@ -401,6 +406,7 @@ static int add_internal_pseudo_fields(sqlite3 *db){
     UnihanField field;
     gboolean pass;
     gchar sqlCmd_buf[BUFFER_SIZE];
+    int ret=0,ret_tmp;
 
     UnihanTable *tables=NULL;
     for(field=0; field< UNIHAN_FIELD_3RD_PARTY;field++){
@@ -408,7 +414,7 @@ static int add_internal_pseudo_fields(sqlite3 *db){
 	    pass=TRUE;
 	    tables=unihanField_get_required_tables(field);
 	    for(j=0; tables[j]!=UNIHAN_INVALID_TABLE; j++){
-		if (!unihanTable_exists(tables)){
+		if (!unihanTable_exists(tables[j])){
 		    pass=FALSE;
 		    break;
 		}
@@ -418,16 +424,25 @@ static int add_internal_pseudo_fields(sqlite3 *db){
 		    sqlite3_snprintf(BUFFER_SIZE,sqlCmd_buf,
 			    "INSERT INTO PseudoFieldRequireTable VALUES (%d, %d);",
 			    field, tables[j] );
+		    ret_tmp=sqlite_exec_handle_error(db,sqlCmd_buf,NULL,NULL,
+			    sqlite_error_callback_hide_constraint_error,"PseudoFieldRequireTable insert");
+		    if (ret_tmp!=SQLITE_OK){
+			ret=ret_tmp;
+		    }
 		}
 		sqlite3_snprintf(BUFFER_SIZE,sqlCmd_buf,
 			"INSERT INTO FieldIdTable VALUES (%d, %Q, 1);",
 			field, unihanField_to_string(field) );
-
+		sqlite_exec_handle_error(db,sqlCmd_buf,NULL,NULL,
+			sqlite_error_callback_hide_constraint_error,"FieldIdTable insert");
+		if (ret_tmp!=SQLITE_OK){
+		    ret=ret_tmp;
+		}
 	    }
 	    free(tables);
 	}
     }
-    return 0;
+    return ret;
 }
 
 int main(int argc,char** argv){
@@ -456,6 +471,11 @@ int main(int argc,char** argv){
 	return ret;
     }
     
+     ret=add_internal_pseudo_fields(field_cache_db);
+    if (ret){
+	return ret;
+    }
+
     ret=create_fieldCacheDb_indexes(field_cache_db);
     if (ret){
 	return ret;

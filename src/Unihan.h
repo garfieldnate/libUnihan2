@@ -52,6 +52,16 @@ typedef struct {
 } UnihanIRG_SourceData;
 
 /**
+ * Structure for field-table pair.
+ *
+ * This struct stores a pair of UnihanField and UnihanTable.
+ */
+typedef struct {
+    UnihanField field;
+    UnihanTable table;
+} UnihanFieldTablePair;
+
+/**
  * IRG source rec.
  *
  * This struct stores an IRG source ID for a character and 

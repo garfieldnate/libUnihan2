@@ -125,7 +125,7 @@ void sqlite_error_callback_print_message(sqlite3 *db, const gchar *sqlClause, gi
     gchar *prompt_str=(gchar *) prompt;
     verboseMsg_print(VERBOSE_MSG_ERROR,"%s: Error on SQL statement: %s\n",prompt_str,sqlClause);
     verboseMsg_print(VERBOSE_MSG_ERROR,"Error code:%d ",error_code);
-    verboseMsg_print(VERBOSE_MSG_ERROR,"message %s.\n",error_msg);
+    verboseMsg_print(VERBOSE_MSG_ERROR,"Message: %s.\n",error_msg);
 }
 
 

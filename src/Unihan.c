@@ -30,12 +30,40 @@
 #include "Unihan_phonetic.h"
 
 #define MAX_BUFFER_SIZE 2000
-static sqlite3 *fieldCacheDb=NULL;
 
 #include "Unihan_SQL_funcs.c"
 #include "Unihan_SQL_gen.c"
 #define UNIHAN_FIELD_ARRAY_MAX_LEN 200
 #define UNIHAN_TABLE_ARRAY_MAX_LEN 800
+
+
+/*=================================
+ * Private data structures 
+ */
+static sqlite3 *fieldCacheDb=NULL;
+static GHashTable *installedDb=NULL;
+
+typedef struct {
+    StringList *dbName_list;
+    GHashTable *dbHandle_hashTable;
+} DbSet;
+
+DbSet *dbSet=NULL;
+
+
+static DbSet *dbSet_new(){
+    DbSet *dbSet=NEW_INSTANCE(DbSet);
+    dbSet->dbName_list=stringList_new();
+    dbSet->dbHandle_hashTable=g_hash_table_new_full (g_str_hash,g_str_equal,NULL,sqlite3_close);
+    return dbSet;
+}
+
+static void dbSet_free(DbSet *dbSet){
+    g_assert(dbSet);
+    g_hash_table_remove_all (dbSet->dbHandle_hashTable);
+    stringList_free(dbSet->dbName_list);
+
+}
 
 /*=================================
  * Unihan character functions.
@@ -145,6 +173,29 @@ char *unihanChar_to_scalar_string(gunichar code){
  * Sqlite DB file functions.
  */
 
+static int unihanDb_open_foreach_callback(gpointer user_option, 
+	gint col_num, gchar **results, gchar **col_names){
+    int *flags_ptr= (int *) user_option;
+    int writable=atoi(results[2]);
+    if (!writable){
+	/* If the dbFile is not writable, the remove the R/W and create
+	 * permission */
+	*flags_ptr &= ~ (SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
+    }
+    sqlite3 *db=NULL;
+    int ret=sqlite_open(results[1],&db,flags);
+
+    if (ret) {
+	verboseMsg_print(VERBOSE_MSG_ERROR, "Db open(%s,%d): %s\n", 
+		results[1],flags,sqlite3_errmsg(db));
+	sqlite3_close(db);
+	return ret;
+    }
+    int index=stringList_insert(dbSet->dbName_list,result[0]);
+    g_assert(db);
+    g_hash_table_insert(dbSet->dbHandle_hashTable,stringList_index(dbSet->dbName_list,index),db);
+}
+
 
 int unihanDb_open(const char *filename, int flags){
     int ret=sqlite_open(filename,&fieldCacheDb,flags);
@@ -157,7 +208,17 @@ int unihanDb_open(const char *filename, int flags){
 	return ret;
     }
 
-    int i=0;
+    /* Open each */
+    if (dbSet){
+	dbSet_free(dbSet);
+    }
+    dbSet=dbSet_new();
+    ret=sqlite_exec_handle_error(field_cache_db,"SELECT * FROM DbFileTable;",
+	    unihanDb_open_foreach_callback, &flags,
+	    sqlite_error_callback_print_message,"DbFileTable SELECT");
+
+    int i;
+
     for(i=0; DATABASE_FUNCS[i].argc!=0;i++){
 	ret = sqlite3_create_function(fieldCacheDb,DATABASE_FUNCS[i].funcName,
 		DATABASE_FUNCS[i].argc,SQLITE_UTF8,NULL,
@@ -346,9 +407,9 @@ UnihanTable *unihanField_get_required_tables(UnihanField field){
 	tables[counter]=UNIHAN_INVALID_TABLE;
 	return tables;
     }
-    for(i=0; PSEUDO_FIELDS_REQUIRED_TABLES[i].pseudoField != UNIHAN_INVALID_FIELD ; i++){
-	if (PSEUDO_FIELDS_REQUIRED_TABLES[i].pseudoField == field ){
-	    tables[counter++]=PSEUDO_FIELDS_REQUIRED_TABLES[i].requiredTable;
+    for(i=0; PSEUDO_FIELDS_REQUIRED_TABLES[i].field != UNIHAN_INVALID_FIELD ; i++){
+	if (PSEUDO_FIELDS_REQUIRED_TABLES[i].field == field ){
+	    tables[counter++]=PSEUDO_FIELDS_REQUIRED_TABLES[i].table;
 	    if (counter>=UNIHAN_TABLE_ARRAY_MAX_LEN-1){
 		/* Too long, trim the result. */
 		tables[counter]=UNIHAN_INVALID_TABLE;
@@ -427,8 +488,8 @@ gboolean unihanField_is_mandarin(UnihanField field){
 
 gboolean unihanField_is_pseudo(UnihanField field){
     int i;
-    for (i=0; PSEUDO_FIELDS[i].pseudoField!=UNIHAN_INVALID_FIELD ; i++){
-	if (PSEUDO_FIELDS[i].pseudoField==field){
+    for (i=0; PSEUDO_FIELDS[i].field!=UNIHAN_INVALID_FIELD ; i++){
+	if (PSEUDO_FIELDS[i].field==field){
 	    return TRUE;
 	}
     }
@@ -467,6 +528,11 @@ const char* unihanField_to_string(UnihanField field){
     }
     return UNIHAN_FIELD_NAMES[field];
 }
+
+
+/*=================================
+ * Field DB functions
+ */
 
 /*=========================================================================
  * IRG_Source functions

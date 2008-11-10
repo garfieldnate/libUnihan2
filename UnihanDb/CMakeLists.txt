@@ -67,13 +67,13 @@ LINK_DIRECTORIES(${GLIB2_LIBRARY_DIRS} ${SQLITE3_LIBRARY_DIRS} ../bin)
 SET(EXECUTABLE_OUTPUT_PATH bin)
 SET(LIBRARY_OUTPUT_PATH bin)
 
-SET(UnihanDb_SRCS unihan_search_db.c)
+SET(UnihanDb_SRCS unihan_rebuild_cache.c)
 
 # executable built from some source
-ADD_EXECUTABLE(unihan_search_db  ${UnihanDb_SRCS})
+ADD_EXECUTABLE(unihan_rebuild_cache  ${UnihanDb_SRCS})
 
 # Link the executable to the library.
-TARGET_LINK_LIBRARIES(unihan_search_db Unihan)
+TARGET_LINK_LIBRARIES(unihan_rebuild_cache Unihan)
 
 SET(MAIN_DOCS README ChangeLog NEWS )
 
@@ -81,7 +81,7 @@ INSTALL(FILES ${MAIN_DOCS}
     DESTINATION "${docdir}/${PROJECT_NAME}-${PRJ_VER}")
 
 
-INSTALL(TARGETS unihan_search_db
+INSTALL(TARGETS unihan_rebuild_cache
      RUNTIME DESTINATION bin
 )
 
