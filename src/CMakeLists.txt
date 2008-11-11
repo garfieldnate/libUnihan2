@@ -42,12 +42,10 @@ ADD_EXECUTABLE(unihan_rebuild_cache unihan_rebuild_cache.c)
 
 
 # Link the executable to the library.
-TARGET_LINK_LIBRARIES(unihan_converter Unihan 
-    ${SQLITE3_LIBRARIES} ${GLIB2_LIBRARIES})
-TARGET_LINK_LIBRARIES(unihan_query Unihan
-    ${SQLITE3_LIBRARIES} ${GLIB2_LIBRARIES})
-TARGET_LINK_LIBRARIES(unihan_rebuild_cache Unihan
-    ${SQLITE3_LIBRARIES} ${GLIB2_LIBRARIES})
+TARGET_LINK_LIBRARIES(Unihan ${SQLITE3_LIBRARIES} ${GLIB2_LIBRARIES})
+TARGET_LINK_LIBRARIES(unihan_converter  Unihan)
+TARGET_LINK_LIBRARIES(unihan_query Unihan)
+TARGET_LINK_LIBRARIES(unihan_rebuild_cache Unihan)
 
 
 

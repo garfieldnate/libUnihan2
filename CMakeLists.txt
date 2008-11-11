@@ -43,18 +43,13 @@ INCLUDE(libUnihan-common.CMakeLists.txt)
 #==================================================================
 # Source code subdirectories
 #
-ADD_SUBDIRECTORY(src bin)
-ADD_SUBDIRECTORY(test)
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR})
-SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR})
-
 FIND_PACKAGE(PkgConfig)
 PKG_CHECK_MODULES(GLIB2 glib-2.0)
 PKG_CHECK_MODULES(SQLITE3 sqlite3)
 
-ADD_CUSTOM_TARGET(${DB_NAME}
-    COMMAND /bin/ln -sf ${DB_NAME}.${DB_VER}-${DB_RELEASE} ${DB_NAME}
-    DEPENDS ${DB_NAME}.${DB_VER}-${DB_RELEASE})
+#ADD_CUSTOM_TARGET(${DB_NAME}
+#    COMMAND /bin/ln -sf ${DB_NAME}.${DB_VER}-${DB_RELEASE} ${DB_NAME}
+#    DEPENDS ${DB_NAME}.${DB_VER}-${DB_RELEASE})
 
 
 SET(MAIN_DOCS AUTHORS README ChangeLog NEWS COPYING COPYING.LESSER )

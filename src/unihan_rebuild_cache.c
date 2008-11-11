@@ -319,7 +319,7 @@ static int create_fieldCacheDb(sqlite3 *field_cache_db, StringList *dbFile_list)
 
 		    sqlite3_snprintf(BUFFER_SIZE,sqlCmd_buf,
 			    "INSERT INTO DbFileTable VALUES (%Q, %Q, %d);",
-			    dbName, stringList_index(dbFile_list,i, writable) );
+			    dbName, stringList_index(dbFile_list,i), writable );
 		    ret=sqlite_exec_handle_error(field_cache_db,sqlCmd_buf,NULL,NULL,
 			    sqlite_error_callback_hide_constraint_error,"TableIdTable insert");
 		    verboseMsg_print(VERBOSE_MSG_INFO2,"%s\n",sqlCmd_buf);

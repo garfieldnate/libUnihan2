@@ -38,7 +38,6 @@
  * Private data structures 
  */
 static sqlite3 *fieldCacheDb=NULL;
-static GHashTable *installedDb=NULL;
 
 typedef struct {
     StringList *dbName_list;
@@ -193,13 +192,14 @@ static int unihanDb_open_foreach_callback(gpointer user_option,
 
     if (ret) {
 	verboseMsg_print(VERBOSE_MSG_ERROR, "Db open(%s,%d): %s\n", 
-		results[1],flags,sqlite3_errmsg(db));
+		results[1],*flags_ptr,sqlite3_errmsg(db));
 	sqlite3_close(db);
 	return ret;
     }
     int index=stringList_insert(dbSet->dbName_list,results[0]);
     g_assert(db);
-    g_hash_table_insert(dbSet->dbHandle_hashTable,stringList_index(dbSet->dbName_list,index),db);
+    g_hash_table_insert(dbSet->dbHandle_hashTable,(gchar *) stringList_index(dbSet->dbName_list,index),db);
+    return SQLITE_OK;
 }
 
 
@@ -219,7 +219,7 @@ int unihanDb_open(const char *filename, int flags){
 	dbSet_free(dbSet);
     }
     dbSet=dbSet_new();
-    ret=sqlite_exec_handle_error(field_cache_db,"SELECT * FROM DbFileTable;",
+    ret=sqlite_exec_handle_error(fieldCacheDb,"SELECT * FROM DbFileTable;",
 	    unihanDb_open_foreach_callback, &flags,
 	    sqlite_error_callback_print_message,"DbFileTable SELECT");
 
@@ -494,8 +494,8 @@ gboolean unihanField_is_mandarin(UnihanField field){
 
 gboolean unihanField_is_pseudo(UnihanField field){
     int i;
-    for (i=0; PSEUDO_FIELDS[i].field!=UNIHAN_INVALID_FIELD ; i++){
-	if (PSEUDO_FIELDS[i].field==field){
+    for (i=0; PSEUDO_FIELDS[i].pseudoField!=UNIHAN_INVALID_FIELD ; i++){
+	if (PSEUDO_FIELDS[i].pseudoField==field){
 	    return TRUE;
 	}
     }
