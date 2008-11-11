@@ -38,6 +38,7 @@
  * Private data structures 
  */
 static sqlite3 *fieldCacheDb=NULL;
+static sqlite3 *unihanDb=NULL;
 
 typedef struct {
     StringList *dbName_list;
@@ -178,28 +179,33 @@ char *unihanChar_to_scalar_string(gunichar code){
  * Sqlite DB file functions.
  */
 
+typedef struct{
+    sqlite3 *db;
+    int flags;
+    guint attachedCount;
+} DbParam;
+
 static int unihanDb_open_foreach_callback(gpointer user_option, 
 	gint col_num, gchar **results, gchar **col_names){
-    int *flags_ptr= (int *) user_option;
+    DbParam param=(DbParam *)  user_option;
     int writable=atoi(results[2]);
     if (!writable){
 	/* If the dbFile is not writable, the remove the R/W and create
 	 * permission */
-	*flags_ptr &= ~ (SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
+	param->flags &= ~ (SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
     }
-    sqlite3 *db=NULL;
-    int ret=sqlite_open(results[1],&db,*flags_ptr);
+    int ret=sqlite_open(results[1],&param->db,param->flags);
 
     if (ret) {
 	verboseMsg_print(VERBOSE_MSG_ERROR, "Db open(%s,%d): %s\n", 
-		results[1],*flags_ptr,sqlite3_errmsg(db));
+		results[1],param->flags,sqlite3_errmsg(param->db));
 	sqlite3_close(db);
 	return ret;
     }
     int index=stringList_insert(dbSet->dbName_list,results[0]);
     g_assert(db);
     g_hash_table_insert(dbSet->dbHandle_hashTable,(gchar *) stringList_index(dbSet->dbName_list,index),db);
-    return SQLITE_OK;
+    return sqlite_exec_handle_error(db,);
 }
 
 

@@ -20,6 +20,13 @@ SET(BODHI_DIST_TAGS fc9 fc10)
 
 
 ####################################################################
+# Definitions
+####################################################################
+ADD_DEFINITIONS(-DPRJ_VERSION='"${PRJ_VER_MAJOR}.${PRJ_VER_MINOR}.${PRJ_VER_PATCH}-${PRJ_VER_RELEASE}"')
+ADD_DEFINITIONS(-DSQLITE_MAX_ATTACHED=30)
+
+
+####################################################################
 # Includes
 ####################################################################
 
@@ -32,7 +39,6 @@ SET(GENERATE_UPLOADPKG_BATCH TRUE)
 SET(GENERATE_SPEC TRUE)
 INCLUDE(common.CMakeLists.txt)
 # MESSAGE("PRJ_VER_FULL=${PRJ_VER_FULL}")
-ADD_DEFINITIONS(-DPRJ_VER='"${PRJ_VER_FULL}"')
 
 #==================================================================
 # Include libUnihan-common.CMakeLists.txt
@@ -46,6 +52,9 @@ INCLUDE(libUnihan-common.CMakeLists.txt)
 FIND_PACKAGE(PkgConfig)
 PKG_CHECK_MODULES(GLIB2 glib-2.0)
 PKG_CHECK_MODULES(SQLITE3 sqlite3)
+
+ADD_SUBDIRECTORY(src bin)
+ADD_SUBDIRECTORY(test)
 
 #ADD_CUSTOM_TARGET(${DB_NAME}
 #    COMMAND /bin/ln -sf ${DB_NAME}.${DB_VER}-${DB_RELEASE} ${DB_NAME}

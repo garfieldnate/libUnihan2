@@ -151,7 +151,7 @@ SET(COMMON_IGNORE_FILES "/CMakeFiles/" "_CPack_Packages/" "/Testing/"
     ".cmake$"   ".directory$" "CMakeCache.txt$"
     "/install_manifest.txt$"
     "/.svn/"  "/CVS/" "~$" ".swp$" ".log$" ".gz$"
-    "/src/config.h$" "NO_BACKUP" "DEVELOPER_SETTING") 
+    "/src/config.h$" "NO_PACK" "DEVELOPER_SETTING") 
 
 SET(RPM_IGNORE_FILES "/SOURCES/" "/SRPMS/" "/RPMS/" "/BUILD/")
 SET(CPACK_GENERATOR "TGZ")

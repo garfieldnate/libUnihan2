@@ -44,6 +44,7 @@ StringList *stringList_new(){
     sList->ptrArray=g_ptr_array_new();
     sList->chunk_size_inital=DEFAULT_G_STRING_CHUNK_SIZE;
     sList->len=0;
+    g_ptr_array_add(sList->ptrArray,NULL);
     return sList;
 }
 
@@ -54,6 +55,7 @@ StringList *stringList_sized_new(size_t chunk_size, size_t element_count){
     sList->hTable=g_hash_table_new(g_str_hash,g_str_equal);
     sList->len=0;
     sList->chunk_size_inital= chunk_size;
+    g_ptr_array_add(sList->ptrArray,NULL);
     return sList;
 }
 
@@ -61,6 +63,8 @@ void stringList_clear(StringList *sList){
     g_assert(sList);
     sList->len=0;
     G_PTR_ARRAY_REMOVE_ALL(sList->ptrArray);
+    g_ptr_array_add(sList->ptrArray,NULL);
+
     g_hash_table_remove_all(sList->hTable);
 #ifdef HAVE_G_STRING_CHUNK_CLEAR
     g_string_chunk_clear(sList->chunk);
@@ -90,12 +94,14 @@ const char *stringList_index(StringList *sList,guint index){
 
 
 guint stringList_insert(StringList *sList, const char *str){
+    g_ptr_array_remove_index_fast (sList->ptrArray,sList->len);
     if (str){
 	gchar *ptr=g_string_chunk_insert (sList->chunk,str);
 	g_ptr_array_add(sList->ptrArray,ptr);
     }else{
 	g_ptr_array_add(sList->ptrArray,NULL);
     }
+    g_ptr_array_add(sList->ptrArray,NULL);
     sList->len++;
     return sList->len-1;
 
@@ -103,12 +109,15 @@ guint stringList_insert(StringList *sList, const char *str){
 }
 
 guint stringList_insert_const(StringList *sList, const char *str){
+    g_ptr_array_remove_index_fast (sList->ptrArray,sList->len);
     gchar *strPtr=(gchar *) g_hash_table_lookup(sList->hTable,str);
+
 
     if (!strPtr){
 	strPtr=g_string_chunk_insert_const (sList->chunk,str);
     }
     g_ptr_array_add(sList->ptrArray,strPtr);
+    g_ptr_array_add(sList->ptrArray,NULL);
     sList->len++;
     return sList->len-1;
 }

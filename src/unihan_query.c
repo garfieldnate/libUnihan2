@@ -210,7 +210,7 @@ static gboolean is_valid_arguments(int argc, char **argv) {
 		verboseLevel=atoi(optarg);
 		break;
 	    case 'v':
-		printf("libUnihan %s\n",PRJ_VER);
+		printf("libUnihan %s\n",PRJ_VERSION);
 		exit(0);
 	    case 'O':
 		qOption |= UNIHAN_QUERY_OPTION_SHOW_GIVEN_FIELD;

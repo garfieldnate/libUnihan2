@@ -337,7 +337,7 @@ static gboolean is_valid_arguments(int argc, char **argv) {
 		verboseLevel=atoi(optarg);
 		break;
 	    case 'v':
-		printf("libUnihan %s\n",PRJ_VER);
+		printf("libUnihan %s\n",PRJ_VERSION);
 		exit(0);
 	    default: /* ’? */
 		printf("Unrecognized Option -%c\n\n",opt);
