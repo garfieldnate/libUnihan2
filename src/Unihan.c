@@ -40,31 +40,6 @@
 static sqlite3 *fieldCacheDb=NULL;
 static sqlite3 *unihanDb=NULL;
 
-typedef struct {
-    StringList *dbName_list;
-    GHashTable *dbHandle_hashTable;
-} DbSet;
-
-DbSet *dbSet=NULL;
-
-static void sqlite_close(gpointer db){
-    sqlite3 *database= (sqlite3 *) db;
-    sqlite3_close(database);
-}
-
-static DbSet *dbSet_new(){
-    DbSet *dbSet=NEW_INSTANCE(DbSet);
-    dbSet->dbName_list=stringList_new();
-    dbSet->dbHandle_hashTable=g_hash_table_new_full (g_str_hash,g_str_equal,NULL,sqlite_close);
-    return dbSet;
-}
-
-static void dbSet_free(DbSet *dbSet){
-    g_assert(dbSet);
-    g_hash_table_remove_all (dbSet->dbHandle_hashTable);
-    stringList_free(dbSet->dbName_list);
-
-}
 
 #include "Unihan_def.c"
 #include "Unihan_SQL_funcs.c"
@@ -179,33 +154,32 @@ char *unihanChar_to_scalar_string(gunichar code){
  * Sqlite DB file functions.
  */
 
-typedef struct{
-    sqlite3 *db;
-    int flags;
-    guint attachedCount;
-} DbParam;
 
 static int unihanDb_open_foreach_callback(gpointer user_option, 
 	gint col_num, gchar **results, gchar **col_names){
-    DbParam param=(DbParam *)  user_option;
+    int *flags_ptr=(int *)  user_option;
     int writable=atoi(results[2]);
     if (!writable){
 	/* If the dbFile is not writable, the remove the R/W and create
 	 * permission */
-	param->flags &= ~ (SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
+	*flags_ptr &= ~ (SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
     }
-    int ret=sqlite_open(results[1],&param->db,param->flags);
-
-    if (ret) {
-	verboseMsg_print(VERBOSE_MSG_ERROR, "Db open(%s,%d): %s\n", 
-		results[1],param->flags,sqlite3_errmsg(param->db));
-	sqlite3_close(db);
-	return ret;
+    int ret=SQLITE_OK;
+    gchar buf[MAX_BUFFER_SIZE];
+    if (unihanDb){
+	/* Attach to unihanDb. */
+	sqlite3_snprintf(MAX_BUFFER_SIZE, buf, "ATTACH DATABASE %Q AS %Q;", results[1], results[0] );
+	ret=sqlite_exec_handle_error(db, buf, NULL, NULL, sqlite_error_callback_print_message, "Cannot attach");
+    }else{
+	/* Open first db file as main. */
+	ret=sqlite_open(results[1],&unihanDb,*flags_ptr);
+	if (ret) {
+	    verboseMsg_print(VERBOSE_MSG_ERROR, "Db open(%s,%d): %s\n", 
+		    results[1],*flags_ptr,sqlite3_errmsg(unihanDb));
+	    exit(ret);
+	}
     }
-    int index=stringList_insert(dbSet->dbName_list,results[0]);
-    g_assert(db);
-    g_hash_table_insert(dbSet->dbHandle_hashTable,(gchar *) stringList_index(dbSet->dbName_list,index),db);
-    return sqlite_exec_handle_error(db,);
+    return ret;
 }
 
 
@@ -213,7 +187,7 @@ int unihanDb_open(const char *filename, int flags){
     int ret=sqlite_open(filename,&fieldCacheDb,flags);
 
     if (ret) {
-	verboseMsg_print(VERBOSE_MSG_ERROR, "fieldCacheDb_open(%s,%d): %s\n", 
+	verboseMsg_print(VERBOSE_MSG_ERROR, "unihanDb_open(%s,%d): %s\n", 
 		filename,flags,sqlite3_errmsg(fieldCacheDb));
 	sqlite3_close(fieldCacheDb);
 	fieldCacheDb=NULL;
@@ -221,10 +195,6 @@ int unihanDb_open(const char *filename, int flags){
     }
 
     /* Open each */
-    if (dbSet){
-	dbSet_free(dbSet);
-    }
-    dbSet=dbSet_new();
     ret=sqlite_exec_handle_error(fieldCacheDb,"SELECT * FROM DbFileTable;",
 	    unihanDb_open_foreach_callback, &flags,
 	    sqlite_error_callback_print_message,"DbFileTable SELECT");
@@ -242,7 +212,6 @@ int unihanDb_open(const char *filename, int flags){
 	    fieldCacheDb=NULL;
 	}
     }
-
     return ret;
 }
 

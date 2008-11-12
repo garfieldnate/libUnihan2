@@ -244,7 +244,7 @@ int sqlite_count_matches(sqlite3 *db,const char * sqlClause,char **errMsg_ptr);
  * @param sqlClause The original \a sqlClause from from sqlite_exec_handle_error().
  * @param error_code Return value of sqlite3_exec().
  * @param error_msg Error message from sqlite3_exec().
- * @param prompt  Prompt of error message.
+ * @param prompt  Prompt of error message. From \a error_option of sqlite_exec_handle_error().
  *
  * @see sqlite_error_callback
  * @see sqlite_exec_handle_error()
@@ -268,7 +268,7 @@ void sqlite_error_callback_hide_constraint_error(sqlite3 *db, const gchar *sqlCl
  * @param sqlClause The original \a sqlClause from from sqlite_exec_handle_error().
  * @param error_code Return value of sqlite3_exec().
  * @param error_msg Error message from sqlite3_exec().
- * @param prompt  Prompt of error message.
+ * @param prompt  Prompt of error message. From \a error_option of sqlite_exec_handle_error().
  *
  * @see sqlite_error_callback
  * @see sqlite_exec_handle_error()
