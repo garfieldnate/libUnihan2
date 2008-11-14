@@ -342,15 +342,36 @@ char *unihanChar_to_scalar_string(gunichar code);
  */
 sqlite3 *unihanDb_get();
 
+
 /**
- * Returns the tables in database.
+ * Returns the names of table in database.
  *
- * This function will get the names from database.
+ * This function returns  all tables Id from DB files
+ *  which are recorded in the cache DB.
  *
- * Use stringList_free() to free it.
- * @return the tables in database.
+ * The result is returned as a newly allocated UnihanTable array.
+ *
+ * Use free() or g_free*( to free the result.
+ *
+ * @return An UnihanTable array that holds Ids of tables in cache DB.
+ * @see unihanDb_get_all_tableNames()
  */
-SQL_Result *unihanDb_get_tableNames();
+UnihanTable *unihanDb_get_all_tables();
+
+/**
+ * Returns the names of table in database.
+ *
+ * This function returns names of all tables from DB files
+ *  which are recorded in the cache DB.
+ * 
+ * The result is returned as a newly allocated SQL_Result instance.
+ *
+ *
+ * Use sql_result_free() to free the result.
+ * @return the tables in SQL_Result form.
+ * @see unihanDb_get_all_tables()
+ */
+SQL_Result *unihanDb_get_all_tableNames();
 
 
 /**

@@ -169,7 +169,7 @@ static int unihanDb_open_foreach_callback(gpointer user_option,
     if (unihanDb){
 	/* Attach to unihanDb. */
 	sqlite3_snprintf(MAX_BUFFER_SIZE, buf, "ATTACH DATABASE %Q AS %Q;", results[1], results[0] );
-	ret=sqlite_exec_handle_error(db, buf, NULL, NULL, sqlite_error_callback_print_message, "Cannot attach");
+	ret=sqlite_exec_handle_error(unihanDb, buf, NULL, NULL, sqlite_error_callback_print_message, "Cannot attach");
     }else{
 	/* Open first db file as main. */
 	ret=sqlite_open(results[1],&unihanDb,*flags_ptr);
@@ -223,13 +223,74 @@ int unihanDb_open_default(){
 }
 
 sqlite3 *unihanDb_get(){
-    return fieldCacheDb;
+    return unihanDb;
 }
 
-SQL_Result *unihanDb_get_tableNames(){
-    g_assert(fieldCacheDb);
-    return sqlite_get_tableNames(fieldCacheDb);
+static UnihanField* unihanDb_get_fields_private(sqlite3 *db, const gchar *sqlClause){
+    SQL_Result *sResult=sqlite_get_sql_result(db, sqlClause);
+    int i,len=sResult->resultList->len;
+    UnihanField *fields=NEW_ARRAY_INSTANCE(len+1,UnihanField);
+    for(i=0;i<len;i++){
+	fields[i]=atoi(stringList(sResult->resultList,i));
+    }
+    fields[len]=UNIHAN_INVALID_FIELD;
+    return fields;
 }
+
+UnihanField *unihanDb_get_all_fields(){
+    g_assert(fieldCacheDb);
+    return unihanDb_get_fields_private(fieldCacheDb, "SELECT FieldId FROM FieldIdTable;");
+}
+
+UnihanField *unihanDb_get_all_real_fields(){
+    g_assert(fieldCacheDb);
+    return unihanDb_get_fields_private(fieldCacheDb, "SELECT FieldId FROM RealFieldTable;");
+}
+
+UnihanField *unihanDb_get_all_pseudo_fields(){
+    g_assert(fieldCacheDb);
+    return unihanDb_get_fields_private(fieldCacheDb, "SELECT FieldId FROM PseudoFieldRequireTable;");
+}
+
+UnihanTable *unihanDb_get_all_tables(){
+    g_assert(fieldCacheDb);
+    SQL_Result *sResult=sqlite_get_sql_result(fieldCacheDb, "SELECT TableId FROM TableIdTable");
+    int i,len=sResult->resultList->len;
+    UnihanTable *tables=NEW_ARRAY_INSTANCE(len+1,UnihanTable);
+    for(i=0;i<len;i++){
+	tables[i]=atoi(stringList(sResult->resultList,i));
+    }
+    tables[len]=UNIHAN_INVALID_TABLE;
+    return tables;
+}
+
+SQL_Result *unihanDb_get_all_tableNames(){
+    g_assert(fieldCacheDb);
+    return sqlite_get_sql_result(fieldCacheDb, "SELECT TableName From TableIdTable");
+}
+
+
+UnihanField* unihanTable_get_db_fields(UnihanTable table){
+    int execResult;
+    char *errMsg=NULL;
+    UnihanField *fields=NEW_ARRAY_INSTANCE(UNIHAN_FIELD_ARRAY_MAX_LEN,UnihanField);
+    GString *strBuf=g_string_new("SELECT * FROM ");
+    g_string_append(strBuf,unihanTable_to_string(table));
+    StringList *sList=sqlite_get_fieldNames(fieldCacheDb,strBuf->str,&execResult, &errMsg);
+    guint counter=0;
+    if (sList){
+	for(counter=0;counter< sList->len; counter++){
+	    g_assert(counter<UNIHAN_FIELD_ARRAY_MAX_LEN);
+	    const char *fieldName=stringList_index(sList,counter);
+	    fields[counter]=unihanField_parse(fieldName);
+	}
+	stringList_free(sList);
+    }
+    fields[counter]=UNIHAN_INVALID_FIELD;
+    return fields;
+}
+
+
 
 int unihanDb_close(){
     return sqlite3_close(fieldCacheDb);
