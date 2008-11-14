@@ -109,41 +109,41 @@ typedef guint UnihanQueryOption;
 #define UNIHAN_QUERY_OPTION_SHOW_GIVEN_FIELD    1 << 2  //!< Show the given field in results.
 #define UNIHAN_QUERY_OPTION_PINYIN_TONE_ACCENT  1 << 3  //!< Use accent mark for pinyin tone.
 #define UNIHAN_QUERY_OPTION_PINYIN_FORMAT_MASK  7 << 4  //!< Mask for pinyin format.
-#define UNIHAN_QUERY_OPTION_ZHUYIN_FORCE_DISPLAY  1 << 7  //!< Force ZhuYin display.
+#define UNIHAN_QUERY_OPTION_ZHUYIN_FORCE_DISPLAY  1 << 7  //!< Force Zhuyin display.
 #define UNIHAN_QUERY_OPTION_ZHUYIN_FORMAT_MASK  7 << 8  //!< Mask for zhuyin format.
 
 #define UNIHAN_QUERY_OPTION_DEFAULT		(PINYIN_ACCENT_UNIHAN << 4) | (ZHUYIN_TONEMARK_ORIGINAL << 8)	
-   //!< Default options, PinYin format is Unihan; and ZhuYin format is Original.
+   //!< Default options, Pinyin format is Unihan; and Zhuyin format is Original.
 
 /**
- * Get PinYin format from UnihanQueryOption.
+ * Get Pinyin format from UnihanQueryOption.
  *
  * @param options A UnihanQueryOption.
- * @return PinYin_Accent_Format
+ * @return Pinyin_Accent_Format
  */
 #define UNIHAN_QUERY_OPTION_GET_PINYIN_FORMAT(options) (options & UNIHAN_QUERY_OPTION_PINYIN_FORMAT_MASK) >> 4
 
 /**
- * Set PinYin format to UnihanQueryOption.
+ * Set Pinyin format to UnihanQueryOption.
  *
  * @param options A UnihanQueryOption.
- * @param format PinYin_Accent_Format.
+ * @param format Pinyin_Accent_Format.
  */
 #define UNIHAN_QUERY_OPTION_SET_PINYIN_FORMAT(options,format) options |= format << 4
 
 /**
- * Get ZhuYin format from UnihanQueryOption.
+ * Get Zhuyin format from UnihanQueryOption.
  *
  * @param options A UnihanQueryOption.
- * @return ZhuYin_ToneMark_Format
+ * @return Zhuyin_ToneMark_Format
  */
 #define UNIHAN_QUERY_OPTION_GET_ZHUYIN_FORMAT(options) (options & UNIHAN_QUERY_OPTION_ZHUYIN_FORMAT_MASK) >> 8
 
 /**
- * Set ZhuYin format to UnihanQueryOption.
+ * Set Zhuyin format to UnihanQueryOption.
  *
  * @param options A UnihanQueryOption.
- * @param format ZhuYin_Accent_Format.
+ * @param format Zhuyin_Accent_Format.
  */
 #define UNIHAN_QUERY_OPTION_SET_ZHUYIN_FORMAT(options,format) options |= format << 8
 
@@ -271,7 +271,7 @@ int unihan_insert_value(gunichar code, UnihanField field, const char *value);
  * @param field		the UnihanField
  * @return TRUE if an non-NULL value is associate with the field, FALSE otherwise.
  */
-gboolean unihanChar_has_property(gunichar code, UnihanField field);
+gboolean unihanChar_has_field(gunichar code, UnihanField field);
 
 /**
  * Whether the character appeared in given source.
@@ -325,7 +325,12 @@ UnihanRange unihanChar_in_range(gunichar code);
 gunichar unihanChar_parse(const char *str);
 
 /**
- * Returns a string representing a UCS4 character.
+ * Returns a scalar string of a UCS4 character.
+ *
+ * This function converts the UCS4 integer to scalar value format (U+XXXXXX)
+ * and returns a newly allocated string that holds it.
+ *
+ * Use free() or g_free() to free the result.
  *
  * @param code		the UCS4 character.
  * @return		a string representing the UCS4 character.

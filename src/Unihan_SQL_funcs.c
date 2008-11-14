@@ -95,32 +95,32 @@ static void kangXiRec_to_string(char* const buf, KangXiRec *rec){
 }
 
 /*-----------------------------
- * Parse pinYin freq (PinLu)
+ * Parse pinyin freq (PinLu)
  */
 
 typedef enum{
     UNIHAN_PINYIN_FREQ_STATE_PINYIN,
     UNIHAN_PINYIN_FREQ_STATE_FREQ,
     UNIHAN_PINYIN_FREQ_STATE_SEPARATER
-} UnihanPinYinFreqState;
+} UnihanPinyinFreqState;
 
 
 #define STRING_BUFFER_PINYIN_SIZE 8
 #define STRING_BUFFER_FREQ_SIZE 6
 #define STRING_BUFFER_PINYIN_FREQ_SIZE STRING_BUFFER_PINYIN_SIZE+ STRING_BUFFER_FREQ_SIZE +3
 typedef struct {
-    char pinYin[7];
+    char pinyin[7];
     int freq;
-} PinYinFreqRec;
+} PinyinFreqRec;
 
-static GArray *pinYinFreqRec_parse(const char *composite_value){
-    GArray *gArray=g_array_new(FALSE,TRUE,sizeof(PinYinFreqRec));
+static GArray *pinyinFreqRec_parse(const char *composite_value){
+    GArray *gArray=g_array_new(FALSE,TRUE,sizeof(PinyinFreqRec));
     char **subFieldArray=g_strsplit_set(composite_value," ()",-1);
     int i;
     int currIndex=0;
     int freq;
-    PinYinFreqRec *currRec=NULL;
-    UnihanPinYinFreqState state=UNIHAN_PINYIN_FREQ_STATE_PINYIN;
+    PinyinFreqRec *currRec=NULL;
+    UnihanPinyinFreqState state=UNIHAN_PINYIN_FREQ_STATE_PINYIN;
 
     for(i=0;subFieldArray[i]!=NULL;i++){
 	switch(state){
@@ -131,8 +131,8 @@ static GArray *pinYinFreqRec_parse(const char *composite_value){
 		g_assert(i>0);
 		currIndex=gArray->len;
 		g_array_set_size(gArray,currIndex+1);
-		currRec=&g_array_index(gArray,PinYinFreqRec,currIndex);
-		g_strlcpy(currRec->pinYin,subFieldArray[i-1],STRING_BUFFER_PINYIN_SIZE);
+		currRec=&g_array_index(gArray,PinyinFreqRec,currIndex);
+		g_strlcpy(currRec->pinyin,subFieldArray[i-1],STRING_BUFFER_PINYIN_SIZE);
 		freq=atoi(subFieldArray[i]);
 		g_assert(freq);
 		currRec->freq=freq;
@@ -147,28 +147,28 @@ static GArray *pinYinFreqRec_parse(const char *composite_value){
     return gArray;
 }
 
-static void pinYinFreqRec_parse_SQLite_value
-(PinYinFreqRec *rec, sqlite3_context *context, int argc, sqlite3_value **argv){
+static void pinyinFreqRec_parse_SQLite_value
+(PinyinFreqRec *rec, sqlite3_context *context, int argc, sqlite3_value **argv){
     g_assert(argc==3);
     if (sqlite3_value_type(argv[0])==SQLITE_TEXT){
-	sqlite_value_signed_text_buffer(rec->pinYin,argv[0]);
+	sqlite_value_signed_text_buffer(rec->pinyin,argv[0]);
     }
     rec->freq=sqlite3_value_int(argv[1]);
 }
 
-static void pinYinFreqRec_to_string(char* const buf, PinYinFreqRec *rec, UnihanQueryOption qOption){
-    PinYin *pinYin=NULL;
-    ZhuYin *zhuYin=NULL;
+static void pinyinFreqRec_to_string(char* const buf, PinyinFreqRec *rec, UnihanQueryOption qOption){
+    Pinyin *pinyin=NULL;
+    Zhuyin *zhuyin=NULL;
 
     if (qOption & UNIHAN_QUERY_OPTION_ZHUYIN_FORCE_DISPLAY){
-	zhuYin=pinYin_to_zhuYin(rec->pinYin,UNIHAN_QUERY_OPTION_GET_ZHUYIN_FORMAT(qOption));
-	g_snprintf(buf,STRING_BUFFER_PINYIN_FREQ_SIZE,"%s(%d)",zhuYin,rec->freq);
-	g_free(zhuYin);
+	zhuyin=pinyin_to_zhuyin(rec->pinyin,UNIHAN_QUERY_OPTION_GET_ZHUYIN_FORMAT(qOption));
+	g_snprintf(buf,STRING_BUFFER_PINYIN_FREQ_SIZE,"%s(%d)",zhuyin,rec->freq);
+	g_free(zhuyin);
     }else{
-	pinYin=pinYin_convert_accent_format(rec->pinYin,UNIHAN_QUERY_OPTION_GET_PINYIN_FORMAT(qOption),
+	pinyin=pinyin_convert_accent_format(rec->pinyin,UNIHAN_QUERY_OPTION_GET_PINYIN_FORMAT(qOption),
 		((qOption & UNIHAN_QUERY_OPTION_PINYIN_TONE_ACCENT) ? 0: 1));
-	g_snprintf(buf,STRING_BUFFER_PINYIN_FREQ_SIZE,"%s(%d)",pinYin,rec->freq);
-	g_free(pinYin);
+	g_snprintf(buf,STRING_BUFFER_PINYIN_FREQ_SIZE,"%s(%d)",pinyin,rec->freq);
+	g_free(pinyin);
     }
 }
 
@@ -296,15 +296,15 @@ static void adobeRadicalStroke_value_concat_Func(sqlite3_context *context, int a
 }
 
 static void hanYu_pinLu_value_concat_Func(sqlite3_context *context, int argc, sqlite3_value **argv){
-    PinYinFreqRec rec;
+    PinyinFreqRec rec;
     g_assert(argc==3);
     char *pStr=NEW_ARRAY_INSTANCE(STRING_BUFFER_PINYIN_FREQ_SIZE,char);
-    pinYinFreqRec_parse_SQLite_value(&rec, context, argc, argv);
+    pinyinFreqRec_parse_SQLite_value(&rec, context, argc, argv);
     UnihanQueryOption qOption=UNIHAN_QUERY_OPTION_DEFAULT;
     if (sqlite3_value_type(argv[2])==SQLITE_INTEGER){
 	qOption= sqlite3_value_int64(argv[2]); 
     }
-    pinYinFreqRec_to_string(pStr,&rec,qOption);
+    pinyinFreqRec_to_string(pStr,&rec,qOption);
     sqlite3_result_text(context,pStr,-1,g_free);
 }
 
@@ -510,8 +510,8 @@ const DatabaseFuncStru DATABASE_FUNCS[]={
     {"HANYU_PINLU_VALUE_CONCAT",3,hanYu_pinLu_value_concat_Func,NULL,NULL},
     {"IRG_SOURCE_VALUE_CONCAT",2,irg_source_value_concat_Func,NULL,NULL},
     {"KANGXI_VALUE_CONCAT",3,kangXi_value_concat_Func,NULL,NULL},
-    {"PINYIN_CONVERT_ACCENT_FORMAT",3,pinYin_convert_accent_format_scalar_func,NULL,NULL},
-    {"PINYIN_TO_ZHUYIN",2,pinYin_to_zhuYin_scalar_func,NULL,NULL},
+    {"PINYIN_CONVERT_ACCENT_FORMAT",3,pinyin_convert_accent_format_scalar_func,NULL,NULL},
+    {"PINYIN_TO_ZHUYIN",2,pinyin_to_zhuyin_scalar_func,NULL,NULL},
     {"RADICAL_STROKE_VALUE_CONCAT",2,radicalStroke_value_concat_Func,NULL,NULL},
     {"SCALAR_STRING_PARSE",1, scalar_string_parse_Func,NULL,NULL},
     {"SEMANTIC_VARIANT_VALUE_CONCAT",5,NULL,semantic_value_concat_step_Func,semantic_value_concat_finalized_Func},
@@ -519,8 +519,8 @@ const DatabaseFuncStru DATABASE_FUNCS[]={
     {"TO_LOWERCASE",1,to_lowercase_Func,NULL,NULL},
     {"TO_UPPERCASE",1,to_uppercase_Func,NULL,NULL},
     {"Z_VARIANT_VALUE_CONCAT",2,zVariant_value_concat_Func,NULL,NULL},
-    {"ZHUYIN_CONVERT_TONEMARK_FORMAT",2,zhuYin_convert_toneMark_format_scalar_func,NULL,NULL},
-    {"ZHUYIN_TO_PINYIN",3,zhuYin_to_pinYin_scalar_func,NULL,NULL},
+    {"ZHUYIN_CONVERT_TONEMARK_FORMAT",2,zhuyin_convert_toneMark_format_scalar_func,NULL,NULL},
+    {"ZHUYIN_TO_PINYIN",3,zhuyin_to_pinyin_scalar_func,NULL,NULL},
     {NULL,0,NULL,NULL,NULL},
 };
 

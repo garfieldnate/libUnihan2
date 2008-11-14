@@ -1,3 +1,4 @@
+
 /*
  * Copyright © 2008  Red Hat, Inc. All rights reserved.
  * Copyright © 2008  Ding-Yi Chen <dchen at redhat dot com>
@@ -50,7 +51,7 @@ static sqlite3 *unihanDb=NULL;
  * Unihan character functions.
  */
 
-gboolean unihanChar_has_property(gunichar code, UnihanField field){
+gboolean unihanChar_has_field(gunichar code, UnihanField field){
     if (field==UNIHAN_FIELD_CODE){
 	return TRUE;
     }
@@ -270,29 +271,11 @@ SQL_Result *unihanDb_get_all_tableNames(){
 }
 
 
-UnihanField* unihanTable_get_db_fields(UnihanTable table){
-    int execResult;
-    char *errMsg=NULL;
-    UnihanField *fields=NEW_ARRAY_INSTANCE(UNIHAN_FIELD_ARRAY_MAX_LEN,UnihanField);
-    GString *strBuf=g_string_new("SELECT * FROM ");
-    g_string_append(strBuf,unihanTable_to_string(table));
-    StringList *sList=sqlite_get_fieldNames(fieldCacheDb,strBuf->str,&execResult, &errMsg);
-    guint counter=0;
-    if (sList){
-	for(counter=0;counter< sList->len; counter++){
-	    g_assert(counter<UNIHAN_FIELD_ARRAY_MAX_LEN);
-	    const char *fieldName=stringList_index(sList,counter);
-	    fields[counter]=unihanField_parse(fieldName);
-	}
-	stringList_free(sList);
-    }
-    fields[counter]=UNIHAN_INVALID_FIELD;
-    return fields;
-}
-
-
-
 int unihanDb_close(){
+    int ret=sqlite3_close(unihanDb);
+    if (ret){
+	return ret;
+    }
     return sqlite3_close(fieldCacheDb);
 }
 
@@ -323,9 +306,9 @@ UnihanTable unihanField_get_table(UnihanField field){
 	    case UNIHAN_FIELD_CODE:
 		return UNIHAN_AMBIGUOUS_TABLE;
 
-	    case UNIHAN_FIELD_KANGXI_PAGE:
-	    case UNIHAN_FIELD_KANGXI_CHARNUM:
-	    case UNIHAN_FIELD_KANGXI_VIRTUAL:
+	    case UNIHAN_FIELD_DICT_PAGE:
+	    case UNIHAN_FIELD_DICT_POSITION:
+	    case UNIHAN_FIELD_DICT_VIRTUAL:
 		return UNIHAN_AMBIGUOUS_TABLE;
 
 	    case UNIHAN_FIELD_PINYIN:
@@ -335,7 +318,7 @@ UnihanTable unihanField_get_table(UnihanField field){
 	    case UNIHAN_FIELD_IRG_SOURCE_SHORT_NAME:
 		return UNIHAN_TABLE_IRG_SOURCE;
 	    case UNIHAN_FIELD_IRG_SOURCE_MAPPING:
-		return UNIHAN_TABLE_IRG_SOURCE_MAPPING;
+		return UNIHAN_TABLE_IRG_SOURCE_EXTRA;
 
 	    case UNIHAN_FIELD_VARIANT_CODE:
 		return UNIHAN_AMBIGUOUS_TABLE;
@@ -385,9 +368,9 @@ UnihanTable *unihanField_get_all_tables(UnihanField field){
 	    }
 	    break;
 
-	case UNIHAN_FIELD_KANGXI_PAGE:
-	case UNIHAN_FIELD_KANGXI_CHARNUM:
-	case UNIHAN_FIELD_KANGXI_VIRTUAL:
+	case UNIHAN_FIELD_DICT_PAGE:
+	case UNIHAN_FIELD_DICT_POSITION:
+	case UNIHAN_FIELD_DICT_VIRTUAL:
 	    tables[i++]=UNIHAN_TABLE_kIRGKANGXI;
 	    tables[i++]=UNIHAN_TABLE_kKANGXI;
 	    break;
@@ -426,7 +409,7 @@ UnihanTable *unihanField_get_all_tables(UnihanField field){
 
 UnihanTable unihanField_get_extra_table(UnihanField field){
     if (unihanField_is_IRG_Source(field))
-	return UNIHAN_TABLE_IRG_SOURCE_MAPPING;
+	return UNIHAN_TABLE_IRG_SOURCE_EXTRA;
     switch(field){
 	case UNIHAN_FIELD_kSEMANTICVARIANT:
 	    return UNIHAN_TABLE_kSEMANTICVARIANT_EXTRA;
@@ -844,14 +827,14 @@ UnihanField* unihanTable_get_fields(UnihanTable table){
 	    break;
 	case UNIHAN_TABLE_kIRGKANGXI:
 	case UNIHAN_TABLE_kKANGXI:
-	    fields[i++]=UNIHAN_FIELD_KANGXI_PAGE;
-	    fields[i++]=UNIHAN_FIELD_KANGXI_CHARNUM;
-	    fields[i++]=UNIHAN_FIELD_KANGXI_VIRTUAL;
+	    fields[i++]=UNIHAN_FIELD_DICT_PAGE;
+	    fields[i++]=UNIHAN_FIELD_DICT_POSITION;
+	    fields[i++]=UNIHAN_FIELD_DICT_VIRTUAL;
 	    break;
 	case UNIHAN_TABLE_IRG_SOURCE:
 	    fields[i++]=UNIHAN_FIELD_IRG_SOURCE_SHORT_NAME;
 	    break;
-	case UNIHAN_TABLE_IRG_SOURCE_MAPPING:
+	case UNIHAN_TABLE_IRG_SOURCE_EXTRA:
 	    fields[i++]=UNIHAN_FIELD_IRG_SOURCE_SHORT_NAME;
 	    fields[i++]=UNIHAN_FIELD_IRG_SOURCE_MAPPING;
 	    break;
@@ -911,7 +894,7 @@ UnihanField* unihanTable_get_primary_key_fields(UnihanTable table){
     switch(table){
 	case UNIHAN_TABLE_IRG_SOURCE:
 	    fields[i++]=UNIHAN_FIELD_IRG_SOURCE_SHORT_NAME;
-	case UNIHAN_TABLE_IRG_SOURCE_MAPPING:
+	case UNIHAN_TABLE_IRG_SOURCE_EXTRA:
 	    fields[i++]=UNIHAN_FIELD_IRG_SOURCE_SHORT_NAME;
 	    break;
 	case UNIHAN_TABLE_kCOMPATIBILITYVARIANT:

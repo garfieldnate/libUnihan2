@@ -1,12 +1,12 @@
 /** 
  * @file Unihan_phonetic.h
- * @brief Phonetic symbols (PinYin and ZhuYin) processing functions.
+ * @brief Phonetic symbols (Pinyin and Zhuyin) processing functions.
  * 
- * This header file lists the functions for PinYin and ZhuYin processing,
+ * This header file lists the functions for Pinyin and Zhuyin processing,
  * such as conversion between HanYu pinyin conversion C functions, and
  * corresponding SQL scalar functions.
  *
- * PinYin is displayed and stored as uppercase, which is same with kMandarin 
+ * Pinyin is displayed and stored as uppercase, which is same with kMandarin 
  * in Unihan.
  *
  * Note that this header is included in Unihan.h, 
@@ -51,94 +51,94 @@
 #define ZHUYIN_MAX_LENGTH 13
 
 /**
- * ZhuYin symbol.
+ * Zhuyin symbol.
  */
-typedef gunichar  ZhuYin_Symbol;
+typedef gunichar  Zhuyin_Symbol;
 
 /**
- * Pronunciation in ZhuYin UTF-8 string.
+ * Pronunciation in Zhuyin UTF-8 string.
  */
-typedef char ZhuYin;
+typedef char Zhuyin;
 
 /**
- * Pronunciation in PinYin UTF-8 string.
+ * Pronunciation in Pinyin UTF-8 string.
  */
-typedef char PinYin;
+typedef char Pinyin;
 
 
 
 /**
- * Enumeration of ZhuYin symbols.
+ * Enumeration of Zhuyin symbols.
  *
- * This enumeration lists the ZhuYin symbols, including the symbols for tone mark.
- * Corresponding PinYin phonemes can also be located using these Ids.
+ * This enumeration lists the Zhuyin symbols, including the symbols for tone mark.
+ * Corresponding Pinyin phonemes can also be located using these Ids.
  *
- * @see pinYin_phoneme_from_id()
- * @see pinYin_phoneme_get_id()
- * @see zhuYin_Symbol_from_id()
- * @see zhuYin_Symbol_get_id()
+ * @see pinyin_phoneme_from_id()
+ * @see pinyin_phoneme_get_id()
+ * @see zhuyin_Symbol_from_id()
+ * @see zhuyin_Symbol_get_id()
  *
  */
 typedef enum {
-    ZHUYIN_INVALID_SYMBOL= -1, //!< Invalid ZhuYin Symbol.
-    ZHUYIN_SYMBOL_B,         //!< ZhuYin symbol 'ㄅ' 
-    ZHUYIN_SYMBOL_P,         //!< ZhuYin symbol 'ㄆ'
-    ZHUYIN_SYMBOL_M,         //!< ZhuYin symbol 'ㄇ'
-    ZHUYIN_SYMBOL_F,         //!< ZhuYin symbol 'ㄈ'
-    ZHUYIN_SYMBOL_D,         //!< ZhuYin symbol 'ㄉ'
-    ZHUYIN_SYMBOL_T,         //!< ZhuYin symbol 'ㄊ'
-    ZHUYIN_SYMBOL_N,         //!< ZhuYin symbol 'ㄋ'
-    ZHUYIN_SYMBOL_L,         //!< ZhuYin symbol 'ㄌ'
-    ZHUYIN_SYMBOL_G,         //!< ZhuYin symbol 'ㄍ'
-    ZHUYIN_SYMBOL_K,         //!< ZhuYin symbol 'ㄎ'
-    ZHUYIN_SYMBOL_H,         //!< ZhuYin symbol 'ㄏ'
-    ZHUYIN_SYMBOL_J,         //!< ZhuYin symbol 'ㄐ'
-    ZHUYIN_SYMBOL_Q,         //!< ZhuYin symbol 'ㄑ'
-    ZHUYIN_SYMBOL_X,         //!< ZhuYin symbol 'ㄒ'
-    ZHUYIN_SYMBOL_ZH,        //!< ZhuYin symbol 'ㄓ'
-    ZHUYIN_SYMBOL_CH,        //!< ZhuYin symbol 'ㄔ'
-    ZHUYIN_SYMBOL_SH,        //!< ZhuYin symbol 'ㄕ'
-    ZHUYIN_SYMBOL_R,         //!< ZhuYin symbol 'ㄖ'
-    ZHUYIN_SYMBOL_Z,         //!< ZhuYin symbol 'ㄗ'
-    ZHUYIN_SYMBOL_C,         //!< ZhuYin symbol 'ㄘ'
-    ZHUYIN_SYMBOL_S,         //!< ZhuYin symbol 'ㄙ'
-    ZHUYIN_SYMBOL_I,        //!< ZhuYin symbol 'ㄧ'
-    ZHUYIN_SYMBOL_U,        //!< ZhuYin symbol 'ㄨ'
-    ZHUYIN_SYMBOL_U_DIAERESIS,       //!< ZhuYin symbol 'ㄩ'
-    ZHUYIN_SYMBOL_A,         //!< ZhuYin symbol 'ㄚ'
-    ZHUYIN_SYMBOL_O,         //!< ZhuYin symbol 'ㄛ'
-    ZHUYIN_SYMBOL_E,         //!< ZhuYin symbol 'ㄜ'
-    ZHUYIN_SYMBOL_E_CIRCUMFLEX,     //!< ZhuYin symbol 'ㄝ'
-    ZHUYIN_SYMBOL_AI,        //!< ZhuYin symbol 'ㄞ'
-    ZHUYIN_SYMBOL_EI,        //!< ZhuYin symbol 'ㄟ'
-    ZHUYIN_SYMBOL_AO,        //!< ZhuYin symbol 'ㄠ'
-    ZHUYIN_SYMBOL_OU,        //!< ZhuYin symbol 'ㄡ'
-    ZHUYIN_SYMBOL_AN,        //!< ZhuYin symbol 'ㄢ'
-    ZHUYIN_SYMBOL_EN,        //!< ZhuYin symbol 'ㄣ'
-    ZHUYIN_SYMBOL_ANG,       //!< ZhuYin symbol 'ㄤ'
-    ZHUYIN_SYMBOL_ENG,       //!< ZhuYin symbol 'ㄥ'
-    ZHUYIN_SYMBOL_ER,        //!< ZhuYin symbol 'ㄦ'
-    ZHUYIN_SYMBOL_1,         //!< ZhuYin 1st tone mark 'ˉ'
-    ZHUYIN_SYMBOL_2,         //!< ZhuYin 2nd tone mark 'ˊ'
-    ZHUYIN_SYMBOL_3,         //!< ZhuYin 3rd tone mark 'ˇ'
-    ZHUYIN_SYMBOL_4,         //!< ZhuYin 4th tone mark 'ˋ'
-    ZHUYIN_SYMBOL_NEUTRAL,   //!< ZhuYin neutral (5th) tone mark '˙'
-} ZhuYin_Symbol_Id;
+    ZHUYIN_INVALID_SYMBOL= -1, //!< Invalid Zhuyin Symbol.
+    ZHUYIN_SYMBOL_B,         //!< Zhuyin symbol 'ㄅ' 
+    ZHUYIN_SYMBOL_P,         //!< Zhuyin symbol 'ㄆ'
+    ZHUYIN_SYMBOL_M,         //!< Zhuyin symbol 'ㄇ'
+    ZHUYIN_SYMBOL_F,         //!< Zhuyin symbol 'ㄈ'
+    ZHUYIN_SYMBOL_D,         //!< Zhuyin symbol 'ㄉ'
+    ZHUYIN_SYMBOL_T,         //!< Zhuyin symbol 'ㄊ'
+    ZHUYIN_SYMBOL_N,         //!< Zhuyin symbol 'ㄋ'
+    ZHUYIN_SYMBOL_L,         //!< Zhuyin symbol 'ㄌ'
+    ZHUYIN_SYMBOL_G,         //!< Zhuyin symbol 'ㄍ'
+    ZHUYIN_SYMBOL_K,         //!< Zhuyin symbol 'ㄎ'
+    ZHUYIN_SYMBOL_H,         //!< Zhuyin symbol 'ㄏ'
+    ZHUYIN_SYMBOL_J,         //!< Zhuyin symbol 'ㄐ'
+    ZHUYIN_SYMBOL_Q,         //!< Zhuyin symbol 'ㄑ'
+    ZHUYIN_SYMBOL_X,         //!< Zhuyin symbol 'ㄒ'
+    ZHUYIN_SYMBOL_ZH,        //!< Zhuyin symbol 'ㄓ'
+    ZHUYIN_SYMBOL_CH,        //!< Zhuyin symbol 'ㄔ'
+    ZHUYIN_SYMBOL_SH,        //!< Zhuyin symbol 'ㄕ'
+    ZHUYIN_SYMBOL_R,         //!< Zhuyin symbol 'ㄖ'
+    ZHUYIN_SYMBOL_Z,         //!< Zhuyin symbol 'ㄗ'
+    ZHUYIN_SYMBOL_C,         //!< Zhuyin symbol 'ㄘ'
+    ZHUYIN_SYMBOL_S,         //!< Zhuyin symbol 'ㄙ'
+    ZHUYIN_SYMBOL_I,        //!< Zhuyin symbol 'ㄧ'
+    ZHUYIN_SYMBOL_U,        //!< Zhuyin symbol 'ㄨ'
+    ZHUYIN_SYMBOL_U_DIAERESIS,       //!< Zhuyin symbol 'ㄩ'
+    ZHUYIN_SYMBOL_A,         //!< Zhuyin symbol 'ㄚ'
+    ZHUYIN_SYMBOL_O,         //!< Zhuyin symbol 'ㄛ'
+    ZHUYIN_SYMBOL_E,         //!< Zhuyin symbol 'ㄜ'
+    ZHUYIN_SYMBOL_E_CIRCUMFLEX,     //!< Zhuyin symbol 'ㄝ'
+    ZHUYIN_SYMBOL_AI,        //!< Zhuyin symbol 'ㄞ'
+    ZHUYIN_SYMBOL_EI,        //!< Zhuyin symbol 'ㄟ'
+    ZHUYIN_SYMBOL_AO,        //!< Zhuyin symbol 'ㄠ'
+    ZHUYIN_SYMBOL_OU,        //!< Zhuyin symbol 'ㄡ'
+    ZHUYIN_SYMBOL_AN,        //!< Zhuyin symbol 'ㄢ'
+    ZHUYIN_SYMBOL_EN,        //!< Zhuyin symbol 'ㄣ'
+    ZHUYIN_SYMBOL_ANG,       //!< Zhuyin symbol 'ㄤ'
+    ZHUYIN_SYMBOL_ENG,       //!< Zhuyin symbol 'ㄥ'
+    ZHUYIN_SYMBOL_ER,        //!< Zhuyin symbol 'ㄦ'
+    ZHUYIN_SYMBOL_1,         //!< Zhuyin 1st tone mark 'ˉ'
+    ZHUYIN_SYMBOL_2,         //!< Zhuyin 2nd tone mark 'ˊ'
+    ZHUYIN_SYMBOL_3,         //!< Zhuyin 3rd tone mark 'ˇ'
+    ZHUYIN_SYMBOL_4,         //!< Zhuyin 4th tone mark 'ˋ'
+    ZHUYIN_SYMBOL_NEUTRAL,   //!< Zhuyin neutral (5th) tone mark '˙'
+} Zhuyin_Symbol_Id;
 
 /**
- * Total number of support ZhuYin symbols.
+ * Total number of support Zhuyin symbols.
  */
 #define ZHUYIN_SYMBOL_COUNT ZHUYIN_SYMBOL_NEUTRAL + 1 
 
 /**
- * An array of ZhuYin symbols.
+ * An array of Zhuyin symbols.
  */
-extern const ZhuYin_Symbol ZHUYIN_SYMBOL_LIST[];
+extern const Zhuyin_Symbol ZHUYIN_SYMBOL_LIST[];
 
 /**
- * Enumeration of PinYin accent (not tone mark) handling modes.
+ * Enumeration of Pinyin accent (not tone mark) handling modes.
  *
- * There are two PinYin symbols with accents, diaeresis U (Ü,ㄩ), and circumflex E (Ê,ㄝ) .
+ * There are two Pinyin symbols with accents, diaeresis U (Ü,ㄩ), and circumflex E (Ê,ㄝ) .
  * As the their pronunciations are different from U and E.
  *
  * In Romanization of Chinese (ISO 7098:1991), under certain circumstances,
@@ -159,9 +159,9 @@ extern const ZhuYin_Symbol ZHUYIN_SYMBOL_LIST[];
  * use PINYIN_ACCENT_ALWAYS for this purpose.
  *
  * Note that this enumeration is not for the pinyin tone mark.
- * See pinYin_convert_accent_format() pinyin tone mark handling.
+ * See pinyin_convert_accent_format() pinyin tone mark handling.
  *
- * @see pinYin_convert_accent_format()
+ * @see pinyin_convert_accent_format()
  */
 typedef enum{
     PINYIN_ACCENT_ALWAYS,   //!< Ü is always represented as Ü, Ê is always represented as Ê. 
@@ -170,11 +170,11 @@ typedef enum{
     PINYIN_ACCENT_TRAILING, //!< Ü is represented as U:, Ê is represented as E.
     PINYIN_ACCENT_INPUT_METHOD,  //!< Ü is represented as V, Ê is represented as E.
     PINYIN_ACCENT_NONE      //!< Ü is represented as U, Ê is represented as E.
-} PinYin_Accent_Format;
+} Pinyin_Accent_Format;
 
 
 /**
- * Enumeration of ZhuYin tone mark handling.
+ * Enumeration of Zhuyin tone mark handling.
  * Originally, the neutral (fifth) tone mark of zhuyin is put in the front, while the first tone mark is omitted.
  * Use ZHUYIN_TONEMARK_ORIGINAL for this.
  *
@@ -187,42 +187,42 @@ typedef enum{
  *
  * If numerical tone mark is desired, use ZHUYIN_TONEMARK_NUMERICAL.
  *
- * @see zhuYin_convert_toneMark_format()
+ * @see zhuyin_convert_toneMark_format()
  */
 typedef enum{
     ZHUYIN_TONEMARK_ALWAYS,   //!<  Neutral (fifth) tone mark is put in the end, while the first tone mark is kept.
     ZHUYIN_TONEMARK_ORIGINAL,   //!< Neutral (fifth) tone mark is put in the front, while the first tone mark is omitted.
     ZHUYIN_TONEMARK_INPUT_METHOD,  //!< Neutral (fifth) tone mark is put in the front, while the first tone mark is omitted.
     ZHUYIN_TONEMARK_NUMERICAL,  //!< Tone mark are represented as numerical, in the end of Zhuyin.
-} ZhuYin_ToneMark_Format;
+} Zhuyin_ToneMark_Format;
 
 
 /*==========================================================
- * PinYin functions.
+ * Pinyin functions.
  */
 
 /**
- * New a PinYin instance.
+ * New a Pinyin instance.
  *
- * This function allocate a new PinYin instance.
- * Non pinYin_str will be copied to the newly allocated PinYin instance and
+ * This function allocate a new Pinyin instance.
+ * Non pinyin_str will be copied to the newly allocated Pinyin instance and
  * converted to uppercase.
- * Note that the PinYin instance only hold #PINYIN_MAX_LENGTH bytes, 
- * including the EOL ('\0') character. Longer pinYin will be truncated.
+ * Note that the Pinyin instance only hold #PINYIN_MAX_LENGTH bytes, 
+ * including the EOL ('\0') character. Longer pinyin will be truncated.
  *
  * Note: use g_free to free the newly allocated instance.
  *
- * @param pinYin_str the PinYin in string, NULL for blank instance.
- * @return new PinYin instances.
+ * @param pinyin_str the Pinyin in string, NULL for blank instance.
+ * @return new Pinyin instances.
  */
-PinYin *pinYin_new(const char *pinYin_str);
+Pinyin *pinyin_new(const char *pinyin_str);
 
 
 /**
- * Return the explicit-specified tone of PinYin.
+ * Return the explicit-specified tone of Pinyin.
  *
- * This function finds and returns the explicit-specified tone of pinYin.
- * Thus 0 will be returned if pinYin does not have any explicit-specified tone.
+ * This function finds and returns the explicit-specified tone of pinyin.
+ * Thus 0 will be returned if pinyin does not have any explicit-specified tone.
  * 
  * This function acts this way in order to accommodate 
  * the SQL LIKE query such as <code>... WHERE kMandarin LIKE 'KE%'</code>.
@@ -230,234 +230,234 @@ PinYin *pinYin_new(const char *pinYin_str);
  * Sometimes, 5th tone mark is omitted, please convert the value 0 to 5
  * if this is the case. 
  *
- * @param pinYin the pinYin instance to be stripped.
+ * @param pinyin the pinyin instance to be stripped.
  * @return the tone id from 1 to 5 if the tone is explicit-specified, 0
  * otherwise.
- * @see pinYin_strip_tone()
+ * @see pinyin_strip_tone()
  */
-guint pinYin_get_tone(const PinYin* pinYin);
+guint pinyin_get_tone(const Pinyin* pinyin);
 
 /**
- * Strip the tone mark of PinYin and return explicit-specified the tone Id.
+ * Strip the tone mark of Pinyin and return explicit-specified the tone Id.
  *
- * This function strips the tone mark of pinYin,
- * otherwise is similar to pinYin_get_tone().
+ * This function strips the tone mark of pinyin,
+ * otherwise is similar to pinyin_get_tone().
  *
- * @param pinYin the pinYin instance to be stripped.
+ * @param pinyin the pinyin instance to be stripped.
  * @return the tone id from 1 to 5 if the tone is explicit-specified, 0
- * @see pinYin_get_tone()
+ * @see pinyin_get_tone()
  */
-guint pinYin_strip_tone(PinYin* pinYin);
+guint pinyin_strip_tone(Pinyin* pinyin);
 
 /**
- * Add the tone mark to pinYin.
+ * Add the tone mark to pinyin.
  *
- * This function add tone mark to zhuYin, existing tone will be removed before adding new tone.
+ * This function add tone mark to zhuyin, existing tone will be removed before adding new tone.
  * If tone is 0, then existing tone will be removed, but no new tone will be added.
  * 
- * The result will be stored in pinYin, so backup it with strdup() or g_strdup() to keep the original.
+ * The result will be stored in pinyin, so backup it with strdup() or g_strdup() to keep the original.
  *
- * @param pinYin the pinYin instance to be processed.
+ * @param pinyin the pinyin instance to be processed.
  * @param tone the tone to be added.
  * @param useTrailNumber TRUE trailing number is preferred, FALSE to use traditional tonemark.
  */
-void pinYin_add_tone(PinYin* pinYin, guint tone, gboolean useTrailNumber);
+void pinyin_add_tone(Pinyin* pinyin, guint tone, gboolean useTrailNumber);
 
 /**
- * Convert a PinYin to new accent formatReturn a newly allocated PinYin instance which contains the converted content.
+ * Convert a Pinyin to new accent formatReturn a newly allocated Pinyin instance which contains the converted content.
  *
- * Unlike pinYin_get_tone() and pinYin_strip_tone() which only identify the explicit-specified tone,
+ * Unlike pinyin_get_tone() and pinyin_strip_tone() which only identify the explicit-specified tone,
  * this function treats the unspecified tone as 5th tone,  unless SQL
  * wild characters '%' and '_' are encountered. 
  *
  * Use g_free to free the newly allocated instance.
  *
- * @param pinYin the PinYin to be converted.
- * @param toFormat the PinYin accent mode to be converted to.
+ * @param pinyin the Pinyin to be converted.
+ * @param toFormat the Pinyin accent mode to be converted to.
  * @param useTrailNumber TRUE trailing number is preferred, FALSE to use traditional tonemark.
- * @return a newly allocated converted PinYin instance.
- * @see zhuYin_to_pinYin()
+ * @return a newly allocated converted Pinyin instance.
+ * @see zhuyin_to_pinyin()
  */
-PinYin *pinYin_convert_accent_format(const PinYin *pinYin, PinYin_Accent_Format toFormat, gboolean useTrailNumber);
+Pinyin *pinyin_convert_accent_format(const Pinyin *pinyin, Pinyin_Accent_Format toFormat, gboolean useTrailNumber);
 
 
 /**
- * PinYin to ZhuYin
+ * Pinyin to Zhuyin
  *
- * @param pinYin the PinYin to be converted.
- * @param toFormat the ZhuYin tone mark mode.
- * @return a newly located ZhuYin instance.
- * @see zhuYin_convert_toneMark_format()
+ * @param pinyin the Pinyin to be converted.
+ * @param toFormat the Zhuyin tone mark mode.
+ * @return a newly located Zhuyin instance.
+ * @see zhuyin_convert_toneMark_format()
  */
-ZhuYin *pinYin_to_zhuYin(const PinYin* pinYin, ZhuYin_ToneMark_Format toFormat);
+Zhuyin *pinyin_to_zhuyin(const Pinyin* pinyin, Zhuyin_ToneMark_Format toFormat);
 
 /*==========================================================
- * ZhuYin functions.
+ * Zhuyin functions.
  */
 
 /**
- * New a ZhuYin instance.
+ * New a Zhuyin instance.
  *
- * This function allocate a new ZhuYin instance.
- * Non-NULL zhuYin_str will be copied to the new ZhuYin instance and 
+ * This function allocate a new Zhuyin instance.
+ * Non-NULL zhuyin_str will be copied to the new Zhuyin instance and 
  * converted to uppercase.
- * Note that the ZhuYin instance only holds #ZHUYIN_MAX_LENGTH bytes, 
- * including the EOL ('\0') character. Longer zhuYin will be truncated.
+ * Note that the Zhuyin instance only holds #ZHUYIN_MAX_LENGTH bytes, 
+ * including the EOL ('\0') character. Longer zhuyin will be truncated.
  *
  * Note: use g_free to free the newly allocated instance.
  *
- * @param zhuYin_str the ZhuYin in string, NULL for blank instance.
- * @return new ZhuYin instances.
+ * @param zhuyin_str the Zhuyin in string, NULL for blank instance.
+ * @return new Zhuyin instances.
  */
-ZhuYin *zhuYin_new(const char *zhuYin_str);
+Zhuyin *zhuyin_new(const char *zhuyin_str);
 
 
 /**
- * Return the explicit-specified tone of ZhuYin.
+ * Return the explicit-specified tone of Zhuyin.
  *
- * This function finds and returns the explicit-specified tone of zhuYin.
- * Thus 0 will be returned if zhuYin does not have any explicit-specified tone.
+ * This function finds and returns the explicit-specified tone of zhuyin.
+ * Thus 0 will be returned if zhuyin does not have any explicit-specified tone.
  * 
  * This function acts this way in order to accommodate 
- * the SQL LIKE query such as <code>... WHERE zhuYin LIKE 'ㄊㄧㄢ%'</code>.
+ * the SQL LIKE query such as <code>... WHERE zhuyin LIKE 'ㄊㄧㄢ%'</code>.
  *
  * Sometimes, 1th tone mark is omitted, please convert the value 0 to 1
  * if this is the case. 
  *
- * @param zhuYin the zhuYin instance to be stripped.
+ * @param zhuyin the zhuyin instance to be stripped.
  * @return the tone id from 1 to 5 if the tone is explicit-specified, 0
  * otherwise.
- * @see zhuYin_strip_tone()
+ * @see zhuyin_strip_tone()
  */
-guint zhuYin_get_tone(const ZhuYin* zhuYin);
+guint zhuyin_get_tone(const Zhuyin* zhuyin);
 
 
 /**
- * Strip the tone mark of ZhuYin and return explicit-specified the tone Id.
+ * Strip the tone mark of Zhuyin and return explicit-specified the tone Id.
  *
- * This function strips the tone mark of zhuYin,
- * otherwise is similar to zhuYin_get_tone().
+ * This function strips the tone mark of zhuyin,
+ * otherwise is similar to zhuyin_get_tone().
  *
- * @param zhuYin the zhuYin instance to be stripped.
+ * @param zhuyin the zhuyin instance to be stripped.
  * @return the tone id from 1 to 5 if the tone is explicit-specified, 0
- * @see zhuYin_get_tone()
+ * @see zhuyin_get_tone()
  */
-guint zhuYin_strip_tone(ZhuYin* zhuYin);
+guint zhuyin_strip_tone(Zhuyin* zhuyin);
 
 /**
- * Add the tone mark to zhuYin.
+ * Add the tone mark to zhuyin.
  *
- * This function add tone mark to zhuYin, existing tone will be removed before adding new tone.
+ * This function add tone mark to zhuyin, existing tone will be removed before adding new tone.
  * If tone is 0, then existing tone will be removed, but no new tone will be added.
  * 
- * The result will be stored in zhuYin, so backup it with strdup() or g_strdup() to keep the original.
+ * The result will be stored in zhuyin, so backup it with strdup() or g_strdup() to keep the original.
  *
- * @param zhuYin the zhuYin instance to be processed.
+ * @param zhuyin the zhuyin instance to be processed.
  * @param tone the tone to be added.
- * @param toFormat the ZhuYin tone mark mode to be converted to.
+ * @param toFormat the Zhuyin tone mark mode to be converted to.
  */
-void zhuYin_add_tone(ZhuYin* zhuYin, guint tone, ZhuYin_ToneMark_Format toFormat);
+void zhuyin_add_tone(Zhuyin* zhuyin, guint tone, Zhuyin_ToneMark_Format toFormat);
 
 /**
  * Convert zhuyin to another tone mark format.
  *
- * Unlike zhuYin_get_tone() and zhuYin_strip_tone() which only identify the explicit-specified tone,
+ * Unlike zhuyin_get_tone() and zhuyin_strip_tone() which only identify the explicit-specified tone,
  * this function treats the unspecified tone as 1st tone,  unless SQL
  * wild characters '%' and '_' are encountered. 
  *
  * Note: use g_free to free the newly allocated instance.
  *
- * @param zhuYin the ZhuYin to be converted.
- * @param toFormat the ZhuYin tone mark mode to be converted to.
- * @return the newly allocated ZhuYin instance that 
- * @see pinYin_to_zhuYin()
+ * @param zhuyin the Zhuyin to be converted.
+ * @param toFormat the Zhuyin tone mark mode to be converted to.
+ * @return the newly allocated Zhuyin instance that 
+ * @see pinyin_to_zhuyin()
  */
-ZhuYin *zhuYin_convert_toneMark_format(const ZhuYin* zhuYin, ZhuYin_ToneMark_Format toFormat);
+Zhuyin *zhuyin_convert_toneMark_format(const Zhuyin* zhuyin, Zhuyin_ToneMark_Format toFormat);
 
 /**
- * ZhuYin to PinYin
+ * Zhuyin to Pinyin
  *
- * @param zhuYin the ZhuYin to be converted.
- * @param toFormat the PinYin accent mode.
+ * @param zhuyin the Zhuyin to be converted.
+ * @param toFormat the Pinyin accent mode.
  * @param useTrailNumber TRUE trailing number is preferred, FALSE to use traditional tonemark.
- * @return a newly located PinYin instance.
- * @see pinYin_convert_accent_format()
+ * @return a newly located Pinyin instance.
+ * @see pinyin_convert_accent_format()
  */
-PinYin *zhuYin_to_pinYin(const ZhuYin* zhuYin, PinYin_Accent_Format toFormat, gboolean useTrailNumber);
+Pinyin *zhuyin_to_pinyin(const Zhuyin* zhuyin, Pinyin_Accent_Format toFormat, gboolean useTrailNumber);
 
 
 /*----------------------------------------------------------
- * ZhuYin symbol functions.
+ * Zhuyin symbol functions.
  */
 
 /**
- * Return the ZhuYin symbol by its Id.
+ * Return the Zhuyin symbol by its Id.
  * 
  *
- * @param id ZhuYin symbol Id.
+ * @param id Zhuyin symbol Id.
  * @return the corresponding symbol, or 0 if the id is negative.
  */
-ZhuYin_Symbol zhuYin_Symbol_from_id(ZhuYin_Symbol_Id id);
+Zhuyin_Symbol zhuyin_Symbol_from_id(Zhuyin_Symbol_Id id);
 
 
 /**
- * Return the Id of a ZhuYin symbol
+ * Return the Id of a Zhuyin symbol
  * 
- * @param zSym  ZhuYin symbol.
+ * @param zSym  Zhuyin symbol.
  * @return the corresponding Id.
  */
-ZhuYin_Symbol_Id zhuYin_Symbol_get_id(ZhuYin_Symbol zSym);
+Zhuyin_Symbol_Id zhuyin_Symbol_get_id(Zhuyin_Symbol zSym);
 
 /**
- * Whether the zhuYin symbol is an initial.
+ * Whether the zhuyin symbol is an initial.
  *
- * @param zSym  ZhuYin symbol.
- * @return TRUE if the zhuYin symbol is an initial, FALSE otherwise.
+ * @param zSym  Zhuyin symbol.
+ * @return TRUE if the zhuyin symbol is an initial, FALSE otherwise.
  */
-gboolean zhuYin_Symbol_is_initial(ZhuYin_Symbol zSym);
+gboolean zhuyin_Symbol_is_initial(Zhuyin_Symbol zSym);
 
 /**
- * Whether the zhuYin symbol is an medial.
+ * Whether the zhuyin symbol is an medial.
  *
- * @param zSym  ZhuYin symbol.
- * @return TRUE if the zhuYin symbol is an medial, FALSE otherwise.
+ * @param zSym  Zhuyin symbol.
+ * @return TRUE if the zhuyin symbol is an medial, FALSE otherwise.
  */
-gboolean zhuYin_Symbol_is_medial(ZhuYin_Symbol zSym);
+gboolean zhuyin_Symbol_is_medial(Zhuyin_Symbol zSym);
 
 /**
- * Whether the zhuYin symbol is an final.
+ * Whether the zhuyin symbol is an final.
  *
- * @param zSym  ZhuYin symbol.
- * @return TRUE if the zhuYin symbol is an final, FALSE otherwise.
+ * @param zSym  Zhuyin symbol.
+ * @return TRUE if the zhuyin symbol is an final, FALSE otherwise.
  */
-gboolean zhuYin_Symbol_is_final(ZhuYin_Symbol zSym);
+gboolean zhuyin_Symbol_is_final(Zhuyin_Symbol zSym);
 
 /**
- * Whether the zhuYin symbol is either a toneMark or number which indicates the tone.
+ * Whether the zhuyin symbol is either a toneMark or number which indicates the tone.
  *
- * @param zSym  ZhuYin symbol.
- * @return TRUE if the zhuYin symbol is either a toneMark or number which indicates the tone, FALSE otherwise.
+ * @param zSym  Zhuyin symbol.
+ * @return TRUE if the zhuyin symbol is either a toneMark or number which indicates the tone, FALSE otherwise.
  */
-gboolean zhuYin_Symbol_is_tone(ZhuYin_Symbol zSym);
+gboolean zhuyin_Symbol_is_tone(Zhuyin_Symbol zSym);
 
 /**
  * Return the tone id of given tone mark.
  *
- * @param zSym  ZhuYin symbol.
+ * @param zSym  Zhuyin symbol.
  * @return tone id if zSym is tone mark, 0 otherwise.
  */
-guint zhuYin_Symbol_to_toneMark_id(ZhuYin_Symbol zSym);
+guint zhuyin_Symbol_to_toneMark_id(Zhuyin_Symbol zSym);
 
 /**
  * Return the tone mark of given tone id.
  *
  * @param toneMark_id  toneMark_id.
- * @return the ZhuYin symbol if id is between 1 to 5; returns 0 otherwise.
+ * @return the Zhuyin symbol if id is between 1 to 5; returns 0 otherwise.
  */
-ZhuYin_Symbol zhuYin_Symbol_from_toneMark_id(guint toneMark_id);
+Zhuyin_Symbol zhuyin_Symbol_from_toneMark_id(guint toneMark_id);
 
 /**
- * PinYin convert accent format scalar function for SQL command call.
+ * Pinyin convert accent format scalar function for SQL command call.
  *
  * This function is meant to be called by sqlite3_create_function()
  * and used in SQL command. Do not use it directly.
@@ -466,10 +466,10 @@ ZhuYin_Symbol zhuYin_Symbol_from_toneMark_id(guint toneMark_id);
  * @param argc Number of argument expected.
  * @param argv Arguments for this scalar function .
  */
-void pinYin_convert_accent_format_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv);
+void pinyin_convert_accent_format_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv);
 
 /**
- * PinYin to ZhuYin converting scalar function for SQL command call.
+ * Pinyin to Zhuyin converting scalar function for SQL command call.
  *
  * This function is meant to be called by sqlite3_create_function()
  * and used in SQL command. Do not use it directly.
@@ -478,10 +478,10 @@ void pinYin_convert_accent_format_scalar_func(sqlite3_context *context, int argc
  * @param argc Number of argument expected.
  * @param argv Arguments for this scalar function .
  */
-void pinYin_to_zhuYin_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv);
+void pinyin_to_zhuyin_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv);
 
 /**
- * ZhuYin convert accent format scalar function for SQL command call.
+ * Zhuyin convert accent format scalar function for SQL command call.
  *
  * This function is meant to be called by sqlite3_create_function()
  * and used in SQL command. Do not use it directly.
@@ -490,11 +490,11 @@ void pinYin_to_zhuYin_scalar_func(sqlite3_context *context, int argc, sqlite3_va
  * @param argc Number of argument expected.
  * @param argv Arguments for this scalar function .
  */
-void zhuYin_convert_toneMark_format_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv);
+void zhuyin_convert_toneMark_format_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv);
 
 
 /**
- * ZhuYin to PinYin converting scalar function for SQL command call.
+ * Zhuyin to Pinyin converting scalar function for SQL command call.
  *
  * This function is meant to be called by sqlite3_create_function()
  * and used in SQL command. Do not use it directly.
@@ -503,6 +503,6 @@ void zhuYin_convert_toneMark_format_scalar_func(sqlite3_context *context, int ar
  * @param argc Number of argument expected.
  * @param argv Arguments for this scalar function .
  */
-void zhuYin_to_pinYin_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv);
+void zhuyin_to_pinyin_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv);
 
 #endif /* UNIHAN_PHONETIC_H_ */

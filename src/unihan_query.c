@@ -60,15 +60,15 @@ Options: \n\
 \t-O: Show given field in result as well.\n\
 \t-L: Like mode, specify the given_value is a pattern to be used in LIKE SQL search.\n\
 \t-U: Unicode code as Unicode scalar string (U+xxxxx).\n\
-\t-P [0-5]: PinYin accent format, 0 for always shows accent if applicable,\n\
-\t          1 for  original PinYin accent format, 2 for Unihan PinYin accent format, \n\
+\t-P [0-5]: Pinyin accent format, 0 for always shows accent if applicable,\n\
+\t          1 for  original Pinyin accent format, 2 for Unihan Pinyin accent format, \n\
 \t	    3 for trailing (CCEDIT) format, 4 for input method accent (LV,NV) format,\n\
 \t          5 for non-accent (passport) format. Default is 2. \n\
 \t-T: Use accent-like tone mark to display tone\n\
-\t-Z [0-3]: ZhuYin tone mark format, 0 for always shows tone, \n\
-\t          1 for  original ZhuYin format,  2 for input method ZhuYin format,\n\
+\t-Z [0-3]: Zhuyin tone mark format, 0 for always shows tone, \n\
+\t          1 for  original Zhuyin format,  2 for input method Zhuyin format,\n\
 \t          3 for showing as number.  Default is 1. \n\
-\t-z: Force ZhuYin display. \n\
+\t-z: Force Zhuyin display. \n\
 \n\
  Show options:\n\
 \t-t, --show-tables: show all the tables in the default db.\n\
@@ -93,8 +93,8 @@ char *givenValueStr=NULL;
 char *queryFieldStr=NULL;
 int verboseLevel=VERBOSE_MSG_ERROR;
 
-guint pinYin_toFormat=PINYIN_ACCENT_UNIHAN;
-guint zhuYin_toFormat=ZHUYIN_TONEMARK_ORIGINAL;
+guint pinyin_toFormat=PINYIN_ACCENT_UNIHAN;
+guint zhuyin_toFormat=ZHUYIN_TONEMARK_ORIGINAL;
 
 
 static void printUsage(){
@@ -216,9 +216,9 @@ static gboolean is_valid_arguments(int argc, char **argv) {
 		qOption |= UNIHAN_QUERY_OPTION_SHOW_GIVEN_FIELD;
 		break;
 	    case 'P':
-		pinYin_toFormat=atoi(optarg);
-		if (pinYin_toFormat<0 || pinYin_toFormat>5){
-		    printf(" Invalid PinYin format number, should be between 0 to 5.\n");
+		pinyin_toFormat=atoi(optarg);
+		if (pinyin_toFormat<0 || pinyin_toFormat>5){
+		    printf(" Invalid Pinyin format number, should be between 0 to 5.\n");
 		    exit(-1);
 		}
 		break;
@@ -226,9 +226,9 @@ static gboolean is_valid_arguments(int argc, char **argv) {
 		qOption |= UNIHAN_QUERY_OPTION_PINYIN_TONE_ACCENT;
 		break;
 	    case 'Z':
-		zhuYin_toFormat=atoi(optarg);
-		if (zhuYin_toFormat<0 || zhuYin_toFormat>3){
-		    printf(" Invalid ZhuYin format number, should be between 0 to 3.\n");
+		zhuyin_toFormat=atoi(optarg);
+		if (zhuyin_toFormat<0 || zhuyin_toFormat>3){
+		    printf(" Invalid Zhuyin format number, should be between 0 to 3.\n");
 		    exit(-1);
 		}
 		break;
@@ -274,8 +274,8 @@ static gboolean is_valid_arguments(int argc, char **argv) {
 	givenFieldStr=argv[optind];
 	givenValueStr=argv[optind+1];
 	queryFieldStr=argv[optind+2];
-	UNIHAN_QUERY_OPTION_SET_PINYIN_FORMAT(qOption,pinYin_toFormat);
-	UNIHAN_QUERY_OPTION_SET_ZHUYIN_FORMAT(qOption,zhuYin_toFormat);
+	UNIHAN_QUERY_OPTION_SET_PINYIN_FORMAT(qOption,pinyin_toFormat);
+	UNIHAN_QUERY_OPTION_SET_ZHUYIN_FORMAT(qOption,zhuyin_toFormat);
     }else{
 	/* SQL mode */
 	if (argc-optind!=0){

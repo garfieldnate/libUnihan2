@@ -16,9 +16,11 @@
   + Field zVariantSource is renamed as zVariant_source
   Since original Unihan tags has 'k' as prefix, we change the leading 'k' to
   to uppercase for fields that are not directly come from original Unihan tags.
-  + Field kangXi_page is renamed as KangXi_page
-  + Field kangXi_charNum is renamed as KangXi_charNum
-  + Field kangXi_virtual is renamed as KangXi_virtual
+  + Field kangXi_page is renamed as dict_page
+  + Field kangXi_charNum is renamed as dict_position
+  + Field kangXi_virtual is renamed as dict_virtual
+
+  + pinYin has been split to pinYin_base and pinYin_tone
 
 
 * Tue Sep 23 2008 Ding-Yi Chen <dchen at redhat dot com> - 5.1.0-7
