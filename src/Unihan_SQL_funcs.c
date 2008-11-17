@@ -30,8 +30,8 @@
  */
 
 typedef enum{
-    UNIHAN_KANGXI_STATE_PAGE,
-    UNIHAN_KANGXI_STATE_CHARNUM,
+    UNIHAN_DICT_STAGE_PAGE,
+    UNIHAN_DICT_STAGE_POSITION,
 } UnihanKangXiState;
 
 #define STRING_BUFFER_KANGXI_PAGE_SIZE 6
@@ -49,15 +49,15 @@ static GArray *kangXiRec_parse(const char *composite_value){
     int i;
     int currIndex=0;
     KangXiRec *currRec=NULL;
-    UnihanKangXiState state=UNIHAN_KANGXI_STATE_PAGE;
+    UnihanKangXiState state=UNIHAN_DICT_STAGE_PAGE;
 
 
     for(i=0;subFieldArray[i]!=NULL;i++){
 	switch(state){
-	    case UNIHAN_KANGXI_STATE_PAGE:
-		state=UNIHAN_KANGXI_STATE_CHARNUM;
+	    case UNIHAN_DICT_STAGE_PAGE:
+		state=UNIHAN_DICT_STAGE_POSITION;
 		break;
-	    case UNIHAN_KANGXI_STATE_CHARNUM:
+	    case UNIHAN_DICT_STAGE_POSITION:
 		g_assert(i>0);
 		currIndex=gArray->len;
 		g_array_set_size(gArray,currIndex+1);
@@ -67,7 +67,7 @@ static GArray *kangXiRec_parse(const char *composite_value){
 		currRec->charNum[1]=subFieldArray[i][1];
 		currRec->charNum[2]='\0';
 		currRec->virtual=(subFieldArray[i][2]=='1') ? TRUE : FALSE;
-		state=UNIHAN_KANGXI_STATE_PAGE;
+		state=UNIHAN_DICT_STAGE_PAGE;
 		break;
 	}
     }
