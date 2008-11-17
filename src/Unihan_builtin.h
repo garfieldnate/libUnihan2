@@ -74,7 +74,7 @@ UnihanTable unihanField_get_builtin_preferred_table(UnihanField field);
  * @see unihanField_get_builtin_required_table()
  * @see unihanField_get_all_builtin_tables(UnihanField field)
  */
-UnihanTable *unihanField_get_builtin_required_table(UnihanField field);
+UnihanTable *unihanField_get_builtin_required_tables(UnihanField field);
 
 
 

@@ -23,6 +23,8 @@
 #include <stdarg.h>
 #include <glib.h>
 #include <limits.h>
+#include <regex.h>
+#include <sys/types.h>
 #include "allocate.h"
 #include "collection.h"
 #include "str_functions.h"
@@ -74,7 +76,7 @@ void stringList_clear(StringList *sList){
 #endif    
 }
 
-int stringList_find_string(StringList *sList,const char* str){
+int stringList_find_string(StringList *sList,const gchar* str){
     guint i;
     for(i=0;i<sList->len;i++){
 	if (strcmp(stringList_index(sList,i),str)==0){
@@ -84,16 +86,16 @@ int stringList_find_string(StringList *sList,const char* str){
     return -1;
 }
 
-char **stringList_to_charPointerPointer(StringList *sList){
-    return (char**) sList->ptrArray->pdata;
+gchar **stringList_to_gcharPointerPointer(StringList *sList){
+    return (gchar**) sList->ptrArray->pdata;
 }
 
-const char *stringList_index(StringList *sList,guint index){
+const gchar *stringList_index(StringList *sList,guint index){
     return g_ptr_array_index(sList->ptrArray,index);
 }
 
 
-guint stringList_insert(StringList *sList, const char *str){
+guint stringList_insert(StringList *sList, const gchar *str){
     g_ptr_array_remove_index_fast (sList->ptrArray,sList->len);
     if (str){
 	gchar *ptr=g_string_chunk_insert (sList->chunk,str);
@@ -108,7 +110,7 @@ guint stringList_insert(StringList *sList, const char *str){
 
 }
 
-guint stringList_insert_const(StringList *sList, const char *str){
+guint stringList_insert_const(StringList *sList, const gchar *str){
     g_ptr_array_remove_index_fast (sList->ptrArray,sList->len);
     gchar *strPtr=(gchar *) g_hash_table_lookup(sList->hTable,str);
 
@@ -130,17 +132,17 @@ void stringList_free(StringList *sList){
     g_free(sList);
 }
 
-char*
-initString(char *str){
+gchar*
+initString(gchar *str){
     if (str==NULL){
-        str=(char *) NEW_ARRAY_INSTANCE(MAX_STRING_BUFFER_SIZE,char);
+        str=(gchar *) NEW_ARRAY_INSTANCE(MAX_STRING_BUFFER_SIZE,gchar);
     }
     str[0]='\0';
     return str;
 }
 
 gboolean
-isEmptyString(const char *str){
+isEmptyString(const gchar *str){
     if (str==NULL)
         return TRUE;
     if (strlen(str)==0)
@@ -148,7 +150,7 @@ isEmptyString(const char *str){
     return FALSE;
 }
 
-void string_trim(char *str){
+void string_trim(gchar *str){
     int i,j,k,len=strlen(str);
     gboolean whiteSpaces=TRUE;
     for(i=len-1;i>=0;i--){
@@ -195,8 +197,8 @@ void string_trim(char *str){
     str[k]='\0';
 }
 
-char*
-subString(char *buf, const char *str,int beginIndex,int length){
+gchar*
+subString(gchar *buf, const gchar *str,int beginIndex,int length){
     int i=0;
     for(i=0;i<length;i++){
 	if (str[beginIndex+i]=='\0'){
@@ -208,36 +210,80 @@ subString(char *buf, const char *str,int beginIndex,int length){
     return buf;
 }
 
-gunichar* utf8_to_ucs4(const char* utf8_str){
+
+StringList *regex_multiple_match_regex_t(regex_t *regexT,const gchar* str, int eflags, guint excludeFlags ){
+    gchar *currPtr=str;
+    int len=strlen(str);
+    int i,ret;
+    int counter=0;
+    int nmatch=regexT->re_nsub+1;
+    gchar *newStr;
+    regmatch_t *pmatch=NEW_ARRAY_INSTANCE(nmatch,regmatch_t);   
+    StringList *sList= stringList_new();
+    while(currPtr<str+len){
+	if (regexec(regexT,currPtr,nmatch,pmatch,eflags)!=0){
+	    /* No Match */
+	    break;
+	}
+	i=0;
+	if (!(excludeFlags & REGEX_EXCLUDE_WHOLE_MATCH)){
+	    /* Put whole match ( pmatch[0] ) in sList */
+	    newStr=g_strndup(currPtr+pmatch[i].rm_so, pmatch[counter].rm_eo - pmatch[i].rm_so);
+	    stringList_insert(sList,newStr);
+	    g_free(newStr);
+	}
+	if (!(excludeFlags & REGEX_EXCLUDE_SUB_MATCH)){
+	    for(i=1;i<nmatch && pmatch[i].rm_so>=0;i++){
+		/* Put sub matchs ( pmatch[i] ) in sList */
+		newStr=g_strndup(currPtr+pmatch[i].rm_so, pmatch[counter].rm_eo - pmatch[i].rm_so);
+		stringList_insert(sList,newStr);
+		g_free(newStr);
+	    }
+	}
+	if (i>0){
+	    i--;
+	}
+	currPtr+=pmatch[i].rm_eo;
+    }
+    g_free(pmatch);
+    return sList;
+}
+
+StringList *regex_multiple_match_regex_t(const gchar *pattern,const gchar *str, int eflags, guint excludeFlags ){
+    StringList *sList=NULL;
+    return sList;
+}
+
+gunigchar* utf8_to_ucs4(const gchar* utf8_str){
     glong items_read;
     glong items_written;
     GError *err = NULL;
-    gunichar*   ucs4Str=g_utf8_to_ucs4(utf8_str, -1,&items_read, &items_written, &err);
+    gunigchar*   ucs4Str=g_utf8_to_ucs4(utf8_str, -1,&items_read, &items_written, &err);
     if (err!=NULL){
-	verboseMsg_print(VERBOSE_MSG_CRITICAL,"UTF-8 to UCS-4 conversion error: on char %ld in \"%s\"\n",items_read,utf8_str);
+	verboseMsg_print(VERBOSE_MSG_CRITICAL,"UTF-8 to UCS-4 conversion error: on gchar %ld in \"%s\"\n",items_read,utf8_str);
 	verboseMsg_print(VERBOSE_MSG_CRITICAL,"Error message:  \"%s\"\n",err->message);
 	exit(1);
     }
     return ucs4Str;
 }
 
-char* ucs4_to_utf8(gunichar ucs4_code){
+gchar* ucs4_to_utf8(gunigchar ucs4_code){
     gchar *utf8_str;
-    gint len=g_unichar_to_utf8(ucs4_code,NULL);
+    gint len=g_unigchar_to_utf8(ucs4_code,NULL);
     utf8_str=NEW_ARRAY_INSTANCE(MAX(len+1,6),gchar);
-    g_unichar_to_utf8(ucs4_code,utf8_str);
+    g_unigchar_to_utf8(ucs4_code,utf8_str);
     utf8_str[len]='\0';
     return utf8_str;
 }
 
-char* utf8_concat_ucs4(char* utf8_str,gunichar ucs4_code){
-    char *ucs4_str=ucs4_to_utf8(ucs4_code);
+gchar* utf8_concat_ucs4(gchar* utf8_str,gunigchar ucs4_code){
+    gchar *ucs4_str=ucs4_to_utf8(ucs4_code);
     strcat(utf8_str,ucs4_str);
     g_free(ucs4_str);
     return utf8_str;
 }
 
-int strcmp_unsigned_signed(const unsigned char *str1, const char *str2){
+int strcmp_unsigned_signed(const unsigned gchar *str1, const gchar *str2){
     int c1, c2,i=0;
     do{
 	c1=(int) str1[i];
@@ -252,45 +298,45 @@ int strcmp_unsigned_signed(const unsigned char *str1, const char *str2){
     return 0;
 }
 
-unsigned char *signedStr_to_unsignedStr(const char *str){
-    unsigned char *cloneStr=NEW_ARRAY_INSTANCE(strlen(str)+1,unsigned char);
-    unsigned char *result=signedStr_to_unsignedStr_buffer(cloneStr,str);
+unsigned gchar *signedStr_to_unsignedStr(const gchar *str){
+    unsigned gchar *cloneStr=NEW_ARRAY_INSTANCE(strlen(str)+1,unsigned gchar);
+    unsigned gchar *result=signedStr_to_unsignedStr_buffer(cloneStr,str);
     if (!result)
 	g_free(cloneStr);
     return result;
 }
 
-unsigned char *signedStr_to_unsignedStr_buffer(unsigned char *resultBuf, const char *str){
-    unsigned char c;
+unsigned gchar *signedStr_to_unsignedStr_buffer(unsigned gchar *resultBuf, const gchar *str){
+    unsigned gchar c;
     int i=0;
     do{
-	c=(unsigned char) str[i];
+	c=(unsigned gchar) str[i];
 	resultBuf[i]=c;
 	i++;
     }while(c!=0 );
     return resultBuf;
 }
 
-char *unsignedStr_to_signedStr(const unsigned char *str){
-    char* cloneStr=NEW_ARRAY_INSTANCE(strlen((const char *)str)+1,char);
-    char *result=unsignedStr_to_signedStr_buffer(cloneStr,str);
+gchar *unsignedStr_to_signedStr(const unsigned gchar *str){
+    gchar* cloneStr=NEW_ARRAY_INSTANCE(strlen((const gchar *)str)+1,gchar);
+    gchar *result=unsignedStr_to_signedStr_buffer(cloneStr,str);
     if (!result)
 	g_free(cloneStr);
     return result;
 }
 
-char *unsignedStr_to_signedStr_buffer(char* resultBuf, const unsigned char *str){
-    char c;
+gchar *unsignedStr_to_signedStr_buffer(gchar* resultBuf, const unsigned gchar *str){
+    gchar c;
     int i=0;
     do{
-	c=(char) str[i];
+	c=(gchar) str[i];
 	resultBuf[i]=c;
 	i++;
     }while(c!=0 );
     return resultBuf;
 }
 
-int longestCommonSubsequence_get_length(const char *s1, const char *s2, int ***lcsTablePtr){
+int longestCommonSubsequence_get_length(const gchar *s1, const gchar *s2, int ***lcsTablePtr){
     int n1=strlen(s1);
     int n2=strlen(s2);
     int **table= NEW_ARRAY2D_INSTANCE(n2,n1,int);
@@ -324,14 +370,14 @@ int longestCommonSubsequence_get_length(const char *s1, const char *s2, int ***l
 }
 
 
-char* longestCommonSubsequence_get_subsequence(const char *s1, const char *s2, int **lcsTable){
+gchar* longestCommonSubsequence_get_subsequence(const gchar *s1, const gchar *s2, int **lcsTable){
     int n1=strlen(s1);
     int n2=strlen(s2);
     int len=lcsTable[0][0];
     if (len==0){
 	return NULL;
     }
-    char *subsequence= (char *) calloc(len+1,sizeof(char));
+    gchar *subsequence= (gchar *) calloc(len+1,sizeof(gchar));
     int i1=0,i2=0;
     int counter=0;
     subsequence[len]='\0';
@@ -362,10 +408,10 @@ char* longestCommonSubsequence_get_subsequence(const char *s1, const char *s2, i
 }
 
 
-//int main(int argc, char** argv){
+//int main(int argc, gchar** argv){
 //    int **table=NULL;
 //    int len=longestCommonSubsequence_get_length(argv[1],argv[2], &table);
-//    char* str=longestCommonSubsequence_get_subsequence(argv[1],argv[2], table);
+//    gchar* str=longestCommonSubsequence_get_subsequence(argv[1],argv[2], table);
 //    if (str==NULL)
 //        str="NULL";
 //    printf("lcs length:%d, subsequence:%s\n",len,str);

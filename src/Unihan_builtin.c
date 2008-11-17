@@ -440,7 +440,7 @@ UnihanTable unihanField_get_builtin_preferred_table(UnihanField field){
     return UNIHAN_INVAILD_TABLE;
 }
 
-UnihanTable *unihanField_get_builtin_required_table(UnihanField field){
+UnihanTable *unihanField_get_builtin_required_tables(UnihanField field){
     int i,counter=0;
     UnihanTable *tables=NEW_ARRAY_INSTANCES(UNIHAN_TABLE_ARRAY_MAX_LEN, UnihanTable);
     for(i=0;PSEUDOFIELD_REQUIRED_TABLES[i].field!=UNIHAN_INVALID_FIELD;i++){
@@ -608,17 +608,28 @@ int unihan_insert(UnihanTable table, StringList *valueList){
     return ret;
 }
 
-
-int unihan_insert_builtin_table(gunichar code, UnihanField field, const char *value){
+int unihan_insert_tagValue_builtin_table(gunichar code, UnihanField field, const char *tagValue){
     char buf[20];
-    UnihanTable table=unihanField_get_table(field);
+    UnihanTable *tables=unihanField_get_builtin_required_tables(field);
+    gchar **values=NULL;
+    gchar **fieldArray=NULL;
+    gunichar variantCode;
+    if (!unihanField_is_singleton(field)){
+	values=g_strsplit_set(value," ",-1);
+    }else{
+	
+    }
+    
+
+
+
+    UnihanTable *tables=unihanField_get_builtin
     StringList *sList=stringList_new();
     char **subFieldArray=NULL;
     gunichar variantCode;
     static gunichar lastCode=0;
     int result=0,newResult=0;
     static int freqRank=1;
-
 
     UnihanIRG_SourceRec *rec=NULL;
     if (unihanField_is_IRG_Source(field)){
@@ -632,7 +643,7 @@ int unihan_insert_builtin_table(gunichar code, UnihanField field, const char *va
 	}
 	g_snprintf(buf,20,"%d",code);
 
-	if (!unihanIRG_Source_has_no_mapping(rec->sourceId)){
+	if (!unihanIRG_Source_has_no_mapping(rec->sourceId)){/
 	    stringList_insert(sList,buf);
 	    stringList_insert(sList,srcData->name);
 	    stringList_insert(sList,rec->sourceMapping);
