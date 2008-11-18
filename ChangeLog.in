@@ -10,6 +10,7 @@
   unihan.h: unihanDb_get_all_pseudo_fields().
   unihan.h: unihanDb_get_all_real_fields().
   unihan.h: unihanDb_get_all_tables().
+  unihan.h: unihanField_is_uppercase()
 
 - Fixed:
   + unihan_find_firstMatched() is corrected as unihan_find_first_matched()
@@ -35,6 +36,7 @@
 - Removed:
   + No more UNIHAN_DEFAULT_DB
   + UNIHAN_FIELD_VARIANT_TYPE is removed.
+  + unihanField_is_case_no_change()
 
 * Tue Oct 21 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.5.3-3
 - Add following make targets: rpm_lint, koji_submit, koji_build,  pkg_remove_old.

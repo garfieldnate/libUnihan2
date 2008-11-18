@@ -21,10 +21,7 @@
  */ 
 #include <stdio.h>
 #include <stdarg.h>
-#include <glib.h>
 #include <limits.h>
-#include <regex.h>
-#include <sys/types.h>
 #include "allocate.h"
 #include "collection.h"
 #include "str_functions.h"
@@ -134,9 +131,9 @@ void stringList_free(StringList *sList){
 
 
 StringList *regex_subString_match_regex_t(regex_t *preg,const gchar* str, int eflags, guint regexSubStringFlags ){
-    gchar *currPtr=str;
+    gchar *currPtr=(gchar *)str;
     int len=strlen(str);
-    int i,ret;
+    int i;
     int counter=0;
     int nmatch=preg->re_nsub+1;
     gchar *newStr;
@@ -150,14 +147,14 @@ StringList *regex_subString_match_regex_t(regex_t *preg,const gchar* str, int ef
 	    break;
 	}
 	i=0;
-	if (!(regexSubstringFlags & REGEX_SUBSTRING_EXCLUDE_MAJOR_MATCH)){
+	if (!(regexSubStringFlags & REGEX_SUBSTRING_EXCLUDE_MAJOR_MATCH)){
 	    /* Put whole match ( pmatch[0] ) in sList */
 	    newStr=g_strndup(currPtr+pmatch[i].rm_so, pmatch[counter].rm_eo - pmatch[i].rm_so);
 	    stringList_insert(sList,newStr);
 	    g_free(newStr);
 	    maxEo=(maxEo >= pmatch[i].rm_eo) ? maxEo : pmatch[i].rm_eo;
 	}
-	if (!(regexSubstringFlags & REGEX_SUBSTRING_EXCLUDE_SUB_MATCH)){
+	if (!(regexSubStringFlags & REGEX_SUBSTRING_EXCLUDE_SUB_MATCH)){
 	    for(i=1;i<nmatch && pmatch[i].rm_so>=0;i++){
 		/* Put sub matchs ( pmatch[i] ) in sList */
 		newStr=g_strndup(currPtr+pmatch[i].rm_so, pmatch[counter].rm_eo - pmatch[i].rm_so);
@@ -166,7 +163,7 @@ StringList *regex_subString_match_regex_t(regex_t *preg,const gchar* str, int ef
 		maxEo=(maxEo >= pmatch[i].rm_eo) ? maxEo : pmatch[i].rm_eo;
 	    }
 	}
-	if (regexSubstringFlags & REGEX_SUBSTRING_ALLOW_OVERLAP){
+	if (regexSubStringFlags & REGEX_SUBSTRING_ALLOW_OVERLAP){
 	    currPtr++;
 	}else{
 	    currPtr+=maxEo;
@@ -177,13 +174,13 @@ StringList *regex_subString_match_regex_t(regex_t *preg,const gchar* str, int ef
 }
 
 StringList *regex_subString_match(const gchar *pattern,const gchar *str, 
-	int cflags, int eflags, guint regexSubstringFlags){
+	int cflags, int eflags, guint regexSubStringFlags){
     regex_t *preg=NULL;
     int ret;
-    if ((ret=regcomp(&preg, pattern, int cflags))!=0){
+    if ((ret=regcomp(preg, pattern, cflags))!=0){
 	/* Invalid pattern */
 	char buf[MAX_STRING_BUFFER_SIZE];
-	regerror(ret,pattern,buf,MAX_STRING_BUFFER_SIZE);
+	regerror(ret,preg,buf,MAX_STRING_BUFFER_SIZE);
 	verboseMsg_print(VERBOSE_MSG_ERROR, "regex_multiple_match():Invalid pattern %s\n"
 		,buf);
 	return NULL;
@@ -274,11 +271,11 @@ subString(gchar *buf, const gchar *str,int beginIndex,int length){
 
 
 
-gunigchar* utf8_to_ucs4(const gchar* utf8_str){
+gunichar* utf8_to_ucs4(const gchar* utf8_str){
     glong items_read;
     glong items_written;
     GError *err = NULL;
-    gunigchar*   ucs4Str=g_utf8_to_ucs4(utf8_str, -1,&items_read, &items_written, &err);
+    gunichar*   ucs4Str=g_utf8_to_ucs4(utf8_str, -1,&items_read, &items_written, &err);
     if (err!=NULL){
 	verboseMsg_print(VERBOSE_MSG_CRITICAL,"UTF-8 to UCS-4 conversion error: on char %ld in \"%s\"\n",items_read,utf8_str);
 	verboseMsg_print(VERBOSE_MSG_CRITICAL,"Error message:  \"%s\"\n",err->message);
@@ -287,23 +284,23 @@ gunigchar* utf8_to_ucs4(const gchar* utf8_str){
     return ucs4Str;
 }
 
-gchar* ucs4_to_utf8(gunigchar ucs4_code){
+gchar* ucs4_to_utf8(gunichar ucs4_code){
     gchar *utf8_str;
-    gint len=g_unigchar_to_utf8(ucs4_code,NULL);
+    gint len=g_unichar_to_utf8(ucs4_code,NULL);
     utf8_str=NEW_ARRAY_INSTANCE(MAX(len+1,6),gchar);
-    g_unigchar_to_utf8(ucs4_code,utf8_str);
+    g_unichar_to_utf8(ucs4_code,utf8_str);
     utf8_str[len]='\0';
     return utf8_str;
 }
 
-gchar* utf8_concat_ucs4(gchar* utf8_str,gunigchar ucs4_code){
+gchar* utf8_concat_ucs4(gchar* utf8_str,gunichar ucs4_code){
     gchar *ucs4_str=ucs4_to_utf8(ucs4_code);
     strcat(utf8_str,ucs4_str);
     g_free(ucs4_str);
     return utf8_str;
 }
 
-int strcmp_unsigned_signed(const unsigned gchar *str1, const gchar *str2){
+int strcmp_unsigned_signed(const unsigned char *str1, const gchar *str2){
     int c1, c2,i=0;
     do{
 	c1=(int) str1[i];
@@ -318,26 +315,26 @@ int strcmp_unsigned_signed(const unsigned gchar *str1, const gchar *str2){
     return 0;
 }
 
-unsigned gchar *signedStr_to_unsignedStr(const gchar *str){
-    unsigned gchar *cloneStr=NEW_ARRAY_INSTANCE(strlen(str)+1,unsigned gchar);
-    unsigned gchar *result=signedStr_to_unsignedStr_buffer(cloneStr,str);
+unsigned char *signedStr_to_unsignedStr(const gchar *str){
+    unsigned char *cloneStr=NEW_ARRAY_INSTANCE(strlen(str)+1,unsigned char);
+    unsigned char *result=signedStr_to_unsignedStr_buffer(cloneStr,str);
     if (!result)
 	g_free(cloneStr);
     return result;
 }
 
-unsigned gchar *signedStr_to_unsignedStr_buffer(unsigned gchar *resultBuf, const gchar *str){
-    unsigned gchar c;
+unsigned char *signedStr_to_unsignedStr_buffer(unsigned char *resultBuf, const gchar *str){
+    unsigned char c;
     int i=0;
     do{
-	c=(unsigned gchar) str[i];
+	c=(unsigned char) str[i];
 	resultBuf[i]=c;
 	i++;
     }while(c!=0 );
     return resultBuf;
 }
 
-gchar *unsignedStr_to_signedStr(const unsigned gchar *str){
+gchar *unsignedStr_to_signedStr(const unsigned char *str){
     gchar* cloneStr=NEW_ARRAY_INSTANCE(strlen((const gchar *)str)+1,gchar);
     gchar *result=unsignedStr_to_signedStr_buffer(cloneStr,str);
     if (!result)
@@ -345,7 +342,7 @@ gchar *unsignedStr_to_signedStr(const unsigned gchar *str){
     return result;
 }
 
-gchar *unsignedStr_to_signedStr_buffer(gchar* resultBuf, const unsigned gchar *str){
+gchar *unsignedStr_to_signedStr_buffer(gchar* resultBuf, const unsigned char *str){
     gchar c;
     int i=0;
     do{

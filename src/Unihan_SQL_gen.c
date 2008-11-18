@@ -40,7 +40,7 @@ static void unihan_generate_select_field_clause(GString *strBuf, UnihanField giv
     if (unihanField_is_lowercase(queryField)){
 	g_string_append(strBuf,"TO_LOWERCASE(");
 	need_right_parenthesis=TRUE;
-    }else if (!unihanField_is_case_no_change(queryField)){
+    }else if (unihanField_is_uppercase(queryField)){
 	if (!unihanField_is_mandarin(queryField)){
 	    g_string_append(strBuf,"TO_UPPERCASE(");
 	    need_right_parenthesis=TRUE;
@@ -585,12 +585,12 @@ static char *unihan_generate_where_clause(UnihanField givenField, const char *va
     GString *strBuf=g_string_new(NULL);
     UnihanIRG_SourceRec *rec=NULL;
     char *valueTmp= NULL;
-    if (unihanField_is_case_no_change(givenField)){
-	valueTmp=g_strdup(value);
+    if (unihanField_is_uppercase(givenField)){
+	valueTmp=g_utf8_strup(value,-1);
     }else if (unihanField_is_lowercase(givenField)){
 	valueTmp=g_utf8_strdown(value,-1);
     }else{
-	valueTmp=g_utf8_strup(value,-1);
+	valueTmp=g_strdup(value);
     }
 
     if (unihanField_is_IRG_Source(givenField)){

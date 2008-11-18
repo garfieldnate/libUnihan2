@@ -33,7 +33,8 @@
 #define STR_FUNCTIONS_H_
 #include <string.h>
 #include <glib.h>
-
+#include <sys/types.h>
+#include <regex.h>
 /**
  * StringList is a structure that stores a list of constant strings.
  *
@@ -172,33 +173,14 @@ guint stringList_insert_const(StringList *sList, const char *str);
  */
 void stringList_free(StringList *sList);
 
+
 /**
- * @defgroup Regex_SubString_Match Regex substring match functions and flags.
+ * @defgroup Regex_SubString_Match_Flags Regex substring match flags.
  * @{
- * @name Regex substring match functions and flags.
+ * @name Regex substring match flags.
  *
- * These functions return a newly allocated StringList that holds a list of regex-matched substrings.
- * They add substring match functionality to regexec() from \c regex.h.
+ * Bitwise regex substring match flags. Use bit operators to combine the flags.
  *
- * Contract to the intuition, regexec() only matches once even if REG_NOSUB is not set in regcomp().
- * The so-called \i sub-match actually means the sub expressions enclosed by '()' in POSIX extended,
- * or '\(\)' in POSIX basic. 
- * For example, matches <code>ab,cd,ef,gh</code> with <code>([a-z]*),([a-z]*)</code> producing following output:
- * <ol start="0">
- *   <li>ab,cd</li>
- *   <li>ab</li>
- *   <li>cd</li>
- * </ol>
- * But not 
- * <ol start="3">
- *   <li>ef,gh</li>
- *   <li>ef</li>
- *   <li>gh</li>
- * </ol>
- * and so on.
- *
- * With regex_subString_match_regex_t(), subsequence substrings are reachable.
- * The output can be filtered by using Regex_SubString_Match_Flags.
  * If none of the flags are given, by default, the output will be like:
  * <ol start="0">
  *   <li>ab,cd</li>
@@ -235,15 +217,7 @@ void stringList_free(StringList *sList);
  *   <li>ab,cd</li>
  *   <li>ef,gh</li>
  * </ol>
- * @{
- */
 
-/**
- * @defgroup Regex_SubString_Match_Flags Regex substring match flags.
- * @{
- * @name Regex substring match flags.
- *
- * Bitwise regex substring match flags. Use bit operators to combine the flags.
  * @{ 
  */
 /**
@@ -275,6 +249,65 @@ void stringList_free(StringList *sList);
  */
 
 /**
+ * @defgroup Regex_SubString_Match_Functions Regex substring match functions.
+ * @{
+ * @name Regex substring match functions.
+ *
+ * These functions return a newly allocated StringList that holds a list of regex-matched substrings.
+ * They add substring match functionality to regexec() from \c regex.h.
+ *
+ * Contract to the intuition, regexec() only matches once even if REG_NOSUB is not set in regcomp().
+ * The so-called \i sub-match actually means the sub expressions enclosed by '()' in POSIX extended,
+ * or '\(\)' in POSIX basic. 
+ * For example, matches <code>ab,cd,ef,gh</code> with <code>([a-z]*),([a-z]*)</code> producing following output:
+ * <ol start="0">
+ *   <li>ab,cd</li>
+ *   <li>ab</li>
+ *   <li>cd</li>
+ * </ol>
+ * But not 
+ * <ol start="3">
+ *   <li>ef,gh</li>
+ *   <li>ef</li>
+ *   <li>gh</li>
+ * </ol>
+ * and so on.
+ *
+ * With regex_subString_match_regex_t(), subsequence substrings are reachable.
+ * The output can be filtered by using regex substring match flags.
+ * @{
+ */
+
+/**
+ * Return a list of regex-matched substrings.
+ *
+ * This function is a convenient wrap of regcomp() and 
+ * regex_subString_match_regex_t().
+ * It compiles the regex_t from \a pattern using regcomp(), 
+ * then call the regex_subString_match_regex_t() for matched result.
+ *
+ * If the compilation fails, NULL will be returned.
+ *
+ * \note REG_NOSUB cannot be used in cflags, because regexec does not 
+ * fill the data to array of \c regmatch_t.
+ *
+ * @param pattern Regex pattern.
+ * @param str  String to be matched.
+ * @param cflags flags to be passed to regcomp().
+ * @param eflags eflag to be passed to regexec().
+ * @param regexSubStringFlags Regex_SubString_Match_Flags
+ * @return a newly allocated StringList that holds a list of regex-matched substrings, 
+ * number of matches is indicated in StringList->len. len=0 if no matches;
+ * NULL if \c pattern does not pass the compilation.
+ *
+ * @see Regex_SubString_Match_Functions 
+ * @see Regex_SubString_Match_Flags
+ * @see regex_subString_match_regex_t()
+ */
+StringList *regex_subString_match(const gchar *pattern,const gchar *str, 
+	int cflags, int eflags, guint regexSubStringFlags);
+
+/**
  * Return a list of regex-matched substrings, given an instance of regex_t.
  *
  * This function adds subsequence substring handling routine to regexec(), and 
@@ -288,36 +321,14 @@ void stringList_free(StringList *sList);
  * @return a newly allocated StringList that holds a list of regex-matched substrings, 
  * number of matches is indicated in StringList->len. len=0 if no matches.
  *
- * @see Regex_SubString_Match 
+ * @see Regex_SubString_Match_Functions 
  * @see Regex_SubString_Match_Flags
  * @see regex_subString_match()
  */
-StringList *regex_subString_match_regex_t(regex_t *preg,const gchar* str, int eflags, guint regexSubStringFlags );
+StringList *regex_subString_match_regex_t(
+	regex_t *preg,
+	const gchar *str, int eflags, guint regexSubStringFlags);
 
-
-/**
- * Return a list of regex-matched substrings.
- *
- * This function is a convenient wrap of regex_subString_match_regex_t().
- *
- * 
- * returns a newly allocated StringList that holds a list of regex-matched substrings in \a str.
- * See Regex_SubString_Match for further explanation, and Regex_SubString_Match_Flags for output control.
- * 
- * @param preg Regex instance generate by regcomp().
- * @param str  String to be matched.
- * @param eflags eflag to be passed to regexec().
- * @param regexSubStringFlags Regex_SubString_Match_Flags
- * @return a newly allocated StringList that holds a list of regex-matched substrings, 
- * number of matches is indicated in StringList->len. len=0 if no matches.
- *
- * @see Regex_SubString_Match 
- * @see Regex_SubString_Match_Flags
- * @see regex_subString_match()
- * Return a StringList of match sub
- */
-StringList *regex_subString_match(const gchar *pattern,const gchar *str, 
-	int cflags, int eflags, guint regexSubStringFlags);
 /**
  * @}
  * @}
@@ -392,7 +403,7 @@ gunichar* utf8_to_ucs4(const char* utf8_str);
  * @param ucs4_code the UCS-4 to be appended.
  * @return a pointer to utf8_str;
  */
-char* utf8_concat_ucs4(char* utf8_str,gunichar ucs4_code);
+gchar* utf8_concat_ucs4(gchar* utf8_str,gunichar ucs4_code);
 
 /**
  * Compare between signed and unsigned char arrays.
@@ -406,7 +417,7 @@ char* utf8_concat_ucs4(char* utf8_str,gunichar ucs4_code);
  *     str1  is found, respectively, to be less than, to match, or be greater
  *     than str2.
  */
-int strcmp_unsigned_signed(const unsigned char *str1, const char *str2);
+int strcmp_unsigned_signed(const unsigned char *str1, const gchar *str2);
 
 /**
  * Convert the signed char string to a new allocated unsigned char string.
@@ -418,7 +429,7 @@ int strcmp_unsigned_signed(const unsigned char *str1, const char *str2);
  * @see unsignedStr_to_signedStr()
  * @see unsignedStr_to_signedStr_buffer()
  */
-unsigned char *signedStr_to_unsignedStr(const char *str);
+unsigned char *signedStr_to_unsignedStr(const gchar *str);
 
 /**
  * Convert the signed char string to the unsigned char string buffer.
@@ -430,7 +441,7 @@ unsigned char *signedStr_to_unsignedStr(const char *str);
  * @see unsignedStr_to_signedStr()
  * @see unsignedStr_to_signedStr_buffer()
  */
-unsigned char *signedStr_to_unsignedStr_buffer(unsigned char *resultBuf, const char *str);
+unsigned char *signedStr_to_unsignedStr_buffer(unsigned char *resultBuf, const gchar *str);
 
 /**
  * Convert the unsigned char string to a new allocated signed char string.
@@ -454,7 +465,7 @@ char *unsignedStr_to_signedStr(const unsigned char *str);
  * @see signedStr_to_unsignedStr_buffer()
  * @see unsignedStr_to_signedStr()
  */
-char *unsignedStr_to_signedStr_buffer(char* resultBuf, const unsigned char *str);
+gchar *unsignedStr_to_signedStr_buffer(gchar* resultBuf, const unsigned char *str);
 
 
 #endif /*STR_FUNCTIONS_H_*/

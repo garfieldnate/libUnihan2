@@ -232,7 +232,7 @@ static UnihanField* unihanDb_get_fields_private(sqlite3 *db, const gchar *sqlCla
     int i,len=sResult->resultList->len;
     UnihanField *fields=NEW_ARRAY_INSTANCE(len+1,UnihanField);
     for(i=0;i<len;i++){
-	fields[i]=atoi(stringList(sResult->resultList,i));
+	fields[i]=atoi(stringList_index(sResult->resultList,i));
     }
     fields[len]=UNIHAN_INVALID_FIELD;
     return fields;
@@ -259,7 +259,7 @@ UnihanTable *unihanDb_get_all_tables(){
     int i,len=sResult->resultList->len;
     UnihanTable *tables=NEW_ARRAY_INSTANCE(len+1,UnihanTable);
     for(i=0;i<len;i++){
-	tables[i]=atoi(stringList(sResult->resultList,i));
+	tables[i]=atoi(stringList_index(sResult->resultList,i));
     }
     tables[len]=UNIHAN_INVALID_TABLE;
     return tables;
@@ -425,35 +425,6 @@ UnihanTable unihanField_get_extra_table(UnihanField field){
 
 UnihanTable *unihanField_get_required_tables(UnihanField field){
     UnihanTable *tables=NEW_ARRAY_INSTANCE(UNIHAN_TABLE_ARRAY_MAX_LEN,UnihanTable);
-    int counter=0;
-    int i;
-    if (field>=UNIHAN_FIELD_3RD_PARTY){
-	/* This function does no treat 3rd party table */
-	tables[counter]=UNIHAN_INVALID_TABLE;
-	return tables;
-    }
-    for(i=0; PSEUDO_FIELDS_REQUIRED_TABLES[i].field != UNIHAN_INVALID_FIELD ; i++){
-	if (PSEUDO_FIELDS_REQUIRED_TABLES[i].field == field ){
-	    tables[counter++]=PSEUDO_FIELDS_REQUIRED_TABLES[i].table;
-	    if (counter>=UNIHAN_TABLE_ARRAY_MAX_LEN-1){
-		/* Too long, trim the result. */
-		tables[counter]=UNIHAN_INVALID_TABLE;
-		return tables;
-
-	    }
-	}
-    }
-    if (counter>0){
-	/* Mark the end of UnihanTable */
-	tables[counter]=UNIHAN_INVALID_TABLE;
-	return tables;
-    }
-    tables[counter++]=unihanField_get_table(field);
-    tables[counter]=unihanField_get_extra_table(field);
-    if (tables[counter]!=UNIHAN_INVALID_TABLE){
-	/* Mark the end of UnihanTable */
-	tables[counter+1]=UNIHAN_INVALID_TABLE;
-    }
     return tables;
 }
 
@@ -481,17 +452,9 @@ gboolean unihanField_is_integer(UnihanField field){
 }
 
 
-gboolean unihanField_is_case_no_change(UnihanField field){
-    if (unihanField_array_index(field,UNIHAN_CASE_NO_CHANGE_FIELDS)>=0){
+gboolean unihanField_is_uppercase(UnihanField field){
+    if (unihanField_array_index(field,UNIHAN_UPPERCASE_FIELDS)>=0){
 	return TRUE;
-    }
-    if (unihanField_is_ucs4(field)){
-	/* UCS4 fields can have U+xxxx form, so need to be converted to uppercase. */
-	return FALSE;
-    }
-    if (unihanField_is_integer(field)){
-	/* Integer fields do not need to convert cases. */
-	return FALSE;
     }
     return FALSE;
 }
