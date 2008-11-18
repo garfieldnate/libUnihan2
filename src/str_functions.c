@@ -132,6 +132,68 @@ void stringList_free(StringList *sList){
     g_free(sList);
 }
 
+
+StringList *regex_subString_match_regex_t(regex_t *preg,const gchar* str, int eflags, guint regexSubStringFlags ){
+    gchar *currPtr=str;
+    int len=strlen(str);
+    int i,ret;
+    int counter=0;
+    int nmatch=preg->re_nsub+1;
+    gchar *newStr;
+    regmatch_t *pmatch=NEW_ARRAY_INSTANCE(nmatch,regmatch_t);   
+    StringList *sList= stringList_new();
+    int maxEo;
+    while(currPtr<str+len){
+	maxEo=-1;
+	if (regexec(preg,currPtr,nmatch,pmatch,eflags)!=0){
+	    /* No Match */
+	    break;
+	}
+	i=0;
+	if (!(regexSubstringFlags & REGEX_SUBSTRING_EXCLUDE_MAJOR_MATCH)){
+	    /* Put whole match ( pmatch[0] ) in sList */
+	    newStr=g_strndup(currPtr+pmatch[i].rm_so, pmatch[counter].rm_eo - pmatch[i].rm_so);
+	    stringList_insert(sList,newStr);
+	    g_free(newStr);
+	    maxEo=(maxEo >= pmatch[i].rm_eo) ? maxEo : pmatch[i].rm_eo;
+	}
+	if (!(regexSubstringFlags & REGEX_SUBSTRING_EXCLUDE_SUB_MATCH)){
+	    for(i=1;i<nmatch && pmatch[i].rm_so>=0;i++){
+		/* Put sub matchs ( pmatch[i] ) in sList */
+		newStr=g_strndup(currPtr+pmatch[i].rm_so, pmatch[counter].rm_eo - pmatch[i].rm_so);
+		stringList_insert(sList,newStr);
+		g_free(newStr);
+		maxEo=(maxEo >= pmatch[i].rm_eo) ? maxEo : pmatch[i].rm_eo;
+	    }
+	}
+	if (regexSubstringFlags & REGEX_SUBSTRING_ALLOW_OVERLAP){
+	    currPtr++;
+	}else{
+	    currPtr+=maxEo;
+	}
+    }
+    g_free(pmatch);
+    return sList;
+}
+
+StringList *regex_subString_match(const gchar *pattern,const gchar *str, 
+	int cflags, int eflags, guint regexSubstringFlags){
+    regex_t *preg=NULL;
+    int ret;
+    if ((ret=regcomp(&preg, pattern, int cflags))!=0){
+	/* Invalid pattern */
+	char buf[MAX_STRING_BUFFER_SIZE];
+	regerror(ret,pattern,buf,MAX_STRING_BUFFER_SIZE);
+	verboseMsg_print(VERBOSE_MSG_ERROR, "regex_multiple_match():Invalid pattern %s\n"
+		,buf);
+	return NULL;
+    }
+    StringList *sList=regex_subString_match_regex_t(preg, str, eflags, regexSubStringFlags );
+    regfree(preg);
+    return sList;
+}
+
+
 gchar*
 initString(gchar *str){
     if (str==NULL){
@@ -211,48 +273,6 @@ subString(gchar *buf, const gchar *str,int beginIndex,int length){
 }
 
 
-StringList *regex_multiple_match_regex_t(regex_t *regexT,const gchar* str, int eflags, guint excludeFlags ){
-    gchar *currPtr=str;
-    int len=strlen(str);
-    int i,ret;
-    int counter=0;
-    int nmatch=regexT->re_nsub+1;
-    gchar *newStr;
-    regmatch_t *pmatch=NEW_ARRAY_INSTANCE(nmatch,regmatch_t);   
-    StringList *sList= stringList_new();
-    while(currPtr<str+len){
-	if (regexec(regexT,currPtr,nmatch,pmatch,eflags)!=0){
-	    /* No Match */
-	    break;
-	}
-	i=0;
-	if (!(excludeFlags & REGEX_EXCLUDE_WHOLE_MATCH)){
-	    /* Put whole match ( pmatch[0] ) in sList */
-	    newStr=g_strndup(currPtr+pmatch[i].rm_so, pmatch[counter].rm_eo - pmatch[i].rm_so);
-	    stringList_insert(sList,newStr);
-	    g_free(newStr);
-	}
-	if (!(excludeFlags & REGEX_EXCLUDE_SUB_MATCH)){
-	    for(i=1;i<nmatch && pmatch[i].rm_so>=0;i++){
-		/* Put sub matchs ( pmatch[i] ) in sList */
-		newStr=g_strndup(currPtr+pmatch[i].rm_so, pmatch[counter].rm_eo - pmatch[i].rm_so);
-		stringList_insert(sList,newStr);
-		g_free(newStr);
-	    }
-	}
-	if (i>0){
-	    i--;
-	}
-	currPtr+=pmatch[i].rm_eo;
-    }
-    g_free(pmatch);
-    return sList;
-}
-
-StringList *regex_multiple_match_regex_t(const gchar *pattern,const gchar *str, int eflags, guint excludeFlags ){
-    StringList *sList=NULL;
-    return sList;
-}
 
 gunigchar* utf8_to_ucs4(const gchar* utf8_str){
     glong items_read;
@@ -260,7 +280,7 @@ gunigchar* utf8_to_ucs4(const gchar* utf8_str){
     GError *err = NULL;
     gunigchar*   ucs4Str=g_utf8_to_ucs4(utf8_str, -1,&items_read, &items_written, &err);
     if (err!=NULL){
-	verboseMsg_print(VERBOSE_MSG_CRITICAL,"UTF-8 to UCS-4 conversion error: on gchar %ld in \"%s\"\n",items_read,utf8_str);
+	verboseMsg_print(VERBOSE_MSG_CRITICAL,"UTF-8 to UCS-4 conversion error: on char %ld in \"%s\"\n",items_read,utf8_str);
 	verboseMsg_print(VERBOSE_MSG_CRITICAL,"Error message:  \"%s\"\n",err->message);
 	exit(1);
     }

@@ -173,6 +173,157 @@ guint stringList_insert_const(StringList *sList, const char *str);
 void stringList_free(StringList *sList);
 
 /**
+ * @defgroup Regex_SubString_Match Regex substring match functions and flags.
+ * @{
+ * @name Regex substring match functions and flags.
+ *
+ * These functions return a newly allocated StringList that holds a list of regex-matched substrings.
+ * They add substring match functionality to regexec() from \c regex.h.
+ *
+ * Contract to the intuition, regexec() only matches once even if REG_NOSUB is not set in regcomp().
+ * The so-called \i sub-match actually means the sub expressions enclosed by '()' in POSIX extended,
+ * or '\(\)' in POSIX basic. 
+ * For example, matches <code>ab,cd,ef,gh</code> with <code>([a-z]*),([a-z]*)</code> producing following output:
+ * <ol start="0">
+ *   <li>ab,cd</li>
+ *   <li>ab</li>
+ *   <li>cd</li>
+ * </ol>
+ * But not 
+ * <ol start="3">
+ *   <li>ef,gh</li>
+ *   <li>ef</li>
+ *   <li>gh</li>
+ * </ol>
+ * and so on.
+ *
+ * With regex_subString_match_regex_t(), subsequence substrings are reachable.
+ * The output can be filtered by using Regex_SubString_Match_Flags.
+ * If none of the flags are given, by default, the output will be like:
+ * <ol start="0">
+ *   <li>ab,cd</li>
+ *   <li>ab</li>
+ *   <li>cd</li>
+ *   <li>ef,gh</li>
+ *   <li>ef</li>
+ *   <li>gh</li>
+ * </ol>
+ *
+ * If <code>REGEX_SUBSTRING_ALLOW_OVERLAP</code> is given:
+ * <ol start="0">
+ *   <li>ab,cd</li>
+ *   <li>ab</li>
+ *   <li>cd</li>
+ *   <li>cd,ef</li>
+ *   <li>cd</li>
+ *   <li>ef</li>
+ *   <li>ef,gh</li>
+ *   <li>ef</li>
+ *   <li>gh</li>
+ * </ol>
+ *
+ * If <code>REGEX_SUBSTRING_EXCLUDE_MAJOR_MATCH</code> is given:
+ * <ol start="0">
+ *   <li>ab</li>
+ *   <li>cd</li>
+ *   <li>ef</li>
+ *   <li>gh</li>
+ * </ol>
+ *
+ * If <code>REGEX_SUBSTRING_EXCLUDE_SUB_MATCH</code> is given:
+ * <ol start="0">
+ *   <li>ab,cd</li>
+ *   <li>ef,gh</li>
+ * </ol>
+ * @{
+ */
+
+/**
+ * @defgroup Regex_SubString_Match_Flags Regex substring match flags.
+ * @{
+ * @name Regex substring match flags.
+ *
+ * Bitwise regex substring match flags. Use bit operators to combine the flags.
+ * @{ 
+ */
+/**
+ * Flag to indicate that result substrings can be overlapped.
+ *
+ * With this flag, results for \c aaa match \c a* will be \c aaa, \c aa, \c a, but not empty string.
+ */
+#define REGEX_SUBSTRING_ALLOW_OVERLAP 1
+/**
+ * Flag to indicate that major matches should be excluded.
+ *
+ * Major match means the matches of whole regex pattern.
+ *
+ * With this flag, results for \c abab matches \c a(b) will be \c b and  \c b, 
+ * but not major match \c ab.
+ */
+#define REGEX_SUBSTRING_EXCLUDE_MAJOR_MATCH 2
+/**
+ * Flag to indicate that sub matches should be excluded.
+ *
+ * Sub match means the matches of the parenthesized sub regex pattern.
+ * With this flag, results for \c abab matches \c a(b) will be \c ab and  \c ab, but not \c b.
+ */
+#define REGEX_SUBSTRING_EXCLUDE_SUB_MATCH 4
+
+/**
+ * @}
+ * @}
+ */
+
+/**
+ * Return a list of regex-matched substrings, given an instance of regex_t.
+ *
+ * This function adds subsequence substring handling routine to regexec(), and 
+ * returns a newly allocated StringList that holds a list of regex-matched substrings in \a str.
+ * See Regex_SubString_Match for further explanation, and Regex_SubString_Match_Flags for output control.
+ * 
+ * @param preg Regex instance generate by regcomp().
+ * @param str  String to be matched.
+ * @param eflags eflag to be passed to regexec().
+ * @param regexSubStringFlags Regex_SubString_Match_Flags
+ * @return a newly allocated StringList that holds a list of regex-matched substrings, 
+ * number of matches is indicated in StringList->len. len=0 if no matches.
+ *
+ * @see Regex_SubString_Match 
+ * @see Regex_SubString_Match_Flags
+ * @see regex_subString_match()
+ */
+StringList *regex_subString_match_regex_t(regex_t *preg,const gchar* str, int eflags, guint regexSubStringFlags );
+
+
+/**
+ * Return a list of regex-matched substrings.
+ *
+ * This function is a convenient wrap of regex_subString_match_regex_t().
+ *
+ * 
+ * returns a newly allocated StringList that holds a list of regex-matched substrings in \a str.
+ * See Regex_SubString_Match for further explanation, and Regex_SubString_Match_Flags for output control.
+ * 
+ * @param preg Regex instance generate by regcomp().
+ * @param str  String to be matched.
+ * @param eflags eflag to be passed to regexec().
+ * @param regexSubStringFlags Regex_SubString_Match_Flags
+ * @return a newly allocated StringList that holds a list of regex-matched substrings, 
+ * number of matches is indicated in StringList->len. len=0 if no matches.
+ *
+ * @see Regex_SubString_Match 
+ * @see Regex_SubString_Match_Flags
+ * @see regex_subString_match()
+ * Return a StringList of match sub
+ */
+StringList *regex_subString_match(const gchar *pattern,const gchar *str, 
+	int cflags, int eflags, guint regexSubStringFlags);
+/**
+ * @}
+ * @}
+ */
+
+/**
  * Initialize the string by setting the first char to 0x0.
  *
  * If str is NULL, then an char array with  MAX_STRING_BUFFER_SIZE will be assined.

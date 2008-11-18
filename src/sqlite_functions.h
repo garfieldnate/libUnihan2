@@ -78,6 +78,7 @@
 
 /**
  * @defgroup SQL_initialParameter SQL_Result initial parameters.
+ * @{
  * @name SQL_Result initial parameters.
  *
  * These parameters define the initial size of SQL_Result.

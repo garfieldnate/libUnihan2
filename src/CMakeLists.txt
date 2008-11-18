@@ -29,8 +29,10 @@ SET(supporting_SRCS allocate.c allocate.h
 SET(DOCUMENTED_HEADERS Unihan.h Unihan_enum.h Unihan_phonetic.h 
     allocate.h collection.h file_functions.h sqlite_functions.h str_functions.h verboseMsg.h)
 
-ADD_LIBRARY(Unihan SHARED ${libUnihan_SRCS} ${supporting_SRCS})
-SET_TARGET_PROPERTIES(Unihan PROPERTIES 
+
+ADD_LIBRARY(Unihan_supporting SHARED ${supporting_SRCS})
+ADD_LIBRARY(Unihan SHARED ${libUnihan_SRCS} )
+SET_TARGET_PROPERTIES(Unihan Unihan_supporting PROPERTIES 
     VERSION "${SO_VER_MAJOR}.${SO_VER_MINOR}"
     SOVERSION "${SO_VER_MAJOR}")
 

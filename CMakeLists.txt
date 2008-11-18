@@ -19,12 +19,6 @@ SET(SUPPORTED_DIST_TAGS F-9 F-10 EL-5)
 SET(BODHI_DIST_TAGS fc9 fc10)
 
 
-####################################################################
-# Definitions
-####################################################################
-ADD_DEFINITIONS(-DPRJ_VERSION='"${PRJ_VER_MAJOR}.${PRJ_VER_MINOR}.${PRJ_VER_PATCH}-${PRJ_VER_RELEASE}"')
-ADD_DEFINITIONS(-DSQLITE_MAX_ATTACHED=30)
-
 
 ####################################################################
 # Includes
@@ -45,6 +39,12 @@ INCLUDE(common.CMakeLists.txt)
 #
 INCLUDE(libUnihan-common.CMakeLists.txt)
 
+
+####################################################################
+# Definitions
+####################################################################
+ADD_DEFINITIONS(-DPRJ_VERSION='"${PRJ_VER_MAJOR}.${PRJ_VER_MINOR}.${PRJ_VER_PATCH}-${PRJ_VER_RELEASE}"')
+ADD_DEFINITIONS(-DSQLITE_MAX_ATTACHED=30)
 
 #==================================================================
 # Source code subdirectories
@@ -67,10 +67,10 @@ INSTALL(FILES ${MAIN_DOCS}
     DESTINATION "${docdir}/${PROJECT_NAME}-${PRJ_VER}")
 
 
+
 #====================================================================
 # CPack configuration
 #
-
 
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "libUnihan: A C library for Unihan Database")
 SET(CPACK_PACKAGE_VENDOR "Red Hat, APAC, Inc.")
