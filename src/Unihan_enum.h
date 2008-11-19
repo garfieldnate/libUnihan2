@@ -273,6 +273,9 @@ typedef enum{
 
     UNIHAN_FIELD_SCALAR_VALUE,		//!< Scalar representation (U+XXXXX) of the character 
 
+    UNIHAN_FIELD_SERIAL,		//!< Hold an artificial sequence number for sorting.
+    UNIHAN_FIELD_SERIAL_NO_JOIN,	//!< Similar with \c UNIHAN_FIELD_SERIAL, but this field will not be used in automatic join.
+
     UNIHAN_FIELD_UTF8,			//!< UTF8 representation of the character.
     /**
      * @}

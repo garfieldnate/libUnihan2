@@ -175,7 +175,7 @@ void stringList_free(StringList *sList);
 
 
 /**
- * @defgroup Regex_SubString_Match_Flags Regex substring match flags.
+ * @defgroup RegexResult_Match_Flags Regex substring match flags.
  * @{
  * @name Regex substring match flags.
  *
@@ -191,7 +191,7 @@ void stringList_free(StringList *sList);
  *   <li>gh</li>
  * </ol>
  *
- * If <code>REGEX_SUBSTRING_ALLOW_OVERLAP</code> is given:
+ * If <code>REGEX_RESULT_ALLOW_OVERLAP</code> is given:
  * <ol start="0">
  *   <li>ab,cd</li>
  *   <li>ab</li>
@@ -204,7 +204,7 @@ void stringList_free(StringList *sList);
  *   <li>gh</li>
  * </ol>
  *
- * If <code>REGEX_SUBSTRING_EXCLUDE_MAJOR_MATCH</code> is given:
+ * If <code>REGEX_RESULT_EXCLUDE_MAJOR_MATCH</code> is given:
  * <ol start="0">
  *   <li>ab</li>
  *   <li>cd</li>
@@ -212,7 +212,7 @@ void stringList_free(StringList *sList);
  *   <li>gh</li>
  * </ol>
  *
- * If <code>REGEX_SUBSTRING_EXCLUDE_SUB_MATCH</code> is given:
+ * If <code>REGEX_RESULT_EXCLUDE_SUB_MATCH</code> is given:
  * <ol start="0">
  *   <li>ab,cd</li>
  *   <li>ef,gh</li>
@@ -225,7 +225,7 @@ void stringList_free(StringList *sList);
  *
  * With this flag, results for \c aaa match \c a* will be \c aaa, \c aa, \c a, but not empty string.
  */
-#define REGEX_SUBSTRING_ALLOW_OVERLAP 1
+#define REGEX_RESULT_ALLOW_OVERLAP 1
 /**
  * Flag to indicate that major matches should be excluded.
  *
@@ -234,14 +234,14 @@ void stringList_free(StringList *sList);
  * With this flag, results for \c abab matches \c a(b) will be \c b and  \c b, 
  * but not major match \c ab.
  */
-#define REGEX_SUBSTRING_EXCLUDE_MAJOR_MATCH 2
+#define REGEX_RESULT_EXCLUDE_MAJOR_MATCH 2
 /**
  * Flag to indicate that sub matches should be excluded.
  *
  * Sub match means the matches of the parenthesized sub regex pattern.
  * With this flag, results for \c abab matches \c a(b) will be \c ab and  \c ab, but not \c b.
  */
-#define REGEX_SUBSTRING_EXCLUDE_SUB_MATCH 4
+#define REGEX_RESULT_EXCLUDE_SUB_MATCH 4
 
 /**
  * @}
@@ -249,7 +249,7 @@ void stringList_free(StringList *sList);
  */
 
 /**
- * @defgroup Regex_SubString_Match_Functions Regex substring match functions.
+ * @defgroup RegexResult_Match_Functions Regex substring match functions.
  * @{
  * @name Regex substring match functions.
  *
@@ -273,18 +273,44 @@ void stringList_free(StringList *sList);
  * </ol>
  * and so on.
  *
- * With regex_subString_match_regex_t(), subsequence substrings are reachable.
+ * With regexResult_match_regex_t(), subsequence substrings are reachable.
  * The output can be filtered by using regex substring match flags.
  * @{
  */
 
+
 /**
- * Return a list of regex-matched substrings.
+ * The data structure that holds result of regex match.
+ *
+ */
+typedef struct{
+    StringList *resultList;  //!< List of string that actually match the pattern.
+    GArray *startOffsets;    //!< Start offset of the actual matched substrings.
+} RegexResult;
+
+/**
+ * New a RegexResult instance.
+ *
+ * @return A newly allocated RegexResult instance.
+ */
+RegexResult *regexResult_new();
+
+/**
+ * Free a RegexResult instance.
+ *
+ * @param rResult RegexResult to be freed.
+ */
+void regexResult_free(RegexResult *rResult);
+
+/**
+ * Return regex-matched substrings.
  *
  * This function is a convenient wrap of regcomp() and 
- * regex_subString_match_regex_t().
+ * regexResult_match_regex_t().
  * It compiles the regex_t from \a pattern using regcomp(), 
- * then call the regex_subString_match_regex_t() for matched result.
+ * then call the regexResult_match_regex_t() for matched result.
+ *
+ * Use regexResult_free() to free the result.
  *
  * If the compilation fails, NULL will be returned.
  *
@@ -295,39 +321,39 @@ void stringList_free(StringList *sList);
  * @param str  String to be matched.
  * @param cflags flags to be passed to regcomp().
  * @param eflags eflag to be passed to regexec().
- * @param regexSubStringFlags Regex_SubString_Match_Flags
- * @return a newly allocated StringList that holds a list of regex-matched substrings, 
- * number of matches is indicated in StringList->len. len=0 if no matches;
+ * @param regexResultFlags RegexResult_Match_Flags
+ * @return a newly allocated RegexResult, 
+ * number of matches is indicated by RegexResult->resultList->len. len=0 if no matches;
  * NULL if \c pattern does not pass the compilation.
  *
- * @see Regex_SubString_Match_Functions 
- * @see Regex_SubString_Match_Flags
- * @see regex_subString_match_regex_t()
+ * @see RegexResult_Match_Functions 
+ * @see RegexResult_Match_Flags
+ * @see regexResult_match_regex_t()
  */
-StringList *regex_subString_match(const gchar *pattern,const gchar *str, 
-	int cflags, int eflags, guint regexSubStringFlags);
+RegexResult *regexResult_match(const gchar *pattern,const gchar *str, 
+	int cflags, int eflags, guint regexResultFlags);
 
 /**
- * Return a list of regex-matched substrings, given an instance of regex_t.
+ * Return regex-matched substrings, given an instance of regex_t.
  *
  * This function adds subsequence substring handling routine to regexec(), and 
  * returns a newly allocated StringList that holds a list of regex-matched substrings in \a str.
- * See Regex_SubString_Match for further explanation, and Regex_SubString_Match_Flags for output control.
+ * See RegexResult_Match for further explanation, and RegexResult_Match_Flags for output control.
  * 
  * @param preg Regex instance generate by regcomp().
  * @param str  String to be matched.
  * @param eflags eflag to be passed to regexec().
- * @param regexSubStringFlags Regex_SubString_Match_Flags
- * @return a newly allocated StringList that holds a list of regex-matched substrings, 
- * number of matches is indicated in StringList->len. len=0 if no matches.
+ * @param regexResultFlags RegexResult_Match_Flags
+ * @return a newly allocated RegexResult, 
+ * number of matches is indicated by RegexResult->resultList->len. len=0 if no matches;
  *
- * @see Regex_SubString_Match_Functions 
- * @see Regex_SubString_Match_Flags
- * @see regex_subString_match()
+ * @see RegexResult_Match_Functions 
+ * @see RegexResult_Match_Flags
+ * @see regexResult_match()
  */
-StringList *regex_subString_match_regex_t(
+RegexResult *regexResult_match_regex_t(
 	regex_t *preg,
-	const gchar *str, int eflags, guint regexSubStringFlags);
+	const gchar *str, int eflags, guint regexResultFlags);
 
 /**
  * @}

@@ -158,6 +158,9 @@ const char *UNIHAN_FIELD_NAMES[UNIHAN_FIELDS_COUNT+1]={
 
     "scalar_value",
 
+    "serial",
+    "serial_no_join",
+
     "utf8",
 
 
@@ -295,6 +298,7 @@ const UnihanField UNIHAN_INTEGER_FIELDS[]={
     UNIHAN_FIELD_SEMANTIC_Z,
 
     UNIHAN_FIELD_FREQ_RANK,
+    UNIHAN_FIELD_KEEP_SEQUAL,
     UNIHAN_INVALID_FIELD
 };
 
