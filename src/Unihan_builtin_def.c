@@ -290,6 +290,8 @@ typedef struct{
     UnihanField field;
     UnihanTable refTable;
     UnihanField refField;
+    UnihanField parentField;
+    UnihanField 
     gchar *importPattern;
     guint importFlags;
     gchar *valueFormat;
