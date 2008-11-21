@@ -204,12 +204,15 @@ RegexResult *regexResult_match_regex_t(regex_t *preg,const gchar* str, int eflag
 
 	    maxEo=(maxEo >= resultStr_eo) ? maxEo : resultStr_eo;
 	}
+	regexResult_free(currResult);
+	if (regexResultFlags & REGEX_RESULT_MATCH_ONCE){
+	    break;
+	}
 	if (regexResultFlags & REGEX_RESULT_ALLOW_OVERLAP){
 	    currPtr++;
 	}else{
 	    currPtr+=maxEo;
 	}
-	regexResult_free(currResult);
     }
     g_free(pmatch);
     return rResult;

@@ -220,12 +220,23 @@ void stringList_free(StringList *sList);
 
  * @{ 
  */
+
+/**
+ * Flag to indicate that only the first result is needed.
+ *
+ * With this flag, results for \c aaa match \c a* will be \c aaa only.
+ * Which is the original behavior of regexec()
+ *
+ * \note This flag overrides REGEX_RESULT_ALLOW_OVERLAP.
+ */
+#define REGEX_RESULT_MATCH_ONCE 1
 /**
  * Flag to indicate that result substrings can be overlapped.
  *
  * With this flag, results for \c aaa match \c a* will be \c aaa, \c aa, \c a, but not empty string.
+ * \note This flag has no effect if REGEX_RESULT_MATCH_ONCE is also set.
  */
-#define REGEX_RESULT_ALLOW_OVERLAP 1
+#define REGEX_RESULT_ALLOW_OVERLAP 2
 /**
  * Flag to indicate that major matches should be excluded.
  *
@@ -234,14 +245,14 @@ void stringList_free(StringList *sList);
  * With this flag, results for \c abab matches \c a(b) will be \c b and  \c b, 
  * but not major match \c ab.
  */
-#define REGEX_RESULT_EXCLUDE_MAJOR_MATCH 2
+#define REGEX_RESULT_EXCLUDE_MAJOR_MATCH 4
 /**
  * Flag to indicate that sub matches should be excluded.
  *
  * Sub match means the matches of the parenthesized sub regex pattern.
  * With this flag, results for \c abab matches \c a(b) will be \c ab and  \c ab, but not \c b.
  */
-#define REGEX_RESULT_EXCLUDE_SUB_MATCH 4
+#define REGEX_RESULT_EXCLUDE_SUB_MATCH 8
 
 /**
  * @}
