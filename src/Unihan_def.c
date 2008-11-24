@@ -203,6 +203,24 @@ const char *UNIHAN_TABLE_NAMES[]={
     "kHKSCSTable",
     "kIBMJapanTable",
     "kIICoreTable",
+    
+    "kIRG_GSourceTable",
+    "kIRG_GSourceTableExtra",
+    "kIRG_HSourceTable",
+    "kIRG_HSourceTableExtra",
+    "kIRG_JSourceTable",
+    "kIRG_JSourceTableExtra",
+    "kIRG_KPSourceTable",
+    "kIRG_KPSourceTableExtra",
+    "kIRG_KSourceTable",
+    "kIRG_KSourceTableExtra",
+    "kIRG_TSourceTable",
+    "kIRG_TSourceTableExtra",
+    "kIRG_USourceTable",
+    "kIRG_USourceTableExtra",
+    "kIRG_VSourceTable",
+    "kIRG_VSourceTableExtra",
+
     "kIRGDaeJaweonTable",
     "kIRGDaiKanwaZitenTable",
     "kIRGHanyuDaZidianTable",
@@ -251,9 +269,6 @@ const char *UNIHAN_TABLE_NAMES[]={
 
     "utf8Table",
 
-    "IRG_SourceTable",
-
-    "IRG_SourceTableExtra",
 
     "kSemanticVariantTableExtra",
     "kSpecializedSemanticVariantTableExtra",

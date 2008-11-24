@@ -291,6 +291,33 @@ typedef enum{
  */
 #define UNIHAN_FIELDS_COUNT	UNIHAN_FIELD_3RD_PARTY 
 
+/**
+ * @name UnihanField types.
+ *
+ */
+#define UNIHAN_FIELD_TYPE_PSEUDO	0x1	//!< The field is 
+#define UNIHAN_FIELD_TYPE_INTEGER	0x2	//!< The field stores an integer.
+#define UNIHAN_FIELD_TYPE_UCS4		0x4	//!< The field stores an UCS4 code.
+#define UNIHAN_FIELD_TYPE_UPPERCASE     0x8	//!< The field should be displayed as upper case.
+#define UNIHAN_FIELD_TYPE_LOWERCASE     0x10	//!< The field should be displayed as lower case.
+#define UNIHAN_FIELD_TYPE_MULTIROWS	0x20	//!< The field is combined by multiple rows, such as kSemanticVariant.
+#define UNIHAN_FIELD_TYPE_MANDARIN	0x40	//!< The field stores a mandarin pronunciation. 
+#define UNIHAN_FIELD_TYPE_NOINDEX	0x80	//!< The field should not be indexed.
+
+
+/**
+ * @defgroup Dict_Ref_Fields Supporting fields for dictionary refering tables.
+ * @{
+ * @name Supporting fields for dictionary refering tables.
+ *
+ *
+ * @{
+ */
+
+/**
+ * @}
+ * @}
+ */
 
 /**
  * Enumeration of tables.
@@ -385,6 +412,23 @@ typedef enum{
     UNIHAN_TABLE_kHKSCS,   		//!< Table for Big5 extended code points for the HK Supplementary Character Set.
     UNIHAN_TABLE_kIBMJAPAN,		//!< Table for IBM Japanese mapping for characters in hexadecimal.
     UNIHAN_TABLE_kIICORE,		//!< Table for IICore, the IRG-produced minimal set of required ideographs for East Asian use.
+    UNIHAN_TABLE_IRG_GSOURCE,		//!< Table for IRG G (China) sources.
+    UNIHAN_TABLE_IRG_GSOURCE_EXTRA,	//!< Table for IRG G (China) and its mapping/code.
+    UNIHAN_TABLE_IRG_HSOURCE,		//!< Table for IRG H (Hong Kong) source.
+    UNIHAN_TABLE_IRG_HSOURCE_EXTRA,	//!< Table for IRG H (Hong Kong) source and its mapping/code.
+    UNIHAN_TABLE_IRG_JSOURCE,		//!< Table for IRG J (Japan) sources.
+    UNIHAN_TABLE_IRG_JSOURCE_EXTRA,	//!< Table for IRG J (Japan) and its mapping/code.
+    UNIHAN_TABLE_IRG_KPSOURCE,		//!< Table for IRG KP (North Korea) source.
+    UNIHAN_TABLE_IRG_KPSOURCE_EXTRA,	//!< Table for IRG KP (North Korea) source and its mapping/code.
+    UNIHAN_TABLE_IRG_KSOURCE,		//!< Table for IRG K (South Korea) source.
+    UNIHAN_TABLE_IRG_KSOURCE_EXTRA,	//!< Table for IRG K (South Korea) source and its mapping/code.
+    UNIHAN_TABLE_IRG_TSOURCE,		//!< Table for IRG T (Taiwan) source.
+    UNIHAN_TABLE_IRG_TSOURCE_EXTRA,	//!< Table for IRG T (Taiwan) source and its mapping/code.
+    UNIHAN_TABLE_IRG_USOURCE,		//!< Table for IRG U (Unicode/Other) source.
+    UNIHAN_TABLE_IRG_USOURCE_EXTRA,	//!< Table for IRG U (Unicode/Other) source and its mapping/code.
+    UNIHAN_TABLE_IRG_VSOURCE,		//!< Table for IRG V (Vietnam) source.
+    UNIHAN_TABLE_IRG_VSOURCE_EXTRA,	//!< Table for IRG V (Vietnam) source and its mapping/code.
+
     UNIHAN_TABLE_kIRGDAEJAWEON,	        //!< Table for Dae Jaweon (Korean) dictionary  used in the four-dictionary sorting algorithm.
     UNIHAN_TABLE_kIRGDAIKANWAZITEN,	//!< Table for Dai Kanwa Ziten, aka Morohashi dictionary (Japanese)  used in the four-dictionary sorting algorithm.   
     UNIHAN_TABLE_kIRGHANYUDAZIDIAN,	//!< Table for Hanyu Da Zidian (PRC) used in the four-dictionary sorting algorithm.
@@ -432,8 +476,6 @@ typedef enum{
     UNIHAN_TABLE_kZVARIANT,		//!< Table for Z-variants.
 
     UNIHAN_TABLE_CODE,			//!< Table for UTF-8.
-    UNIHAN_TABLE_IRG_SOURCE,		//!< Table for IRG Sources.
-    UNIHAN_TABLE_IRG_SOURCE_EXTRA,	//!< Table for IRG Sources and its mapping/code.
     UNIHAN_TABLE_kSEMANTICVARIANT_EXTRA,  //!< Table for dictionary that states the semantical relationship.
     UNIHAN_TABLE_kSPECIALIZEDSEMANTICVARIANT_EXTRA, //!< Table for dictionary that states the semantical relationship.
     UNIHAN_TABLE_kZVARIANT_EXTRA,	//!< Table for the source of Z variant.
