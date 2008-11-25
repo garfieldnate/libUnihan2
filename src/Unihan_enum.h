@@ -292,18 +292,36 @@ typedef enum{
 #define UNIHAN_FIELDS_COUNT	UNIHAN_FIELD_3RD_PARTY 
 
 /**
- * @name UnihanField types.
+ * @defgroup Unihan_Field_Flags Bitwise flags for UnihanField.
+ * @{
+ * @name Bitwise flags for UnihanField.
  *
+ * Bitwise flags for UnihanField provides additional control over storing and displaying field values.
+ * By default (Flag 0), field values are stored and displayed as string without changing case. 
+ * However, this behavior can be chaaged by setting these flags.
+ *
+ * Most of the flags are self-explaining. But note that:
+ * -# Set also the \c  UNIHAN_FIELD_FLAG_INTEGER for UCS4 fields and hexdecimal fields. 
+ *  But \c UNIHAN_FIELD_FLAG_UCS4 and \c UNIHAN_FIELD_FLAG_HEXDECIMAL are mutually exclusive, because \c UNIHAN_FIELD_FLAG_UCS4 is for the fields that can be convert to UTF-8 directly;
+ *   while \c UNIHAN_FIELD_FLAG_HEXDECIMAL are for other encoding.
+ *
+ * -# \c UNIHAN_FIELD_FLAG_NOINDEX only works for real fields. Pseudo fields are not indexed.
+ * @{
  */
-#define UNIHAN_FIELD_TYPE_PSEUDO	0x1	//!< The field is 
-#define UNIHAN_FIELD_TYPE_INTEGER	0x2	//!< The field stores an integer.
-#define UNIHAN_FIELD_TYPE_UCS4		0x4	//!< The field stores an UCS4 code.
-#define UNIHAN_FIELD_TYPE_UPPERCASE     0x8	//!< The field should be displayed as upper case.
-#define UNIHAN_FIELD_TYPE_LOWERCASE     0x10	//!< The field should be displayed as lower case.
-#define UNIHAN_FIELD_TYPE_MULTIROWS	0x20	//!< The field is combined by multiple rows, such as kSemanticVariant.
-#define UNIHAN_FIELD_TYPE_MANDARIN	0x40	//!< The field stores a mandarin pronunciation. 
-#define UNIHAN_FIELD_TYPE_NOINDEX	0x80	//!< The field should not be indexed.
+// #define UNIHAN_FIELD_FLAG_PSEUDO	0x1	//!< The field is a pseudo field.
+#define UNIHAN_FIELD_FLAG_INTEGER	0x2	//!< The field stores an integer. 
+#define UNIHAN_FIELD_FLAG_UCS4		0x4	//!< The field stores an UCS4 code. Should also set UNIHAN_FIELD_FLAG_INTEGER, but not with UNIHAN_FIELD_FLAG_HEXDECIMAL
+#define UNIHAN_FIELD_FLAG_HEXDECIMAL_16	0x8	//!< The field should be displayed as 16 bits hexdecimal. Should also set UNIHAN_FIELD_FLAG_INTEGER, but not with UNIHAN_FIELD_FLAG_UCS4
+#define UNIHAN_FIELD_FLAG_UPPERCASE     0x10	//!< The field should be displayed as upper case.
+#define UNIHAN_FIELD_FLAG_LOWERCASE     0x20	//!< The field should be displayed as lower case.
+#define UNIHAN_FIELD_FLAG_MULTIROWS	0x40	//!< The field is combined by multiple rows, such as kSemanticVariant.
+#define UNIHAN_FIELD_FLAG_NOINDEX	0x80	//!< The field should not be indexed. This 
+#define UNIHAN_FIELD_FLAG_MANDARIN	0x100	//!< The field stores a mandarin pronunciation. 
 
+/**
+ * @}
+ * @}
+ */
 
 /**
  * @defgroup Dict_Ref_Fields Supporting fields for dictionary refering tables.

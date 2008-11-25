@@ -6,6 +6,12 @@
  *  which only deal for builtin tables and fields.
  */
 
+typedef struct{
+    UnihanField field;
+	    gchar *value;
+} UnihanFieldValuePair;
+
+
 /*
  * UNIHAN_FIELD_CODE is omitted, as it exists in every table
  */
