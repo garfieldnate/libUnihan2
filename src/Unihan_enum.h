@@ -161,17 +161,17 @@ typedef enum{
     UNIHAN_FIELD_kRSKOREAN,		//!< A Korean radical/stroke count.
     UNIHAN_FIELD_kRSUNICODE,		//!< A standard radical/stroke count.
     UNIHAN_FIELD_kSBGY,			//!< Song Ben Guang Yun (SBGY) 《宋本廣韻》 Medieval Chinese character dictionary.
-    UNIHAN_FIELD_kSEMANTICVARIANT,	//!< The Unicode value for a semantic variant for this character.
-    UNIHAN_FIELD_kSIMPLIFIEDVARIANT,	//!< The Unicode value for the simplified Chinese variant for this character (if any).
-    UNIHAN_FIELD_kSPECIALIZEDSEMANTICVARIANT, //!< The Unicode value for a specialized semantic variant for this character.
+    UNIHAN_FIELD_kSEMANTICVARIANT,	//!< Semantic variants for this character, including dictionaries that refer it.
+    UNIHAN_FIELD_kSIMPLIFIEDVARIANT,	//!< Simplified variant for this character (if any).
+    UNIHAN_FIELD_kSPECIALIZEDSEMANTICVARIANT, //!< Specialized semantic variant for this character, including dictionaries that refer it.
     UNIHAN_FIELD_kTAIWANTELEGRAPH,	//!< Taiwanese telegraph code for this character.
     UNIHAN_FIELD_kTANG,		//!< T'ang Poetic Vocabulary.
     UNIHAN_FIELD_kTOTALSTROKES,	//!< The total number of strokes in the character (including the radical).
-    UNIHAN_FIELD_kTRADITIONALVARIANT,	//!< The Unicode value(s) for the traditional Chinese variant(s) for this character.
+    UNIHAN_FIELD_kTRADITIONALVARIANT,	//!< Traditional Chinese variant(s) for this character.
     UNIHAN_FIELD_kVIETNAMESE,		//!< character's pronunciation(s) in in Quốc ngữ.
     UNIHAN_FIELD_kXEROX,		//!< The Xerox code for this character.
     UNIHAN_FIELD_kXHC1983,		//!< One or more Hanyu pinyin reading as given in Xiandai Hanyu Ciden.
-    UNIHAN_FIELD_kZVARIANT,		//!< The Unicode value(s) for known z-variants of this character.
+    UNIHAN_FIELD_kZVARIANT,		//!< Z-variants of this character, including the source that refers it.
 
     /**
      * @defgroup Dict_Ref_Fields Supporting fields for dictionary refering tables.
@@ -197,7 +197,14 @@ typedef enum{
      *
      * @{
      */
-    UNIHAN_FIELD_IRG_SOURCE_SHORT_NAME, //!< The abbreviated source name such as "G0" or "JA".
+    UNIHAN_FIELD_IRG_GSOURCE, 		//!< The abbreviated G source name such as "G0" or "G4K".
+    UNIHAN_FIELD_IRG_HSOURCE, 		//!< The abbreviated H source name "H".
+    UNIHAN_FIELD_IRG_JSOURCE, 		//!< The abbreviated J source name such as "J0" or "J1".
+    UNIHAN_FIELD_IRG_KPSOURCE, 		//!< The abbreviated KP source name such as "KP0" or "KP1".
+    UNIHAN_FIELD_IRG_KSOURCE, 		//!< The abbreviated K source name such as "K0" or "K1".
+    UNIHAN_FIELD_IRG_TSOURCE, 		//!< The abbreviated T source name such as "T1" or "T2".
+    UNIHAN_FIELD_IRG_USOURCE, 		//!< The abbreviated U source name "U".
+    UNIHAN_FIELD_IRG_VSOURCE, 		//!< The abbreviated V source name such as "V0" or "V1".
     UNIHAN_FIELD_IRG_SOURCE_MAPPING,	//!< The index (code) in hex as in the corresponding IRG source.
     /**
      * @}
@@ -249,6 +256,8 @@ typedef enum{
      *
      * @{
      */
+    UNIHAN_FIELD_SEMANTICVARIANT,   	//!< Semantic Variant in UCS4, without dictionary information.
+    UNIHAN_FIELD_SPECIALIZEDSEMANTICVARIANT,   	//!< Specialized Semantic Variant in UCS4, without dictionary information.
     UNIHAN_FIELD_VARIANT_CODE,		//!< Unicode code point of variant character in integer.
     UNIHAN_FIELD_FROM_DICT,		//!< The dictionary that define the semantic relation.
     UNIHAN_FIELD_SEMANTIC_T,		//!< "Tong" (同,synonym). The character and variant one are interchangeable.
@@ -256,6 +265,7 @@ typedef enum{
     UNIHAN_FIELD_SEMANTIC_Z,		//!< "Zheng" (正,preferred). The variant character is preferred. 
 
 
+    UNIHAN_FIELD_ZVARIANT, 		//!< Z Variant in UCS4, without source information.
     UNIHAN_FIELD_ZVARIANT_SOURCE, 	//!< The "Source" of Z variants, such as "kHKGlyph" 
     /**
      * @}
@@ -301,22 +311,25 @@ typedef enum{
  * However, this behavior can be chaaged by setting these flags.
  *
  * Most of the flags are self-explaining. But note that:
- * -# Set also the \c  UNIHAN_FIELD_FLAG_INTEGER for UCS4 fields and hexdecimal fields. 
- *  But \c UNIHAN_FIELD_FLAG_UCS4 and \c UNIHAN_FIELD_FLAG_HEXDECIMAL are mutually exclusive, because \c UNIHAN_FIELD_FLAG_UCS4 is for the fields that can be convert to UTF-8 directly;
- *   while \c UNIHAN_FIELD_FLAG_HEXDECIMAL are for other encoding.
- *
+ * -# Set also the \c  UNIHAN_FIELD_FLAG_INTEGER for UCS4 fields, 
+ *   hexdecimal fields and 4-digits padded fields.
+ *   But \c UNIHAN_FIELD_FLAG_UCS4, \c UNIHAN_FIELD_FLAG_HEXDECIMAL and \c UNIHAN_FIELD_FLAG_0_PADDED_4
+ *   are mutually exclusive and should not be set in same field.
+ *   Because \c UNIHAN_FIELD_FLAG_UCS4 is for the fields that can be convert to UTF-8 directly;
+ *   while other 2 flags indicates the string representation for the integer value.
  * -# \c UNIHAN_FIELD_FLAG_NOINDEX only works for real fields. Pseudo fields are not indexed.
  * @{
  */
-// #define UNIHAN_FIELD_FLAG_PSEUDO	0x1	//!< The field is a pseudo field.
-#define UNIHAN_FIELD_FLAG_INTEGER	0x2	//!< The field stores an integer. 
-#define UNIHAN_FIELD_FLAG_UCS4		0x4	//!< The field stores an UCS4 code. Should also set UNIHAN_FIELD_FLAG_INTEGER, but not with UNIHAN_FIELD_FLAG_HEXDECIMAL
-#define UNIHAN_FIELD_FLAG_HEXDECIMAL_16	0x8	//!< The field should be displayed as 16 bits hexdecimal. Should also set UNIHAN_FIELD_FLAG_INTEGER, but not with UNIHAN_FIELD_FLAG_UCS4
-#define UNIHAN_FIELD_FLAG_UPPERCASE     0x10	//!< The field should be displayed as upper case.
-#define UNIHAN_FIELD_FLAG_LOWERCASE     0x20	//!< The field should be displayed as lower case.
-#define UNIHAN_FIELD_FLAG_MULTIROWS	0x40	//!< The field is combined by multiple rows, such as kSemanticVariant.
-#define UNIHAN_FIELD_FLAG_NOINDEX	0x80	//!< The field should not be indexed. This 
-#define UNIHAN_FIELD_FLAG_MANDARIN	0x100	//!< The field stores a mandarin pronunciation. 
+// #define UNIHAN_FIELD_FLAG_PSEUDO		0x1	//!< The field is a pseudo field.
+#define UNIHAN_FIELD_FLAG_INTEGER		0x2	//!< The field stores an integer. 
+#define UNIHAN_FIELD_FLAG_UCS4			0x4	//!< The field stores an UCS4 code. Should also set UNIHAN_FIELD_FLAG_INTEGER.
+#define UNIHAN_FIELD_FLAG_HEXDECIMAL_16		0x8	//!< The field should be displayed as 16 bits hexdecimal. Should also set UNIHAN_FIELD_FLAG_INTEGER.
+#define UNIHAN_FIELD_FLAG_0_PADDED_4		0x10	//!< The field should be displayed as zero-padded 4 digits integer. Should also set UNIHAN_FIELD_FLAG_INTEGER.
+#define UNIHAN_FIELD_FLAG_UPPERCASE     	0x20	//!< The field should be displayed as upper case.
+#define UNIHAN_FIELD_FLAG_LOWERCASE     	0x40	//!< The field should be displayed as lower case.
+#define UNIHAN_FIELD_FLAG_MULTIROWS		0x80	//!< The field is combined by multiple rows, such as kSemanticVariant.
+#define UNIHAN_FIELD_FLAG_NOINDEX		0x100	//!< The field should not be indexed. This 
+#define UNIHAN_FIELD_FLAG_MANDARIN		0x200	//!< The field stores a mandarin pronunciation. 
 
 /**
  * @}
@@ -430,22 +443,22 @@ typedef enum{
     UNIHAN_TABLE_kHKSCS,   		//!< Table for Big5 extended code points for the HK Supplementary Character Set.
     UNIHAN_TABLE_kIBMJAPAN,		//!< Table for IBM Japanese mapping for characters in hexadecimal.
     UNIHAN_TABLE_kIICORE,		//!< Table for IICore, the IRG-produced minimal set of required ideographs for East Asian use.
-    UNIHAN_TABLE_IRG_GSOURCE,		//!< Table for IRG G (China) sources.
-    UNIHAN_TABLE_IRG_GSOURCE_EXTRA,	//!< Table for IRG G (China) and its mapping/code.
-    UNIHAN_TABLE_IRG_HSOURCE,		//!< Table for IRG H (Hong Kong) source.
-    UNIHAN_TABLE_IRG_HSOURCE_EXTRA,	//!< Table for IRG H (Hong Kong) source and its mapping/code.
-    UNIHAN_TABLE_IRG_JSOURCE,		//!< Table for IRG J (Japan) sources.
-    UNIHAN_TABLE_IRG_JSOURCE_EXTRA,	//!< Table for IRG J (Japan) and its mapping/code.
-    UNIHAN_TABLE_IRG_KPSOURCE,		//!< Table for IRG KP (North Korea) source.
-    UNIHAN_TABLE_IRG_KPSOURCE_EXTRA,	//!< Table for IRG KP (North Korea) source and its mapping/code.
-    UNIHAN_TABLE_IRG_KSOURCE,		//!< Table for IRG K (South Korea) source.
-    UNIHAN_TABLE_IRG_KSOURCE_EXTRA,	//!< Table for IRG K (South Korea) source and its mapping/code.
-    UNIHAN_TABLE_IRG_TSOURCE,		//!< Table for IRG T (Taiwan) source.
-    UNIHAN_TABLE_IRG_TSOURCE_EXTRA,	//!< Table for IRG T (Taiwan) source and its mapping/code.
-    UNIHAN_TABLE_IRG_USOURCE,		//!< Table for IRG U (Unicode/Other) source.
-    UNIHAN_TABLE_IRG_USOURCE_EXTRA,	//!< Table for IRG U (Unicode/Other) source and its mapping/code.
-    UNIHAN_TABLE_IRG_VSOURCE,		//!< Table for IRG V (Vietnam) source.
-    UNIHAN_TABLE_IRG_VSOURCE_EXTRA,	//!< Table for IRG V (Vietnam) source and its mapping/code.
+    UNIHAN_TABLE_kIRG_GSOURCE,		//!< Table for IRG G (China) sources.
+    UNIHAN_TABLE_kIRG_GSOURCE_EXTRA,	//!< Table for IRG G (China) and its mapping/code.
+    UNIHAN_TABLE_kIRG_HSOURCE,		//!< Table for IRG H (Hong Kong) source.
+    UNIHAN_TABLE_kIRG_HSOURCE_EXTRA,	//!< Table for IRG H (Hong Kong) source and its mapping/code.
+    UNIHAN_TABLE_kIRG_JSOURCE,		//!< Table for IRG J (Japan) sources.
+    UNIHAN_TABLE_kIRG_JSOURCE_EXTRA,	//!< Table for IRG J (Japan) and its mapping/code.
+    UNIHAN_TABLE_kIRG_KPSOURCE,		//!< Table for IRG KP (North Korea) source.
+    UNIHAN_TABLE_kIRG_KPSOURCE_EXTRA,	//!< Table for IRG KP (North Korea) source and its mapping/code.
+    UNIHAN_TABLE_kIRG_KSOURCE,		//!< Table for IRG K (South Korea) source.
+    UNIHAN_TABLE_kIRG_KSOURCE_EXTRA,	//!< Table for IRG K (South Korea) source and its mapping/code.
+    UNIHAN_TABLE_kIRG_TSOURCE,		//!< Table for IRG T (Taiwan) source.
+    UNIHAN_TABLE_kIRG_TSOURCE_EXTRA,	//!< Table for IRG T (Taiwan) source and its mapping/code.
+    UNIHAN_TABLE_kIRG_USOURCE,		//!< Table for IRG U (Unicode/Other) source.
+    UNIHAN_TABLE_kIRG_USOURCE_EXTRA,	//!< Table for IRG U (Unicode/Other) source and its mapping/code.
+    UNIHAN_TABLE_kIRG_VSOURCE,		//!< Table for IRG V (Vietnam) source.
+    UNIHAN_TABLE_kIRG_VSOURCE_EXTRA,	//!< Table for IRG V (Vietnam) source and its mapping/code.
 
     UNIHAN_TABLE_kIRGDAEJAWEON,	        //!< Table for Dae Jaweon (Korean) dictionary  used in the four-dictionary sorting algorithm.
     UNIHAN_TABLE_kIRGDAIKANWAZITEN,	//!< Table for Dai Kanwa Ziten, aka Morohashi dictionary (Japanese)  used in the four-dictionary sorting algorithm.   
@@ -482,8 +495,10 @@ typedef enum{
     UNIHAN_TABLE_kRSUNICODE,		//!< Table for standard radical/stroke count.
     UNIHAN_TABLE_kSBGY,			//!< Table for Song Ben Guang Yun (SBGY) 《宋本廣韻》 Medieval Chinese character dictionary.
     UNIHAN_TABLE_kSEMANTICVARIANT,	//!< Table for Unicode value for a semantic variant characters.
+    UNIHAN_TABLE_kSEMANTICVARIANT_EXTRA,  //!< Table for dictionary that states the semantical relationship.
     UNIHAN_TABLE_kSIMPLIFIEDVARIANT,	//!< Table for Unicode value for the simplified Chinese variant characters.
     UNIHAN_TABLE_kSPECIALIZEDSEMANTICVARIANT, //!< Table for Unicode value for a specialized semantic variant characters.
+    UNIHAN_TABLE_kSPECIALIZEDSEMANTICVARIANT_EXTRA, //!< Table for dictionary that states the semantical relationship.
     UNIHAN_TABLE_kTAIWANTELEGRAPH,	//!< Table for Taiwanese telegraph code for this character.
     UNIHAN_TABLE_kTANG,			//!< Table for T'ang Poetic Vocabulary.
     UNIHAN_TABLE_kTOTALSTROKES,		//!< Table for total number of strokes of characters.(including the radical).
@@ -492,11 +507,9 @@ typedef enum{
     UNIHAN_TABLE_kXEROX,		//!< Table for Xerox codes.
     UNIHAN_TABLE_kXHC1983,		//!< Table for One or more Hanyu pinyin reading as given in Xiandai Hanyu Ciden.
     UNIHAN_TABLE_kZVARIANT,		//!< Table for Z-variants.
+    UNIHAN_TABLE_kZVARIANT_EXTRA,	//!< Table for the source of Z variant.
 
     UNIHAN_TABLE_CODE,			//!< Table for UTF-8.
-    UNIHAN_TABLE_kSEMANTICVARIANT_EXTRA,  //!< Table for dictionary that states the semantical relationship.
-    UNIHAN_TABLE_kSPECIALIZEDSEMANTICVARIANT_EXTRA, //!< Table for dictionary that states the semantical relationship.
-    UNIHAN_TABLE_kZVARIANT_EXTRA,	//!< Table for the source of Z variant.
     UNIHAN_TABLE_3RD_PARTY		//!< Third party table.
 } UnihanTable;
 
