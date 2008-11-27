@@ -123,14 +123,14 @@ typedef enum{
     UNIHAN_FIELD_kIRGDAIKANWAZITEN,	//!< in Dai Kanwa Ziten, aka Morohashi dictionary (Japanese)  used in the four-dictionary sorting algorithm.   
     UNIHAN_FIELD_kIRGHANYUDAZIDIAN,	//!< in Hanyu Da Zidian (PRC) used in the four-dictionary sorting algorithm.
     UNIHAN_FIELD_kIRGKANGXI,		//!< in KangXi dictionary.
-    UNIHAN_FIELD_kIRG_GSOURCE, 	//!< PRC/Singapore sources
-    UNIHAN_FIELD_kIRG_HSOURCE, 	//!< Hong Kong sources
-    UNIHAN_FIELD_kIRG_JSOURCE, 	//!< Japanese sources
-    UNIHAN_FIELD_kIRG_KPSOURCE, 	//!< North Korean sources
-    UNIHAN_FIELD_kIRG_KSOURCE, 		//!< South Korean sources
-    UNIHAN_FIELD_kIRG_TSOURCE, 		//!< Taiwan sources
-    UNIHAN_FIELD_kIRG_USOURCE, 		//!< Unicode/USA sources
-    UNIHAN_FIELD_kIRG_VSOURCE, 		//!< Vietname sources
+    UNIHAN_FIELD_kIRG_GSOURCE, 		//!< PRC/Singapore sources, including mapping information.
+    UNIHAN_FIELD_kIRG_HSOURCE, 		//!< Hong Kong sources , including mapping information.
+    UNIHAN_FIELD_kIRG_JSOURCE, 		//!< Japanese sources, including mapping information.
+    UNIHAN_FIELD_kIRG_KPSOURCE, 	//!< North Korean sources, including mapping information.
+    UNIHAN_FIELD_kIRG_KSOURCE, 		//!< South Korean sources, including mapping information.
+    UNIHAN_FIELD_kIRG_TSOURCE, 		//!< Taiwan sources, including mapping information.
+    UNIHAN_FIELD_kIRG_USOURCE, 		//!< Unicode/USA sources, including mapping information.
+    UNIHAN_FIELD_kIRG_VSOURCE, 		//!< Vietname sources, including mapping information.
     UNIHAN_FIELD_kJAPANESEKUN,		//!< Japanese pronunciation(s).
     UNIHAN_FIELD_kJAPANESEON,		//!< Sino-Japanese pronunciation(s) of this character.
     UNIHAN_FIELD_kJIS0213,		//!< JIS X 0213-2000
@@ -181,9 +181,13 @@ typedef enum{
      *
      * @{
      */
-    UNIHAN_FIELD_DICT_PAGE,		//!< Page number in KangXi. (Represent as string)
-    UNIHAN_FIELD_DICT_POSITION,	//!< The character number in the page. (Represent as string)
-    UNIHAN_FIELD_DICT_VIRTUAL,	//!< Whether the character is actually in KangXi. 1 for virtual (the character is not acctually in KangXi, 0 for real (the character is in KangXi)
+    UNIHAN_FIELD_DICT_PAGE,		//!< Page number.
+    UNIHAN_FIELD_DICT_PAGE_0_PADDED_4,	//!< 0 padded 4 digit page number.
+    UNIHAN_FIELD_DICT_POSITION,	//!< The character number in the page.
+    UNIHAN_FIELD_DICT_VIRTUAL,	//!< Whether the character is actually in the dictionary. 1 for virtual (the character is not acctually in the dictionary, 0 for real (the character is in the dictionary)
+    UNIHAN_FIELD_DICT_VARIANT_SERIAL,	//!< Serial number of variant. 0 for a main entry and greater than 0 for a parenthesized variant.
+    UNIHAN_FIELD_DICT_UNENCODED,	//!< Unencoded character in the dictionary which is replaced by one or more encoded variants. Currently used only by kXHC1983.
+
     /**
      * @}
      * @}
@@ -324,6 +328,7 @@ typedef enum{
 #define UNIHAN_FIELD_FLAG_INTEGER		0x2	//!< The field stores an integer. 
 #define UNIHAN_FIELD_FLAG_UCS4			0x4	//!< The field stores an UCS4 code. Should also set UNIHAN_FIELD_FLAG_INTEGER.
 #define UNIHAN_FIELD_FLAG_HEXDECIMAL_16		0x8	//!< The field should be displayed as 16 bits hexdecimal. Should also set UNIHAN_FIELD_FLAG_INTEGER.
+#define UNIHAN_FIELD_FLAG_0_PADDED_2		0x10	//!< The field should be displayed as zero-padded 2 digits integer. Should also set UNIHAN_FIELD_FLAG_INTEGER.
 #define UNIHAN_FIELD_FLAG_0_PADDED_4		0x10	//!< The field should be displayed as zero-padded 4 digits integer. Should also set UNIHAN_FIELD_FLAG_INTEGER.
 #define UNIHAN_FIELD_FLAG_UPPERCASE     	0x20	//!< The field should be displayed as upper case.
 #define UNIHAN_FIELD_FLAG_LOWERCASE     	0x40	//!< The field should be displayed as lower case.
