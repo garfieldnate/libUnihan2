@@ -2,7 +2,7 @@
  * @file Unihan_enum.h
  * @brief Enumeration and defintion used in libUnihan.
  * 
- * This header file consists enumeration and definte used in libUnihan.
+ * This header file consists enumeration and definite used in libUnihan.
  * It is included in Unihan.h, so no need to include it directly.
  */
 
@@ -315,26 +315,26 @@ typedef enum{
  * However, this behavior can be chaaged by setting these flags.
  *
  * Most of the flags are self-explaining. But note that:
- * -# Set also the \c  UNIHAN_FIELD_FLAG_INTEGER for UCS4 fields, 
+ * -# Set also the \c  UNIHAN_FIELDFLAG_INTEGER for UCS4 fields, 
  *   hexdecimal fields and 4-digits padded fields.
- *   But \c UNIHAN_FIELD_FLAG_UCS4, \c UNIHAN_FIELD_FLAG_HEXDECIMAL and \c UNIHAN_FIELD_FLAG_0_PADDED_4
+ *   But \c UNIHAN_FIELDFLAG_UCS4, \c UNIHAN_FIELDFLAG_HEXDECIMAL and \c UNIHAN_FIELDFLAG_0_PADDED_4
  *   are mutually exclusive and should not be set in same field.
- *   Because \c UNIHAN_FIELD_FLAG_UCS4 is for the fields that can be convert to UTF-8 directly;
+ *   Because \c UNIHAN_FIELDFLAG_UCS4 is for the fields that can be convert to UTF-8 directly;
  *   while other 2 flags indicates the string representation for the integer value.
- * -# \c UNIHAN_FIELD_FLAG_NOINDEX only works for real fields. Pseudo fields are not indexed.
+ * -# \c UNIHAN_FIELDFLAG_NOINDEX only works for real fields. Pseudo fields are not indexed.
  * @{
  */
-// #define UNIHAN_FIELD_FLAG_PSEUDO		0x1	//!< The field is a pseudo field.
-#define UNIHAN_FIELD_FLAG_INTEGER		0x2	//!< The field stores an integer. 
-#define UNIHAN_FIELD_FLAG_UCS4			0x4	//!< The field stores an UCS4 code. Should also set UNIHAN_FIELD_FLAG_INTEGER.
-#define UNIHAN_FIELD_FLAG_HEXDECIMAL_16		0x8	//!< The field should be displayed as 16 bits hexdecimal. Should also set UNIHAN_FIELD_FLAG_INTEGER.
-#define UNIHAN_FIELD_FLAG_0_PADDED_2		0x10	//!< The field should be displayed as zero-padded 2 digits integer. Should also set UNIHAN_FIELD_FLAG_INTEGER.
-#define UNIHAN_FIELD_FLAG_0_PADDED_4		0x10	//!< The field should be displayed as zero-padded 4 digits integer. Should also set UNIHAN_FIELD_FLAG_INTEGER.
-#define UNIHAN_FIELD_FLAG_UPPERCASE     	0x20	//!< The field should be displayed as upper case.
-#define UNIHAN_FIELD_FLAG_LOWERCASE     	0x40	//!< The field should be displayed as lower case.
-#define UNIHAN_FIELD_FLAG_MULTIROWS		0x80	//!< The field is combined by multiple rows, such as kSemanticVariant.
-#define UNIHAN_FIELD_FLAG_NOINDEX		0x100	//!< The field should not be indexed. This 
-#define UNIHAN_FIELD_FLAG_MANDARIN		0x200	//!< The field stores a mandarin pronunciation. 
+// #define UNIHAN_FIELDFLAG_PSEUDO		0x1	//!< The field is a pseudo field.
+#define UNIHAN_FIELDFLAG_INTEGER		0x2	//!< The field stores an integer. 
+#define UNIHAN_FIELDFLAG_UCS4			0x4	//!< The field stores an UCS4 code. Should also set UNIHAN_FIELDFLAG_INTEGER.
+#define UNIHAN_FIELDFLAG_HEXDECIMAL_16		0x8	//!< The field should be displayed as 16 bits hexdecimal. Should also set UNIHAN_FIELDFLAG_INTEGER.
+#define UNIHAN_FIELDFLAG_0_PADDED_2		0x10	//!< The field should be displayed as zero-padded 2 digits integer. Should also set UNIHAN_FIELDFLAG_INTEGER.
+#define UNIHAN_FIELDFLAG_0_PADDED_4		0x10	//!< The field should be displayed as zero-padded 4 digits integer. Should also set UNIHAN_FIELDFLAG_INTEGER.
+#define UNIHAN_FIELDFLAG_UPPERCASE     	0x20	//!< The field should be displayed as upper case.
+#define UNIHAN_FIELDFLAG_LOWERCASE     	0x40	//!< The field should be displayed as lower case.
+#define UNIHAN_FIELDFLAG_MULTIROWS		0x80	//!< The field is combined by multiple rows, such as kSemanticVariant.
+#define UNIHAN_FIELDFLAG_NOINDEX		0x100	//!< The field should not be indexed. This 
+#define UNIHAN_FIELDFLAG_MANDARIN		0x200	//!< The field stores a mandarin pronunciation. 
 
 /**
  * @}
@@ -342,18 +342,18 @@ typedef enum{
  */
 
 /**
- * @defgroup Dict_Ref_Fields Supporting fields for dictionary refering tables.
- * @{
- * @name Supporting fields for dictionary refering tables.
+ * Struct of Field Properties.
  *
- *
- * @{
+ * This struct defines the properties of a field, include the field name, and 
+ * field flags which are described in #Unihan_Field_Flags.
  */
+typedef struct {
+    gchar *fieldName;	//!< Field Name.
+    guint flags;	//!< Combined Unihan field flags.
+} FieldProperties;
 
-/**
- * @}
- * @}
- */
+
+
 
 /**
  * Enumeration of tables.

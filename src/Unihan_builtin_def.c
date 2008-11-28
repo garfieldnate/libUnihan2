@@ -165,7 +165,6 @@ const UnihanFieldTablePair REALFIELD_TABLES[]={
     {UNIHAN_FIELD_SEMANTIC_B,		UNIHAN_TABLE_kSPECIALIZEDSEMANTICVARIANT_EXTRA},
     {UNIHAN_FIELD_SEMANTIC_Z,		UNIHAN_TABLE_kSPECIALIZEDSEMANTICVARIANT_EXTRA},
 
-
     {UNIHAN_FIELD_kTAIWANTELEGRAPH,	UNIHAN_TABLE_kTAIWANTELEGRAPH},
     {UNIHAN_FIELD_kTANG,		UNIHAN_TABLE_kTANG},
     {UNIHAN_FIELD_kTOTALSTROKES,	UNIHAN_TABLE_kTOTALSTROKES},
@@ -186,8 +185,6 @@ const UnihanFieldTablePair REALFIELD_TABLES[]={
     {UNIHAN_FIELD_VARIANT_CODE,		UNIHAN_TABLE_kZVARIANT},
     {UNIHAN_FIELD_VARIANT_CODE,		UNIHAN_TABLE_kZVARIANT_EXTRA},
     {UNIHAN_FIELD_ZVARIANT_SOURCE,	UNIHAN_TABLE_kZVARIANT_EXTRA},
-
-
 
     {UNIHAN_INVALID_FIELD,  UNIHAN_INVALID_TABLE},
 };
@@ -362,12 +359,11 @@ typedef struct{
  */
 const UnihanImportData PSEUDOFIELD_IMPORT_DATA[]={
     {UNIHAN_FIELD_kHANYUPINLU, UNIHAN_TABLE_kHANYUPINLU, 
-	"([^[:digit:]]*)([[:digit:]])\(([[:digit:]]*)\)"},
+	"([a-zE]+)([1-5])\(([[:digit:]]*)\)"},
         {UNIHAN_FIELD_PINYIN_BASE, UNIHAN_FIELD_PINYIN_TONE, UNIHAN_FIELD_PINYIN_FREQ,
 	    UNIHAN_INVALID_FIELD},
 	{"$1", "$2", "$3", NULL}
     },
-
 
     {UNIHAN_FIELD_kIRG_GSOURCE, UNIHAN_TABLE_IRG_GSOURCE,
 	"[[:alnum:]]*",
@@ -464,10 +460,10 @@ const UnihanImportData PSEUDOFIELD_IMPORT_DATA[]={
     },
 
     {UNIHAN_FIELD_kMANDARIN,	UNIHAN_TABLE_kMANDARIN,
-	"([^[:digit:]]*)([1-5])",
+	"([a-zE]+)([1-5])",
 	{UNIHAN_FIELD_PINYIN_BASE, UNIHAN_FIELD_PINYIN_TONE, UNIHAN_FIELD_FREQ_RANK,
 	    UNIHAN_INVALID_FIELD},
-	{"$1","$2","$+", NULL}
+	{"$1","$2","$+0", NULL}
     },
 
     {UNIHAN_FIELD_kRSADOBE_JAPAN1_6, UNIHAN_TABLE_kRSADOBE_JAPAN1_6,
@@ -507,49 +503,49 @@ const UnihanImportData PSEUDOFIELD_IMPORT_DATA[]={
 	{"$1","$2","$3", NULL}
     },
     {UNIHAN_FIELD_kSEMANTICVARIANT, UNIHAN_TABLE_kSEMANTICVARIANT, 
-	"U+[[:xdigit:]]*",
+	"U\+[[:xdigit:]]*",
 	{UNIHAN_FIELD_VARIANT_CODE,  UNIHAN_INVALID_FIELD},
 	{"$0", NULL}
     },
     {UNIHAN_FIELD_kSEMANTICVARIANT, UNIHAN_TABLE_kSEMANTICVARIANT_EXTRA,
-	"(U+[[:xdigit:]]*)<(k[[:alpha:]]*):(T?)(B?)(Z?)",
+	"(U\+[[:xdigit:]]*)<(k[[:alpha:]]*):(T?)(B?)(Z?)",
 	{UNIHAN_FIELD_VARIANT_CODE, UNIHAN_FIELD_SERIAL_NO_JOIN, UNIHAN_FIELD_FROM_DICT,
 	    UNIHAN_FIELD_SEMANTIC_T, UNIHAN_FIELD_SEMANTIC_B, UNIHAN_FIELD_SEMANTIC_Z,
 	    UNIHAN_INVALID_FIELD},
-	{"$1", "$+", "$2","$3","$4","$5", NULL}
+	{"$1", "$+0", "$2","$N3","$N4","$N5", NULL}
     },
 
     {UNIHAN_FIELD_kSPECIALIZEDSEMANTICVARIANT, UNIHAN_TABLE_kSPECIALIZEDSEMANTICVARIANT, 
-	"U+[[:xdigit:]]*",
+	"U\+[[:xdigit:]]*",
 	{UNIHAN_FIELD_VARIANT_CODE,  UNIHAN_INVALID_FIELD},
 	{"$0", NULL}
     },
     {UNIHAN_FIELD_kSPECIALIZEDSEMANTICVARIANT, UNIHAN_TABLE_kSPECIALIZEDSEMANTICVARIANT_EXTRA,
-	"(U+[[:xdigit:]]*)<(k[[:alpha:]]*):(T?)(B?)(Z?)",
+	"(U\+[[:xdigit:]]*)<(k[[:alpha:]]*):(T?)(B?)(Z?)",
 	{UNIHAN_FIELD_VARIANT_CODE, UNIHAN_FIELD_SERIAL_NO_JOIN, UNIHAN_FIELD_FROM_DICT,
 	    UNIHAN_FIELD_SEMANTIC_T, UNIHAN_FIELD_SEMANTIC_B, UNIHAN_FIELD_SEMANTIC_Z,
 	    UNIHAN_INVALID_FIELD},
-	{"$1", "$+", "$2","$3","$4","$5", NULL}
+	{"$1", "$+0", "$2","$N3","$N4","$N5", NULL}
     },
-    {UNIHAN_FIELD_kXHC1983, UNIHAN_TABLE_kZVARIANT, 
-    	"U+[[:xdigit:]]*",
+    {UNIHAN_FIELD_kXHC1983, UNIHAN_TABLE_kXHC1983, 
+	"([[:digit:]]{4})\.([[:digit:]]{2})([[:digit:]])[^[:space:]]*:([a-zE]+)([1-5])",
     	{UNIHAN_FIELD_VARIANT_CODE,  UNIHAN_INVALID_FIELD},
     	{"$0", NULL}
     },
 
     {UNIHAN_FIELD_kZVARIANT, UNIHAN_TABLE_kZVARIANT, 
-	"U+[[:xdigit:]]*",
+	"U\+[[:xdigit:]]*",
 	{UNIHAN_FIELD_VARIANT_CODE,  UNIHAN_INVALID_FIELD},
 	{"$0", NULL}
     },
     {UNIHAN_FIELD_kZVARIANT, UNIHAN_TABLE_kZVARIANT_EXTRA, 
-	"(U+[[:xdigit:]]*):(k[[:alpha:]]*)",
+	"(U\+[[:xdigit:]]*):(k[[:alpha:]]*)",
 	{UNIHAN_FIELD_VARIANT_CODE, UNIHAN_FIELD_ZVARIANT_SOURCE, UNIHAN_INVALID_FIELD},
 	{"$1","$2", NULL}
     },
 
     {UNIHAN_INVALID_FIELD,  UNIHAN_INVALID_TABLE ,
-	"",
+	NULL,
 	{NULL},
 	{NULL}
     }
@@ -557,31 +553,20 @@ const UnihanImportData PSEUDOFIELD_IMPORT_DATA[]={
 
 typedef struct{
     UnihanField field;
-    UnihanTable refTable;
-    UnihanField refField;
-} UnihanFieldTableReferenceTableField;
+    gchar *searchRegex;
+    gchar *replace;
+} UnihanImportData_Post;
 
-
-typedef struct{
-    UnihanField field;
-    UnihanTable refTable;
-    UnihanField refField;
-} UnihanReferenceTableField;
-
-
-const UnihanReferenceTableField PSEUDOFIELDS_REQUIRED[]={
-}
-
-
-const UNIHAN_NOINDEX_FIELDS[]={
-    UNIHAN_FIELD_kACCOUNTINGNUMERIC,
-    UNIHAN_FIELD_kDEFINITION,
-    UNIHAN_FIELD_kOTHERNUMERIC,
-    UNIHAN_FIELD_kPRIMARYNUMERIC,
-    UNIHAN_FIELD_DICT_POSITION,
-    UNIHAN_FIELD_DICT_VIRTUAL,
-
-    UNIHAN_INVALID_FIELD
+UnihanImportData_Post PSEUDOFIELD_IMPORT_DATA_POST[]={
+    {UNIHAN_FIELD_kSEMANTICVARIANT,
+	"(U\+[[:xdigit:]]*)<(k[[:alpha:]]*:?T?B?Z?),(.*)", "$1<$3"},
+    {UNIHAN_FIELD_kSPECIALIZEDSEMANTICVARIANT,
+	"(U\+[[:xdigit:]]*)<(k[[:alpha:]]*:?T?B?Z?),(.*)", "$1<$3"},
+    {UNIHAN_FIELD_kXHC1983,
+	"([[:digit:]\.]{8}),([^:]*):(.*)", "$2<$3"},
+    {UNIHAN_INVALID_FIELD,
+	NULL,NULL},
 };
+
 
 

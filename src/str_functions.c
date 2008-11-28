@@ -132,109 +132,259 @@ void stringList_free(StringList *sList){
 
 // typedef gpointer (* Regex_Result_Callback) (gpointer option, const gchar* str, Regex_Result *result);
 
-RegexResult *regexResult_new(){
-    RegexResult *rResult=NEW_INSTANCE(RegexResult);
-    rResult->resultList=stringList_new();
-    rResult->startOffsets=g_array_new(FALSE,FALSE,int);
-    return rResult;
+//RegexResult *regexResult_new(){
+//    RegexResult *rResult=NEW_INSTANCE(RegexResult);
+//    rResult->resultList=stringList_new();
+//    rResult->startOffsets=g_array_new(FALSE,FALSE,int);
+//    return rResult;
+//}
+
+//void regexResult_free(RegexResult *rResult){
+//    stringList_free(rResult->resultList);
+//    g_array_free(startOffsets,TRUE);
+//    g_free(rResult);
+//}
+
+//RegexResult *regexResult_match_once_regex_t(regex_t *preg, const gchar* str, 
+//        int eflags){
+//    int i;
+//    int nmatch=preg->re_nsub+1;
+//    regmatch_t *pmatch=NEW_ARRAY_INSTANCE(nmatch,regmatch_t);
+//    RegexResult *rResult=regexResult_new();
+
+//    if (regexec(preg,currPtr,nmatch,pmatch,eflags)!=0){
+//        /* No Match */
+//        return rResult;
+//    }
+//    for(i=0;i<nmatch && pmatch[i].rm_so>=0;i++){
+//        /* Put sub matchs ( pmatch[i] ) in rResult->resultList */
+//        newStr=g_strndup(str+pmatch[i].rm_so, pmatch[counter].rm_eo - pmatch[i].rm_so);
+//        stringList_insert(rResult->resultList,newStr);
+//        g_array_append_val(rResult->startOffsets,pmatch[i].rm_so);
+//        g_free(newStr);
+//    }
+//    g_free(pmatch);
+//    return rResult;
+//}
+
+//RegexResult *regexResult_match_regex_t(regex_t *preg,const gchar* str, int eflags, 
+//        guint regexResultFlags){
+//    gchar *currPtr=(gchar *)str;
+//    int len=strlen(str);
+//    int i;
+//    int counter=0;
+//    gchar *newStr;
+//    RegexResult *currResult=NULL:
+//    RegexResult *rResult=regexResult_new();  
+//    gchar *resultStr;
+//    int resultStr_so,resultStr_eo;
+//    int maxEo;
+//    while(currPtr<str+len){
+//        maxEo=-1;
+//        currResult=regexResult_match_once_regex_t(preg, currPtr, eflags);
+//        if (currResult->resultList->len<=0){
+//            /* No Match */
+//            break;
+//        }
+
+//        for(i=1; i< currResult->resultList->len ;i++){
+//            if (i==0 && (regexResultFlags & REGEX_RESULT_EXCLUDE_MAJOR_MATCH)){
+//                /* Exclude major match ( pmatch[0] ) from rResult->resultList and rResult->startOffsets */
+//                continue;
+//            }
+//            if (i>0 && (regexResultFlags & REGEX_RESULT_EXCLUDE_SUB_MATCH)){
+//                /* Exclude sub matchs ( pmatch[i] ) from rResult->resultList and rResult->startOffsets */
+//                break;
+//            }
+//            resultStr=stringList_index(currResult->resultList,i);
+//            stringList_insert(rResult->resultList,resultStr);
+//            resultStr_so=g_array_index(currResult->startOffsets,int,i);
+//            g_array_append_val(rResult->startOffsets, resultStr_so);
+//            resultStr_eo=resultStr_so+strlen(resultStr);
+
+//            maxEo=(maxEo >= resultStr_eo) ? maxEo : resultStr_eo;
+//        }
+//        regexResult_free(currResult);
+//        if (regexResultFlags & REGEX_RESULT_MATCH_ONCE){
+//            break;
+//        }
+//        if (regexResultFlags & REGEX_RESULT_ALLOW_OVERLAP){
+//            currPtr++;
+//        }else{
+//            currPtr+=maxEo;
+//        }
+//    }
+//    g_free(pmatch);
+//    return rResult;
+//}
+
+//RegexResult *regexResult_match(const gchar *pattern,const gchar *str, 
+//        int cflags, int eflags, guint regexResultFlags){
+//    regex_t *preg=NULL;
+//    int ret;
+//    if ((ret=regcomp(preg, pattern, cflags))!=0){
+//        /* Invalid pattern */
+//        char buf[MAX_STRING_BUFFER_SIZE];
+//        regerror(ret,preg,buf,MAX_STRING_BUFFER_SIZE);
+//        verboseMsg_print(VERBOSE_MSG_ERROR, "regex_multiple_match():Invalid pattern %s\n"
+//                ,buf);
+//        return NULL;
+//    }
+//    RegexResult *rResult=regexResult_match_regex_t(preg, str, eflags, regexResultFlags );
+//    regfree(preg);
+//    return rResult;
+//}
+
+#define SUBPATTERN_FLAG_IS_EMPTY		0x1
+#define SUBPATTERN_FLAG_IS_PLUS			0x4
+#define SUBPATTERN_FLAG_IS_MINUS		0x8
+#define SUBPATTERN_FLAG_IS_DOLLOR_SIGN		0x10
+#define SUBPATTERN_FLAG_IS_INVALID		0x20
+
+typedef enum{
+    REGEX_REPLACE_STAGE_INIT,
+    REGEX_REPLACE_STAGE_FLAG,
+    REGEX_REPLACE_STAGE_INDEX,
+    REGEX_REPLACE_STAGE_OPTION1,
+    REGEX_REPLACE_STAGE_OPTION2
+} RegexReplaceStage;
+
+/* 
+ * Return >=0: index of subpattern
+ *         -1: dollar sign.
+ *         -2: error
+ */
+static int string_regex_replace_regex_t_getSubIndex(const gchar *replacePattern, guint *currPos_ptr, int *statusFlags_ptr, regmatch_t *pmatch, gchar *ifEmptyValue, gchar *ifNonEmptyValuegchar){
+    gboolean indexRead=FALSE;
+    int index=0;
+    *statusFlags_ptr=0;
+    gchar c;
+    gboolean error=FALSE;
+    RegexReplaceStage stage=REGEX_REPLACE_STAGE_INIT;
+    gboolean inEmptyValue=FALSE; 
+    gboolean inNonEmptyValue=FALSE;
+    for(;!error;(*currPos_ptr)++){
+        c=replacePattern[*currPos_ptr];
+	if (c=='\0){
+	    error=TRUE;
+	    break;
+	}
+	if (c>='0' && c<='9'){
+	    switch(stage){
+		case REGEX_REPLACE_STAGE_INIT:
+		case REGEX_REPLACE_STAGE_FLAG:
+		case REGEX_REPLACE_STAGE_INDEX:
+		    index+=index*10+c-'0';
+		    break;
+	    }
+	    indexRead=TRUE;
+	    continue;
+	}
+	if (indexRead && (*statusFlags_ptr & ~SUBPATTERN_FLAG_IS_EMPTY)){
+	    return index;
+	}
+	if (*statusFlags_ptr & ~SUBPATTERN_FLAG_IS_EMPTY)
+	    return -2;
+	switch(c){
+	    case 'E':
+		*statusFlags_ptr |=SUBPATTERN_FLAG_IS_EMPTY;
+		break;
+	    case '+':
+		*statusFlags_ptr |=SUBPATTERN_FLAG_IS_PLUS;
+		break;
+	    case '-':
+		*statusFlags_ptr |=SUBPATTERN_FLAG_IS_MINUS;
+		break;
+	    case '$':
+		*statusFlags_ptr |=SUBPATTERN_FLAG_IS_DOLLERSIGN;
+		return -1;
+	    case '{':
+		inBranch=TR
+		break;
+	    case ',':
+		break;
+	    case '}':
+		break;
+	    default:
+		*statusFlags_ptr |=SUBPATTERN_FLAG_IS_INVALID;
+		error=TRUE;
+		break;
+
+	}
+    }
+    return -2;
 }
 
-void regexResult_free(RegexResult *rResult){
-    stringList_free(rResult->resultList);
-    g_array_free(startOffsets,TRUE);
-    g_free(rResult);
-}
-
-RegexResult *regexResult_match_once_regex_t(regex_t *preg, const gchar* str, 
-	int eflags){
-    int i;
-    int nmatch=preg->re_nsub+1;
+gchar *string_regex_replace_regex_t_full(const gchar *str, const regex_t *preg, const gchar *replacePattern, 
+	int eflag, int *counter_ptr, const gchar *ifEmptyValue, const gchar *ifNonEmptyValue){
+    guint i,j,k,m;
+    guint len=strlen(str);
+    guint replaceLen=strlen(replacePattern);
+    guint nmatch=preg->re_nsub+1;
     regmatch_t *pmatch=NEW_ARRAY_INSTANCE(nmatch,regmatch_t);
-    RegexResult *rResult=regexResult_new();
-
     if (regexec(preg,currPtr,nmatch,pmatch,eflags)!=0){
 	/* No Match */
-	return rResult;
-    }
-    for(i=0;i<nmatch && pmatch[i].rm_so>=0;i++){
-	/* Put sub matchs ( pmatch[i] ) in rResult->resultList */
-	newStr=g_strndup(str+pmatch[i].rm_so, pmatch[counter].rm_eo - pmatch[i].rm_so);
-	stringList_insert(rResult->resultList,newStr);
-	g_array_append_val(rResult->startOffsets,pmatch[i].rm_so);
-	g_free(newStr);
-    }
-    g_free(pmatch);
-    return rResult;
-}
-
-RegexResult *regexResult_match_regex_t(regex_t *preg,const gchar* str, int eflags, 
-	guint regexResultFlags){
-    gchar *currPtr=(gchar *)str;
-    int len=strlen(str);
-    int i;
-    int counter=0;
-    gchar *newStr;
-    RegexResult *currResult=NULL:
-    RegexResult *rResult=regexResult_new();  
-    gchar *resultStr;
-    int resultStr_so,resultStr_eo;
-    int maxEo;
-    while(currPtr<str+len){
-	maxEo=-1;
-	currResult=regexResult_match_once_regex_t(preg, currPtr, eflags);
-	if (currResult->resultList->len<=0){
-	    /* No Match */
-	    break;
-	}
-
-	for(i=1; i< currResult->resultList->len ;i++){
-	    if (i==0 && (regexResultFlags & REGEX_RESULT_EXCLUDE_MAJOR_MATCH)){
-		/* Exclude major match ( pmatch[0] ) from rResult->resultList and rResult->startOffsets */
-		continue;
-	    }
-	    if (i>0 && (regexResultFlags & REGEX_RESULT_EXCLUDE_SUB_MATCH)){
-		/* Exclude sub matchs ( pmatch[i] ) from rResult->resultList and rResult->startOffsets */
-		break;
-	    }
-	    resultStr=stringList_index(currResult->resultList,i);
-	    stringList_insert(rResult->resultList,resultStr);
-	    resultStr_so=g_array_index(currResult->startOffsets,int,i);
-	    g_array_append_val(rResult->startOffsets, resultStr_so);
-	    resultStr_eo=resultStr_so+strlen(resultStr);
-
-	    maxEo=(maxEo >= resultStr_eo) ? maxEo : resultStr_eo;
-	}
-	regexResult_free(currResult);
-	if (regexResultFlags & REGEX_RESULT_MATCH_ONCE){
-	    break;
-	}
-	if (regexResultFlags & REGEX_RESULT_ALLOW_OVERLAP){
-	    currPtr++;
-	}else{
-	    currPtr+=maxEo;
-	}
-    }
-    g_free(pmatch);
-    return rResult;
-}
-
-RegexResult *regexResult_match(const gchar *pattern,const gchar *str, 
-	int cflags, int eflags, guint regexResultFlags){
-    regex_t *preg=NULL;
-    int ret;
-    if ((ret=regcomp(preg, pattern, cflags))!=0){
-	/* Invalid pattern */
-	char buf[MAX_STRING_BUFFER_SIZE];
-	regerror(ret,preg,buf,MAX_STRING_BUFFER_SIZE);
-	verboseMsg_print(VERBOSE_MSG_ERROR, "regex_multiple_match():Invalid pattern %s\n"
-		,buf);
 	return NULL;
     }
-    RegexResult *rResult=regexResult_match_regex_t(preg, str, eflags, regexResultFlags );
-    regfree(preg);
-    return rResult;
+
+    GString *strBuf=g_string_sized_new();
+
+    /* Chars before matched */
+    for(i=0;i<pmatch[0].rm_so;i++){
+	g_string_append_c(strBuf,str[i]);
+    }
+    int subIndex=0;
+    guint statusFlags;
+    gboolean error=FALSE;
+
+    for(j=0;j<replaceLen && (!error);j++){
+	if (replacePattern[j]=='$'){
+	    j++;
+	    subIndex=string_regex_replace_regex_t_getSubIndex(replacePattern, &j, &statusFlags, pmatch);
+	    if (subIndex>=0){
+		if (subIndex>=nmatch){
+		    error=TRUE;
+		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_replace_regex_t_full():index %d should be less than or equal to the number of sub patterns %d\n",subIndex,nmatch-1);
+		    break;
+		}
+		if (pmatch[subIndex].rm_so<0 || (statusFlags & (SUBPATTERN_FLAG_IS_EMPTY | SUBPATTERN_FLAG_IS_NONEMPTY))){
+
+		}
+		for(k=pmatch[subIndex].rm_so>=0;k++){
+
+		}
+	    }
+    	}else{
+	    g_string_append_c(strBuf,str[i]);
+	}
+    }
+
+
+
+    /* Char after matched */
+    for(i=pmatch[0].rm_eo;i<len;i++){
+	g_string_append_c(strBuf,str[i]);
+    }
+
+    
+
+        RegexResult *rResult=regexResult_new();
+
+    //    for(i=0;i<nmatch && pmatch[i].rm_so>=0;i++){
+    //        /* Put sub matchs ( pmatch[i] ) in rResult->resultList */
+    //        newStr=g_strndup(str+pmatch[i].rm_so, pmatch[counter].rm_eo - pmatch[i].rm_so);
+    //        stringList_insert(rResult->resultList,newStr);
+    //        g_array_append_val(rResult->startOffsets,pmatch[i].rm_so);
+    //        g_free(newStr);
+    //    }
+    //    g_free(pmatch);
+    //    return rResult;
+
+    return g_string_free(strBuf,FALSE);
 }
 
+int regex_replace(const gchar *str, const gchar *pattern, const gchar *){
+}
 
 gchar*
 initString(gchar *str){
