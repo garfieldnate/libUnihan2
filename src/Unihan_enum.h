@@ -334,7 +334,8 @@ typedef enum{
 #define UNIHAN_FIELDFLAG_LOWERCASE     	0x40	//!< The field should be displayed as lower case.
 #define UNIHAN_FIELDFLAG_MULTIROWS		0x80	//!< The field is combined by multiple rows, such as kSemanticVariant.
 #define UNIHAN_FIELDFLAG_NOINDEX		0x100	//!< The field should not be indexed. This 
-#define UNIHAN_FIELDFLAG_MANDARIN		0x200	//!< The field stores a mandarin pronunciation. 
+#define UNIHAN_FIELDFLAG_SINGLETON		0x200	//!< The field is functional dependent on code. (i.e. No other values)
+#define UNIHAN_FIELDFLAG_MANDARIN		0x400	//!< The field stores a mandarin pronunciation. 
 
 /**
  * @}

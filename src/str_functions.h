@@ -173,198 +173,343 @@ guint stringList_insert_const(StringList *sList, const char *str);
  */
 void stringList_free(StringList *sList);
 
+///**
+// * @defgroup RegexResult_Match_Flags Regex substring match flags.
+// * @{
+// * @name Regex substring match flags.
+// *
+// * Bitwise regex substring match flags. Use bit operators to combine the flags.
+// *
+// * If none of the flags are given, by default, the output will be like:
+// * <ol start="0">
+// *   <li>ab,cd</li>
+// *   <li>ab</li>
+// *   <li>cd</li>
+// *   <li>ef,gh</li>
+// *   <li>ef</li>
+// *   <li>gh</li>
+// * </ol>
+// *
+// * If <code>REGEX_RESULT_ALLOW_OVERLAP</code> is given:
+// * <ol start="0">
+// *   <li>ab,cd</li>
+// *   <li>ab</li>
+// *   <li>cd</li>
+// *   <li>cd,ef</li>
+// *   <li>cd</li>
+// *   <li>ef</li>
+// *   <li>ef,gh</li>
+// *   <li>ef</li>
+// *   <li>gh</li>
+// * </ol>
+// *
+// * If <code>REGEX_RESULT_EXCLUDE_MAJOR_MATCH</code> is given:
+// * <ol start="0">
+// *   <li>ab</li>
+// *   <li>cd</li>
+// *   <li>ef</li>
+// *   <li>gh</li>
+// * </ol>
+// *
+// * If <code>REGEX_RESULT_EXCLUDE_SUB_MATCH</code> is given:
+// * <ol start="0">
+// *   <li>ab,cd</li>
+// *   <li>ef,gh</li>
+// * </ol>
+
+// * @{ 
+// */
+
+///**
+// * Flag to indicate that only the first result is needed.
+// *
+// * With this flag, results for \c aaa match \c a* will be \c aaa only.
+// * Which is the original behavior of regexec()
+// *
+// * \note This flag overrides REGEX_RESULT_ALLOW_OVERLAP.
+// */
+//#define REGEX_RESULT_MATCH_ONCE 1
+///**
+// * Flag to indicate that result substrings can be overlapped.
+// *
+// * With this flag, results for \c aaa match \c a* will be \c aaa, \c aa, \c a, but not empty string.
+// * \note This flag has no effect if REGEX_RESULT_MATCH_ONCE is also set.
+// */
+//#define REGEX_RESULT_ALLOW_OVERLAP 2
+///**
+// * Flag to indicate that major matches should be excluded.
+// *
+// * Major match means the matches of whole regex pattern.
+// *
+// * With this flag, results for \c abab matches \c a(b) will be \c b and  \c b, 
+// * but not major match \c ab.
+// */
+//#define REGEX_RESULT_EXCLUDE_MAJOR_MATCH 4
+///**
+// * Flag to indicate that sub matches should be excluded.
+// *
+// * Sub match means the matches of the parenthesized sub regex pattern.
+// * With this flag, results for \c abab matches \c a(b) will be \c ab and  \c ab, but not \c b.
+// */
+//#define REGEX_RESULT_EXCLUDE_SUB_MATCH 8
+
+///**
+// * @}
+// * @}
+// */
+
+///**
+// * @defgroup RegexResult_Match_Functions Regex substring match functions.
+// * @{
+// * @name Regex substring match functions.
+// *
+// * These functions return a newly allocated StringList that holds a list of regex-matched substrings.
+// * They add substring match functionality to regexec() from \c regex.h.
+// *
+// * Contract to the intuition, regexec() only matches once even if REG_NOSUB is not set in regcomp().
+// * The so-called \i sub-match actually means the sub expressions enclosed by '()' in POSIX extended,
+// * or '\(\)' in POSIX basic. 
+// * For example, matches <code>ab,cd,ef,gh</code> with <code>([a-z]*),([a-z]*)</code> producing following output:
+// * <ol start="0">
+// *   <li>ab,cd</li>
+// *   <li>ab</li>
+// *   <li>cd</li>
+// * </ol>
+// * But not 
+// * <ol start="3">
+// *   <li>ef,gh</li>
+// *   <li>ef</li>
+// *   <li>gh</li>
+// * </ol>
+// * and so on.
+// *
+// * With regexResult_match_regex_t(), subsequence substrings are reachable.
+// * The output can be filtered by using regex substring match flags.
+// * @{
+// */
+
+
+///**
+// * The data structure that holds result of regex match.
+// *
+// */
+//typedef struct{
+//    StringList *resultList;  //!< List of string that actually match the pattern.
+//    GArray *startOffsets;    //!< Start offset of the actual matched substrings.
+//} RegexResult;
+
+///**
+// * New a RegexResult instance.
+// *
+// * @return A newly allocated RegexResult instance.
+// */
+//RegexResult *regexResult_new();
+
+///**
+// * Free a RegexResult instance.
+// *
+// * @param rResult RegexResult to be freed.
+// */
+//void regexResult_free(RegexResult *rResult);
+
+///**
+// * Return regex-matched substrings.
+// *
+// * This function is a convenient wrap of regcomp() and 
+// * regexResult_match_regex_t().
+// * It compiles the regex_t from \a pattern using regcomp(), 
+// * then call the regexResult_match_regex_t() for matched result.
+// *
+// * Use regexResult_free() to free the result.
+// *
+// * If the compilation fails, NULL will be returned.
+// *
+// * \note REG_NOSUB cannot be used in cflags, because regexec does not 
+// * fill the data to array of \c regmatch_t.
+// *
+// * @param pattern Regex pattern.
+// * @param str  String to be matched.
+// * @param cflags flags to be passed to regcomp().
+// * @param eflags eflag to be passed to regexec().
+// * @param regexResultFlags RegexResult_Match_Flags
+// * @return a newly allocated RegexResult, 
+// * number of matches is indicated by RegexResult->resultList->len. len=0 if no matches;
+// * NULL if \c pattern does not pass the compilation.
+// *
+// * @see RegexResult_Match_Functions 
+// * @see RegexResult_Match_Flags
+// * @see regexResult_match_regex_t()
+// */
+//RegexResult *regexResult_match(const gchar *pattern,const gchar *str, 
+//        int cflags, int eflags, guint regexResultFlags);
+
+///**
+// * Return regex-matched substrings, given an instance of regex_t.
+// *
+// * This function adds subsequence substring handling routine to regexec(), and 
+// * returns a newly allocated StringList that holds a list of regex-matched substrings in \a str.
+// * See RegexResult_Match for further explanation, and RegexResult_Match_Flags for output control.
+// * 
+// * @param preg Regex instance generate by regcomp().
+// * @param str  String to be matched.
+// * @param eflags eflag to be passed to regexec().
+// * @param regexResultFlags RegexResult_Match_Flags
+// * @return a newly allocated RegexResult, 
+// * number of matches is indicated by RegexResult->resultList->len. len=0 if no matches;
+// *
+// * @see RegexResult_Match_Functions 
+// * @see RegexResult_Match_Flags
+// * @see regexResult_match()
+// */
+//RegexResult *regexResult_match_regex_t(
+//        regex_t *preg,
+//        const gchar *str, int eflags, guint regexResultFlags);
+
+///**
+// * @}
+// * @}
+// */
 
 /**
- * @defgroup RegexResult_Match_Flags Regex substring match flags.
+ * @defgroup Regex_Manipulating_Funcs Regex manipulating functions.
  * @{
- * @name Regex substring match flags.
+ * @name Regex manipulating functions.
  *
- * Bitwise regex substring match flags. Use bit operators to combine the flags.
+ * These functions provide evaluation and search-replace functions for regex matches.
+ * They are based with \c regex.h, thus format of search pattern and 
+ * option flags are same as used in regcomp() and regexec().
  *
- * If none of the flags are given, by default, the output will be like:
- * <ol start="0">
- *   <li>ab,cd</li>
- *   <li>ab</li>
- *   <li>cd</li>
- *   <li>ef,gh</li>
- *   <li>ef</li>
- *   <li>gh</li>
- * </ol>
+ * These functions are capable of dealing with parenthesized sub patterns,
+ * which are referred as their pattern id.
+ * Id 0 refers the whole matched pattern, 1 refers the first sub pattern,
+ * and 2 for second sub pattern, and so on.
  *
- * If <code>REGEX_RESULT_ALLOW_OVERLAP</code> is given:
- * <ol start="0">
- *   <li>ab,cd</li>
- *   <li>ab</li>
- *   <li>cd</li>
- *   <li>cd,ef</li>
- *   <li>cd</li>
- *   <li>ef</li>
- *   <li>ef,gh</li>
- *   <li>ef</li>
- *   <li>gh</li>
- * </ol>
+ * The format string is composed of zero or more directives: ordinary characters (not $),
+ * which are copied unchanged to the output string;  and  pattern  substitutes,  each  of
+ * which  results in fetching zero or more subsequent arguments.  
+ * Each pattern substitute is introduced by the character $, and ends with a pattern id. 
+ * In  between  there may be (in this order) zero or more flags, one or two optional 
+ * substitute strings. Note that at most one flag can be used in pattern substitute.
  *
- * If <code>REGEX_RESULT_EXCLUDE_MAJOR_MATCH</code> is given:
- * <ol start="0">
- *   <li>ab</li>
- *   <li>cd</li>
- *   <li>ef</li>
- *   <li>gh</li>
- * </ol>
- *
- * If <code>REGEX_RESULT_EXCLUDE_SUB_MATCH</code> is given:
- * <ol start="0">
- *   <li>ab,cd</li>
- *   <li>ef,gh</li>
- * </ol>
-
- * @{ 
- */
-
-/**
- * Flag to indicate that only the first result is needed.
- *
- * With this flag, results for \c aaa match \c a* will be \c aaa only.
- * Which is the original behavior of regexec()
- *
- * \note This flag overrides REGEX_RESULT_ALLOW_OVERLAP.
- */
-#define REGEX_RESULT_MATCH_ONCE 1
-/**
- * Flag to indicate that result substrings can be overlapped.
- *
- * With this flag, results for \c aaa match \c a* will be \c aaa, \c aa, \c a, but not empty string.
- * \note This flag has no effect if REGEX_RESULT_MATCH_ONCE is also set.
- */
-#define REGEX_RESULT_ALLOW_OVERLAP 2
-/**
- * Flag to indicate that major matches should be excluded.
- *
- * Major match means the matches of whole regex pattern.
- *
- * With this flag, results for \c abab matches \c a(b) will be \c b and  \c b, 
- * but not major match \c ab.
- */
-#define REGEX_RESULT_EXCLUDE_MAJOR_MATCH 4
-/**
- * Flag to indicate that sub matches should be excluded.
- *
- * Sub match means the matches of the parenthesized sub regex pattern.
- * With this flag, results for \c abab matches \c a(b) will be \c ab and  \c ab, but not \c b.
- */
-#define REGEX_RESULT_EXCLUDE_SUB_MATCH 8
-
-/**
- * @}
- * @}
- */
-
-/**
- * @defgroup RegexResult_Match_Functions Regex substring match functions.
- * @{
- * @name Regex substring match functions.
- *
- * These functions return a newly allocated StringList that holds a list of regex-matched substrings.
- * They add substring match functionality to regexec() from \c regex.h.
- *
- * Contract to the intuition, regexec() only matches once even if REG_NOSUB is not set in regcomp().
- * The so-called \i sub-match actually means the sub expressions enclosed by '()' in POSIX extended,
- * or '\(\)' in POSIX basic. 
- * For example, matches <code>ab,cd,ef,gh</code> with <code>([a-z]*),([a-z]*)</code> producing following output:
- * <ol start="0">
- *   <li>ab,cd</li>
- *   <li>ab</li>
- *   <li>cd</li>
- * </ol>
- * But not 
- * <ol start="3">
- *   <li>ef,gh</li>
- *   <li>ef</li>
- *   <li>gh</li>
- * </ol>
- * and so on.
- *
- * With regexResult_match_regex_t(), subsequence substrings are reachable.
- * The output can be filtered by using regex substring match flags.
- * @{
- */
-
-
-/**
- * The data structure that holds result of regex match.
- *
- */
-typedef struct{
-    StringList *resultList;  //!< List of string that actually match the pattern.
-    GArray *startOffsets;    //!< Start offset of the actual matched substrings.
-} RegexResult;
-
-/**
- * New a RegexResult instance.
- *
- * @return A newly allocated RegexResult instance.
- */
-RegexResult *regexResult_new();
-
-/**
- * Free a RegexResult instance.
- *
- * @param rResult RegexResult to be freed.
- */
-void regexResult_free(RegexResult *rResult);
-
-/**
- * Return regex-matched substrings.
- *
- * This function is a convenient wrap of regcomp() and 
- * regexResult_match_regex_t().
- * It compiles the regex_t from \a pattern using regcomp(), 
- * then call the regexResult_match_regex_t() for matched result.
- *
- * Use regexResult_free() to free the result.
- *
- * If the compilation fails, NULL will be returned.
- *
- * \note REG_NOSUB cannot be used in cflags, because regexec does not 
- * fill the data to array of \c regmatch_t.
- *
- * @param pattern Regex pattern.
- * @param str  String to be matched.
- * @param cflags flags to be passed to regcomp().
- * @param eflags eflag to be passed to regexec().
- * @param regexResultFlags RegexResult_Match_Flags
- * @return a newly allocated RegexResult, 
- * number of matches is indicated by RegexResult->resultList->len. len=0 if no matches;
- * NULL if \c pattern does not pass the compilation.
- *
- * @see RegexResult_Match_Functions 
- * @see RegexResult_Match_Flags
- * @see regexResult_match_regex_t()
- */
-RegexResult *regexResult_match(const gchar *pattern,const gchar *str, 
-	int cflags, int eflags, guint regexResultFlags);
-
-/**
- * Return regex-matched substrings, given an instance of regex_t.
- *
- * This function adds subsequence substring handling routine to regexec(), and 
- * returns a newly allocated StringList that holds a list of regex-matched substrings in \a str.
- * See RegexResult_Match for further explanation, and RegexResult_Match_Flags for output control.
+ * The format of a pattern substitute is:
+ * <code>$[flag][{str1 [,str2]}]<pattern id></code>
+ * If no flags are given, pattern substitutes will be outputted as (sub) pattern it matched.
+ * Be aware that it is possible that patterns are empty (has 0 length). 
  * 
- * @param preg Regex instance generate by regcomp().
- * @param str  String to be matched.
- * @param eflags eflag to be passed to regexec().
- * @param regexResultFlags RegexResult_Match_Flags
- * @return a newly allocated RegexResult, 
- * number of matches is indicated by RegexResult->resultList->len. len=0 if no matches;
+ * Following flags provide additional output control:
+ * - N{str1 [,str2]}<id>: 
+ *   if matched pattern \c id is nonempty, then str1 is outputted for this  pattern substitute; 
+ *   if matched pattern \c id is empty, then outputs str2 if given, or empty string.
+ * - E{str1 [,str2]}<id>: 
+ *   similar with -N, but output str1 if matched pattern \c id is empty.
+ * - +<id>: 
+ *   if matched pattern \c id is nonempty, then adds 1 to provided counter and output the number.
+ *   if matched pattern \c id is empty, then outputs a empty string.
+ * - -<id>: 
+ *   if matched pattern \c id is nonempty, then minuses 1 to provided counter and output the number.
+ *   if matched pattern \c id is empty, then outputs a empty string.
+ * - $: 
+ *   Outputs a '$' character. '$' is used as escape character here.
  *
- * @see RegexResult_Match_Functions 
- * @see RegexResult_Match_Flags
- * @see regexResult_match()
+ * @{
  */
-RegexResult *regexResult_match_regex_t(
-	regex_t *preg,
-	const gchar *str, int eflags, guint regexResultFlags);
+
+/**
+ * Return a string of evaluated pattern substitutes, given a regex_t instance.
+ *
+ * This function evaluates the value of a pattern substitute, and returns a newly allocated
+ * string that holds the result.
+ *
+ * Use free() or g_free() to free the result.
+ * @param str String to be matched.
+ * @param preg regex pattern buffer which is generated by regcomp().
+ * @param format the format of output string, which consists one to multiple pattern substitute.
+ * @param eflag Flags for regexec().
+ * @param counter_ptr a pointer to an integer counter. Can be NULL if + or - flags are not required.
+ * @return An newly allocated string of evaluated pattern substitutes, or NULL if no match or have error.
+ *
+ * @see string_regex_eval()
+ * @see string_regex_replace_regex_t()
+ * @see string_regex_replace()
+ */
+gchar *string_regex_eval_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
+	int eflag, int *counter_ptr);
+
+/**
+ * Return a string of evaluated pattern substitutes.
+ *
+ * This function evaluates the value of a pattern substitute, and returns a newly allocated
+ * string that holds the result.
+ *
+ * Use free() or g_free() to free the result.
+ * @param str String to be matched.
+ * @param pattern Pattern for matching.
+ * @param format the format of output string, which consists one to multiple pattern substitute.
+ * @param cflag Flags for regcomp().
+ * @param eflag Flags for regexec().
+ * @param counter_ptr a pointer to an integer counter. Can be NULL if + or - flags are not required.
+ * @return An newly allocated string of evaluated pattern substitutes, or NULL if no match or have error.
+ *
+ * @see string_regex_eval_regex_t()
+ * @see string_regex_replace_regex_t()
+ * @see string_regex_replace()
+ */
+gchar *string_regex_eval(const gchar *str, const gchar *pattern, const gchar *format, 
+	int cflag, int eflag, int *counter_ptr);
+
+
+/**
+ * Replace a new text for the substring matching a regular expression. 
+ *
+ * This function replaces the regex matched sub-string to the string specified in \c format, 
+ * and returns a newly allocated string that holds the result.
+ *
+ * This function differs with string_regex_eval_regex_t(), 
+ * as string_regex_eval_regex_t() substitutes and returns only the matched substring,
+ * while this function keeps the parts that does not match the pattern.
+ *
+ * Use free() or g_free() to free the result.
+ *
+ * @param str String to be matched.
+ * @param preg regex pattern buffer which is generated by regcomp().
+ * @param format the format of output string, which consists one to multiple pattern substitute.
+ * @param eflag Flags for regexec().
+ * @param counter_ptr a pointer to an integer counter. Can be NULL if + or - flags are not required.
+ * @return An newly allocated string whose matched pattern is replaced., or NULL if no match or have error.
+ *
+ * @see string_regex_eval_regex_t()
+ * @see string_regex_eval()
+ * @see string_regex_replace()
+ */
+gchar *string_regex_replace_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
+	int eflag, int *counter_ptr);
+
+/**
+ * Replace a new text for the substring matching a regular expression. 
+ *
+ * This function replaces the regex matched sub-string to the string specified in \c format, 
+ * and returns a newly allocated string that holds the result.
+ *
+ * This function differs with string_regex_eval_regex_t(), 
+ * as string_regex_eval_regex_t() substitutes and returns only the matched substring,
+ * while this function keeps the parts that does not match the pattern.
+ *
+ * Use free() or g_free() to free the result.
+ *
+ * @param str String to be matched.
+ * @param pattern Pattern for matching.
+ * @param format the format of output string, which consists one to multiple pattern substitute.
+ * @param cflag Flags for regcomp().
+ * @param eflag Flags for regexec().
+ * @param counter_ptr a pointer to an integer counter. Can be NULL if + or - flags are not required.
+ * @return An newly allocated string whose matched pattern is replaced., or NULL if no match or have error.
+ *
+ * @see string_regex_eval_regex_t()
+ * @see string_regex_eval()
+ * @see string_regex_replace_regex_t()
+ */
+gchar *string_regex_replace(const gchar *str, const gchar *pattern, const gchar *format, 
+	int cflag, int eflag, int *counter_ptr);
 
 /**
  * @}

@@ -236,17 +236,19 @@ void stringList_free(StringList *sList){
 //}
 
 #define SUBPATTERN_FLAG_IS_EMPTY		0x1
+#define SUBPATTERN_FLAG_IS_NONEMPTY		0x2
 #define SUBPATTERN_FLAG_IS_PLUS			0x4
 #define SUBPATTERN_FLAG_IS_MINUS		0x8
-#define SUBPATTERN_FLAG_IS_DOLLOR_SIGN		0x10
+#define SUBPATTERN_FLAG_IS_DOLLORSIGN		0x10
 #define SUBPATTERN_FLAG_IS_INVALID		0x20
 
 typedef enum{
     REGEX_REPLACE_STAGE_INIT,
     REGEX_REPLACE_STAGE_FLAG,
-    REGEX_REPLACE_STAGE_INDEX,
     REGEX_REPLACE_STAGE_OPTION1,
-    REGEX_REPLACE_STAGE_OPTION2
+    REGEX_REPLACE_STAGE_OPTION2,
+    REGEX_REPLACE_STAGE_INDEX,
+    REGEX_REPLACE_STAGE_DONE
 } RegexReplaceStage;
 
 /* 
@@ -254,72 +256,245 @@ typedef enum{
  *         -1: dollar sign.
  *         -2: error
  */
-static int string_regex_replace_regex_t_getSubIndex(const gchar *replacePattern, guint *currPos_ptr, int *statusFlags_ptr, regmatch_t *pmatch, gchar *ifEmptyValue, gchar *ifNonEmptyValuegchar){
+static int string_regex_eval_regex_t_getSubIndex(const gchar *format, guint *currPos_ptr, int *statusFlags_ptr, regmatch_t *pmatch, gchar **option1_ptr, gchar **option2_ptr){
     gboolean indexRead=FALSE;
     int index=0;
     *statusFlags_ptr=0;
     gchar c;
     gboolean error=FALSE;
     RegexReplaceStage stage=REGEX_REPLACE_STAGE_INIT;
-    gboolean inEmptyValue=FALSE; 
-    gboolean inNonEmptyValue=FALSE;
-    for(;!error;(*currPos_ptr)++){
-        c=replacePattern[*currPos_ptr];
+    GString *option1Str=NULL;
+    GString *option2Str=NULL;
+    *option1_ptr=*option2_ptr=NULL;
+
+    for(;!error && stage!=REGEX_REPLACE_STAGE_DONE; (*currPos_ptr)++){
+        c=format[*currPos_ptr];
 	if (c=='\0){
 	    error=TRUE;
+	    verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_replace_regex_t_getSubIndex(): At character %d: Characters expected after '$'",*currPos_ptr);
 	    break;
 	}
-	if (c>='0' && c<='9'){
-	    switch(stage){
-		case REGEX_REPLACE_STAGE_INIT:
-		case REGEX_REPLACE_STAGE_FLAG:
-		case REGEX_REPLACE_STAGE_INDEX:
+	switch(stage){
+	    case REGEX_REPLACE_STAGE_INIT:
+		if (isdigit(c)){
+		    stage=REGEX_REPLACE_STAGE_INDEX;
 		    index+=index*10+c-'0';
 		    break;
-	    }
-	    indexRead=TRUE;
-	    continue;
-	}
-	if (indexRead && (*statusFlags_ptr & ~SUBPATTERN_FLAG_IS_EMPTY)){
-	    return index;
-	}
-	if (*statusFlags_ptr & ~SUBPATTERN_FLAG_IS_EMPTY)
-	    return -2;
-	switch(c){
-	    case 'E':
-		*statusFlags_ptr |=SUBPATTERN_FLAG_IS_EMPTY;
+		}
+		if (c=='E'){
+		    stage=REGEX_REPLACE_STAGE_FLAG;
+		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_EMPTY;
+		    break;
+		}else if (c=='N'){
+		    stage=REGEX_REPLACE_STAGE_FLAG;
+		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_NONEMPTY;
+		    break;
+		}else if (c=='+'){
+		    stage=REGEX_REPLACE_STAGE_FLAG;
+		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_PLUS;
+		    break;
+		}else if (c=='-'){
+		    stage=REGEX_REPLACE_STAGE_MINUS;
+		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_PLUS;
+		    break;
+		}else if (c=='$'){
+		    stage=REGEX_REPLACE_STAGE_DONE;
+		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_DOLLARSIGN;
+		    break;
+		}
+		error=TRUE;
+		verboseMsg_print(VERBOSE_MSG_ERROR,
+			"string_regex_replace_regex_t_getSubIndex(): At character %d : Invalid flag %c.",
+			*currPos_ptr,c);
 		break;
-	    case '+':
-		*statusFlags_ptr |=SUBPATTERN_FLAG_IS_PLUS;
-		break;
-	    case '-':
-		*statusFlags_ptr |=SUBPATTERN_FLAG_IS_MINUS;
-		break;
-	    case '$':
-		*statusFlags_ptr |=SUBPATTERN_FLAG_IS_DOLLERSIGN;
-		return -1;
-	    case '{':
-		inBranch=TR
-		break;
-	    case ',':
-		break;
-	    case '}':
-		break;
-	    default:
-		*statusFlags_ptr |=SUBPATTERN_FLAG_IS_INVALID;
+	    case REGEX_REPLACE_STAGE_FLAG:
+		if (isdigit(c)){
+		    stage=REGEX_REPLACE_STAGE_INDEX;
+		    index+=index*10+c-'0';
+		    break;
+		}
+		if (c=='{' && (*statusFlags_ptr & (SUBPATTERN_FLAG_IS_EMPTY | SUBPATTERN_FLAG_IS_NONEMPTY) )){
+		    stage=REGEX_REPLACE_STAGE_OPTION1;
+		    option1Str=g_string_new();
+		    break;
+		}
+		verboseMsg_print(VERBOSE_MSG_ERROR,
+			"string_regex_replace_regex_t_getSubIndex(): At character %d : Should only have at most one flag.",
+			*currPos_ptr);
 		error=TRUE;
 		break;
+	    case REGEX_REPLACE_STAGE_OPTION1:
+		if (c==','){
+		    stage=REGEX_REPLACE_STAGE_OPTION2;
+		    option2Str=g_string_new();
+		    break;
+		}else if (c=='}'){
+		    (*currPos_ptr)++;
+		    stage=REGEX_REPLACE_STAGE_INDEX;
+		    break;
+		}else if (c=='$'){
+		    (*currPos_ptr)++;
+		    c=format[*currPos_ptr];
+		    if (c=='\0'){
+			error=TRUE;
+			verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_replace_regex_t_getSubIndex(): At character %d: Characters expected after '$'",*currPos_ptr);
+			break;
+		    }
+		    g_string_append_c(option1Str,c);
+		}
+		break;
 
+	    case REGEX_REPLACE_STAGE_OPTION2:
+		if (c=='}'){
+		    (*currPos_ptr)++;
+		    stage=REGEX_REPLACE_STAGE_INDEX;
+		    break;
+		}else if (c=='$'){
+		    (*currPos_ptr)++;
+		    c=format[*currPos_ptr];
+		    if (c=='\0'){
+			error=TRUE;
+			verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_replace_regex_t_getSubIndex(): At character %d: Characters expected after '$'",*currPos_ptr);
+			break;
+		    }
+		    g_string_append_c(option2Str,c);
+		}
+		g_string_append_c(option2Str,c);
+		break;
+
+	    case REGEX_REPLACE_STAGE_INDEX:
+		if (isdigit(c)){
+		    stage=REGEX_REPLACE_STAGE_INDEX;
+		    index+=index*10+c-'0';
+		    break;
+		}
+		stage=REGEX_REPLACE_STAGE_DONE;
+		break;
 	}
     }
-    return -2;
+    if (error){
+	if (option1Str)
+	    g_string_free(option1Str,TRUE);
+
+	if (option2Str)
+	    g_string_free(option2Str,TRUE);
+	return -2;
+    }
+
+    if (*statusFlags_ptr & SUBPATTERN_FLAG_IS_DOLLARSIGN){
+	if (option1Str)
+	    g_string_free(option1Str,TRUE);
+
+	if (option2Str)
+	    g_string_free(option2Str,TRUE);
+	return -1;
+    }
+
+    if (option1Str)
+	*option1_ptr=g_string_free(option1Str,FALSE);
+
+    if (option2Str)
+	*option2_ptr=g_string_free(option2Str,FALSE);
+    return index;
 }
 
-gchar *string_regex_replace_regex_t_full(const gchar *str, const regex_t *preg, const gchar *replacePattern, 
-	int eflag, int *counter_ptr, const gchar *ifEmptyValue, const gchar *ifNonEmptyValue){
+gchar *string_regex_eval_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
+	int eflag, int *counter_ptr){
+    guint nmatch=preg->re_nsub+1;
+    regmatch_t *pmatch=NEW_ARRAY_INSTANCE(nmatch,regmatch_t);
+    if (regexec(preg,currPtr,nmatch,pmatch,eflags)!=0){
+	/* No Match */
+	return NULL;
+    }
+    GString *strBuf=g_string_new(NULL);
+
+    int subIndex=0;
+    guint statusFlags;
+    gboolean error=FALSE;
+    gchar *option1Str=NULL;
+    gchar *option2Str=NULL;
+
+    for(j=0;j<replaceLen && (!error);j++){
+	if (format[j]=='$'){
+	    j++;
+	    subIndex=string_regex_eval_regex_t_getSubIndex(format, &j, &statusFlags, pmatch,
+		    &option1Str, &option2Str);
+	    if (subIndex>=0){
+		if (subIndex>=nmatch){
+		    error=TRUE;
+		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_replace_regex_t_full():index %d should be less than or equal to the number of sub patterns %d\n",subIndex,nmatch-1);
+		    break;
+		}
+		if (pmatch[subIndex].rm_so==pmatch[subIndex].rm_eo){
+		    /* Subpattern is empty */
+		    if (statusFlags & SUBPATTERN_FLAG_IS_EMPTY && option1Str){
+			g_string_append(strBuf,option1Str);
+		    }else if (statusFlags & SUBPATTERN_FLAG_IS_NONEMPTY && option2Str){
+			g_string_append(strBuf,option2Str);
+		    }
+		}else{
+		    /* Subpattern is not empty */
+		    if (statusFlags & SUBPATTERN_FLAG_IS_NOTEMPTY && option1Str){
+			g_string_append(strBuf,option1Str);
+		    }else if (statusFlags & SUBPATTERN_FLAG_IS_EMPTY && option2Str){
+			g_string_append(strBuf,option2Str);
+		    }else if (statusFlags & SUBPATTERN_FLAG_IS_PLUS && counter_ptr){
+			g_string_append(strBuf,"%d",++(*counter_ptr));
+		    }else if (statusFlags & SUBPATTERN_FLAG_IS_MINUS && counter_ptr){
+			g_string_append(strBuf,"%d",--(*counter_ptr));
+		    }else{
+			for(k=pmatch[subIndex].rm_so;k<pmatch[subIndex].rm_eo;k++){
+			    g_string_append_c(strBuf,str[k]);
+			}
+		    }
+		}
+		j--;
+		if (option1Str)
+		    g_free(option1Str);
+		if (option2Str)
+		    g_free(option2Str);
+	    }else if (subIndex==-1){
+		/* Dollar sign */
+		g_string_append_c(strBuf,'$');
+	    }else{
+		/* replace pattern error */
+		error=TRUE;
+		break;
+	    }
+	}else{
+	    /* Normal character */
+	    g_string_append_c(strBuf,format[j]);
+	}
+    }
+    if (error){
+	g_string_free(strBuf,TRUE);
+	return NULL;
+    }
+    return g_string_free(strBuf,FALSE);
+}
+
+gchar *string_regex_eval(const gchar *str, const gchar *pattern, const gchar *format, 
+	int cflag, int eflag, int *counter_ptr){
+
+    regex_t *preg=NULL;
+    int ret;
+    if ((ret=regcomp(preg, pattern, cflags))!=0){
+	/* Invalid pattern */
+	char buf[MAX_STRING_BUFFER_SIZE];
+	regerror(ret,preg,buf,MAX_STRING_BUFFER_SIZE);
+	verboseMsg_print(VERBOSE_MSG_ERROR, "string_regex_eval():Invalid pattern %s\n"
+		,buf);
+	return NULL;
+    }
+    return string_regex_eval_regex_t(str, preg, format, eflag, counter_ptr);
+}
+
+
+gchar *string_regex_replace_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
+	int eflag, int *counter_ptr){
     guint i,j,k,m;
     guint len=strlen(str);
-    guint replaceLen=strlen(replacePattern);
+    guint replaceLen=strlen(format);
     guint nmatch=preg->re_nsub+1;
     regmatch_t *pmatch=NEW_ARRAY_INSTANCE(nmatch,regmatch_t);
     if (regexec(preg,currPtr,nmatch,pmatch,eflags)!=0){
@@ -327,38 +502,22 @@ gchar *string_regex_replace_regex_t_full(const gchar *str, const regex_t *preg, 
 	return NULL;
     }
 
-    GString *strBuf=g_string_sized_new();
+    GString *strBuf=g_string_sized_new(len);
 
     /* Chars before matched */
     for(i=0;i<pmatch[0].rm_so;i++){
 	g_string_append_c(strBuf,str[i]);
     }
-    int subIndex=0;
-    guint statusFlags;
-    gboolean error=FALSE;
 
-    for(j=0;j<replaceLen && (!error);j++){
-	if (replacePattern[j]=='$'){
-	    j++;
-	    subIndex=string_regex_replace_regex_t_getSubIndex(replacePattern, &j, &statusFlags, pmatch);
-	    if (subIndex>=0){
-		if (subIndex>=nmatch){
-		    error=TRUE;
-		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_replace_regex_t_full():index %d should be less than or equal to the number of sub patterns %d\n",subIndex,nmatch-1);
-		    break;
-		}
-		if (pmatch[subIndex].rm_so<0 || (statusFlags & (SUBPATTERN_FLAG_IS_EMPTY | SUBPATTERN_FLAG_IS_NONEMPTY))){
-
-		}
-		for(k=pmatch[subIndex].rm_so>=0;k++){
-
-		}
-	    }
-    	}else{
-	    g_string_append_c(strBuf,str[i]);
-	}
+    gchar *evalStr=string_regex_eval_regex_t(str, preg, format, eflag, counter_ptr);
+    
+    if (evalStr){
+	g_string_append(strBuf,evalStr);
+	g_free(evalStr);
+    }else{
+	g_string_free(strBuf,TRUE);
+	return NULL;
     }
-
 
 
     /* Char after matched */
@@ -366,25 +525,26 @@ gchar *string_regex_replace_regex_t_full(const gchar *str, const regex_t *preg, 
 	g_string_append_c(strBuf,str[i]);
     }
 
-    
-
-        RegexResult *rResult=regexResult_new();
-
-    //    for(i=0;i<nmatch && pmatch[i].rm_so>=0;i++){
-    //        /* Put sub matchs ( pmatch[i] ) in rResult->resultList */
-    //        newStr=g_strndup(str+pmatch[i].rm_so, pmatch[counter].rm_eo - pmatch[i].rm_so);
-    //        stringList_insert(rResult->resultList,newStr);
-    //        g_array_append_val(rResult->startOffsets,pmatch[i].rm_so);
-    //        g_free(newStr);
-    //    }
-    //    g_free(pmatch);
-    //    return rResult;
-
     return g_string_free(strBuf,FALSE);
 }
 
-int regex_replace(const gchar *str, const gchar *pattern, const gchar *){
+gchar *string_regex_replace(const gchar *str, const gchar *pattern, const gchar *format, 
+	int cflag, int eflag, int *counter_ptr){
+
+    regex_t *preg=NULL;
+    int ret;
+    if ((ret=regcomp(preg, pattern, cflags))!=0){
+	/* Invalid pattern */
+	char buf[MAX_STRING_BUFFER_SIZE];
+	regerror(ret,preg,buf,MAX_STRING_BUFFER_SIZE);
+	verboseMsg_print(VERBOSE_MSG_ERROR, "string_regex_replace():Invalid pattern %s\n"
+		,buf);
+	return NULL;
+    }
+    return string_regex_eval_regex_t(str, preg, format, eflag, counter_ptr);
 }
+
+
 
 gchar*
 initString(gchar *str){

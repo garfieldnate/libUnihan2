@@ -314,7 +314,7 @@ const UnihanFieldTablePair FIELD_PREFERRED_TABLES[]={
 };
 
 typedef struct{
-    UnihanField field,
+    UnihanField field;
     gchar *value;
 } UnihanFieldValuePair;
 
@@ -512,7 +512,7 @@ const UnihanImportData PSEUDOFIELD_IMPORT_DATA[]={
 	{UNIHAN_FIELD_VARIANT_CODE, UNIHAN_FIELD_SERIAL_NO_JOIN, UNIHAN_FIELD_FROM_DICT,
 	    UNIHAN_FIELD_SEMANTIC_T, UNIHAN_FIELD_SEMANTIC_B, UNIHAN_FIELD_SEMANTIC_Z,
 	    UNIHAN_INVALID_FIELD},
-	{"$1", "$+0", "$2","$N3","$N4","$N5", NULL}
+	{"$1", "$+0", "$2","$N{1,0}3","$N{1,0}4","$N{1,0}5", NULL}
     },
 
     {UNIHAN_FIELD_kSPECIALIZEDSEMANTICVARIANT, UNIHAN_TABLE_kSPECIALIZEDSEMANTICVARIANT, 
@@ -525,7 +525,7 @@ const UnihanImportData PSEUDOFIELD_IMPORT_DATA[]={
 	{UNIHAN_FIELD_VARIANT_CODE, UNIHAN_FIELD_SERIAL_NO_JOIN, UNIHAN_FIELD_FROM_DICT,
 	    UNIHAN_FIELD_SEMANTIC_T, UNIHAN_FIELD_SEMANTIC_B, UNIHAN_FIELD_SEMANTIC_Z,
 	    UNIHAN_INVALID_FIELD},
-	{"$1", "$+0", "$2","$N3","$N4","$N5", NULL}
+	{"$1", "$+0", "$2","$N{1,0}3","$N{1,0}4","$N{1,0}5", NULL}
     },
     {UNIHAN_FIELD_kXHC1983, UNIHAN_TABLE_kXHC1983, 
 	"([[:digit:]]{4})\.([[:digit:]]{2})([[:digit:]])[^[:space:]]*:([a-zE]+)([1-5])",
