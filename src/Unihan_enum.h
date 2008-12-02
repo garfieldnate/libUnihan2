@@ -321,7 +321,7 @@ typedef enum{
  *   are mutually exclusive and should not be set in same field.
  *   Because \c UNIHAN_FIELDFLAG_UCS4 is for the fields that can be convert to UTF-8 directly;
  *   while other 2 flags indicates the string representation for the integer value.
- * -# \c UNIHAN_FIELDFLAG_NOINDEX only works for real fields. Pseudo fields are not indexed.
+ * -# \c UNIHAN_FIELDFLAG_NO_INDEX only works for real fields. Pseudo fields are not indexed.
  * @{
  */
 // #define UNIHAN_FIELDFLAG_PSEUDO		0x1	//!< The field is a pseudo field.
@@ -333,9 +333,10 @@ typedef enum{
 #define UNIHAN_FIELDFLAG_UPPERCASE     	0x20	//!< The field should be displayed as upper case.
 #define UNIHAN_FIELDFLAG_LOWERCASE     	0x40	//!< The field should be displayed as lower case.
 #define UNIHAN_FIELDFLAG_MULTIROWS		0x80	//!< The field is combined by multiple rows, such as kSemanticVariant.
-#define UNIHAN_FIELDFLAG_NOINDEX		0x100	//!< The field should not be indexed. This 
-#define UNIHAN_FIELDFLAG_SINGLETON		0x200	//!< The field is functional dependent on code. (i.e. No other values)
-#define UNIHAN_FIELDFLAG_MANDARIN		0x400	//!< The field stores a mandarin pronunciation. 
+#define UNIHAN_FIELDFLAG_NO_INDEX		0x100	//!< The field do not need to be indexed. 
+#define UNIHAN_FIELDFLAG_NO_PRIMARYKEY		0x200	//!< The field do not need to be in primary key. Normally fields without flag UNIHAN_FIELDFLAG_SINGLETON are in the primary key. However, this flags explicitly specify the field do not need to be in primary key.
+#define UNIHAN_FIELDFLAG_SINGLETON		0x400	//!< The field is functional dependent on code. (i.e. No other values)
+#define UNIHAN_FIELDFLAG_MANDARIN		0x800	//!< The field stores a mandarin pronunciation. 
 
 /**
  * @}

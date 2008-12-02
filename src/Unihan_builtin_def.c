@@ -553,18 +553,19 @@ const UnihanImportData PSEUDOFIELD_IMPORT_DATA[]={
 
 typedef struct{
     UnihanField field;
+    UnihanTable table;
     gchar *searchRegex;
-    gchar *replace;
+    gchar *evalStr;
 } UnihanImportData_Post;
 
 UnihanImportData_Post PSEUDOFIELD_IMPORT_DATA_POST[]={
-    {UNIHAN_FIELD_kSEMANTICVARIANT,
+    {UNIHAN_FIELD_kSEMANTICVARIANT, UNIHAN_TABLE_kSEMANTICVARIANT_EXTRA,
 	"(U\+[[:xdigit:]]*)<(k[[:alpha:]]*:?T?B?Z?),(.*)", "$1<$3"},
-    {UNIHAN_FIELD_kSPECIALIZEDSEMANTICVARIANT,
+    {UNIHAN_FIELD_kSPECIALIZEDSEMANTICVARIANT, UNIHAN_TABLE_kSPECIALIZEDSEMANTICVARIANT_EXTRA,
 	"(U\+[[:xdigit:]]*)<(k[[:alpha:]]*:?T?B?Z?),(.*)", "$1<$3"},
-    {UNIHAN_FIELD_kXHC1983,
+    {UNIHAN_FIELD_kXHC1983, UNIHAN_TABLE_kXHC1983,
 	"([[:digit:]\.]{8}),([^:]*):(.*)", "$2<$3"},
-    {UNIHAN_INVALID_FIELD,
+    {UNIHAN_INVALID_FIELD, UNIHAN_INVALID_TABLE,
 	NULL,NULL},
 };
 
