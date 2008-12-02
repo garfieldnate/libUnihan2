@@ -359,7 +359,7 @@ typedef struct{
  */
 const UnihanImportData PSEUDOFIELD_IMPORT_DATA[]={
     {UNIHAN_FIELD_kHANYUPINLU, UNIHAN_TABLE_kHANYUPINLU, 
-	"([a-zE]+)([1-5])\(([[:digit:]]*)\)"},
+	"([a-tw-z]*)(yu?)(ü?)(ie?)(ue?)([a-z]*)([1-5])\(([[:digit:]]*)\)"},
         {UNIHAN_FIELD_PINYIN_BASE, UNIHAN_FIELD_PINYIN_TONE, UNIHAN_FIELD_PINYIN_FREQ,
 	    UNIHAN_INVALID_FIELD},
 	{"$1", "$2", "$3", NULL}
@@ -554,8 +554,8 @@ const UnihanImportData PSEUDOFIELD_IMPORT_DATA[]={
 typedef struct{
     UnihanField field;
     UnihanTable table;
-    gchar *searchRegex;
-    gchar *evalStr;
+    gchar *regex_pattern;
+    gchar *eval_str;
 } UnihanImportData_Post;
 
 UnihanImportData_Post PSEUDOFIELD_IMPORT_DATA_POST[]={

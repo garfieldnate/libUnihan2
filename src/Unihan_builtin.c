@@ -149,7 +149,7 @@ int unihan_import_builtin_table_tagValue(sqlite3 *db, gunichar code, UnihanField
 	    storeFormats=PSEUDOFIELD_IMPORT_DATA[pseudoNextIndex].storeFormats;
 	    importData_post_ptr=unihanField_get_builtin_importData_post(field,table);
 	    if (importData_post_ptr){
-		if ((regexRet=regcomp(preg_post, importData_post_ptr->searchRegex, REG_EXTENDED))!=0){
+		if ((regexRet=regcomp(preg_post, importData_post_ptr->regex_pattern, REG_EXTENDED))!=0){
 		    /* Invalid pattern */
 		    regerror(ret,preg_post,buf,MAX_STRING_BUFFER_SIZE);
 		    verboseMsg_print(VERBOSE_MSG_ERROR, 
@@ -211,14 +211,21 @@ int unihan_import_builtin_table_tagValue(sqlite3 *db, gunichar code, UnihanField
 		if (importData_post_ptr){
 		    /* Need post process */
 		    tagValuePtr_tmp=string_regex_eval_regex_t(tagValuePtr, preg_post, 
-			    importData_post_ptr->, 0, &counter_post);
-
-		    
-
+			    importData_post_ptr->eval_str, 0, &counter_post);
+		    if (tagValuePtr!=tagValue){
+			g_free(tagValuePtr);
+		    }
+		    if (tagValuePtr_tmp){
+			tagValuePtr=tagValuePtr_tmp;
+		    }else{
+			tagValuePtr=NULL;
+		    }
+		}else{
+		    tagValuePtr=NULL;
 		}
-	    }while();
-
-
+		if (ret)
+		    break;
+	    }while(tagValuePtr);
 	    pseudoNextIndex=unihanField_builtin_pseudo_import_data_index(field,pseudoNextIndex);
 	}
     }else{
