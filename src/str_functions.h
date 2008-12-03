@@ -387,20 +387,21 @@ void stringList_free(StringList *sList);
  * The format string is composed of zero or more directives: ordinary characters (not $),
  * which are copied unchanged to the output string;  and  pattern  substitutes,  each  of
  * which  results in fetching zero or more subsequent arguments.  
- * Each pattern substitute is introduced by the character $, and ends with a pattern id. 
+ * Each pattern substitute is introduced by the character $, followed by optional flags, 
+ * mandatory pattern id, and optional substitute strings. 
  * In  between  there may be (in this order) zero or more flags, one or two optional 
  * substitute strings. Note that at most one flag can be used in pattern substitute.
  *
  * The format of a pattern substitute is:
- * <code>$[flag][{str1 [,str2]}]<pattern id></code>
+ * <code>$[flag]<pattern id>[{[str1 [,str2]]}]</code>
  * If no flags are given, pattern substitutes will be outputted as (sub) pattern it matched.
- * Be aware that it is possible that patterns are empty (has 0 length). 
+ * Be aware that matched patterns maybe be empty (has 0 length). 
  * 
  * Following flags provide additional output control:
- * - N{str1 [,str2]}<id>: 
+ * - N<id>{str1 [,str2]}: 
  *   if matched pattern \c id is nonempty, then str1 is outputted for this  pattern substitute; 
  *   if matched pattern \c id is empty, then outputs str2 if given, or empty string.
- * - E{str1 [,str2]}<id>: 
+ * - E<id>{str1 [,str2]}: 
  *   similar with -N, but output str1 if matched pattern \c id is empty.
  * - +<id>: 
  *   if matched pattern \c id is nonempty, then adds 1 to provided counter and output the number.
@@ -409,8 +410,10 @@ void stringList_free(StringList *sList);
  *   if matched pattern \c id is nonempty, then minuses 1 to provided counter and output the number.
  *   if matched pattern \c id is empty, then outputs a empty string.
  * - $: 
- *   Outputs a '$' character. '$' is used as escape character here.
+ *   Outputs a '$' character. 
  *
+ * Character '$' is also an escape character. For example,
+ *  '$N1{${}' outputs  '{' if pattern substitute 1 is nonempty.
  * @{
  */
 

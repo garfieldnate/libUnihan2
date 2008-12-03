@@ -345,7 +345,6 @@ typedef struct{
     gchar **storeFormats;
 } UnihanImportData;
 
-
 /*
  * Most of the Unihan tag value can be import using this.
  * Exceptions:
@@ -359,10 +358,10 @@ typedef struct{
  */
 const UnihanImportData PSEUDOFIELD_IMPORT_DATA[]={
     {UNIHAN_FIELD_kHANYUPINLU, UNIHAN_TABLE_kHANYUPINLU, 
-	"([a-tw-z]*)(yu?)(ü?)(ie?)(ue?)([a-z]*)([1-5])\(([[:digit:]]*)\)"},
+	"([a-hj-twxz]*)(yu)?(y)?(ü)?(u[^[:alnum:]])?(ie)?(ue)?([a-z]*)([1-5])\(([[:digit:]]*)\)"},
         {UNIHAN_FIELD_PINYIN_BASE, UNIHAN_FIELD_PINYIN_TONE, UNIHAN_FIELD_PINYIN_FREQ,
 	    UNIHAN_INVALID_FIELD},
-	{"$1", "$2", "$3", NULL}
+	{"$1$N{yv}2$3$N{v}4$N{v}5$N{iE}6$N{vE}7$8", "$9", "$10", NULL}
     },
 
     {UNIHAN_FIELD_kIRG_GSOURCE, UNIHAN_TABLE_IRG_GSOURCE,

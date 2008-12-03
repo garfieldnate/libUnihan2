@@ -245,9 +245,9 @@ void stringList_free(StringList *sList){
 typedef enum{
     REGEX_REPLACE_STAGE_INIT,
     REGEX_REPLACE_STAGE_FLAG,
+    REGEX_REPLACE_STAGE_INDEX,
     REGEX_REPLACE_STAGE_OPTION1,
     REGEX_REPLACE_STAGE_OPTION2,
-    REGEX_REPLACE_STAGE_INDEX,
     REGEX_REPLACE_STAGE_DONE
 } RegexReplaceStage;
 
@@ -313,26 +313,38 @@ static int string_regex_eval_regex_t_getSubIndex(const gchar *format, guint *cur
 		    index+=index*10+c-'0';
 		    break;
 		}
-		if (c=='{' && (*statusFlags_ptr & (SUBPATTERN_FLAG_IS_EMPTY | SUBPATTERN_FLAG_IS_NONEMPTY) )){
-		    stage=REGEX_REPLACE_STAGE_OPTION1;
-		    option1Str=g_string_new();
-		    break;
-		}
 		verboseMsg_print(VERBOSE_MSG_ERROR,
 			"string_regex_replace_regex_t_getSubIndex(): At character %d : Should only have at most one flag.",
 			*currPos_ptr);
 		error=TRUE;
 		break;
+
+	    case REGEX_REPLACE_STAGE_INDEX:
+		if (isdigit(c)){
+		    stage=REGEX_REPLACE_STAGE_INDEX;
+		    index+=index*10+c-'0';
+		    break;
+		}
+		if (c=='{'){
+		    stage=REGEX_REPLACE_STAGE_OPTION1;
+		    break;
+		}
+		stage=REGEX_REPLACE_STAGE_DONE;
+		break;
+
 	    case REGEX_REPLACE_STAGE_OPTION1:
 		if (c==','){
 		    stage=REGEX_REPLACE_STAGE_OPTION2;
-		    option2Str=g_string_new();
 		    break;
 		}else if (c=='}'){
 		    (*currPos_ptr)++;
-		    stage=REGEX_REPLACE_STAGE_INDEX;
+		    stage=REGEX_REPLACE_STAGE_DONE;
 		    break;
-		}else if (c=='$'){
+		}
+		if (!option1Str && *statusFlags_ptr & ( SUBPATTERN_FLAG_IS_EMPTY | SUBPATTERN_FLAG_IS_NONEMPTY)){
+		    option1Str=g_string_new(NULL);
+		}
+		if (c=='$'){
 		    (*currPos_ptr)++;
 		    c=format[*currPos_ptr];
 		    if (c=='\0'){
@@ -341,7 +353,9 @@ static int string_regex_eval_regex_t_getSubIndex(const gchar *format, guint *cur
 			break;
 		    }
 		    g_string_append_c(option1Str,c);
+		    break;
 		}
+		g_string_append_c(option1Str,c);
 		break;
 
 	    case REGEX_REPLACE_STAGE_OPTION2:
@@ -349,7 +363,11 @@ static int string_regex_eval_regex_t_getSubIndex(const gchar *format, guint *cur
 		    (*currPos_ptr)++;
 		    stage=REGEX_REPLACE_STAGE_INDEX;
 		    break;
-		}else if (c=='$'){
+		}
+		if (!option2Str && *statusFlags_ptr & ( SUBPATTERN_FLAG_IS_EMPTY | SUBPATTERN_FLAG_IS_NONEMPTY)){
+		    option2Str=g_string_new(NULL);
+		}
+		if (c=='$'){
 		    (*currPos_ptr)++;
 		    c=format[*currPos_ptr];
 		    if (c=='\0'){
@@ -362,14 +380,6 @@ static int string_regex_eval_regex_t_getSubIndex(const gchar *format, guint *cur
 		g_string_append_c(option2Str,c);
 		break;
 
-	    case REGEX_REPLACE_STAGE_INDEX:
-		if (isdigit(c)){
-		    stage=REGEX_REPLACE_STAGE_INDEX;
-		    index+=index*10+c-'0';
-		    break;
-		}
-		stage=REGEX_REPLACE_STAGE_DONE;
-		break;
 	}
     }
     if (error){
@@ -425,7 +435,7 @@ gchar *string_regex_eval_regex_t(const gchar *str, const regex_t *preg, const gc
 		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_replace_regex_t_full():index %d should be less than or equal to the number of sub patterns %d\n",subIndex,nmatch-1);
 		    break;
 		}
-		if (pmatch[subIndex].rm_so==pmatch[subIndex].rm_eo){
+		if ( pmatch[subIndex].rm_so<0 || pmatch[subIndex].rm_so==pmatch[subIndex].rm_eo){
 		    /* Subpattern is empty */
 		    if (statusFlags & SUBPATTERN_FLAG_IS_EMPTY && option1Str){
 			g_string_append(strBuf,option1Str);
