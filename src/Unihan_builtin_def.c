@@ -459,10 +459,10 @@ const UnihanImportData PSEUDOFIELD_IMPORT_DATA[]={
     },
 
     {UNIHAN_FIELD_kMANDARIN,	UNIHAN_TABLE_kMANDARIN,
-	"([a-zE]+)([1-5])",
+	"([A-HJ-TWXZ]*)(YU)?(Y)?(Ü)?(U[^[:alnum:]])?(IE)?(UE)?([A-Z]*)([1-5])",
 	{UNIHAN_FIELD_PINYIN_BASE, UNIHAN_FIELD_PINYIN_TONE, UNIHAN_FIELD_FREQ_RANK,
 	    UNIHAN_INVALID_FIELD},
-	{"$1","$2","$+0", NULL}
+	{"$1$N{yv}2$3$N{v}4$N{v}5$N{iE}6$N{vE}7$8", "$9","$+0", NULL}
     },
 
     {UNIHAN_FIELD_kRSADOBE_JAPAN1_6, UNIHAN_TABLE_kRSADOBE_JAPAN1_6,
@@ -527,7 +527,7 @@ const UnihanImportData PSEUDOFIELD_IMPORT_DATA[]={
 	{"$1", "$+0", "$2","$N{1,0}3","$N{1,0}4","$N{1,0}5", NULL}
     },
     {UNIHAN_FIELD_kXHC1983, UNIHAN_TABLE_kXHC1983, 
-	"([[:digit:]]{4})\.([[:digit:]]{2})([[:digit:]])[^[:space:]]*:([a-zE]+)([1-5])",
+	"([[:digit:]]{4})\.([[:digit:]]{2})([[:digit:]])[^[:space:]]*:([a-hj-twxz]*)(yu)?(y)?(ü)?(u[^[:alnum:]])?(ie)?(ue)?([a-z]*)",
     	{UNIHAN_FIELD_VARIANT_CODE,  UNIHAN_INVALID_FIELD},
     	{"$0", NULL}
     },
