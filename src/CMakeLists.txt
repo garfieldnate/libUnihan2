@@ -31,24 +31,25 @@ SET(DOCUMENTED_HEADERS Unihan.h Unihan_enum.h Unihan_phonetic.h
 
 
 ADD_LIBRARY(Unihan_supporting SHARED ${supporting_SRCS})
-ADD_LIBRARY(Unihan SHARED ${libUnihan_SRCS} )
-SET_TARGET_PROPERTIES(Unihan Unihan_supporting PROPERTIES 
+#ADD_LIBRARY(Unihan SHARED ${libUnihan_SRCS} )
+#SET_TARGET_PROPERTIES(Unihan Unihan_supporting PROPERTIES 
+SET_TARGET_PROPERTIES(Unihan_supporting PROPERTIES 
     VERSION "${SO_VER_MAJOR}.${SO_VER_MINOR}"
     SOVERSION "${SO_VER_MAJOR}")
 
 
 # executable built from some source
-ADD_EXECUTABLE(unihan_converter  unihan_converter.c)
-ADD_EXECUTABLE(unihan_query	 unihan_query.c)
-ADD_EXECUTABLE(unihan_rebuild_cache unihan_rebuild_cache.c)
+#ADD_EXECUTABLE(unihan_converter  unihan_converter.c)
+#ADD_EXECUTABLE(unihan_query	 unihan_query.c)
+#ADD_EXECUTABLE(unihan_rebuild_cache unihan_rebuild_cache.c)
 
 
 # Link the executable to the library.
 TARGET_LINK_LIBRARIES(Unihan_supporting ${SQLITE3_LIBRARIES} ${GLIB2_LIBRARIES})
-TARGET_LINK_LIBRARIES(Unihan ${SQLITE3_LIBRARIES} ${GLIB2_LIBRARIES})
-TARGET_LINK_LIBRARIES(unihan_converter Unihan_supporting Unihan)
-TARGET_LINK_LIBRARIES(unihan_query Unihan_supporting Unihan)
-TARGET_LINK_LIBRARIES(unihan_rebuild_cache Unihan_supporting Unihan)
+#TARGET_LINK_LIBRARIES(Unihan ${SQLITE3_LIBRARIES} ${GLIB2_LIBRARIES})
+#TARGET_LINK_LIBRARIES(unihan_converter Unihan_supporting Unihan)
+#TARGET_LINK_LIBRARIES(unihan_query Unihan_supporting Unihan)
+#TARGET_LINK_LIBRARIES(unihan_rebuild_cache Unihan_supporting Unihan)
 
 
 
@@ -64,7 +65,8 @@ IF(NOT DEFINED LIB_INSTALL_DIR)
 ENDIF(NOT DEFINED LIB_INSTALL_DIR)
 
 
-INSTALL(TARGETS unihan_converter unihan_query unihan_rebuild_cache Unihan
+#INSTALL(TARGETS unihan_converter unihan_query unihan_rebuild_cache Unihan Unihan_supporting
+INSTALL(TARGETS Unihan_supporting
      RUNTIME DESTINATION bin
      LIBRARY DESTINATION ${LIB_INSTALL_DIR}
 )

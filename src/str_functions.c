@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <limits.h>
+#include <ctype.h>
 #include "allocate.h"
 #include "collection.h"
 #include "str_functions.h"
@@ -237,108 +238,136 @@ void stringList_free(StringList *sList){
 
 #define SUBPATTERN_FLAG_IS_EMPTY		0x1
 #define SUBPATTERN_FLAG_IS_NONEMPTY		0x2
-#define SUBPATTERN_FLAG_IS_PLUS			0x4
-#define SUBPATTERN_FLAG_IS_MINUS		0x8
-#define SUBPATTERN_FLAG_IS_DOLLORSIGN		0x10
-#define SUBPATTERN_FLAG_IS_INVALID		0x20
+#define SUBPATTERN_FLAG_IS_UPPERCASE		0x4
+#define SUBPATTERN_FLAG_IS_LOWERCASE		0x4
+#define SUBPATTERN_FLAG_IS_PLUS			0x10
+#define SUBPATTERN_FLAG_IS_MINUS		0x20
+#define SUBPATTERN_FLAG_IS_DOLLARSIGN		0x40
+#define SUBPATTERN_FLAG_IS_INVALID		0x80
 
 typedef enum{
-    REGEX_REPLACE_STAGE_INIT,
-    REGEX_REPLACE_STAGE_FLAG,
-    REGEX_REPLACE_STAGE_INDEX,
-    REGEX_REPLACE_STAGE_OPTION1,
-    REGEX_REPLACE_STAGE_OPTION2,
-    REGEX_REPLACE_STAGE_DONE
+    REGEX_EVAL_STAGE_INIT,
+    REGEX_EVAL_STAGE_FLAG,
+    REGEX_EVAL_STAGE_INDEX,
+    REGEX_EVAL_STAGE_OPTION1,
+    REGEX_EVAL_STAGE_OPTION2,
+    REGEX_EVAL_STAGE_DONE
 } RegexReplaceStage;
+
+
+static gchar *string_get_matched_substring(const gchar *str, regmatch_t *pmatch, guint index){
+    if (pmatch[index].rm_so<0 || pmatch[index].rm_so==pmatch[index].rm_eo){
+	return NULL;
+    }
+    gchar *result=NEW_ARRAY_INSTANCE(pmatch[index].rm_eo-pmatch[index].rm_so+1,gchar);
+    int i;
+    for(i=0;i<pmatch[index].rm_eo-pmatch[index].rm_so;i++){
+	result[i]=str[pmatch[index].rm_so+i];
+    }
+    result[i]='\0';
+    return result;
+}
 
 /* 
  * Return >=0: index of subpattern
  *         -1: dollar sign.
  *         -2: error
  */
-static int string_regex_eval_regex_t_getSubIndex(const gchar *format, guint *currPos_ptr, int *statusFlags_ptr, regmatch_t *pmatch, gchar **option1_ptr, gchar **option2_ptr){
-    gboolean indexRead=FALSE;
+static int string_regex_eval_regex_t_getSubIndex(const gchar *format, guint *currPos_ptr, guint *statusFlags_ptr, regmatch_t *pmatch, gchar **option1_ptr, gchar **option2_ptr){
     int index=0;
     *statusFlags_ptr=0;
     gchar c;
     gboolean error=FALSE;
-    RegexReplaceStage stage=REGEX_REPLACE_STAGE_INIT;
+    RegexReplaceStage stage=REGEX_EVAL_STAGE_INIT;
     GString *option1Str=NULL;
     GString *option2Str=NULL;
     *option1_ptr=*option2_ptr=NULL;
 
-    for(;!error && stage!=REGEX_REPLACE_STAGE_DONE; (*currPos_ptr)++){
-        c=format[*currPos_ptr];
-	if (c=='\0){
-	    error=TRUE;
-	    verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_replace_regex_t_getSubIndex(): At character %d: Characters expected after '$'",*currPos_ptr);
-	    break;
-	}
+    for(;!error && stage!=REGEX_EVAL_STAGE_DONE; (*currPos_ptr)++){
+	c=format[*currPos_ptr];
 	switch(stage){
-	    case REGEX_REPLACE_STAGE_INIT:
+	    case REGEX_EVAL_STAGE_INIT:
+		if (c=='\0'){
+		    error=TRUE;
+		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_eval_regex_t_getSubIndex(): At character %d: Characters expected after '$'",*currPos_ptr);
+		    break;
+		}
 		if (isdigit(c)){
-		    stage=REGEX_REPLACE_STAGE_INDEX;
-		    index+=index*10+c-'0';
+		    stage=REGEX_EVAL_STAGE_INDEX;
+		    index=index*10+c-'0';
 		    break;
 		}
 		if (c=='E'){
-		    stage=REGEX_REPLACE_STAGE_FLAG;
+		    stage=REGEX_EVAL_STAGE_FLAG;
 		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_EMPTY;
 		    break;
 		}else if (c=='N'){
-		    stage=REGEX_REPLACE_STAGE_FLAG;
+		    stage=REGEX_EVAL_STAGE_FLAG;
 		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_NONEMPTY;
 		    break;
+		}else if (c=='U'){
+		    stage=REGEX_EVAL_STAGE_FLAG;
+		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_UPPERCASE;
+		    break;
+		}else if (c=='L'){
+		    stage=REGEX_EVAL_STAGE_FLAG;
+		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_LOWERCASE;
+		    break;
 		}else if (c=='+'){
-		    stage=REGEX_REPLACE_STAGE_FLAG;
+		    stage=REGEX_EVAL_STAGE_FLAG;
 		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_PLUS;
 		    break;
 		}else if (c=='-'){
-		    stage=REGEX_REPLACE_STAGE_MINUS;
-		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_PLUS;
+		    stage=REGEX_EVAL_STAGE_FLAG;
+		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_MINUS;
 		    break;
 		}else if (c=='$'){
-		    stage=REGEX_REPLACE_STAGE_DONE;
+		    stage=REGEX_EVAL_STAGE_DONE;
 		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_DOLLARSIGN;
 		    break;
 		}
 		error=TRUE;
 		verboseMsg_print(VERBOSE_MSG_ERROR,
-			"string_regex_replace_regex_t_getSubIndex(): At character %d : Invalid flag %c.",
+			"string_regex_eval_regex_t_getSubIndex(): At character %d : Invalid flag %c.",
 			*currPos_ptr,c);
 		break;
-	    case REGEX_REPLACE_STAGE_FLAG:
+	    case REGEX_EVAL_STAGE_FLAG:
+		if (c=='\0'){
+		    error=TRUE;
+		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_eval_regex_t_getSubIndex(): No sub pattern index!\n");
+		    break;
+		}
 		if (isdigit(c)){
-		    stage=REGEX_REPLACE_STAGE_INDEX;
-		    index+=index*10+c-'0';
+		    stage=REGEX_EVAL_STAGE_INDEX;
+		    index=index*10+c-'0';
 		    break;
 		}
 		verboseMsg_print(VERBOSE_MSG_ERROR,
-			"string_regex_replace_regex_t_getSubIndex(): At character %d : Should only have at most one flag.",
+			"string_regex_eval_regex_t_getSubIndex(): At character %d : Should only have at most one flag.",
 			*currPos_ptr);
 		error=TRUE;
 		break;
 
-	    case REGEX_REPLACE_STAGE_INDEX:
+	    case REGEX_EVAL_STAGE_INDEX:
 		if (isdigit(c)){
-		    stage=REGEX_REPLACE_STAGE_INDEX;
-		    index+=index*10+c-'0';
+		    stage=REGEX_EVAL_STAGE_INDEX;
+		    index=index*10+c-'0';
 		    break;
 		}
 		if (c=='{'){
-		    stage=REGEX_REPLACE_STAGE_OPTION1;
+		    stage=REGEX_EVAL_STAGE_OPTION1;
 		    break;
 		}
-		stage=REGEX_REPLACE_STAGE_DONE;
+		stage=REGEX_EVAL_STAGE_DONE;
 		break;
 
-	    case REGEX_REPLACE_STAGE_OPTION1:
+	    case REGEX_EVAL_STAGE_OPTION1:
 		if (c==','){
-		    stage=REGEX_REPLACE_STAGE_OPTION2;
+		    stage=REGEX_EVAL_STAGE_OPTION2;
 		    break;
 		}else if (c=='}'){
 		    (*currPos_ptr)++;
-		    stage=REGEX_REPLACE_STAGE_DONE;
+		    stage=REGEX_EVAL_STAGE_DONE;
 		    break;
 		}
 		if (!option1Str && *statusFlags_ptr & ( SUBPATTERN_FLAG_IS_EMPTY | SUBPATTERN_FLAG_IS_NONEMPTY)){
@@ -349,7 +378,7 @@ static int string_regex_eval_regex_t_getSubIndex(const gchar *format, guint *cur
 		    c=format[*currPos_ptr];
 		    if (c=='\0'){
 			error=TRUE;
-			verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_replace_regex_t_getSubIndex(): At character %d: Characters expected after '$'",*currPos_ptr);
+			verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_eval_regex_t_getSubIndex(): At character %d: Characters expected after '$'",*currPos_ptr);
 			break;
 		    }
 		    g_string_append_c(option1Str,c);
@@ -358,10 +387,10 @@ static int string_regex_eval_regex_t_getSubIndex(const gchar *format, guint *cur
 		g_string_append_c(option1Str,c);
 		break;
 
-	    case REGEX_REPLACE_STAGE_OPTION2:
+	    case REGEX_EVAL_STAGE_OPTION2:
 		if (c=='}'){
 		    (*currPos_ptr)++;
-		    stage=REGEX_REPLACE_STAGE_INDEX;
+		    stage=REGEX_EVAL_STAGE_INDEX;
 		    break;
 		}
 		if (!option2Str && *statusFlags_ptr & ( SUBPATTERN_FLAG_IS_EMPTY | SUBPATTERN_FLAG_IS_NONEMPTY)){
@@ -372,14 +401,15 @@ static int string_regex_eval_regex_t_getSubIndex(const gchar *format, guint *cur
 		    c=format[*currPos_ptr];
 		    if (c=='\0'){
 			error=TRUE;
-			verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_replace_regex_t_getSubIndex(): At character %d: Characters expected after '$'",*currPos_ptr);
+			verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_eval_regex_t_getSubIndex(): At character %d: Characters expected after '$'",*currPos_ptr);
 			break;
 		    }
 		    g_string_append_c(option2Str,c);
 		}
 		g_string_append_c(option2Str,c);
 		break;
-
+	    case REGEX_EVAL_STAGE_DONE:
+		break;
 	}
     }
     if (error){
@@ -409,33 +439,42 @@ static int string_regex_eval_regex_t_getSubIndex(const gchar *format, guint *cur
 }
 
 gchar *string_regex_eval_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
-	int eflag, int *counter_ptr){
+	int eflags, int *counter_ptr){
+
     guint nmatch=preg->re_nsub+1;
     regmatch_t *pmatch=NEW_ARRAY_INSTANCE(nmatch,regmatch_t);
-    if (regexec(preg,currPtr,nmatch,pmatch,eflags)!=0){
+    if (regexec(preg,str,nmatch,pmatch,eflags)!=0){
 	/* No Match */
 	return NULL;
     }
     GString *strBuf=g_string_new(NULL);
 
     int subIndex=0;
+    guint j,k,formatLen=strlen(format);
     guint statusFlags;
     gboolean error=FALSE;
     gchar *option1Str=NULL;
     gchar *option2Str=NULL;
+    gchar *strTmp=NULL,*strTmp2=NULL;
 
-    for(j=0;j<replaceLen && (!error);j++){
+    for(j=0;j<formatLen && (!error);j++){
+	printf("*** string_regex_eval_regex_t 2 j=%d\n",j);
 	if (format[j]=='$'){
 	    j++;
+	    printf("*** string_regex_eval_regex_t 3 j=%d\n",j);
 	    subIndex=string_regex_eval_regex_t_getSubIndex(format, &j, &statusFlags, pmatch,
 		    &option1Str, &option2Str);
+	    printf("*** string_regex_eval_regex_t 4 subIndex=%d\tstatusFlags=%X\n",subIndex,statusFlags);
 	    if (subIndex>=0){
+		printf("*** string_regex_eval_regex_t 5\n");
 		if (subIndex>=nmatch){
+		    printf("*** string_regex_eval_regex_t 6\n");
 		    error=TRUE;
-		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_replace_regex_t_full():index %d should be less than or equal to the number of sub patterns %d\n",subIndex,nmatch-1);
+		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_eval_regex_t():index %d should be less than or equal to the number of sub patterns %d\n",subIndex,nmatch-1);
 		    break;
 		}
 		if ( pmatch[subIndex].rm_so<0 || pmatch[subIndex].rm_so==pmatch[subIndex].rm_eo){
+		    printf("*** string_regex_eval_regex_t 7\n");
 		    /* Subpattern is empty */
 		    if (statusFlags & SUBPATTERN_FLAG_IS_EMPTY && option1Str){
 			g_string_append(strBuf,option1Str);
@@ -443,15 +482,32 @@ gchar *string_regex_eval_regex_t(const gchar *str, const regex_t *preg, const gc
 			g_string_append(strBuf,option2Str);
 		    }
 		}else{
+		    printf("*** string_regex_eval_regex_t 8\n");
 		    /* Subpattern is not empty */
-		    if (statusFlags & SUBPATTERN_FLAG_IS_NOTEMPTY && option1Str){
+		    if (statusFlags & SUBPATTERN_FLAG_IS_NONEMPTY && option1Str){
 			g_string_append(strBuf,option1Str);
 		    }else if (statusFlags & SUBPATTERN_FLAG_IS_EMPTY && option2Str){
 			g_string_append(strBuf,option2Str);
+		    }else if (statusFlags & SUBPATTERN_FLAG_IS_UPPERCASE){
+			strTmp=string_get_matched_substring(str,pmatch,subIndex);
+			if (strTmp){
+			    strTmp2=g_utf8_strup(strTmp,-1);
+			    g_string_append(strBuf,strTmp2);
+			    g_free(strTmp);
+			    g_free(strTmp2);
+			}
+		    }else if (statusFlags & SUBPATTERN_FLAG_IS_LOWERCASE){
+			strTmp=string_get_matched_substring(str,pmatch,subIndex);
+			if (strTmp){
+			    strTmp2=g_utf8_strdown(strTmp,-1);
+			    g_string_append(strBuf,strTmp2);
+			    g_free(strTmp);
+			    g_free(strTmp2);
+			}
 		    }else if (statusFlags & SUBPATTERN_FLAG_IS_PLUS && counter_ptr){
-			g_string_append(strBuf,"%d",++(*counter_ptr));
+			g_string_append_printf(strBuf,"%d",++(*counter_ptr));
 		    }else if (statusFlags & SUBPATTERN_FLAG_IS_MINUS && counter_ptr){
-			g_string_append(strBuf,"%d",--(*counter_ptr));
+			g_string_append_printf(strBuf,"%d",--(*counter_ptr));
 		    }else{
 			for(k=pmatch[subIndex].rm_so;k<pmatch[subIndex].rm_eo;k++){
 			    g_string_append_c(strBuf,str[k]);
@@ -459,6 +515,7 @@ gchar *string_regex_eval_regex_t(const gchar *str, const regex_t *preg, const gc
 		    }
 		}
 		j--;
+		printf("*** string_regex_eval_regex_t 9 j=%d\n",j);
 		if (option1Str)
 		    g_free(option1Str);
 		if (option2Str)
@@ -484,30 +541,33 @@ gchar *string_regex_eval_regex_t(const gchar *str, const regex_t *preg, const gc
 }
 
 gchar *string_regex_eval(const gchar *str, const gchar *pattern, const gchar *format, 
-	int cflag, int eflag, int *counter_ptr){
+	int cflags, int eflags, int *counter_ptr){
 
-    regex_t *preg=NULL;
+    regex_t preg;
     int ret;
-    if ((ret=regcomp(preg, pattern, cflags))!=0){
+
+    if ((ret=regcomp(&preg, pattern, cflags))!=0){
 	/* Invalid pattern */
 	char buf[MAX_STRING_BUFFER_SIZE];
-	regerror(ret,preg,buf,MAX_STRING_BUFFER_SIZE);
+	regerror(ret,&preg,buf,MAX_STRING_BUFFER_SIZE);
 	verboseMsg_print(VERBOSE_MSG_ERROR, "string_regex_eval():Invalid pattern %s\n"
 		,buf);
 	return NULL;
     }
-    return string_regex_eval_regex_t(str, preg, format, eflag, counter_ptr);
+    gchar *result=string_regex_eval_regex_t(str, &preg, format, eflags, counter_ptr);
+    regfree(&preg);
+    return result;
 }
 
 
 gchar *string_regex_replace_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
-	int eflag, int *counter_ptr){
-    guint i,j,k,m;
+	int eflags, int *counter_ptr){
+
+    guint i;
     guint len=strlen(str);
-    guint replaceLen=strlen(format);
     guint nmatch=preg->re_nsub+1;
     regmatch_t *pmatch=NEW_ARRAY_INSTANCE(nmatch,regmatch_t);
-    if (regexec(preg,currPtr,nmatch,pmatch,eflags)!=0){
+    if (regexec(preg,format,nmatch,pmatch,eflags)!=0){
 	/* No Match */
 	return NULL;
     }
@@ -519,7 +579,7 @@ gchar *string_regex_replace_regex_t(const gchar *str, const regex_t *preg, const
 	g_string_append_c(strBuf,str[i]);
     }
 
-    gchar *evalStr=string_regex_eval_regex_t(str, preg, format, eflag, counter_ptr);
+    gchar *evalStr=string_regex_eval_regex_t(str, preg, format, eflags, counter_ptr);
     
     if (evalStr){
 	g_string_append(strBuf,evalStr);
@@ -539,19 +599,21 @@ gchar *string_regex_replace_regex_t(const gchar *str, const regex_t *preg, const
 }
 
 gchar *string_regex_replace(const gchar *str, const gchar *pattern, const gchar *format, 
-	int cflag, int eflag, int *counter_ptr){
+	int cflags, int eflags, int *counter_ptr){
 
-    regex_t *preg=NULL;
+    regex_t preg;
     int ret;
-    if ((ret=regcomp(preg, pattern, cflags))!=0){
+    if ((ret=regcomp(&preg, pattern, cflags))!=0){
 	/* Invalid pattern */
 	char buf[MAX_STRING_BUFFER_SIZE];
-	regerror(ret,preg,buf,MAX_STRING_BUFFER_SIZE);
+	regerror(ret,&preg,buf,MAX_STRING_BUFFER_SIZE);
 	verboseMsg_print(VERBOSE_MSG_ERROR, "string_regex_replace():Invalid pattern %s\n"
 		,buf);
 	return NULL;
     }
-    return string_regex_eval_regex_t(str, preg, format, eflag, counter_ptr);
+    gchar *result=string_regex_eval_regex_t(str, &preg, format, eflags, counter_ptr);
+    regfree(&preg);
+    return result;
 }
 
 

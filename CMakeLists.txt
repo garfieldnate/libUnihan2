@@ -109,59 +109,8 @@ ADD_CUSTOM_TARGET(ChangeLog
 ADD_DEPENDENCIES(pack_src ChangeLog)
 
 
-
 ####################################################################
 # Test Suites.
 ####################################################################
 ENABLE_TESTING()
-ADD_TEST(check_unihan_functions_0 
-    ${PROJECT_BINARY_DIR}/test/check_unihan_functions 0)
-
-ADD_TEST(check_phonetic_pinyin_always 
-    ${PROJECT_BINARY_DIR}/test/check_phonetic 0) 
-ADD_TEST(check_phonetic_pinyin_original
-    ${PROJECT_BINARY_DIR}/test/check_phonetic 1) 
-ADD_TEST(check_phonetic_pinyin_unihan
-    ${PROJECT_BINARY_DIR}/test/check_phonetic 2) 
-ADD_TEST(check_phonetic_pinyin_trailing
-    ${PROJECT_BINARY_DIR}/test/check_phonetic 3) 
-ADD_TEST(check_phonetic_pinyin_inputMethod
-    ${PROJECT_BINARY_DIR}/test/check_phonetic 4) 
-ADD_TEST(check_phonetic_pinyin_none
-    ${PROJECT_BINARY_DIR}/test/check_phonetic 5) 
-ADD_TEST(check_phonetic_zhuyin_always
-    ${PROJECT_BINARY_DIR}/test/check_phonetic 6) 
-
-ADD_TEST(toneMark_pinyin_always_f 
-    ${PROJECT_BINARY_DIR}/test/check_toneMark 0 test) 
-ADD_TEST(toneMark_pinyin_always_t 
-    ${PROJECT_BINARY_DIR}/test/check_toneMark 1 test) 
-ADD_TEST(toneMark_pinyin_original_f 
-    ${PROJECT_BINARY_DIR}/test/check_toneMark 2 test) 
-ADD_TEST(toneMark_pinyin_original_t
-    ${PROJECT_BINARY_DIR}/test/check_toneMark 3 test) 
-ADD_TEST(toneMark_pinyin_unihan_f
-    ${PROJECT_BINARY_DIR}/test/check_toneMark 4 test) 
-ADD_TEST(toneMark_pinyin_unihan_t
-    ${PROJECT_BINARY_DIR}/test/check_toneMark 5 test) 
-ADD_TEST(toneMark_pinyin_trailing_f
-    ${PROJECT_BINARY_DIR}/test/check_toneMark 6 test) 
-ADD_TEST(toneMark_pinyin_trailing_t
-    ${PROJECT_BINARY_DIR}/test/check_toneMark 7 test) 
-ADD_TEST(toneMark_pinyin_inputMethod_f
-    ${PROJECT_BINARY_DIR}/test/check_toneMark 8 test) 
-ADD_TEST(toneMark_pinyin_inputMethod_t
-    ${PROJECT_BINARY_DIR}/test/check_toneMark 9 test) 
-ADD_TEST(toneMark_pinyin_none_f
-    ${PROJECT_BINARY_DIR}/test/check_toneMark 10 test) 
-ADD_TEST(toneMark_pinyin_none_t
-    ${PROJECT_BINARY_DIR}/test/check_toneMark 11 test) 
-ADD_TEST(toneMark_zhuyin_always
-    ${PROJECT_BINARY_DIR}/test/check_toneMark 12 test) 
-ADD_TEST(toneMark_zhuyin_original
-    ${PROJECT_BINARY_DIR}/test/check_toneMark 13 test) 
-ADD_TEST(toneMark_zhuyin_inputMethod
-    ${PROJECT_BINARY_DIR}/test/check_toneMark 14 test) 
-ADD_TEST(toneMark_zhuyin_numberical
-    ${PROJECT_BINARY_DIR}/test/check_toneMark 15 test) 
 

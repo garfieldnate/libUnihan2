@@ -77,16 +77,37 @@ UnihanTable unihanField_get_builtin_preferred_table(UnihanField field);
 UnihanTable *unihanField_get_builtin_required_tables(UnihanField field);
 
 /**
- * Import a field value of a character from Unihan.txt.
+ * Import a single tag value of a character from Unihan.txt.
  *
- * This function imports a single field valueof character from Unihan.txt. 
+ * This function imports a single tag value of character from Unihan.txt. 
  * Note that multi-valued fields should use unihan_import_builtin_table_tagValue_original() instread.
  * 
  * @param db Db handle
  * @param code the UCS4 representation of the character.
- * @param field 
+ * @param field The UnihanField to be import.
+ * @param tagValue The value of the field.
+ * @param counter_ptr Pointer to an integer counter. Can be NULL if $+ or $- flags are not used.
+ * @return 0 if success, otherwise return nonzero value.
+ * @see unihan_import_builtin_table_tagValue().
  */
-int unihan_import_builtin_table_tagValue(sqlite3 *db, gunichar code, UnihanField field, 
+int unihan_import_builtin_table_single_tagValue(sqlite3 *db, gunichar code, UnihanField field, 
 	const char *tagValue, int *counter_ptr);
 
-int unihan_import_builtin_table_tagValue_original(sqlite3 *db, gunichar code, UnihanField field, const char *tagValue_original);
+
+/**
+ * Import a tag value of a character from a line of Unihan.txt.
+ *
+ * This function imports a line in Unihan.txt to database \c db.
+ * For non-singleton fields (fields that can have multiple value for each character),
+ * the tag value is split with the delimiter ' ', and each 
+ * chunk is passed to unihan_import_builtin_table_single_tagValue() for further process.
+ *
+ * 
+ * @param db Db handle
+ * @param code the UCS4 representation of the character.
+ * @param field The UnihanField to be import.
+ * @param tagValue The value of the field.
+ * @return 0 if success, otherwise return nonzero value.
+ * @see unihan_import_builtin_table_tagValue_original.
+ */
+int unihan_import_builtin_table_tagValue(sqlite3 *db, gunichar code, UnihanField field, const char *tagValue);

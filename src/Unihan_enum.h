@@ -350,7 +350,7 @@ typedef enum{
  * field flags which are described in #Unihan_Field_Flags.
  */
 typedef struct {
-    gchar *fieldName;	//!< Field Name.
+    const gchar *fieldName;	//!< Field Name.
     guint flags;	//!< Combined Unihan field flags.
 } FieldProperties;
 
