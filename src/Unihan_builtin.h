@@ -76,5 +76,17 @@ UnihanTable unihanField_get_builtin_preferred_table(UnihanField field);
  */
 UnihanTable *unihanField_get_builtin_required_tables(UnihanField field);
 
+/**
+ * Import a field value of a character from Unihan.txt.
+ *
+ * This function imports a single field valueof character from Unihan.txt. 
+ * Note that multi-valued fields should use unihan_import_builtin_table_tagValue_original() instread.
+ * 
+ * @param db Db handle
+ * @param code the UCS4 representation of the character.
+ * @param field 
+ */
+int unihan_import_builtin_table_tagValue(sqlite3 *db, gunichar code, UnihanField field, 
+	const char *tagValue, int *counter_ptr);
 
-
+int unihan_import_builtin_table_tagValue_original(sqlite3 *db, gunichar code, UnihanField field, const char *tagValue_original);
