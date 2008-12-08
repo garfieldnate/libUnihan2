@@ -35,6 +35,9 @@
 #include <glib.h>
 #include <sys/types.h>
 #include <regex.h>
+
+#define CHAR_TO_UNSIGNEDCHAR(c) (unsigned char) ((int) c >=0)? c : c+256
+
 /**
  * StringList is a structure that stores a list of constant strings.
  *
@@ -393,14 +396,14 @@ void stringList_free(StringList *sList);
  * substitute strings. Note that at most one flag can be used in pattern substitute.
  *
  * The format of a pattern substitute is:
- * <code>$[flag]<pattern id>[{[str1 [,str2]]}]</code>
+ * <code>$[flag]<pattern id>[{[option1 [,option2]]}]</code>
  * If no flags are given, pattern substitutes will be outputted as (sub) pattern it matched.
  * Be aware that matched patterns maybe be empty (has 0 length). 
  * 
  * Following flags provide additional output control:
  * - N<id>{str1 [,str2]}: 
- *   if matched pattern \c id is nonempty, then str1 is outputted for this  pattern substitute; 
- *   if matched pattern \c id is empty, then outputs str2 if given, or empty string.
+ *   if matched pattern \c id is nonempty, then \c str1 is outputted for this  pattern substitute; 
+ *   otherwise outputs str2, or empty string if str2 is omitted.
  * - E<id>{str1 [,str2]}: 
  *   similar with -N, but output str1 if matched pattern \c id is empty.
  * - +<id>: 

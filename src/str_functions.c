@@ -283,7 +283,8 @@ static int string_regex_eval_regex_t_getSubIndex(const gchar *format, guint *cur
     GString *option2Str=NULL;
     *option1_ptr=*option2_ptr=NULL;
 
-    for(;!error && stage!=REGEX_EVAL_STAGE_DONE; (*currPos_ptr)++){
+    do{
+    
 	c=format[*currPos_ptr];
 	switch(stage){
 	    case REGEX_EVAL_STAGE_INIT:
@@ -294,7 +295,7 @@ static int string_regex_eval_regex_t_getSubIndex(const gchar *format, guint *cur
 		}
 		if (isdigit(c)){
 		    stage=REGEX_EVAL_STAGE_INDEX;
-		    index=index*10+c-'0';
+		    index=c-'0';
 		    break;
 		}
 		if (c=='E'){
@@ -390,7 +391,7 @@ static int string_regex_eval_regex_t_getSubIndex(const gchar *format, guint *cur
 	    case REGEX_EVAL_STAGE_OPTION2:
 		if (c=='}'){
 		    (*currPos_ptr)++;
-		    stage=REGEX_EVAL_STAGE_INDEX;
+		    stage=REGEX_EVAL_STAGE_DONE;
 		    break;
 		}
 		if (!option2Str && *statusFlags_ptr & ( SUBPATTERN_FLAG_IS_EMPTY | SUBPATTERN_FLAG_IS_NONEMPTY)){
@@ -411,7 +412,10 @@ static int string_regex_eval_regex_t_getSubIndex(const gchar *format, guint *cur
 	    case REGEX_EVAL_STAGE_DONE:
 		break;
 	}
-    }
+	if (!error && stage!=REGEX_EVAL_STAGE_DONE){
+	    (*currPos_ptr)++;
+	}
+    }while(!error && stage!=REGEX_EVAL_STAGE_DONE);
     if (error){
 	if (option1Str)
 	    g_string_free(option1Str,TRUE);
@@ -440,13 +444,15 @@ static int string_regex_eval_regex_t_getSubIndex(const gchar *format, guint *cur
 
 gchar *string_regex_eval_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
 	int eflags, int *counter_ptr){
-
+    printf("*** string_regex_eval_regex_t 0\n");
     guint nmatch=preg->re_nsub+1;
     regmatch_t *pmatch=NEW_ARRAY_INSTANCE(nmatch,regmatch_t);
     if (regexec(preg,str,nmatch,pmatch,eflags)!=0){
 	/* No Match */
+	printf("*** string_regex_eval_regex_t 0.5\n");
 	return NULL;
     }
+    printf("*** string_regex_eval_regex_t 1\n");
     GString *strBuf=g_string_new(NULL);
 
     int subIndex=0;
@@ -464,7 +470,7 @@ gchar *string_regex_eval_regex_t(const gchar *str, const regex_t *preg, const gc
 	    printf("*** string_regex_eval_regex_t 3 j=%d\n",j);
 	    subIndex=string_regex_eval_regex_t_getSubIndex(format, &j, &statusFlags, pmatch,
 		    &option1Str, &option2Str);
-	    printf("*** string_regex_eval_regex_t 4 subIndex=%d\tstatusFlags=%X\n",subIndex,statusFlags);
+	    printf("*** string_regex_eval_regex_t 4 subIndex=%d\tstatusFlags=%X j=%d\n",subIndex,statusFlags,j);
 	    if (subIndex>=0){
 		printf("*** string_regex_eval_regex_t 5\n");
 		if (subIndex>=nmatch){
@@ -474,24 +480,39 @@ gchar *string_regex_eval_regex_t(const gchar *str, const regex_t *preg, const gc
 		    break;
 		}
 		if ( pmatch[subIndex].rm_so<0 || pmatch[subIndex].rm_so==pmatch[subIndex].rm_eo){
-		    printf("*** string_regex_eval_regex_t 7\n");
-		    /* Subpattern is empty */
+//                if ( pmatch[subIndex].rm_so<0){
+		    /* This subpattern is empty */
+		    printf("*** string_regex_eval_regex_t 7 pmatch[%d].rm_so=%d pmatch[%d].rm_eo=%d\n",subIndex,pmatch[subIndex].rm_so,subIndex,pmatch[subIndex].rm_eo);
 		    if (statusFlags & SUBPATTERN_FLAG_IS_EMPTY && option1Str){
 			g_string_append(strBuf,option1Str);
 		    }else if (statusFlags & SUBPATTERN_FLAG_IS_NONEMPTY && option2Str){
 			g_string_append(strBuf,option2Str);
 		    }
+//                }else if (pmatch[subIndex].rm_so==pmatch[subIndex].rm_eo){
+//                    /* Child subpattern is not empty */
+//                    printf("*** string_regex_eval_regex_t 8 pmatch[%d].rm_so=%d pmatch[%d].rm_eo=%d\n",subIndex,pmatch[subIndex].rm_so,subIndex,pmatch[subIndex].rm_eo);
+//                    if (statusFlags & SUBPATTERN_FLAG_IS_EMPTY && option1Str){
+//                        g_string_append(strBuf,option1Str);
+//                    }else if (statusFlags & SUBPATTERN_FLAG_IS_NONEMPTY && option2Str){
+//                        g_string_append(strBuf,option2Str);
+//                    }
 		}else{
-		    printf("*** string_regex_eval_regex_t 8\n");
-		    /* Subpattern is not empty */
-		    if (statusFlags & SUBPATTERN_FLAG_IS_NONEMPTY && option1Str){
-			g_string_append(strBuf,option1Str);
-		    }else if (statusFlags & SUBPATTERN_FLAG_IS_EMPTY && option2Str){
-			g_string_append(strBuf,option2Str);
+		    printf("*** string_regex_eval_regex_t 9 pmatch[%d].rm_so=%d pmatch[%d].rm_eo=%d\n",subIndex,pmatch[subIndex].rm_so,subIndex,pmatch[subIndex].rm_eo);
+		    /* This subpattern is not empty */
+		    if (statusFlags & SUBPATTERN_FLAG_IS_NONEMPTY){
+			printf("*** string_regex_eval_regex_t 10\n");
+			if (option1Str)
+			    g_string_append(strBuf,option1Str);
+		    }else if (statusFlags & SUBPATTERN_FLAG_IS_EMPTY){
+			printf("*** string_regex_eval_regex_t 11\n");
+			if (option2Str)
+			    g_string_append(strBuf,option2Str);
 		    }else if (statusFlags & SUBPATTERN_FLAG_IS_UPPERCASE){
 			strTmp=string_get_matched_substring(str,pmatch,subIndex);
+			printf("*** string_regex_eval_regex_t 12 strTmp=%s\n",strTmp);
 			if (strTmp){
 			    strTmp2=g_utf8_strup(strTmp,-1);
+			    printf("*** string_regex_eval_regex_t 13 strTmp2=%s\n",strTmp2);
 			    g_string_append(strBuf,strTmp2);
 			    g_free(strTmp);
 			    g_free(strTmp2);
@@ -515,7 +536,7 @@ gchar *string_regex_eval_regex_t(const gchar *str, const regex_t *preg, const gc
 		    }
 		}
 		j--;
-		printf("*** string_regex_eval_regex_t 9 j=%d\n",j);
+		printf("*** string_regex_eval_regex_t 14 j=%d strBuf->str=%s|\n",j,strBuf->str);
 		if (option1Str)
 		    g_free(option1Str);
 		if (option2Str)
@@ -542,6 +563,7 @@ gchar *string_regex_eval_regex_t(const gchar *str, const regex_t *preg, const gc
 
 gchar *string_regex_eval(const gchar *str, const gchar *pattern, const gchar *format, 
 	int cflags, int eflags, int *counter_ptr){
+
 
     regex_t preg;
     int ret;

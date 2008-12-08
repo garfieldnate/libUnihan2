@@ -66,6 +66,13 @@ typedef char Zhuyin;
 typedef char Pinyin;
 
 
+#define PINYIN_TONE_ACCENTS  "((\xCC\x84)?(\xCC\x81)?(\xCC\x8C)?(\xCC\x80)?)?"
+#define PINYIN_REGEX "([b-df-hj-np-twxzB-DF-HJ-NP-TWXZ]*)(yu|YU)?([yY])?([uU]\xCC\x88)?(ie|IE)?(ue|UE)?([aeiouAEIOU]*)?" PINYIN_TONE_ACCENTS "([a-zA-Z]*)([1-5])?"
+
+#define PINYIN_PATTERN_SUBSTITUTE(startIndex) "$L" startIndex "$N" startIndex+1 "{yv}$L" startIndex+2 "$N" startIndex+3 "{v}$N" startIndex+4 "{iE}$N" startIndex+5 "{vE}$L" startIndex+ 6 "$L13" startIndex+ 12
+#define PINYIN_TONE_PATTERN_SUBSTITUTE(startIndex) "$" startIndex+13 
+#define PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE(startIndex) "$E" startIndex+7 "{5}$N" startIndex+8 "{1}$N" startIndex+9 "{2}$N" startIndex+10 "{3}$N" startIndex+11 "{4}"
+
 
 /**
  * Enumeration of Zhuyin symbols.

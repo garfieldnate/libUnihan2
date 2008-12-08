@@ -182,7 +182,6 @@ typedef enum{
      * @{
      */
     UNIHAN_FIELD_DICT_PAGE,		//!< Page number.
-    UNIHAN_FIELD_DICT_PAGE_0_PADDED_4,	//!< 0 padded 4 digit page number.
     UNIHAN_FIELD_DICT_POSITION,	//!< The character number in the page.
     UNIHAN_FIELD_DICT_VIRTUAL,	//!< Whether the character is actually in the dictionary. 1 for virtual (the character is not acctually in the dictionary, 0 for real (the character is in the dictionary)
     UNIHAN_FIELD_DICT_VARIANT_SERIAL,	//!< Serial number of variant. 0 for a main entry and greater than 0 for a parenthesized variant.
