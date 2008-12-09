@@ -372,6 +372,50 @@ void stringList_free(StringList *sList);
 // * @}
 // * @}
 // */
+//
+
+/**
+ * Evaluate output string with given format.
+ *
+ * This function writes the output under the control of a format string that specifies 
+ * how the arguments in given string list \c sList or  arguments  accessed
+ * via the variable-length argument facilities of stdarg(3)) are converted  for output.
+ *
+ * The format string a character string, which is composed of zero or more directives: 
+ * ordinary characters (not $),
+ * which are copied unchanged to the output string;  and  pattern  substitutes,  each  of
+ * which  results in fetching zero or more subsequent arguments.  
+ * Each pattern substitute is introduced by the character $, followed by optional flags, 
+ * mandatory pattern id, and optional substitute strings. 
+ * In  between  there may be (in this order) zero or more flags, one or two optional 
+ * substitute strings. Note that at most one flag can be used in pattern substitute.
+ *
+ * The format of a pattern substitute is:
+ * <code>$[flag]<pattern id>[{[option1 [,option2]]}]</code>
+ * If no flags are given, pattern substitutes will be outputted as (sub) pattern it matched.
+ * Be aware that matched patterns maybe be empty (has 0 length). 
+ * 
+ * Following flags provide additional output control:
+ * - N<id>{str1 [,str2]}: 
+ *   if matched pattern \c id is nonempty, then \c str1 is outputted for this  pattern substitute; 
+ *   otherwise outputs str2, or empty string if str2 is omitted.
+ * - E<id>{str1 [,str2]}: 
+ *   similar with -N, but output str1 if matched pattern \c id is empty.
+ * - +<id>: 
+ *   if matched pattern \c id is nonempty, then adds 1 to provided counter and output the number.
+ *   if matched pattern \c id is empty, then outputs a empty string.
+ * - -<id>: 
+ *   if matched pattern \c id is nonempty, then minuses 1 to provided counter and output the number.
+ *   if matched pattern \c id is empty, then outputs a empty string.
+ * - $: 
+ *   Outputs a '$' character. 
+ *
+ * Character '$' is also an escape character. For example,
+ *  '$N1{${}' outputs  '{' if pattern substitute 1 is nonempty.
+ * @param format the format for evaluate output.
+ * @param sList the StringList that hold arguments.
+ */
+gchar *string_eval_output(const gchar *format,StringList *sList);
 
 /**
  * @defgroup Regex_Manipulating_Funcs Regex manipulating functions.
@@ -438,7 +482,7 @@ void stringList_free(StringList *sList);
  * @see string_regex_replace_regex_t()
  * @see string_regex_replace()
  */
-gchar *string_regex_eval_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
+gchar *string_regex_eval_output_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
 	int eflags, int *counter_ptr);
 
 /**
@@ -460,7 +504,7 @@ gchar *string_regex_eval_regex_t(const gchar *str, const regex_t *preg, const gc
  * @see string_regex_replace_regex_t()
  * @see string_regex_replace()
  */
-gchar *string_regex_eval(const gchar *str, const gchar *pattern, const gchar *format, 
+gchar *string_regex_eval_output(const gchar *str, const gchar *pattern, const gchar *format, 
 	int cflags, int eflag, int *counter_ptr);
 
 

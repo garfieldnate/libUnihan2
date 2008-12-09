@@ -29,6 +29,9 @@
 
 typedef gboolean (* TestFunc)(void *param,void *dataSet);
 
+#define RESET_COUNTER 1
+#define MAX_STRING_BUFFER_SIZE 2000
+
 typedef struct{
     char *prompt;
     void *param;
@@ -36,78 +39,110 @@ typedef struct{
     TestFunc func;
 } TestStruct;
 
+typedef void DataSet;
+
+
 typedef struct {
-    const char *input;
+    const char *pattern;
+    const char *str;
+    const char *format;
     const char *output;
+    unsigned int options;
 } RegexEval_DataRec;
 
 RegexEval_DataRec REGEX_EVAL_DATA_SET[]={
-    {"[[:alnum:]]*\0""1-9999\0G$0","G1"},
-    {"[[:alnum:]]*\0""4K\0G$0","G4K"},
-    {"([[:alnum:]]*)-(.*)\0""4K\0G$0",NULL},
-    {PINYIN_REGEX "\\(([[:digit:]]*)\\)\0lüan4(439)\0"
-	"$0","lu\xCC\x88""an4(439)"},
-    {PINYIN_REGEX "\\(([[:digit:]]*)\\)\0lun4(439)\0"
-	"$0","lun4(439)"},
-//    {PINYIN_REGEX "\\(([[:digit:]]*)\\)\0lüan4(439)\0"
-//	PINYIN_PATTERN_SUBSTITUTE(1),"lvan"},
-//    {PINYIN_REGEX "\\(([[:digit:]]*)\\)\0lün4(439)\0"
-//        PINYIN_TONE_PATTERN_SUBSTITUTE(1),"4"},
-//    {PINYIN_REGEX "\0hòu\0"
-//        PINYIN_PATTERN_SUBSTITUTE(1),"hou"},
-//    {PINYIN_REGEX "\0hòu\0"
-//        PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE(1),"4"},
-//    {PINYIN_REGEX "\0lǜ\0"
-//        PINYIN_PATTERN_SUBSTITUTE(1),"lv"},
-//    {PINYIN_REGEX "\0lǜ\0"
-//        PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE(1),"4"},
-//    {PINYIN_REGEX "\0xie\0"
-//        PINYIN_PATTERN_SUBSTITUTE(1),"xiE"},
-//    {PINYIN_REGEX "\0xie\0"
-//        PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE(1),"5"},
-//    {PINYIN_REGEX "\0zhuāng\0"
-//        PINYIN_PATTERN_SUBSTITUTE(1),"zhuang"},
-//    {PINYIN_REGEX "\0zhuāng\0"
-//        PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE(1),"1"},
-//    {PINYIN_REGEX "\0YIN2\0"
-//        PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE(1)" $+0","YIN 1"},
-//    {PINYIN_REGEX "\0YI2\0"
-//        PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE(1)" $+0","YI 2"},
-//    {PINYIN_REGEX "\0YI1\0"
-//        PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE(1)" $+0","YI 3"},
-    {"([[:digit:]]*)\\.([[:digit:]]*)([01])\0""0526.211\0"
-	"$1 $2 $3","0526 21 1"},
-    {"([[:digit:]]+)(')?\\.([[:digit:]]+)\0""75.6\0"
-	"$1 $N2{1,0} $3","75 0 6"},
-    {"([[:digit:]]+)(')?\\.([[:digit:]]+)\0""200'.7\0"
-	"$1 $N2{1,0} $3","200 1 7"},
-    {"U\\+[[:xdigit:]]*\0""U+5275<kHanYu:TZ,kMeyerWempe\0"
-	"$0","U+5275"},
-    {"(U\\+[[:xdigit:]]*)<(k[[:alpha:]]*)(:(T?)(B?)(Z?))?\0U+5275<kHanYu:TZ,kMeyerWempe\0"
-	"$1 $+0 $2 $N4{1,0} $N5{1,0} $N6{1,0}","U+5275 1 kHanYu 1 0 1"},
-    {"(U\\+[[:xdigit:]]*)<(k[[:alpha:]]*:?T?B?Z?),(.*)\0U+5275<kHanYu:TZ,kMeyerWempe\0"
-	"$1<$3", "U+5275<kMeyerWempe"},
-    {"(U\\+[[:xdigit:]]*)<(k[[:alpha:]]*:?T?B?Z?),(.*)\0U+5275<kMeyerWempe,kHanYu:TZ\0"
-	"$1<$3", "U+5275<kHanYu:TZ"},
-    {"(U\\+[[:xdigit:]]*)<(k[[:alpha:]]*)(:(T?)(B?)(Z?))?\0""U+5275<kMeyerWempe\0"
-	"$1 $+0 $2 $N3{1,0} $N4{1,0} $N5{1,0}","U+5275 2 kMeyerWempe 0 0 0"},
-    {"([[:digit:]]{4})\\.([[:digit:]]{2})([[:digit:]])(\\*)?[^[:space:]]*:" PINYIN_REGEX 
-	"\0""0484.052,0485.021:huà\0"
-	    "$1 $2 $3 $N4{1,0} $+0 " PINYIN_TONE_PATTERN_SUBSTITUTE(5),
-	"0482.01 1 0 1 hua 2"},
-    {NULL,NULL}
+    {"[[:alnum:]]*","1-9999","G$0","G1",0},
+    {"[[:alnum:]]*","4K","G$0","G4K",0},
+    {"([[:alnum:]]*)-(.*)","4K","G$0",NULL,0},
+    {PINYIN_REGEX "\\(([[:digit:]]*)\\)","lüan4(439)",
+	"$0","lu\xCC\x88""an4(439)",0},
+    {PINYIN_REGEX "\\(([[:digit:]]*)\\)","lun4(439)",
+	"$0","lun4(439)",0},
+    {PINYIN_REGEX "\\(([[:digit:]]*)\\)","lüan4(439)",
+	PINYIN_PATTERN_SUBSTITUTE,"lvan",0},
+    {PINYIN_REGEX "\\(([[:digit:]]*)\\)","lün4(439)",
+	PINYIN_TONE_PATTERN_SUBSTITUTE,"4",0},
+    {PINYIN_REGEX ,"hòu",
+	PINYIN_PATTERN_SUBSTITUTE,"hou",0},
+    {PINYIN_REGEX ,"hòu",
+	PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE,"4",0},
+    {PINYIN_REGEX ,"lǜ",
+	PINYIN_PATTERN_SUBSTITUTE,"lv",0},
+    {PINYIN_REGEX ,"lǜ",
+	PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE,"4",0},
+    {PINYIN_REGEX ,"xie",
+	PINYIN_PATTERN_SUBSTITUTE,"xiE",0},
+    {PINYIN_REGEX ,"xie",
+	PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE,"5",0},
+    {PINYIN_REGEX ,"zhuāng",
+	PINYIN_PATTERN_SUBSTITUTE,"zhuang",0},
+    {PINYIN_REGEX ,"zhuāng",
+	PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE,"1",0},
+    {PINYIN_REGEX ,"YIN2",
+	PINYIN_PATTERN_SUBSTITUTE" $+0","yin 1",0},
+    {PINYIN_REGEX ,"YI2",
+	PINYIN_TONE_PATTERN_SUBSTITUTE" $+0","2 2",0},
+    {PINYIN_REGEX ,"YI1",
+	PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE" $+0","5 3",0},
+    {"([[:digit:]]*)\\.([[:digit:]]*)([01])","0526.211",
+	"$1 $2 $3","0526 21 1",0},
+    {"([[:digit:]]+)(')?\\.([[:digit:]]+)","75.6",
+	"$1 $N2{1,0} $3","75 0 6",0},
+    {"([[:digit:]]+)(')?\\.([[:digit:]]+)","200'.7",
+	"$1 $N2{1,0} $3","200 1 7",0},
+    {"U\\+[[:xdigit:]]*","U+5275<kHanYu:TZ,kMeyerWempe",
+	"$0","U+5275",0},
+    {"(U\\+[[:xdigit:]]*)<(k[[:alpha:]]*)(:(T?)(B?)(Z?))?","U+5275<kHanYu:TZ,kMeyerWempe",
+	"$1 $+0 $2 $N4{1,0} $N5{1,0} $N6{1,0}","U+5275 1 kHanYu 1 0 1", RESET_COUNTER},
+    {"(U\\+[[:xdigit:]]*)<(k[[:alpha:]]*:?T?B?Z?),(.*)","U+5275<kHanYu:TZ,kMeyerWempe",
+	"$1<$3", "U+5275<kMeyerWempe",0},
+    {"(U\\+[[:xdigit:]]*)<(k[[:alpha:]]*:?T?B?Z?),(.*)","U+5275<kMeyerWempe,kHanYu:TZ",
+	"$1<$3", "U+5275<kHanYu:TZ",0},
+    {"(U\\+[[:xdigit:]]*)<(k[[:alpha:]]*)(:(T?)(B?)(Z?))?","U+5275<kMeyerWempe",
+	"$1 $+0 $2 $N3{1,0} $N4{1,0} $N5{1,0}","U+5275 2 kMeyerWempe 0 0 0",0},
+    {"([[:digit:]]{4})\\.([[:digit:]]{2})([[:digit:]])(\\*)?[^[:space:]]*:" PINYIN_REGEX,
+	"0484.052,0485.021:huà",
+       	"$1 $2 $3 $N4{1,0} $+0 " PINYIN_PATTERN_SUBSTITUTE_XHC " " PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE_XHC,
+	"0484 05 2 0 1 hua 4",RESET_COUNTER},
+    {NULL,NULL,NULL,NULL,0}
 };
 
 int testId;
+
+int compare_strings(const char *prompt, const char *expect, const char *actual){
+    int ret;
+    if (expect==NULL && actual==NULL){
+	verboseMsg_print(VERBOSE_MSG_INFO1,"[Ok]: both are NULL\n");
+	return 0;
+    }
+    if (expect==NULL){
+	verboseMsg_print(VERBOSE_MSG_ERROR,"[Error]: %s:",prompt);
+	verboseMsg_print(VERBOSE_MSG_ERROR,"    Expect:[NULL]\tActual:%s\n",actual);
+	return -1;
+    }
+    if (actual==NULL){
+	verboseMsg_print(VERBOSE_MSG_ERROR,"[Error]: %s:",prompt);
+	verboseMsg_print(VERBOSE_MSG_ERROR,"    Expect:%s\tActual:[NULL]\n",expect);
+	return 1;
+    }
+
+    ret=strcmp(expect,actual);
+    if (ret){
+	verboseMsg_print(VERBOSE_MSG_ERROR,"[Error]: %s:",prompt);
+	verboseMsg_print(VERBOSE_MSG_ERROR,"    Expect:%s\tActual:%s\n",expect,actual);
+    }else{
+	verboseMsg_print(VERBOSE_MSG_INFO1,"[Ok]: expect and actual matched: %s\n",actual);
+    }
+    return ret;
+}
 
 /*==========================================================
  * Start of testing functions.
  */
 
-gboolean test_regex_eval(void *param,void *dataSet){
-
+gboolean test_regex_eval(void *param,DataSet *dataSet){
     RegexEval_DataRec *examSet= (RegexEval_DataRec *) dataSet;
-    int i,n;
+    int n,ret;
     int j;
     const gchar *pattern;
     const gchar *str;
@@ -115,75 +150,46 @@ gboolean test_regex_eval(void *param,void *dataSet){
     const gchar *format;
     gchar *actualResult;
     int counter=0;
+    gchar buf[MAX_STRING_BUFFER_SIZE];
 
-    for (n=0;examSet[n].input!=NULL;n++){
-	pattern=examSet[n].input;
-	for(i=0;examSet[n].input[i]!='\0';i++){
-	}
-	i++;
-	str=&(examSet[n].input[i]);
+    for (n=0;examSet[n].pattern!=NULL;n++){
+	pattern=examSet[n].pattern;
+	str=examSet[n].str;
 	str_normalized=g_utf8_normalize(str,-1,G_NORMALIZE_NFD);
+	format=examSet[n].format;
 
-	for(;examSet[n].input[i]!='\0';i++){
-	}
-	i++;
-	format=&(examSet[n].input[i]);
-
-	verboseMsg_print(VERBOSE_MSG_INFO1,"[Info1]: str(%d)=%s\tstr_normalized(%d)=%s\tpattern=%s\tformat=%s\n",
+	verboseMsg_print(VERBOSE_MSG_INFO2,"[Info2]: str(%d)=%s\tstr_normalized(%d)=%s\tpattern=%s\tformat=%s\n",
 		strlen(str),str,strlen(str_normalized),str_normalized,pattern,format);
 
-	if (verboseMsg_get_level()>=VERBOSE_MSG_INFO2){
-	    verboseMsg_print(VERBOSE_MSG_INFO2,"*** str_normalized=");
+	if (verboseMsg_get_level()>=VERBOSE_MSG_INFO3){
+	    printf("*** str_normalized=");
 	    for(j=0;j<strlen(str_normalized);j++){
-		verboseMsg_print(VERBOSE_MSG_INFO2,"%X ", CHAR_TO_UNSIGNEDCHAR(str_normalized[j]));
+		printf("%X ", CHAR_TO_UNSIGNEDCHAR(str_normalized[j]));
 	    }
-	    verboseMsg_print(VERBOSE_MSG_INFO2,"\n");
-	    verboseMsg_print(VERBOSE_MSG_INFO2,"*** str=");
+	    printf("\n");
+	    printf("*** str=");
 	    for(j=0;j<strlen(str);j++){
-		verboseMsg_print(VERBOSE_MSG_INFO2,"%X ",CHAR_TO_UNSIGNEDCHAR(str[j]));
+		printf("%X ",CHAR_TO_UNSIGNEDCHAR(str[j]));
 	    }
-	    verboseMsg_print(VERBOSE_MSG_INFO2,"\n");
+	    printf("\n");
 	}
 
+	g_snprintf(buf,MAX_STRING_BUFFER_SIZE,"string_regex_eval(%s,%s,%s,%X,%X,&(%d))\n",
+		str_normalized, pattern, format, REG_EXTENDED, 0, counter);
+	if (examSet[n].options & RESET_COUNTER){
+	    counter=0;
+	}
 	actualResult=string_regex_eval(str_normalized, pattern, format, REG_EXTENDED, 0, &counter);
-	if (examSet[n].output==actualResult){
-	    verboseMsg_print(VERBOSE_MSG_INFO2,"[Correct]: No match\n");
-	    if(str_normalized){
-		g_free(str_normalized);
-	    }
-	    continue;
-	}
-	if (examSet[n].output==NULL){
-	    verboseMsg_print(VERBOSE_MSG_ERROR,"[Error]: string_regex_eval(%s,%s,%s,%X,%X,&(%d)):\n",
-		    str,pattern,format,REG_EXTENDED, 0, counter);
-	    verboseMsg_print(VERBOSE_MSG_ERROR,"    Expect:[NULL]\tActual:%s\n",
-		    actualResult);
-	    return FALSE;
-	}
-	if (actualResult==NULL){
-	    verboseMsg_print(VERBOSE_MSG_ERROR,"[Error]: string_regex_eval(%s,%s,%s,%X,%X,&(%d)):\n",
-		    str,pattern,format,REG_EXTENDED, 0, counter);
-	    verboseMsg_print(VERBOSE_MSG_ERROR,"    Expect:%s\tActual:[NULL]\n",
-		    examSet[n].output);
-	    return FALSE;
-	}
 
-
-	if (strcmp(actualResult,examSet[n].output)){
-	    verboseMsg_print(VERBOSE_MSG_ERROR,"[Error]: string_regex_eval(%s,%s,%s,%X,%X,&(%d)):\n",
-		    str,pattern,format,REG_EXTENDED, 0, counter);
-	    verboseMsg_print(VERBOSE_MSG_ERROR,"    Expect:%s\tActual:%s\n",
-		    examSet[n].output,actualResult);
-	    return FALSE;
-	}else{
-	    verboseMsg_print(VERBOSE_MSG_INFO2,"[Correct]: str=%s, eval=%s\n",
-		    str,actualResult);
-	}
+	ret=compare_strings(buf,examSet[n].output,actualResult);
 	if(str_normalized){
 	    g_free(str_normalized);
 	}
 	if (actualResult){
 	    g_free(actualResult);
+	}
+	if (ret){
+	    return FALSE;
 	}
     }
     return TRUE;

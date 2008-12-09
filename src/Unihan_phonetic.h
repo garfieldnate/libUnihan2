@@ -69,10 +69,12 @@ typedef char Pinyin;
 #define PINYIN_TONE_ACCENTS  "((\xCC\x84)?(\xCC\x81)?(\xCC\x8C)?(\xCC\x80)?)?"
 #define PINYIN_REGEX "([b-df-hj-np-twxzB-DF-HJ-NP-TWXZ]*)(yu|YU)?([yY])?([uU]\xCC\x88)?(ie|IE)?(ue|UE)?([aeiouAEIOU]*)?" PINYIN_TONE_ACCENTS "([a-zA-Z]*)([1-5])?"
 
-#define PINYIN_PATTERN_SUBSTITUTE(startIndex) "$L" startIndex "$N" startIndex+1 "{yv}$L" startIndex+2 "$N" startIndex+3 "{v}$N" startIndex+4 "{iE}$N" startIndex+5 "{vE}$L" startIndex+ 6 "$L13" startIndex+ 12
-#define PINYIN_TONE_PATTERN_SUBSTITUTE(startIndex) "$" startIndex+13 
-#define PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE(startIndex) "$E" startIndex+7 "{5}$N" startIndex+8 "{1}$N" startIndex+9 "{2}$N" startIndex+10 "{3}$N" startIndex+11 "{4}"
-
+#define PINYIN_PATTERN_SUBSTITUTE "$L1$N2{yv}$L3$N4{v}$N5{iE}$N6{vE}$L7$L13"
+#define PINYIN_TONE_PATTERN_SUBSTITUTE "$14"
+#define PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE "$E8{5}$N9{1}$N10{2}$N11{3}$N12{4}"
+#define PINYIN_PATTERN_SUBSTITUTE_XHC "$L5$N6{yv}$L7$N8{v}$N8{iE}$N10{vE}$L11$L17"
+#define PINYIN_TONE_PATTERN_SUBSTITUTE_XHC "$18"
+#define PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE_XHC "$E12{5}$N13{1}$N14{2}$N15{3}$N16{4}"
 
 /**
  * Enumeration of Zhuyin symbols.

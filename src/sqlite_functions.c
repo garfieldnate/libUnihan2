@@ -204,7 +204,25 @@ StringList *sqlite_get_fieldNames(sqlite3 *db,const char * sqlClause, int *execR
     return sList;
 }
 
+//void sqlite_eval_output_db_Func(sqlite3_context *context, int argc, sqlite3_value **argv){
+//    g_assert(argc>=1);
+//    int i,counter=1;
+//    const char *format=sqlite_value_signed_text(argv[0]);
+//    GString *strBuf=g_string_new(NULL);
 
+//    
+//    for(i=1;i<argc;i++){
+
+//    }
+
+
+//    
+//    
+
+//    char *pStr=g_string_free(strBuf,FALSE);
+//    sqlite3_result_text(context,pStr,-1,g_free);
+
+//}
 
 typedef struct {
     int rowCount;

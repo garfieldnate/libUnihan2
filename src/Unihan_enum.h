@@ -181,9 +181,10 @@ typedef enum{
      *
      * @{
      */
-    UNIHAN_FIELD_DICT_PAGE,		//!< Page number.
+    UNIHAN_FIELD_DICT_VOLUME,		//!< Volume number in dictionary.
+    UNIHAN_FIELD_DICT_PAGE,		//!< Page number in dictionary.
     UNIHAN_FIELD_DICT_POSITION,	//!< The character number in the page.
-    UNIHAN_FIELD_DICT_VIRTUAL,	//!< Whether the character is actually in the dictionary. 1 for virtual (the character is not acctually in the dictionary, 0 for real (the character is in the dictionary)
+    UNIHAN_FIELD_DICT_VIRTUAL,	//!< Virtual position of the character in dictionary. 0 if the character is in the dictionary, greater than 0 for a character assigned a "virtual" position in the dictionary. 
     UNIHAN_FIELD_DICT_VARIANT_SERIAL,	//!< Serial number of variant. 0 for a main entry and greater than 0 for a parenthesized variant.
     UNIHAN_FIELD_DICT_UNENCODED,	//!< Unencoded character in the dictionary which is replaced by one or more encoded variants. Currently used only by kXHC1983.
 
