@@ -179,7 +179,7 @@ gboolean test_regex_eval(void *param,DataSet *dataSet){
 	if (examSet[n].options & RESET_COUNTER){
 	    counter=0;
 	}
-	actualResult=string_regex_eval(str_normalized, pattern, format, REG_EXTENDED, 0, &counter);
+	actualResult=string_regex_formatted_output(str_normalized, pattern, format, REG_EXTENDED, 0, &counter);
 
 	ret=compare_strings(buf,examSet[n].output,actualResult);
 	if(str_normalized){

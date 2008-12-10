@@ -375,47 +375,77 @@ void stringList_free(StringList *sList);
 //
 
 /**
- * Evaluate output string with given format.
+ * Output a result string whose string arguments are arranged in specified format.
  *
- * This function writes the output under the control of a format string that specifies 
- * how the arguments in given string list \c sList or  arguments  accessed
- * via the variable-length argument facilities of stdarg(3)) are converted  for output.
+ * This function arranges the string arguments given in a StringList \c sList according
+ * to the format string \c format. 
+ * It returns a newly allocated char array that hold the result, or NULL if error occurs.
  *
  * The format string a character string, which is composed of zero or more directives: 
  * ordinary characters (not $),
- * which are copied unchanged to the output string;  and  pattern  substitutes,  each  of
+ * which are copied unchanged to the output string;  and  format directives,  each  of
  * which  results in fetching zero or more subsequent arguments.  
- * Each pattern substitute is introduced by the character $, followed by optional flags, 
- * mandatory pattern id, and optional substitute strings. 
+ * Each format directives is introduced by the character $, followed by optional flags, 
+ * mandatory pattern id, and optional options like substitute strings or padding instruction.
  * In  between  there may be (in this order) zero or more flags, one or two optional 
- * substitute strings. Note that at most one flag can be used in pattern substitute.
+ * options. Note that at most one flag can be used in format directives.
  *
- * The format of a pattern substitute is:
- * <code>$[flag]<pattern id>[{[option1 [,option2]]}]</code>
- * If no flags are given, pattern substitutes will be outputted as (sub) pattern it matched.
- * Be aware that matched patterns maybe be empty (has 0 length). 
- * 
+ * The format of a format directives is:
+ * <code>$[flag]<argument id>[{[option1 [,option2]]}]</code>
+ * If no flags are given, format directives are substituted by arguments they refer.
+ *
+ * The argument id starts from 0, but should not exceed the number of arguments.
+ *
  * Following flags provide additional output control:
  * - N<id>{str1 [,str2]}: 
- *   if matched pattern \c id is nonempty, then \c str1 is outputted for this  pattern substitute; 
+ *   if argument \c id is nonempty, then \c str1 is outputted for this format directives; 
  *   otherwise outputs str2, or empty string if str2 is omitted.
  * - E<id>{str1 [,str2]}: 
- *   similar with -N, but output str1 if matched pattern \c id is empty.
+ *   similar with -N, but output str1 if argument \c id is empty, i.e, is NULL or has 0 length.
+ * - U<id>: 
+ *   argument \c id should be outputted as uppercase. This directive is backed by g_utf8_strup(),
+ *   so it will convert non-ascii unicode character as well.
+ * - L<id>: 
+ *   argument \c id should be outputted as lowercase. This directive is backed by g_utf8_strdown(),
+ *   so it will convert non-ascii unicode character as well.
+ * - P<id>{length[,pad_char]}: 
+ *   argument \c id should be padded with \c pad_char on the left till it reaches the \c length.
+ *   Space (' ') is used as pad_char if it is not given.
+ * - p<id>{length[,pad_char]}: 
+ *   argument \c id should be padded with \c pad_char on the right till it reaches the \c length.
+ *   Space (' ') is used as pad_char if it is not given.
+ * - X<id>[{length}]:
+ *   output argument \c id as hexadecimal if it contains a literal integer.
+ *   If length is given, 0  will be padded on the left of the argument. 
+ *   Note that NULL is returned if argument \c id cannot be converted by strtol().
+ * - T<id>:
+ *   output argument \c id as UTF-8 string if it contains a literal integer.
+ *   Note that NULL is returned if argument \c id cannot be converted by strtol() and g_unichar_to_utf8 ().
  * - +<id>: 
- *   if matched pattern \c id is nonempty, then adds 1 to provided counter and output the number.
- *   if matched pattern \c id is empty, then outputs a empty string.
+ *   if argument \c id is nonempty, then adds 1 to provided counter and output the number.
+ *   if argument \c id is empty, then outputs a empty string.
  * - -<id>: 
- *   if matched pattern \c id is nonempty, then minuses 1 to provided counter and output the number.
- *   if matched pattern \c id is empty, then outputs a empty string.
+ *   if argument \c id is nonempty, then minuses 1 to provided counter and output the number.
+ *   if argument \c id is empty, then outputs a empty string.
  * - $: 
  *   Outputs a '$' character. 
  *
  * Character '$' is also an escape character. For example,
- *  '$N1{${}' outputs  '{' if pattern substitute 1 is nonempty.
+ *  '$N1{${}' outputs  '{' if argument 1 is nonempty.
+ *
+ * This function is similar with sprintf(), except:
+ * - This function accept a fixed length StringList.
+ * - This function provides conditional control.
+ * - This function supports utf8 case changing.
+ * - This function is capable of using counter.
+ * - This function returns a newly allocated result string.
+ *
  * @param format the format for evaluate output.
  * @param sList the StringList that hold arguments.
+ * @param counter_ptr a pointer to an integer counter. Can be NULL if + or - flags are not required.
+ * @return a newly allocated result string; or NULL if error occurs.
  */
-gchar *string_eval_output(const gchar *format,StringList *sList);
+gchar *string_formated_output(const gchar *format,StringList *sList,int *counter_ptr);
 
 /**
  * @defgroup Regex_Manipulating_Funcs Regex manipulating functions.
@@ -430,6 +460,8 @@ gchar *string_eval_output(const gchar *format,StringList *sList);
  * which are referred as their pattern id.
  * Id 0 refers the whole matched pattern, 1 refers the first sub pattern,
  * and 2 for second sub pattern, and so on.
+ *
+ * After matched sub-pattern are extracted, 
  *
  * The format string is composed of zero or more directives: ordinary characters (not $),
  * which are copied unchanged to the output string;  and  pattern  substitutes,  each  of
@@ -478,11 +510,11 @@ gchar *string_eval_output(const gchar *format,StringList *sList);
  * @param counter_ptr a pointer to an integer counter. Can be NULL if + or - flags are not required.
  * @return An newly allocated string of evaluated pattern substitutes, or NULL if no match or have error.
  *
- * @see string_regex_eval()
+ * @see string_regex_formated_output()
  * @see string_regex_replace_regex_t()
  * @see string_regex_replace()
  */
-gchar *string_regex_eval_output_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
+gchar *string_regex_formated_output_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
 	int eflags, int *counter_ptr);
 
 /**
@@ -500,11 +532,11 @@ gchar *string_regex_eval_output_regex_t(const gchar *str, const regex_t *preg, c
  * @param counter_ptr a pointer to an integer counter. Can be NULL if + or - flags are not required.
  * @return An newly allocated string of evaluated pattern substitutes, or NULL if no match or have error.
  *
- * @see string_regex_eval_regex_t()
+ * @see string_regex_formated_output_regex_t()
  * @see string_regex_replace_regex_t()
  * @see string_regex_replace()
  */
-gchar *string_regex_eval_output(const gchar *str, const gchar *pattern, const gchar *format, 
+gchar *string_regex_formated_output(const gchar *str, const gchar *pattern, const gchar *format, 
 	int cflags, int eflag, int *counter_ptr);
 
 
@@ -527,8 +559,8 @@ gchar *string_regex_eval_output(const gchar *str, const gchar *pattern, const gc
  * @param counter_ptr a pointer to an integer counter. Can be NULL if + or - flags are not required.
  * @return An newly allocated string whose matched pattern is replaced., or NULL if no match or have error.
  *
- * @see string_regex_eval_regex_t()
- * @see string_regex_eval()
+ * @see string_regex_formated_output_regex_t()
+ * @see string_regex_formated_output()
  * @see string_regex_replace()
  */
 gchar *string_regex_replace_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
@@ -554,8 +586,8 @@ gchar *string_regex_replace_regex_t(const gchar *str, const regex_t *preg, const
  * @param counter_ptr a pointer to an integer counter. Can be NULL if + or - flags are not required.
  * @return An newly allocated string whose matched pattern is replaced., or NULL if no match or have error.
  *
- * @see string_regex_eval_regex_t()
- * @see string_regex_eval()
+ * @see string_regex_formated_output_regex_t()
+ * @see string_regex_formated_output()
  * @see string_regex_replace_regex_t()
  */
 gchar *string_regex_replace(const gchar *str, const gchar *pattern, const gchar *format, 
@@ -611,6 +643,30 @@ void string_trim(char *str);
  */
 char*
 subString(char *buf,const char *str,int beginIndex, int length);
+
+/**
+ * Pad a string on the left up to certain length.
+ *
+ * Note that if \c padding_str is multi-bytes, the padding will not exceed the \c length.
+ *
+ * @param str original string.
+ * @param padding_str string to be padded on the left.
+ * @param length length in bytes.
+ * @return A newly allocated string that store the padded string.
+ */
+gchar* string_padding_left(const gchar *str, const gchar *padding_str, size_t length);
+
+/**
+ * Pad a string on the right up to certain length.
+ *
+ * Note that if \c padding_str is multi-bytes, the padding will not exceed the \c length.
+ *
+ * @param str original string.
+ * @param padding_str string to be padded on the right.
+ * @param length length in bytes.
+ * @return A newly allocated string that store the padded string.
+ */
+gchar* string_padding_right(const gchar *str, const gchar *padding_str, size_t length);
 
 /**
  * Convert UCS-4 to UTF-8 string.

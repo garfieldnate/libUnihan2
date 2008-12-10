@@ -244,8 +244,10 @@ void stringList_free(StringList *sList){
 #define SUBPATTERN_FLAG_IS_LOWERCASE		0x20	//'L'
 #define SUBPATTERN_FLAG_IS_PLUS			0x40	//'+'
 #define SUBPATTERN_FLAG_IS_MINUS		0x80	//'-'
-#define SUBPATTERN_FLAG_IS_PADDING_LEFT		0x100 	//'P'
-#define SUBPATTERN_FLAG_IS_PADDING_RIGHT	0x200 	//'p'
+#define SUBPATTERN_FLAG_IS_PADDED_LEFT		0x100 	//'P'
+#define SUBPATTERN_FLAG_IS_PADDED_RIGHT		0x200 	//'p'
+#define SUBPATTERN_FLAG_IS_HEXADECIMAL		0x400 	//'X'
+#define SUBPATTERN_FLAG_IS_UTF8			0x800 	//'T'
 
 typedef enum{
     REGEX_EVAL_STAGE_INIT,
@@ -261,7 +263,7 @@ typedef enum{
  *         -1: dollar sign.
  *         -2: error
  */
-static int string_eval_output_getSubIndex(const gchar *format, guint *currPos_ptr, guint *statusFlags_ptr, 
+static int string_formated_output_getSubIndex(const gchar *format, guint *currPos_ptr, guint *statusFlags_ptr, 
 	gchar **option1_ptr, gchar **option2_ptr){
     int index=0;
     *statusFlags_ptr=0;
@@ -310,6 +312,14 @@ static int string_eval_output_getSubIndex(const gchar *format, guint *currPos_pt
 		}else if (c=='-'){
 		    stage=REGEX_EVAL_STAGE_FLAG;
 		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_MINUS;
+		    break;
+		}else if (c=='P'){
+		    stage=REGEX_EVAL_STAGE_FLAG;
+		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_PADDED_LEFT;
+		    break;
+		}else if (c=='p'){
+		    stage=REGEX_EVAL_STAGE_FLAG;
+		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_PADDED_RIGHT;
 		    break;
 		}else if (c=='$'){
 		    stage=REGEX_EVAL_STAGE_DONE;
@@ -431,7 +441,7 @@ static int string_eval_output_getSubIndex(const gchar *format, guint *currPos_pt
     return index;
 }
 
-gchar *string_eval_output(const gchar *format,StringList *sList){
+gchar *string_formated_output(const gchar *format,StringList *sList){
     GString *strBuf=g_string_new(NULL);
 
     int subIndex=0;
@@ -440,14 +450,19 @@ gchar *string_eval_output(const gchar *format,StringList *sList){
     gboolean error=FALSE;
     gchar *option1Str=NULL;
     gchar *option2Str=NULL;
+    gchar *strtolEnd_ptr=NULL;
     gchar *strTmp=NULL;
+    gchar *paddedStr;
+    guint paddedStr_len;
+    int length,length_curr;
 
     for(j=0;j<formatLen && (!error);j++){
 	if (format[j]=='$'){
 	    j++;
-	    subIndex=string_eval_output_getSubIndex(format, &j, &statusFlags,  &option1Str, &option2Str);
+	    subIndex=string_formated_output_getSubIndex(format, &j, &statusFlags,  &option1Str, &option2Str);
+	    paddedStr=NULL;
 	    if (subIndex>=0){
-		if (subIndex>=nmatch){
+		if (subIndex>=sList->len){
 		    error=TRUE;
 		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_eval_regex_t():index %d should be less than or equal to the number of sub patterns %d\n",subIndex,nmatch-1);
 		    break;
@@ -473,6 +488,26 @@ gchar *string_eval_output(const gchar *format,StringList *sList){
 			g_free(strTmp);
 		    }else if (statusFlags & SUBPATTERN_FLAG_IS_LOWERCASE){
 			strTmp=g_utf8_strdown(stringList_index(sList,subIndex),-1);
+			g_string_append(strBuf,strTmp);
+			g_free(strTmp);
+		    }else if (statusFlags & SUBPATTERN_FLAG_IS_PADDING_LEFT){
+			length=(int) strtol(option1Str,&strtolEnd_ptr,10);
+			if (strtolEnd_ptr==option1Str){
+			    /* Length is not number! */
+			    error=TRUE;
+			    verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_eval_regex_t():index %d:  should have an integer number instead of %s\n",subIndex,option1Str);
+			    break;
+			}
+			if (option2Str){
+			    paddedStr=option2Str;
+			}else{
+			    paddedStr=' ';
+			}
+			length_curr=
+			error
+			if (){
+			}
+			strTmp=g_utf8_strup(stringList_index(sList,subIndex),-1);
 			g_string_append(strBuf,strTmp);
 			g_free(strTmp);
 		    }else if (statusFlags & SUBPATTERN_FLAG_IS_PLUS && counter_ptr){
@@ -522,7 +557,7 @@ static gchar *string_get_matched_substring(const gchar *str, regmatch_t *pmatch,
     return result;
 }
 
-gchar *string_regex_eval_output_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
+gchar *string_regex_formated_output_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
 	int eflags, int *counter_ptr){
     guint nmatch=preg->re_nsub+1;
     regmatch_t *pmatch=NEW_ARRAY_INSTANCE(nmatch,regmatch_t);
@@ -551,12 +586,12 @@ gchar *string_regex_eval_output_regex_t(const gchar *str, const regex_t *preg, c
 	    g_free(strTmp);
 	}
     }
-    gchar *result=string_eval_output(format,sList);
+    gchar *result=string_formated_output(format,sList);
     stringList_free(sList);
     return result;
 }
 
-gchar *string_regex_eval_output(const gchar *str, const gchar *pattern, const gchar *format, 
+gchar *string_regex_formated_output(const gchar *str, const gchar *pattern, const gchar *format, 
 	int cflags, int eflags, int *counter_ptr){
 
 
@@ -651,6 +686,34 @@ isEmptyString(const gchar *str){
     if (strlen(str)==0)
         return TRUE;
     return FALSE;
+}
+
+static gchar* string_padding(const gchar *str, const gchar *padding_str, size_t length, gboolean left){
+    int len=strlen(str);
+    int len_padding=strlen(padding_str);
+    int i=0;
+    GString *strBuf=g_string_new(NULL);
+    if (left){
+	for(i=0;i<length-len-len_padding+1;i+=len_padding){
+	    g_string_append(strBuf,padding_str);
+	}
+    }
+    g_string_append(strBuf,str);
+    i+=len;
+    if (!left){
+	for(;i<length-len_padding+1;i+=len_padding){
+	    g_string_append(strBuf,padding_str);
+	}
+    }
+    return g_string_free(strBuf,FALSE);
+}
+
+gchar* string_padding_left(const gchar *str, const gchar *padding_str, size_t length){
+    return string_padding(str, padding_str, length, TRUE);
+}
+
+gchar* string_padding_right(const gchar *str, const gchar *padding_str, size_t length){
+    return string_padding(str, padding_str, length, FALSE);
 }
 
 void string_trim(gchar *str){

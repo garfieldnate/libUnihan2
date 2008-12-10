@@ -317,7 +317,7 @@ typedef enum{
  * Most of the flags are self-explaining. But note that:
  * -# Set also the \c  UNIHAN_FIELDFLAG_INTEGER for UCS4 fields, 
  *   hexdecimal fields and 4-digits padded fields.
- *   But \c UNIHAN_FIELDFLAG_UCS4, \c UNIHAN_FIELDFLAG_HEXDECIMAL and \c UNIHAN_FIELDFLAG_0_PADDED_4
+ *   But \c UNIHAN_FIELDFLAG_UCS4, \c UNIHAN_FIELDFLAG_HEXADECIMAL and \c UNIHAN_FIELDFLAG_0_PADDED_4
  *   are mutually exclusive and should not be set in same field.
  *   Because \c UNIHAN_FIELDFLAG_UCS4 is for the fields that can be convert to UTF-8 directly;
  *   while other 2 flags indicates the string representation for the integer value.
@@ -327,7 +327,7 @@ typedef enum{
 // #define UNIHAN_FIELDFLAG_PSEUDO		0x1	//!< The field is a pseudo field.
 #define UNIHAN_FIELDFLAG_INTEGER		0x2	//!< The field stores an integer. 
 #define UNIHAN_FIELDFLAG_UCS4			0x4	//!< The field stores an UCS4 code. Should also set UNIHAN_FIELDFLAG_INTEGER.
-#define UNIHAN_FIELDFLAG_HEXDECIMAL_16		0x8	//!< The field should be displayed as 16 bits hexdecimal. Should also set UNIHAN_FIELDFLAG_INTEGER.
+#define UNIHAN_FIELDFLAG_HEXADECIMAL_16		0x8	//!< The field should be displayed as 16 bits hexdecimal. Should also set UNIHAN_FIELDFLAG_INTEGER.
 #define UNIHAN_FIELDFLAG_0_PADDED_2		0x10	//!< The field should be displayed as zero-padded 2 digits integer. Should also set UNIHAN_FIELDFLAG_INTEGER.
 #define UNIHAN_FIELDFLAG_0_PADDED_4		0x10	//!< The field should be displayed as zero-padded 4 digits integer. Should also set UNIHAN_FIELDFLAG_INTEGER.
 #define UNIHAN_FIELDFLAG_UPPERCASE     	0x20	//!< The field should be displayed as upper case.
