@@ -461,38 +461,8 @@ gchar *string_formated_output(const gchar *format,StringList *sList,int *counter
  * Id 0 refers the whole matched pattern, 1 refers the first sub pattern,
  * and 2 for second sub pattern, and so on.
  *
- * After matched sub-pattern are extracted, 
- *
- * The format string is composed of zero or more directives: ordinary characters (not $),
- * which are copied unchanged to the output string;  and  pattern  substitutes,  each  of
- * which  results in fetching zero or more subsequent arguments.  
- * Each pattern substitute is introduced by the character $, followed by optional flags, 
- * mandatory pattern id, and optional substitute strings. 
- * In  between  there may be (in this order) zero or more flags, one or two optional 
- * substitute strings. Note that at most one flag can be used in pattern substitute.
- *
- * The format of a pattern substitute is:
- * <code>$[flag]<pattern id>[{[option1 [,option2]]}]</code>
- * If no flags are given, pattern substitutes will be outputted as (sub) pattern it matched.
- * Be aware that matched patterns maybe be empty (has 0 length). 
- * 
- * Following flags provide additional output control:
- * - N<id>{str1 [,str2]}: 
- *   if matched pattern \c id is nonempty, then \c str1 is outputted for this  pattern substitute; 
- *   otherwise outputs str2, or empty string if str2 is omitted.
- * - E<id>{str1 [,str2]}: 
- *   similar with -N, but output str1 if matched pattern \c id is empty.
- * - +<id>: 
- *   if matched pattern \c id is nonempty, then adds 1 to provided counter and output the number.
- *   if matched pattern \c id is empty, then outputs a empty string.
- * - -<id>: 
- *   if matched pattern \c id is nonempty, then minuses 1 to provided counter and output the number.
- *   if matched pattern \c id is empty, then outputs a empty string.
- * - $: 
- *   Outputs a '$' character. 
- *
- * Character '$' is also an escape character. For example,
- *  '$N1{${}' outputs  '{' if pattern substitute 1 is nonempty.
+ * The matched sub-patterns are extracted and stored in a StringList, then processed
+ * by string_formated_output().
  * @{
  */
 
@@ -546,8 +516,8 @@ gchar *string_regex_formated_output(const gchar *str, const gchar *pattern, cons
  * This function replaces the regex matched sub-string to the string specified in \c format, 
  * and returns a newly allocated string that holds the result.
  *
- * This function differs with string_regex_eval_regex_t(), 
- * as string_regex_eval_regex_t() substitutes and returns only the matched substring,
+ * This function differs with string_regex_formatted_output_regex_t(), 
+ * as string_regex_formatted_output_regex_t() substitutes and returns only the matched substring,
  * while this function keeps the parts that does not match the pattern.
  *
  * Use free() or g_free() to free the result.
@@ -573,7 +543,7 @@ gchar *string_regex_replace_regex_t(const gchar *str, const regex_t *preg, const
  * and returns a newly allocated string that holds the result.
  *
  * This function differs with string_regex_eval_regex_t(), 
- * as string_regex_eval_regex_t() substitutes and returns only the matched substring,
+ * as string_regex_formatted_output_regex_t() substitutes and returns only the matched substring,
  * while this function keeps the parts that does not match the pattern.
  *
  * Use free() or g_free() to free the result.

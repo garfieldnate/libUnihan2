@@ -503,11 +503,23 @@ gchar *string_formated_output(const gchar *format,StringList *sList){
 			}else{
 			    paddedStr=' ';
 			}
-			length_curr=
-			error
-			if (){
+			strTmp=string_padding_left(stringList_index(sList,subIndex),paddedStr,length);
+			g_string_append(strBuf,strTmp);
+			g_free(strTmp);
+		    }else if (statusFlags & SUBPATTERN_FLAG_IS_PADDING_RIGHT){
+			length=(int) strtol(option1Str,&strtolEnd_ptr,10);
+			if (strtolEnd_ptr==option1Str){
+			    /* Length is not number! */
+			    error=TRUE;
+			    verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_eval_regex_t():index %d:  should have an integer number instead of %s\n",subIndex,option1Str);
+			    break;
 			}
-			strTmp=g_utf8_strup(stringList_index(sList,subIndex),-1);
+			if (option2Str){
+			    paddedStr=option2Str;
+			}else{
+			    paddedStr=' ';
+			}
+			strTmp=string_padding_right(stringList_index(sList,subIndex),paddedStr,length);
 			g_string_append(strBuf,strTmp);
 			g_free(strTmp);
 		    }else if (statusFlags & SUBPATTERN_FLAG_IS_PLUS && counter_ptr){
