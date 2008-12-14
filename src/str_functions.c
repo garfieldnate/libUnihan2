@@ -263,7 +263,7 @@ typedef enum{
  *         -1: dollar sign.
  *         -2: error
  */
-static int string_formated_output_getSubIndex(const gchar *format, guint *currPos_ptr, guint *statusFlags_ptr, 
+static int string_formatted_output_getSubIndex(const gchar *format, guint *currPos_ptr, guint *statusFlags_ptr, 
 	gchar **option1_ptr, gchar **option2_ptr){
     int index=0;
     *statusFlags_ptr=0;
@@ -281,7 +281,7 @@ static int string_formated_output_getSubIndex(const gchar *format, guint *currPo
 	    case REGEX_EVAL_STAGE_INIT:
 		if (c=='\0'){
 		    error=TRUE;
-		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_eval_regex_t_getSubIndex(): At character %d: Characters expected after '$'",*currPos_ptr);
+		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_regex_t_getSubIndex(): At character %d: Characters expected after '$'",*currPos_ptr);
 		    break;
 		}
 		if (isdigit(c)){
@@ -321,6 +321,14 @@ static int string_formated_output_getSubIndex(const gchar *format, guint *currPo
 		    stage=REGEX_EVAL_STAGE_FLAG;
 		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_PADDED_RIGHT;
 		    break;
+		}else if (c=='X'){
+		    stage=REGEX_EVAL_STAGE_FLAG;
+		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_HEXADECIMAL;
+		    break;
+		}else if (c=='T'){
+		    stage=REGEX_EVAL_STAGE_FLAG;
+		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_UTF8;
+		    break;
 		}else if (c=='$'){
 		    stage=REGEX_EVAL_STAGE_DONE;
 		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_DOLLARSIGN;
@@ -328,13 +336,13 @@ static int string_formated_output_getSubIndex(const gchar *format, guint *currPo
 		}
 		error=TRUE;
 		verboseMsg_print(VERBOSE_MSG_ERROR,
-			"string_regex_eval_regex_t_getSubIndex(): At character %d : Invalid flag %c.",
+			"string_formatted_output_regex_t_getSubIndex(): At character %d : Invalid flag %c.",
 			*currPos_ptr,c);
 		break;
 	    case REGEX_EVAL_STAGE_FLAG:
 		if (c=='\0'){
 		    error=TRUE;
-		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_eval_regex_t_getSubIndex(): No sub pattern index!\n");
+		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_regex_t_getSubIndex(): No sub pattern index!\n");
 		    break;
 		}
 		if (isdigit(c)){
@@ -343,7 +351,7 @@ static int string_formated_output_getSubIndex(const gchar *format, guint *currPo
 		    break;
 		}
 		verboseMsg_print(VERBOSE_MSG_ERROR,
-			"string_regex_eval_regex_t_getSubIndex(): At character %d : Should only have at most one flag.",
+			"string_formatted_output_regex_t_getSubIndex(): At character %d : Should only have at most one flag.",
 			*currPos_ptr);
 		error=TRUE;
 		break;
@@ -378,7 +386,7 @@ static int string_formated_output_getSubIndex(const gchar *format, guint *currPo
 		    c=format[*currPos_ptr];
 		    if (c=='\0'){
 			error=TRUE;
-			verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_eval_regex_t_getSubIndex(): At character %d: Characters expected after '$'",*currPos_ptr);
+			verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_regex_t_getSubIndex(): At character %d: Characters expected after '$'",*currPos_ptr);
 			break;
 		    }
 		    g_string_append_c(option1Str,c);
@@ -401,7 +409,7 @@ static int string_formated_output_getSubIndex(const gchar *format, guint *currPo
 		    c=format[*currPos_ptr];
 		    if (c=='\0'){
 			error=TRUE;
-			verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_eval_regex_t_getSubIndex(): At character %d: Characters expected after '$'",*currPos_ptr);
+			verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_regex_t_getSubIndex(): At character %d: Characters expected after '$'",*currPos_ptr);
 			break;
 		    }
 		    g_string_append_c(option2Str,c);
@@ -441,33 +449,36 @@ static int string_formated_output_getSubIndex(const gchar *format, guint *currPo
     return index;
 }
 
-gchar *string_formated_output(const gchar *format,StringList *sList){
+gchar *string_formatted_output(const gchar *format,StringList *sList,int *counter_ptr){
     GString *strBuf=g_string_new(NULL);
 
     int subIndex=0;
-    guint j,k,formatLen=strlen(format);
+    gunichar ucs4_code;
+    guint j,formatLen=strlen(format);
     guint statusFlags;
     gboolean error=FALSE;
+    gchar *str=NULL;
     gchar *option1Str=NULL;
     gchar *option2Str=NULL;
     gchar *strtolEnd_ptr=NULL;
     gchar *strTmp=NULL;
     gchar *paddedStr;
-    guint paddedStr_len;
-    int length,length_curr;
+    int length;
+    gchar buf[MAX_STRING_BUFFER_SIZE];
 
     for(j=0;j<formatLen && (!error);j++){
 	if (format[j]=='$'){
 	    j++;
-	    subIndex=string_formated_output_getSubIndex(format, &j, &statusFlags,  &option1Str, &option2Str);
+	    subIndex=string_formatted_output_getSubIndex(format, &j, &statusFlags,  &option1Str, &option2Str);
 	    paddedStr=NULL;
 	    if (subIndex>=0){
 		if (subIndex>=sList->len){
 		    error=TRUE;
-		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_eval_regex_t():index %d should be less than or equal to the number of sub patterns %d\n",subIndex,nmatch-1);
+		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output():index %d should be less than the number of string in stringList%d\n",subIndex,sList->len);
 		    break;
 		}
-		if (isEmptyString(stringList_index(sList,subIndex))){
+		str=stringList_index(sList,subIndex);
+		if (isEmptyString(str)){
 		    /* This substring is not empty */
 		    if (statusFlags & SUBPATTERN_FLAG_IS_EMPTY && option1Str){
 			g_string_append(strBuf,option1Str);
@@ -483,43 +494,43 @@ gchar *string_formated_output(const gchar *format,StringList *sList){
 			if (option2Str)
 			    g_string_append(strBuf,option2Str);
 		    }else if (statusFlags & SUBPATTERN_FLAG_IS_UPPERCASE){
-			strTmp=g_utf8_strup(stringList_index(sList,subIndex),-1);
+			strTmp=g_utf8_strup(str,-1);
 			g_string_append(strBuf,strTmp);
 			g_free(strTmp);
 		    }else if (statusFlags & SUBPATTERN_FLAG_IS_LOWERCASE){
-			strTmp=g_utf8_strdown(stringList_index(sList,subIndex),-1);
+			strTmp=g_utf8_strdown(str,-1);
 			g_string_append(strBuf,strTmp);
 			g_free(strTmp);
-		    }else if (statusFlags & SUBPATTERN_FLAG_IS_PADDING_LEFT){
+		    }else if (statusFlags & SUBPATTERN_FLAG_IS_PADDED_LEFT){
 			length=(int) strtol(option1Str,&strtolEnd_ptr,10);
 			if (strtolEnd_ptr==option1Str){
 			    /* Length is not number! */
 			    error=TRUE;
-			    verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_eval_regex_t():index %d:  should have an integer number instead of %s\n",subIndex,option1Str);
+			    verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_regex_t():index %d:  should have an integer number instead of %s\n",subIndex,option1Str);
 			    break;
 			}
 			if (option2Str){
 			    paddedStr=option2Str;
 			}else{
-			    paddedStr=' ';
+			    paddedStr=" ";
 			}
-			strTmp=string_padding_left(stringList_index(sList,subIndex),paddedStr,length);
+			strTmp=string_padding_left(str,paddedStr,length);
 			g_string_append(strBuf,strTmp);
 			g_free(strTmp);
-		    }else if (statusFlags & SUBPATTERN_FLAG_IS_PADDING_RIGHT){
+		    }else if (statusFlags & SUBPATTERN_FLAG_IS_PADDED_RIGHT){
 			length=(int) strtol(option1Str,&strtolEnd_ptr,10);
 			if (strtolEnd_ptr==option1Str){
 			    /* Length is not number! */
 			    error=TRUE;
-			    verboseMsg_print(VERBOSE_MSG_ERROR,"string_regex_eval_regex_t():index %d:  should have an integer number instead of %s\n",subIndex,option1Str);
+			    verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_regex_t():index %d:  should have an integer number instead of %s\n",subIndex,option1Str);
 			    break;
 			}
 			if (option2Str){
 			    paddedStr=option2Str;
 			}else{
-			    paddedStr=' ';
+			    paddedStr=" ";
 			}
-			strTmp=string_padding_right(stringList_index(sList,subIndex),paddedStr,length);
+			strTmp=string_padding_right(str,paddedStr,length);
 			g_string_append(strBuf,strTmp);
 			g_free(strTmp);
 		    }else if (statusFlags & SUBPATTERN_FLAG_IS_PLUS && counter_ptr){
@@ -527,8 +538,42 @@ gchar *string_formated_output(const gchar *format,StringList *sList){
 		    }else if (statusFlags & SUBPATTERN_FLAG_IS_MINUS && counter_ptr){
 			g_string_append_printf(strBuf,"%d",--(*counter_ptr));
 		    }else{
-			g_string_append(strBuf,stringList_index(sList,subIndex));
+			g_string_append(strBuf,str);
 		    }
+		}else if (statusFlags & SUBPATTERN_FLAG_IS_HEXADECIMAL){
+		    ucs4_code=(gucs4_codear) strtol(str,&strtolEnd_ptr,10);
+		    if (strtolEnd_ptr==str){
+			/* Number string is expected. */
+			error=TRUE;
+			verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_regex_t():index %d:  should have an integer number instead of %s\n",subIndex,str);
+			break;
+		    }
+		    g_snprintf(buf,MAX_STRING_BUFFER_SIZE,"%lX",ucs4_code);
+		    if (option1Str){
+			length=(int) strtol(option1Str,&strtolEnd_ptr,10);
+			if (strtolEnd_ptr==option1Str){
+			    /* Length is not number! */
+			    error=TRUE;
+			    verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_regex_t():index %d:  should have an integer number instead of %s\n",subIndex,option1Str);
+			    break;
+			}
+			strTmp=string_padding_right(buf,"0",length);
+			g_string_append(strBuf,strTmp);
+			g_free(strTmp);
+		    }else{
+			g_string_append(strBuf,buf);
+		    }
+		}else if (statusFlags & SUBPATTERN_FLAG_IS_UTF8){
+		    ucs4_code=(gucs4_codear) strtol(str,&strtolEnd_ptr,10);
+		    if (strtolEnd_ptr==str){
+			/* Number string is expected. */
+			error=TRUE;
+			verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_regex_t():index %d:  should have an integer number instead of %s\n",subIndex,str);
+			break;
+		    }
+		    strTmp=ucs4_to_utf8(ucs4_code);
+		    g_string_append(strBuf,strTmp);
+		    g_free(strTmp);
 		}
 		j--;
 		if (option1Str)
@@ -569,7 +614,7 @@ static gchar *string_get_matched_substring(const gchar *str, regmatch_t *pmatch,
     return result;
 }
 
-gchar *string_regex_formated_output_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
+gchar *string_regex_formatted_output_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
 	int eflags, int *counter_ptr){
     guint nmatch=preg->re_nsub+1;
     regmatch_t *pmatch=NEW_ARRAY_INSTANCE(nmatch,regmatch_t);
@@ -577,33 +622,28 @@ gchar *string_regex_formated_output_regex_t(const gchar *str, const regex_t *pre
 	/* No Match */
 	return NULL;
     }
-    GString *strBuf=g_string_new(NULL);
-
-    int subIndex=0;
-    guint i,j,k,formatLen=strlen(format);
-    guint statusFlags;
-    gboolean error=FALSE;
-    gchar *strTmp=NULL,*strTmp2=NULL;
+    guint i;
+    gchar *strTmp=NULL;
 
 
     StringList *sList=stringList_new();
     for(i=0;i<nmatch;i++){
-	if ( pmatch[i].rm_so<0 || pmatch[i].rm_so==pmatch[subIndex].rm_eo){
+	if ( pmatch[i].rm_so<0 || pmatch[i].rm_so==pmatch[i].rm_eo){
 	    /* This subpattern is empty */
 	    stringList_insert(sList,NULL);
 	}else{
 	    /* This subpattern is not empty */
-	    strTmp=string_get_matched_substring(str,pmatch,subIndex);
-	    stringList_insert(strTmp);
+	    strTmp=string_get_matched_substring(str,pmatch,i);
+	    stringList_insert(sList,strTmp);
 	    g_free(strTmp);
 	}
     }
-    gchar *result=string_formated_output(format,sList);
+    gchar *result=string_formatted_output(format,sList,counter_ptr);
     stringList_free(sList);
     return result;
 }
 
-gchar *string_regex_formated_output(const gchar *str, const gchar *pattern, const gchar *format, 
+gchar *string_regex_formatted_output(const gchar *str, const gchar *pattern, const gchar *format, 
 	int cflags, int eflags, int *counter_ptr){
 
 
@@ -614,11 +654,11 @@ gchar *string_regex_formated_output(const gchar *str, const gchar *pattern, cons
 	/* Invalid pattern */
 	char buf[MAX_STRING_BUFFER_SIZE];
 	regerror(ret,&preg,buf,MAX_STRING_BUFFER_SIZE);
-	verboseMsg_print(VERBOSE_MSG_ERROR, "string_regex_eval():Invalid pattern %s\n"
+	verboseMsg_print(VERBOSE_MSG_ERROR, "string_formatted_output():Invalid pattern %s\n"
 		,buf);
 	return NULL;
     }
-    gchar *result=string_regex_eval_regex_t(str, &preg, format, eflags, counter_ptr);
+    gchar *result=string_regex_formatted_output_regex_t(str, &preg, format, eflags, counter_ptr);
     regfree(&preg);
     return result;
 }
@@ -643,7 +683,7 @@ gchar *string_regex_replace_regex_t(const gchar *str, const regex_t *preg, const
 	g_string_append_c(strBuf,str[i]);
     }
 
-    gchar *evalStr=string_regex_eval_regex_t(str, preg, format, eflags, counter_ptr);
+    gchar *evalStr=string_regex_formatted_output_regex_t(str, preg, format, eflags, counter_ptr);
     
     if (evalStr){
 	g_string_append(strBuf,evalStr);
@@ -675,7 +715,7 @@ gchar *string_regex_replace(const gchar *str, const gchar *pattern, const gchar 
 		,buf);
 	return NULL;
     }
-    gchar *result=string_regex_eval_regex_t(str, &preg, format, eflags, counter_ptr);
+    gchar *result=string_regex_formatted_output_regex_t(str, &preg, format, eflags, counter_ptr);
     regfree(&preg);
     return result;
 }

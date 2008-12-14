@@ -140,7 +140,7 @@ int compare_strings(const char *prompt, const char *expect, const char *actual){
  * Start of testing functions.
  */
 
-gboolean test_regex_eval(void *param,DataSet *dataSet){
+gboolean test_regex_formatted_output(void *param,DataSet *dataSet){
     RegexEval_DataRec *examSet= (RegexEval_DataRec *) dataSet;
     int n,ret;
     int j;
@@ -174,7 +174,7 @@ gboolean test_regex_eval(void *param,DataSet *dataSet){
 	    printf("\n");
 	}
 
-	g_snprintf(buf,MAX_STRING_BUFFER_SIZE,"string_regex_eval(%s,%s,%s,%X,%X,&(%d))\n",
+	g_snprintf(buf,MAX_STRING_BUFFER_SIZE,"string_regex_formatted_output(%s,%s,%s,%X,%X,&(%d))\n",
 		str_normalized, pattern, format, REG_EXTENDED, 0, counter);
 	if (examSet[n].options & RESET_COUNTER){
 	    counter=0;
@@ -200,7 +200,7 @@ gboolean test_regex_eval(void *param,DataSet *dataSet){
  */
 
 TestStruct TEST_COLLECTION[]={
-    {"regex eval functions",NULL,REGEX_EVAL_DATA_SET, test_regex_eval},
+    {"regex eval functions",NULL,REGEX_EVAL_DATA_SET, test_regex_formatted_output},
     {NULL,NULL, NULL, NULL},
 };
 

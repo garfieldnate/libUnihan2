@@ -445,7 +445,7 @@ void stringList_free(StringList *sList);
  * @param counter_ptr a pointer to an integer counter. Can be NULL if + or - flags are not required.
  * @return a newly allocated result string; or NULL if error occurs.
  */
-gchar *string_formated_output(const gchar *format,StringList *sList,int *counter_ptr);
+gchar *string_formatted_output(const gchar *format,StringList *sList,int *counter_ptr);
 
 /**
  * @defgroup Regex_Manipulating_Funcs Regex manipulating functions.
@@ -462,7 +462,7 @@ gchar *string_formated_output(const gchar *format,StringList *sList,int *counter
  * and 2 for second sub pattern, and so on.
  *
  * The matched sub-patterns are extracted and stored in a StringList, then processed
- * by string_formated_output().
+ * by string_formatted_output().
  * @{
  */
 
@@ -480,11 +480,11 @@ gchar *string_formated_output(const gchar *format,StringList *sList,int *counter
  * @param counter_ptr a pointer to an integer counter. Can be NULL if + or - flags are not required.
  * @return An newly allocated string of evaluated pattern substitutes, or NULL if no match or have error.
  *
- * @see string_regex_formated_output()
+ * @see string_regex_formatted_output()
  * @see string_regex_replace_regex_t()
  * @see string_regex_replace()
  */
-gchar *string_regex_formated_output_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
+gchar *string_regex_formatted_output_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
 	int eflags, int *counter_ptr);
 
 /**
@@ -502,11 +502,11 @@ gchar *string_regex_formated_output_regex_t(const gchar *str, const regex_t *pre
  * @param counter_ptr a pointer to an integer counter. Can be NULL if + or - flags are not required.
  * @return An newly allocated string of evaluated pattern substitutes, or NULL if no match or have error.
  *
- * @see string_regex_formated_output_regex_t()
+ * @see string_regex_formatted_output_regex_t()
  * @see string_regex_replace_regex_t()
  * @see string_regex_replace()
  */
-gchar *string_regex_formated_output(const gchar *str, const gchar *pattern, const gchar *format, 
+gchar *string_regex_formatted_output(const gchar *str, const gchar *pattern, const gchar *format, 
 	int cflags, int eflag, int *counter_ptr);
 
 
@@ -529,8 +529,8 @@ gchar *string_regex_formated_output(const gchar *str, const gchar *pattern, cons
  * @param counter_ptr a pointer to an integer counter. Can be NULL if + or - flags are not required.
  * @return An newly allocated string whose matched pattern is replaced., or NULL if no match or have error.
  *
- * @see string_regex_formated_output_regex_t()
- * @see string_regex_formated_output()
+ * @see string_regex_formatted_output_regex_t()
+ * @see string_regex_formatted_output()
  * @see string_regex_replace()
  */
 gchar *string_regex_replace_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
@@ -556,8 +556,8 @@ gchar *string_regex_replace_regex_t(const gchar *str, const regex_t *preg, const
  * @param counter_ptr a pointer to an integer counter. Can be NULL if + or - flags are not required.
  * @return An newly allocated string whose matched pattern is replaced., or NULL if no match or have error.
  *
- * @see string_regex_formated_output_regex_t()
- * @see string_regex_formated_output()
+ * @see string_regex_formatted_output_regex_t()
+ * @see string_regex_formatted_output()
  * @see string_regex_replace_regex_t()
  */
 gchar *string_regex_replace(const gchar *str, const gchar *pattern, const gchar *format, 
