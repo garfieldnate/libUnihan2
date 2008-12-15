@@ -43,7 +43,7 @@
 /**
  * Maximum length of pinyin in byte.
  */
-#define PINYIN_MAX_LENGTH 9
+#define PINYIN_MAX_LENGTH 11
 
 /**
  * Maximum length of zhuyin in byte.
@@ -66,15 +66,60 @@ typedef char Zhuyin;
 typedef char Pinyin;
 
 
+/**
+ * @defgroup PinYin_Regex Regex pattern and output format for Pinyin importing.
+ * @{
+ * @name Regex pattern and store format for Pinyin importing.
+ *
+ * These define the regex pattern and out format for Pinyin related field
+ * importing.
+ * The input string  must be normalized as NFD.
+ * @{
+ */
+/**
+ * Regex pattern for tone accent mark.
+ */
 #define PINYIN_TONE_ACCENTS  "((\xCC\x84)?(\xCC\x81)?(\xCC\x8C)?(\xCC\x80)?)?"
+/**
+ * Regex pattern for tone accents.
+ */
 #define PINYIN_REGEX "([b-df-hj-np-twxzB-DF-HJ-NP-TWXZ]*)(yu|YU)?([yY])?([uU]\xCC\x88)?(ie|IE)?(ue|UE)?([aeiouAEIOU]*)?" PINYIN_TONE_ACCENTS "([a-zA-Z]*)([1-5])?"
 
+/**
+ * Pinyin pattern substitute (store format). Pinyin fields are stored as \c PINYIN_ACCENT_INTERNAL, without tone accent mark or number.
+ */
 #define PINYIN_PATTERN_SUBSTITUTE "$L1$N2{yv}$L3$N4{v}$N5{iE}$N6{vE}$L7$L13"
+/**
+ * Pinyin tone number pattern substitute (store format).
+ */
 #define PINYIN_TONE_PATTERN_SUBSTITUTE "$14"
+/**
+ * Pinyin tone accent mark pattern substitute (store format).
+ */
 #define PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE "$E8{5}$N9{1}$N10{2}$N11{3}$N12{4}"
+
+/**
+ * Pinyin pattern substitute (store format) for Xiandai Hanyu Cidian (XHC1983).
+ *
+ * Similar to \c PINYIN_PATTERN_SUBSTITUTE, but for kXHC1983 only.
+ */
 #define PINYIN_PATTERN_SUBSTITUTE_XHC "$L5$N6{yv}$L7$N8{v}$N8{iE}$N10{vE}$L11$L17"
+/**
+ * Pinyin tone number pattern substitute (store format) for Xiandai Hanyu Cidian (XHC1983).
+ *
+ * Similar to \c PINYIN_TONE_PATTERN_SUBSTITUTE, but for kXHC1983 only.
+ */
 #define PINYIN_TONE_PATTERN_SUBSTITUTE_XHC "$18"
+/**
+ * Pinyin tone accent mark pattern substitute (store format) for Xiandai Hanyu Cidian (XHC1983).
+ *
+ * Similar to \c PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE, but for kXHC1983 only.
+ */
 #define PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE_XHC "$E12{5}$N13{1}$N14{2}$N15{3}$N16{4}"
+/**
+ * @}
+ * @}
+ */
 
 /**
  * Enumeration of Zhuyin symbols.
@@ -143,6 +188,24 @@ typedef enum {
  * An array of Zhuyin symbols.
  */
 extern const Zhuyin_Symbol ZHUYIN_SYMBOL_LIST[];
+
+
+/**
+ * @defgroup PinYin_Display_Flags Pinyin display flags.
+ * @{
+ * @name Pinyin display flags.
+ *
+ * These define the regex pattern and out format for Pinyin related field
+ * importing.
+ * The input string  must be normalized as NFD.
+ * @{
+ */
+#define PINYIN_STRIP_E
+#define PINYIN_STRIP_U
+/**
+ * @}
+ * @}
+ */
 
 /**
  * Enumeration of Pinyin accent (not tone mark) handling modes.
