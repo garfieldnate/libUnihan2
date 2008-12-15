@@ -104,6 +104,24 @@ RegexEval_DataRec REGEX_EVAL_DATA_SET[]={
 	"0484.052,0485.021:huà",
        	"$1 $2 $3 $N4{1,0} $+0 " PINYIN_PATTERN_SUBSTITUTE_XHC " " PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE_XHC,
 	"0484 05 2 0 1 hua 4",RESET_COUNTER},
+    {"([0-9]*)-([0-9]*)-([0-9]*)",
+	"4040-4041-20142",
+	"$X1 $X2{6} $T3",
+	"FC8 000FC9 亮",0},
+    {"([[:alnum:]]*)-([[:alnum:]]*)-([[:alnum:]]*)-([[:alnum:]]*)-([[:alnum:]]*)-([[:alnum:]]*)"
+	"-([[:alnum:]]*)-([[:alnum:]]*)-([[:alnum:]]*)-([[:alnum:]]*)-([[:alnum:]]*)-([[:alnum:]]*)",
+	"ABC-CBA-DEF-FED-GHI-IGH-JKL-LKJ-MNO-ONM-PQR-RQP",
+	"$P1{4} $P2{4,+} $P3{3} $P4{3,+} $P5{2} $P6{2,+}"
+	" $p7{4} $p8{4,+} $p9{3} $p10{3,+} $p11{2} $p12{2,+}",
+	" ABC +CBA DEF FED GHI IGH JKL  LKJ+ MNO ONM PQR RQP",RESET_COUNTER},
+    {"[[:alnum:]]*",
+     "ABCDEFGHIJKL",
+     "$S0{4} $S0{1,4}",
+     "EFGHIJKL BCDE",0},
+    {"([[:alnum:]]*)",
+	"AB",
+	"$I1{AB,ab} $I1{CD,cd,!cd} $I1{EF,ef}",
+	"ab !cd ",0},
     {NULL,NULL,NULL,NULL,0}
 };
 

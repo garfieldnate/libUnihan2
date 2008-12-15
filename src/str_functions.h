@@ -387,11 +387,11 @@ void stringList_free(StringList *sList);
  * which  results in fetching zero or more subsequent arguments.  
  * Each format directives is introduced by the character $, followed by optional flags, 
  * mandatory pattern id, and optional options like substitute strings or padding instruction.
- * In  between  there may be (in this order) zero or more flags, one or two optional 
+ * In  between  there may be (in this order) zero or more flags, one to three optional 
  * options. Note that at most one flag can be used in format directives.
  *
  * The format of a format directives is:
- * <code>$[flag]<argument id>[{[option1 [,option2]]}]</code>
+ * <code>$[flag]<argument id>[{[option1[,option2[,option3]]]}]</code>
  * If no flags are given, format directives are substituted by arguments they refer.
  *
  * The argument id starts from 0, but should not exceed the number of arguments.
@@ -421,6 +421,12 @@ void stringList_free(StringList *sList);
  * - T<id>:
  *   output argument \c id as UTF-8 string if it contains a literal integer.
  *   Note that NULL is returned if argument \c id cannot be converted by strtol() and g_unichar_to_utf8 ().
+ * - S<id>{beginIndex[,length]}:
+ *   output substring of argument \c id which begins from \c beginIndex,
+ *   if \c length is not given, the it will output till the end of argument \c id.
+ * - I<id>{compare_str,true_substitute[,false_substitute]}:
+ *   output \c true_substitute if \c compare_str is identical to argument \c id;
+ *   otherwise output \c false_substitute if given.
  * - +<id>: 
  *   if argument \c id is nonempty, then adds 1 to provided counter and output the number.
  *   if argument \c id is empty, then outputs a empty string.
@@ -600,19 +606,41 @@ void string_trim(char *str);
 
 
 /**
- * Returns a substring of the given string. 
+ * Return a substring of the given string.
  * 
  * The substring begins at the specified beginIndex and end after <code>length</code> bytes.
- * The index starts from zero.
+ * The index starts from zero. 
+ * If length is given a negative value, then a substring starting from \c beginIndex to the
+ * end of \c str is returned.
+ * 
+ * @param str String to be process
+ * @param beginIndex the beginning index, inclusive.
+ * @param length total bytes to copy, excluding the trailing '\0'
+ * @return A newly allocated string which is a substring of \c str.
+ * @see subString_buffer()
+ */
+char*
+subString(const char *str,int beginIndex, int length);
+
+/**
+ * Return a substring of the given string in given buffer.
+ *
+ * This function is similar with subString(), except it stores the result in
+ * the developer-provided buffer. 
+ *
+ * Make sure to provide at least length+1 (including the trailing '\0');
+ * or strlen(str)-beginIndex+1 if length is negative. 
+ * 
  * 
  * @param buf buffer that stores the result.
  * @param str String to be process
  * @param beginIndex the beginning index, inclusive.
  * @param length total bytes to copy.
- * @return The specified substring.
+ * @return The buffer that stores the result.
+ * @see subString()
  */
 char*
-subString(char *buf,const char *str,int beginIndex, int length);
+subString_buffer(char *buf,const char *str,int beginIndex, int length);
 
 /**
  * Pad a string on the left up to certain length.

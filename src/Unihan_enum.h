@@ -411,8 +411,7 @@ typedef struct {
  * @see unihanTable_get_db_fields(), unihanTable_get_fields(), unihanTable_get_primary_key_fields()
  */
 typedef enum{
-    UNIHAN_TABLE_NOT_INSTALLED=-4,	//!< The table have not been installed.
-    UNIHAN_NOT_A_TABLE=-3,		//!< Return value for pseudo fields with unihanField_get_table(), as they are derived from database functions but not table fields.
+    UNIHAN_TABLE_NOT_INSTALLED=-3,	//!< The table have not been installed.
     UNIHAN_INVALID_TABLE=-2,		//!< End of an Unihan table array or indicate invalid table.
     UNIHAN_AMBIGUOUS_TABLE=-1,		//!< Cannot decide which table is more appropriate, usually because it appears in multiple tables, such as UNIHAN_FIELD_CODE.
     UNIHAN_TABLE_kACCOUNTINGNUMERIC,	//!< Table for accounting numberic.
