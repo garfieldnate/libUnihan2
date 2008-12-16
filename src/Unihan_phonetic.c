@@ -334,22 +334,23 @@ Pinyin *pinyin_new_normalized(const char *pinyin_str){
     pinyin=NEW_ARRAY_INSTANCE(PINYIN_MAX_LENGTH,char);
     initString(pinyin);
     if (!isEmptyString(pinyin_str)){
-	pinyin=g_utf8_normalize(pinyin_str,PINYIN_MAX_LENGTH,G_NORMALIZE_NFD);
+	char *pinyin_tmp=g_utf8_normalize(pinyin_str,PINYIN_MAX_LENGTH,G_NORMALIZE_NFD);
+	
+
 	int i,items_written;
 	gunichar *uniStr=g_utf8_to_ucs4_fast(pinyin, -1 , &items_written);
 	gunichar uniCh,uniCh_prev,uniCh_next;
 	for(i=0;i<items_written;i++){
 	    uniCh=uniStr[i];
-	    uniCh_prev=(i>0)? uniStr[i-1] : 0;
-	    uniCh_next=(i<items_written-1)? uniStr[i+1] : 0;
 	    switch(uniCh){
+
 		case E:
 		case e:
 		    if (!uniCh_prev && !uniCh_next){
 			/* Single e, no change case */
-
-
+			utf8_concat_ucs4(pinyin,uniCh);
 			continue;
+		    }else if (uniCh_prev==''{
 		    }
 		case Y:
 		    uniCh='y';

@@ -261,14 +261,50 @@ typedef enum{
     REGEX_EVAL_STAGE_DONE
 } RegexReplaceStage;
 
+
 /* 
  * Return >=0: index of subpattern
- *         -1: dollar sign.
+ *         -1: escaped char, not error,
  *         -2: error
  */
-static int string_formatted_output_getSubIndex(const gchar *format, guint *currPos_ptr, guint *statusFlags_ptr, 
+static int string_formatted_output_expand_subSubIndex(const gchar *format, StringList *sList,guint *currPos_ptr, GString *optionStr){
+    char c=format[*currPos_ptr];
+    gboolean hasIndex=FALSE;
+    int subIndex=0;
+    if (c=='\0'){
+	verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_expand_getSubSubIndex(): At character %d: Characters expected after '$'",*currPos_ptr);
+	return -2;
+    }
+    while(isdigit(c)){
+	hasIndex=TRUE;
+	subIndex=subIndex*10+c-'0';
+	c=format[*currPos_ptr++];
+    }
+    if (!hasIndex){
+	/* No index, escaped  */
+	g_string_append_c(optionStr,c);
+	return -1;
+    }
+    if (subIndex>=sList->len){
+	verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_expand_subSubIndex():index %d should be less than the number of string in stringList %d\n",subIndex,sList->len);
+	return -2;
+    }
+
+    g_string_append(optionStr,stringList_index(sList,subIndex));
+    guint currPos=*currPos_ptr--;
+    verboseMsg_print(VERBOSE_MSG_INFO5,"***** string_formatted_output_expand_subSubIndex():currPos=%d\n",currPos);
+    return subIndex;
+}
+
+/* 
+ * Return >=0: index of subpattern
+ *         -1: escaped char, not error,
+ *         -2: error
+ */
+static int string_formatted_output_getSubIndex(const gchar *format, StringList *sList,guint *currPos_ptr, guint *statusFlags_ptr, 
 	gchar **option1_ptr, gchar **option2_ptr, gchar **option3_ptr){
     int index=0;
+    int subIndex=-1;
     *statusFlags_ptr=0;
     gchar c;
     gboolean error=FALSE;
@@ -397,12 +433,13 @@ static int string_formatted_output_getSubIndex(const gchar *format, guint *currP
 		}
 		if (c=='$'){
 		    (*currPos_ptr)++;
-		    c=format[*currPos_ptr];
-		    if (c=='\0'){
+		    subIndex=string_formatted_output_expand_subSubIndex(format, sList,currPos_ptr,option1Str);
+		    if (subIndex<=-2){
+			/* Verbose message already printed in string_formatted_output_expand_subSubIndex() */
 			error=TRUE;
-			verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_regex_t_getSubIndex(): At character %d: Characters expected after '$'",*currPos_ptr);
 			break;
 		    }
+		    break;
 		}
 		g_string_append_c(option1Str,c);
 		break;
@@ -421,12 +458,13 @@ static int string_formatted_output_getSubIndex(const gchar *format, guint *currP
 		}
 		if (c=='$'){
 		    (*currPos_ptr)++;
-		    c=format[*currPos_ptr];
-		    if (c=='\0'){
+		    subIndex=string_formatted_output_expand_subSubIndex(format, sList,currPos_ptr,option2Str);
+		    if (subIndex<=-2){
+			/* Verbose message already printed in string_formatted_output_expand_subSubIndex() */
 			error=TRUE;
-			verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_regex_t_getSubIndex(): At character %d: Characters expected after '$'",*currPos_ptr);
 			break;
 		    }
+		    break;
 		}
 		g_string_append_c(option2Str,c);
 		break;
@@ -441,12 +479,13 @@ static int string_formatted_output_getSubIndex(const gchar *format, guint *currP
 		}
 		if (c=='$'){
 		    (*currPos_ptr)++;
-		    c=format[*currPos_ptr];
-		    if (c=='\0'){
+		    subIndex=string_formatted_output_expand_subSubIndex(format, sList,currPos_ptr,option2Str);
+		    if (subIndex<=-2){
+			/* Verbose message already printed in string_formatted_output_expand_subSubIndex() */
 			error=TRUE;
-			verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_regex_t_getSubIndex(): At character %d: Characters expected after '$'",*currPos_ptr);
 			break;
 		    }
+		    break;
 		}
 		g_string_append_c(option3Str,c);
 		break;
@@ -518,7 +557,7 @@ gchar *string_formatted_output(const gchar *format,StringList *sList,int *counte
 	verboseMsg_print(VERBOSE_MSG_INFO3,"*** string_formatted_output():Current strBuf=%s|\n",strBuf->str);
 	if (format[j]=='$'){
 	    j++;
-	    subIndex=string_formatted_output_getSubIndex(format, &j, &statusFlags,  
+	    subIndex=string_formatted_output_getSubIndex(format, sList, &j, &statusFlags,  
 		    &option1Str, &option2Str, &option3Str);
 	    paddedStr=NULL;
 	    if (verboseMsg_get_level()>=VERBOSE_MSG_INFO4){
@@ -537,7 +576,7 @@ gchar *string_formatted_output(const gchar *format,StringList *sList,int *counte
 	    if (subIndex>=0){
 		if (subIndex>=sList->len){
 		    error=TRUE;
-		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output():index %d should be less than the number of string in stringList%d\n",subIndex,sList->len);
+		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output():index %d should be less than the number of string in stringList %d\n",subIndex,sList->len);
 		    break;
 		}
 		str=stringList_index(sList,subIndex);

@@ -82,10 +82,13 @@ typedef char Pinyin;
  * Regex pattern for tone accent mark.
  */
 #define PINYIN_TONE_ACCENTS  "((\xCC\x84)?(\xCC\x81)?(\xCC\x8C)?(\xCC\x80)?)?"
+
+#define PINYIN_TEST_JQXY "(([JjQqXx])?([Yy])?)?"
+#define PINYIN_TEST_Y "((([JjQqXxYy])[UuVv](\xCC\x88)?)([Ee](\xCC\x82)?)?)?"
 /**
  * Regex pattern for tone accents.
  */
-#define PINYIN_REGEX "([b-df-hj-np-twxzB-DF-HJ-NP-TWXZ]*)(yu|YU)?([yY])?([uU]\xCC\x88)?(ie|IE)?(ue|UE)?([aeiouAEIOU]*)?" PINYIN_TONE_ACCENTS "([a-zA-Z]*)([1-5])?"
+#define PINYIN_REGEX PINYIN_TEST_JQXY "([b-df-hk-npr-twzB-DF-HK-NPR-TWZ]*)([Ii])?([Uu](\xCC\x88)?)?([Vv])?([Ee](\xCC\x82)?)?([aeiouAEIOU]*)?" PINYIN_TONE_ACCENTS "([a-zA-Z]*)([1-5])?"
 
 /**
  * Pinyin pattern substitute (store format). Pinyin fields are stored as \c PINYIN_ACCENT_INTERNAL, without tone accent mark or number.
