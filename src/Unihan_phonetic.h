@@ -6,11 +6,13 @@
  * such as conversion between HanYu pinyin conversion C functions, and
  * corresponding SQL scalar functions.
  *
- * Pinyin is displayed and stored as uppercase, which is same with kMandarin 
- * in Unihan.
+ * From libUnihan 1.0, pinyin is stored as lowercase,
+ * so as to be consistent with other phonetic fields.
+ * Though field UNIHAN_FIELD_kMANDARIN still outputs uppercase to make it compatible with the original Unihan.txt.
+ *
  *
  * Note that this header is included in Unihan.h, 
- * so no need to includes it explicitly if Unihan.h is also included.
+ * thus no need to explicitly include it if Unihan.h is already included.
  */
 
 /*
@@ -43,7 +45,7 @@
 /**
  * Maximum length of pinyin in byte.
  */
-#define PINYIN_MAX_LENGTH 11
+#define PINYIN_MAX_LENGTH 13
 
 /**
  * Maximum length of zhuyin in byte.
@@ -53,7 +55,7 @@
 /**
  * Zhuyin symbol.
  */
-typedef gunichar  Zhuyin_Symbol;
+typedef gunichar  ZhuyinSymbol;
 
 /**
  * Pronunciation in Zhuyin UTF-8 string.
@@ -67,7 +69,7 @@ typedef char Pinyin;
 
 
 /**
- * @defgroup PinYin_Regex Regex pattern and output format for Pinyin importing.
+ * @defgroup Pinyin_Regex Regex pattern and output format for Pinyin importing.
  * @{
  * @name Regex pattern and store format for Pinyin importing.
  *
@@ -129,8 +131,8 @@ typedef char Pinyin;
  *
  * @see pinyin_phoneme_from_id()
  * @see pinyin_phoneme_get_id()
- * @see zhuyin_Symbol_from_id()
- * @see zhuyin_Symbol_get_id()
+ * @see zhuyinSymbol_from_id()
+ * @see zhuyinSymbol_get_id()
  *
  */
 typedef enum {
@@ -177,7 +179,7 @@ typedef enum {
     ZHUYIN_SYMBOL_3,         //!< Zhuyin 3rd tone mark 'ˇ'
     ZHUYIN_SYMBOL_4,         //!< Zhuyin 4th tone mark 'ˋ'
     ZHUYIN_SYMBOL_NEUTRAL,   //!< Zhuyin neutral (5th) tone mark '˙'
-} Zhuyin_Symbol_Id;
+} ZhuyinSymbolId;
 
 /**
  * Total number of support Zhuyin symbols.
@@ -187,45 +189,94 @@ typedef enum {
 /**
  * An array of Zhuyin symbols.
  */
-extern const Zhuyin_Symbol ZHUYIN_SYMBOL_LIST[];
+extern const ZhuyinSymbol ZHUYIN_SYMBOL_LIST[];
 
 
 /**
- * @defgroup PinYin_Display_Flags Pinyin display flags.
+ * @defgroup Pinyin_Format_Flags Pinyin format flags.
  * @{
- * @name Pinyin display flags.
+ * @name Pinyin format flags.
  *
- * These define the regex pattern and out format for Pinyin related field
- * importing.
- * The input string  must be normalized as NFD.
+ * These bitwise flags specify the pinyin string output format.
+ * There are various way to represent Hanyu pinyin, 
+ * some employ combining accent mark to represent certain phonemes and tones, 
+ * some use alternate symbols for those phonemes and tones for easier input.
+ * See #PinyinAccentFormat for widely adopted format.
+ *
+ *
+ * @see PinyinAccentFormat
  * @{
  */
-#define PINYIN_STRIP_E
-#define PINYIN_STRIP_U
+/**
+ * Data structure for Pinyin format flags.
+ */
+typedef guint PinyinFormatFlags;
+
+/**
+ * Flag for removing trivial accents.
+ *
+ * This flag indicate that trivial accents, that is, combining circumflex '^' (U+0302) 
+ * or diaeresis accent '‥' (U+0302) which are omissible, should be stripped.
+ */
+#define PINYIN_FORMAT_FLAG_STRIP_TRIVIAL_ACCENT 0x1 
+#define PINYIN_FORMAT_FLAG_STRIP_DIAERESIS	0x2  //!< Flag for forcedly removing combining diaeresis  '‥' (U+0302) from ü.
+#define PINYIN_FORMAT_FLAG_NFD			0x4  //!< Flag Decompose into Normalized form D (NFD).
+/**
+ * Flag for forcedly showing in ASCII symbols.
+ *
+ * With this flag, ü is outputted as v, and ê is as E.
+ * If \s PINYIN_FORMAT_FLAG_NFD is also set, 
+ * diaeresis  '‥' (U+0302) is converted to ':';
+ * while circumflex '^' (U+0302) is converted.
+ */
+#define PINYIN_FORMAT_FLAG_ASCII_ONLY		0x8  //!< Show only ASCII symbol, ü is outputted as v, and ê is as E,
+                                         
+/**
+ * Flag for showing tone as accent.
+ *
+ * By default the tone is represented as trailing number of 
+ * With this flag, ü is outputted as v, and ê is as E.
+ * If \s PINYIN_FORMAT_FLAG_NFD is also set, 
+ * diaeresis  '‥' (U+0302) is converted to ':';
+ * while circumflex '^' (U+0302) is converted.
+ */
+#define PINYIN_FORMAT_FLAG_TONE_AS_ACCENT		0x10
+
+/**
+ * Flag for stripping the trivial (5-th) tone.
+ */
+#define PINYIN_FORMAT_FLAG_STRIP_TRIVIAL_TONE		0x20
+
 /**
  * @}
  * @}
  */
 
 /**
- * Enumeration of Pinyin accent (not tone mark) handling modes.
+ * @name Pinyin format flags.
+ * Enumeration of Pinyin accent (not tone mark) formats.
  *
- * There are two Pinyin symbols with accents, diaeresis U (Ü,ㄩ), and circumflex E (Ê,ㄝ) .
- * As the their pronunciations are different from U and E.
+ * There are two Pinyin symbols with accents, diaeresis u (ü,ㄩ), and circumflex e (ê,ㄝ) .
+ * As the their pronunciations are different from u and e.
  *
  * In Romanization of Chinese (ISO 7098:1991), under certain circumstances,
- * accents can be omitted, such as JÜ -&gt; JU , QÜ -&gt;QU. This is adopted in PRC education system.
+ * accents can be omitted, such as jü -&gt; ju , qü -&gt;qu. This is adopted in PRC education system.
  * Use PINYIN_ACCENT_ORIGINAL for this purpose.
  *
- * Unihan project does not have circumflex E (Ê), the other is same with ISO 7098.
- * Use PINYIN_ACCENT_UNIHAN for Unihan project.
+ * Unihan does not have circumflex e (ê), otherwise it is same with ISO 7098.
+ * Use PINYIN_ACCENT_UNIHAN for Unihan.
  *
- * Because Ü is not on most of the keyboards, there are various ways to represent Ü.
- * For example, CEDICT use U: (PINYIN_ACCENT_TRAILING); while most of Chinese
- * input method use V as substitute (PINYIN_ACCENT_INPUT_METHOD).
+ * Because ü is not on most of the keyboards, there are various ways to represent ü.
+ * For example, CEDICT use u: (PINYIN_ACCENT_TRAILING); while most of Chinese
+ * input method use v as substitute (PINYIN_ACCENT_INPUT_METHOD).
  *
- * In English documents such as passport, the accent are usually ignores, use 
+ * In English documents such as passport, the accent are usually stripped, use 
  * PINYIN_ACCENT_NONE for this purpose. 
+ *
+ * libUnihan itself uses #PINYIN_ACCENT_INTERNAL to store pinyin.
+ * It converts ü to v, and ê to E. By doing so, the pinyin strings can be easily processed by
+ * legacy string functions as the strings are all in ASCII, yet carry over all phonetic information
+ * for Pinyin and Zhuyin manipulation.
  *
  * Preserving accents unconditionally makes conversion and education easier, 
  * use PINYIN_ACCENT_ALWAYS for this purpose.
@@ -234,15 +285,18 @@ extern const Zhuyin_Symbol ZHUYIN_SYMBOL_LIST[];
  * See pinyin_convert_accent_format() pinyin tone mark handling.
  *
  * @see pinyin_convert_accent_format()
+ * @{
  */
 typedef enum{
-    PINYIN_ACCENT_ALWAYS,   //!< Ü is always represented as Ü, Ê is always represented as Ê. 
-    PINYIN_ACCENT_ORIGINAL, //!< MOE CN standard ISO 7098:1991.
-    PINYIN_ACCENT_UNIHAN,   //!< Ü is represented as Ü, Ê is represented as E.
-    PINYIN_ACCENT_TRAILING, //!< Ü is represented as U:, Ê is represented as E.
-    PINYIN_ACCENT_INPUT_METHOD,  //!< Ü is represented as V, Ê is represented as E.
-    PINYIN_ACCENT_NONE      //!< Ü is represented as U, Ê is represented as E.
-} Pinyin_Accent_Format;
+    PINYIN_ACCENT_ALWAYS,   //!< ü is always represented as ü, ê is always represented as ê. 
+    PINYIN_ACCENT_ORIGINAL, //!< MOE CN standard ISO 7098:1991. Trivial accent mark is omitted.
+    PINYIN_ACCENT_UNIHAN,   //!< ü is represented as ü, ê is represented as e.
+    PINYIN_ACCENT_TRAILING, //!< ü is represented as u:, ê is represented as e.
+    PINYIN_ACCENT_INPUT_METHOD,  //!< ü is represented as v, ê is represented as e.
+    PINYIN_ACCENT_NONE,      //!< ü is represented as u, ê is represented as e.
+    PINYIN_ACCENT_INTERNAL  //!< ü is represented as v, ê is represented as E.
+} PinyinAccentFormat;
+/* @} */
 
 
 /**
@@ -266,7 +320,7 @@ typedef enum{
     ZHUYIN_TONEMARK_ORIGINAL,   //!< Neutral (fifth) tone mark is put in the front, while the first tone mark is omitted.
     ZHUYIN_TONEMARK_INPUT_METHOD,  //!< Neutral (fifth) tone mark is put in the front, while the first tone mark is omitted.
     ZHUYIN_TONEMARK_NUMERICAL,  //!< Tone mark are represented as numerical, in the end of Zhuyin.
-} Zhuyin_ToneMark_Format;
+} ZhuyinToneMarkFormat;
 
 
 /*==========================================================
@@ -276,13 +330,14 @@ typedef enum{
 /**
  * New a Pinyin instance.
  *
- * This function allocate a new Pinyin instance.
- * Non pinyin_str will be copied to the newly allocated Pinyin instance and
- * converted to uppercase.
+ * This function allocates a new Pinyin instance.
+ * If \c pinyin_str is given, it will be copied to the newly allocated Pinyin instance.
  * Note that the Pinyin instance only hold #PINYIN_MAX_LENGTH bytes, 
  * including the EOL ('\0') character. Longer pinyin will be truncated.
  *
- * Note: use g_free to free the newly allocated instance.
+ * \note From libUnihan 1.0, pinyin_new() no longer convert \c pinyin_str to upper case.
+ *
+ * Use free() or g_free() to free the newly allocated instance.
  *
  * @param pinyin_str the Pinyin in string, NULL for blank instance.
  * @return new Pinyin instances.
@@ -335,22 +390,46 @@ guint pinyin_strip_tone(Pinyin* pinyin);
  */
 void pinyin_add_tone(Pinyin* pinyin, guint tone, gboolean useTrailNumber);
 
+
 /**
- * Convert a Pinyin to new accent formatReturn a newly allocated Pinyin instance which contains the converted content.
+ * Convert pinyin to new format.
+ * Return a newly allocated Pinyin instance which contains the converted content.
  *
- * Unlike pinyin_get_tone() and pinyin_strip_tone() which only identify the explicit-specified tone,
- * this function treats the unspecified tone as 5th tone,  unless SQL
- * wild characters '%' and '_' are encountered. 
+ * This function converts pinyin to new accent format and return the result as a newly allocated pinyin instance.
+ * Unlike pinyin_get_tone() and pinyin_strip_tone(), 
+ * it treats the toneless pinyin as if it is in neutral (5-th) tone, 
+ * unless SQL wild characters '%' and '_' also present.
  *
- * Use g_free to free the newly allocated instance.
+ * Use free() or g_free() to free the newly allocated instance.
+ *
+ *
+ * @param pinyin the Pinyin to be converted.
+ * @param formatFlags Pinyin Format Flags.
+ * @return a newly allocated converted Pinyin instance.
+ * @see zhuyin_to_pinyin()
+ * @see PinyinFormatFlags
+ * @see pinyin_convert_accent_format()
+ */
+Pinyin *pinyin_convert_format(const Pinyin *pinyin, PinyinFormatFlags formatFlags);
+
+/**
+ * Convert pinyin to new accent format.
+ *
+ * This function performs exactly the same with pinyin_convert_format()
+ * except this function accepts PinyinAccentFormat and a boolean value as arguments.
+ *
+ * Use free() or g_free() to free the newly allocated instance.
  *
  * @param pinyin the Pinyin to be converted.
  * @param toFormat the Pinyin accent mode to be converted to.
- * @param useTrailNumber TRUE trailing number is preferred, FALSE to use traditional tonemark.
+ * @param useTrailNumber TRUE to present tone as  trailing number, FALSE to present tone as combining accent.
  * @return a newly allocated converted Pinyin instance.
  * @see zhuyin_to_pinyin()
+ * @see PinyinAccentFormat
+ * @see pinyin_convert_format()
  */
-Pinyin *pinyin_convert_accent_format(const Pinyin *pinyin, Pinyin_Accent_Format toFormat, gboolean useTrailNumber);
+Pinyin *pinyin_convert_accent_format(const Pinyin *pinyin, PinyinAccentFormat toFormat, gboolean useTrailNumber);
+
 
 
 /**
@@ -361,7 +440,7 @@ Pinyin *pinyin_convert_accent_format(const Pinyin *pinyin, Pinyin_Accent_Format 
  * @return a newly located Zhuyin instance.
  * @see zhuyin_convert_toneMark_format()
  */
-Zhuyin *pinyin_to_zhuyin(const Pinyin* pinyin, Zhuyin_ToneMark_Format toFormat);
+Zhuyin *pinyin_to_zhuyin(const Pinyin* pinyin, ZhuyinToneMarkFormat toFormat);
 
 /*==========================================================
  * Zhuyin functions.
@@ -428,7 +507,7 @@ guint zhuyin_strip_tone(Zhuyin* zhuyin);
  * @param tone the tone to be added.
  * @param toFormat the Zhuyin tone mark mode to be converted to.
  */
-void zhuyin_add_tone(Zhuyin* zhuyin, guint tone, Zhuyin_ToneMark_Format toFormat);
+void zhuyin_add_tone(Zhuyin* zhuyin, guint tone, ZhuyinToneMarkFormat toFormat);
 
 /**
  * Convert zhuyin to another tone mark format.
@@ -444,18 +523,18 @@ void zhuyin_add_tone(Zhuyin* zhuyin, guint tone, Zhuyin_ToneMark_Format toFormat
  * @return the newly allocated Zhuyin instance that 
  * @see pinyin_to_zhuyin()
  */
-Zhuyin *zhuyin_convert_toneMark_format(const Zhuyin* zhuyin, Zhuyin_ToneMark_Format toFormat);
+Zhuyin *zhuyin_convert_toneMark_format(const Zhuyin* zhuyin, ZhuyinToneMarkFormat toFormat);
 
 /**
  * Zhuyin to Pinyin
  *
  * @param zhuyin the Zhuyin to be converted.
  * @param toFormat the Pinyin accent mode.
- * @param useTrailNumber TRUE trailing number is preferred, FALSE to use traditional tonemark.
+ * @param useTrailNumber TRUE to present tone as  trailing number, FALSE to present tone as combining accent.
  * @return a newly located Pinyin instance.
  * @see pinyin_convert_accent_format()
  */
-Pinyin *zhuyin_to_pinyin(const Zhuyin* zhuyin, Pinyin_Accent_Format toFormat, gboolean useTrailNumber);
+Pinyin *zhuyin_to_pinyin(const Zhuyin* zhuyin, PinyinAccentFormat toFormat, gboolean useTrailNumber);
 
 
 /*----------------------------------------------------------
@@ -469,7 +548,7 @@ Pinyin *zhuyin_to_pinyin(const Zhuyin* zhuyin, Pinyin_Accent_Format toFormat, gb
  * @param id Zhuyin symbol Id.
  * @return the corresponding symbol, or 0 if the id is negative.
  */
-Zhuyin_Symbol zhuyin_Symbol_from_id(Zhuyin_Symbol_Id id);
+ZhuyinSymbol zhuyinSymbol_from_id(ZhuyinSymbolId id);
 
 
 /**
@@ -478,7 +557,7 @@ Zhuyin_Symbol zhuyin_Symbol_from_id(Zhuyin_Symbol_Id id);
  * @param zSym  Zhuyin symbol.
  * @return the corresponding Id.
  */
-Zhuyin_Symbol_Id zhuyin_Symbol_get_id(Zhuyin_Symbol zSym);
+ZhuyinSymbolId zhuyinSymbol_get_id(ZhuyinSymbol zSym);
 
 /**
  * Whether the zhuyin symbol is an initial.
@@ -486,7 +565,7 @@ Zhuyin_Symbol_Id zhuyin_Symbol_get_id(Zhuyin_Symbol zSym);
  * @param zSym  Zhuyin symbol.
  * @return TRUE if the zhuyin symbol is an initial, FALSE otherwise.
  */
-gboolean zhuyin_Symbol_is_initial(Zhuyin_Symbol zSym);
+gboolean zhuyinSymbol_is_initial(ZhuyinSymbol zSym);
 
 /**
  * Whether the zhuyin symbol is an medial.
@@ -494,7 +573,7 @@ gboolean zhuyin_Symbol_is_initial(Zhuyin_Symbol zSym);
  * @param zSym  Zhuyin symbol.
  * @return TRUE if the zhuyin symbol is an medial, FALSE otherwise.
  */
-gboolean zhuyin_Symbol_is_medial(Zhuyin_Symbol zSym);
+gboolean zhuyinSymbol_is_medial(ZhuyinSymbol zSym);
 
 /**
  * Whether the zhuyin symbol is an final.
@@ -502,7 +581,7 @@ gboolean zhuyin_Symbol_is_medial(Zhuyin_Symbol zSym);
  * @param zSym  Zhuyin symbol.
  * @return TRUE if the zhuyin symbol is an final, FALSE otherwise.
  */
-gboolean zhuyin_Symbol_is_final(Zhuyin_Symbol zSym);
+gboolean zhuyinSymbol_is_final(ZhuyinSymbol zSym);
 
 /**
  * Whether the zhuyin symbol is either a toneMark or number which indicates the tone.
@@ -510,7 +589,7 @@ gboolean zhuyin_Symbol_is_final(Zhuyin_Symbol zSym);
  * @param zSym  Zhuyin symbol.
  * @return TRUE if the zhuyin symbol is either a toneMark or number which indicates the tone, FALSE otherwise.
  */
-gboolean zhuyin_Symbol_is_tone(Zhuyin_Symbol zSym);
+gboolean zhuyinSymbol_is_tone(ZhuyinSymbol zSym);
 
 /**
  * Return the tone id of given tone mark.
@@ -518,7 +597,7 @@ gboolean zhuyin_Symbol_is_tone(Zhuyin_Symbol zSym);
  * @param zSym  Zhuyin symbol.
  * @return tone id if zSym is tone mark, 0 otherwise.
  */
-guint zhuyin_Symbol_to_toneMark_id(Zhuyin_Symbol zSym);
+guint zhuyinSymbol_to_toneMark_id(ZhuyinSymbol zSym);
 
 /**
  * Return the tone mark of given tone id.
@@ -526,7 +605,7 @@ guint zhuyin_Symbol_to_toneMark_id(Zhuyin_Symbol zSym);
  * @param toneMark_id  toneMark_id.
  * @return the Zhuyin symbol if id is between 1 to 5; returns 0 otherwise.
  */
-Zhuyin_Symbol zhuyin_Symbol_from_toneMark_id(guint toneMark_id);
+ZhuyinSymbol zhuyinSymbol_from_toneMark_id(guint toneMark_id);
 
 /**
  * Pinyin convert accent format scalar function for SQL command call.

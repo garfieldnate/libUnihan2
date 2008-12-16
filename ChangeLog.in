@@ -4,6 +4,7 @@
   + UNIHAN_FIELD_RADICAL_IS_SIMPLIFIED "radical_is_simplified" .
   + UNIHAN_FIELD_PINYIN_BASE "pinYin_base".
   + UNIHAN_FIELD_PINYIN_TONE "pinYin_tone".
+
 - New functions:
   file_functions.h: lsDir().
   unihan.h: unihanDb_get_all_fields().
@@ -26,6 +27,7 @@
 
 
 - Changed Functions:
+  + Pinyin/Zhuyin function normalizes strings as NFD by default, there are flags to change the behavior nevertheless.
   + The behavior of unihanDb_open_default() and unihan_open() has changed:
     now unihanDb_open() opens the user-defined cache and the db it mentions;
     while unihanDb_open_default() opens the system cache and the db it mentions.

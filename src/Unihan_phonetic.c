@@ -31,7 +31,7 @@
 #include "Unihan_phonetic.h"
 
 
-const Zhuyin_Symbol ZHUYIN_SYMBOL_LIST[ZHUYIN_SYMBOL_COUNT]={
+const ZhuyinSymbol ZHUYIN_SYMBOL_LIST[ZHUYIN_SYMBOL_COUNT]={
     0x3105,   // "ㄅ"
     0x3106,   // "ㄆ"
     0x3107,   // "ㄇ"
@@ -101,11 +101,11 @@ const Zhuyin_Symbol ZHUYIN_SYMBOL_LIST[ZHUYIN_SYMBOL_COUNT]={
 #define PHONEME_FLAG_HAS_WILDCHAR	1 << 21
 
 typedef struct{
-    Zhuyin_Symbol zhuyin_symbol;
+    ZhuyinSymbol zhuyin_symbol;
     guint phonemeFlags;
-} Zhuyin_Symbol_Properties;
+} ZhuyinSymbol_Properties;
 
-const Zhuyin_Symbol_Properties ZHUYIN_SYMBOL_PROPERTIES[]={
+const ZhuyinSymbol_Properties ZHUYIN_SYMBOL_PROPERTIES[]={
     {0x3105, PHONEME_FLAG_HAS_INITIAL},   // "ㄅ"
     {0x3106, PHONEME_FLAG_HAS_INITIAL},   // "ㄆ"
     {0x3107, PHONEME_FLAG_HAS_INITIAL},   // "ㄇ"
@@ -155,13 +155,13 @@ const Zhuyin_Symbol_Properties ZHUYIN_SYMBOL_PROPERTIES[]={
 /**
  * Struct of Pinyin-Zhuyin conversion rule.
  *
- * This struct shows a conversion rule between Zhuyin_Symbol
+ * This struct shows a conversion rule between ZhuyinSymbol
  * and Pinyin Phoneme.
  *
  */
 typedef struct {
     const char  *pinyin_phoneme; //<! Pinyin phoneme.
-    Zhuyin_Symbol zhuyin_symbol;   //<! Zhuyin.
+    ZhuyinSymbol zhuyin_symbol;   //<! Zhuyin.
     guint mask;             //<! The bits to be compare. (with AND)
     guint match;            //<! The masked bits should be exactly the same with match, or the rule will not be applied.
     guint location;
@@ -170,9 +170,9 @@ typedef struct {
 
 
 const P_Z_Rule P_Z_RULES[]={
-    {"zhI",  0x3113, PHONEME_FLAG_HAS_MEDIAL | PHONEME_FLAG_HAS_FINAL, 0}, // "ㄓ"
-    {"chI",  0x3114, PHONEME_FLAG_HAS_MEDIAL | PHONEME_FLAG_HAS_FINAL, 0}, // "ㄔ"
-    {"shI",  0x3115, PHONEME_FLAG_HAS_MEDIAL | PHONEME_FLAG_HAS_FINAL, 0}, // "ㄕ"
+    {"zhi",  0x3113, PHONEME_FLAG_HAS_MEDIAL | PHONEME_FLAG_HAS_FINAL, 0}, // "ㄓ"
+    {"chi",  0x3114, PHONEME_FLAG_HAS_MEDIAL | PHONEME_FLAG_HAS_FINAL, 0}, // "ㄔ"
+    {"shi",  0x3115, PHONEME_FLAG_HAS_MEDIAL | PHONEME_FLAG_HAS_FINAL, 0}, // "ㄕ"
     {"ri",   0x3116, PHONEME_FLAG_HAS_MEDIAL | PHONEME_FLAG_HAS_FINAL, 0}, // "ㄖ"
     {"zi",   0x3117, PHONEME_FLAG_HAS_MEDIAL | PHONEME_FLAG_HAS_FINAL, 0}, // "ㄗ"
     {"ci",   0x3118, PHONEME_FLAG_HAS_MEDIAL | PHONEME_FLAG_HAS_FINAL, 0}, // "ㄘ"
@@ -216,7 +216,7 @@ const P_Z_Rule P_Z_RULES[]={
 	PHONEME_FLAG_HAS_FINAL_G, 
 	PHONEME_FLAG_HAS_INITIAL | PHONEME_FLAG_HAS_FINAL_G}, // "ㄨ"
     {"u",    0x3128, PHONEME_FLAG_HAS_INITIAL | PHONEME_FLAG_HAS_Y, PHONEME_FLAG_HAS_INITIAL}, // "ㄨ"
-    {"ü",    0x3129, PHONEME_FLAG_HAS_INITIAL, PHONEME_FLAG_HAS_INITIAL},  // "ㄩ"
+    {"v",    0x3129, PHONEME_FLAG_HAS_INITIAL, PHONEME_FLAG_HAS_INITIAL},  // "ㄩ"
     /* for *ㄨㄥ */
     {"eng",  0x3125, PHONEME_FLAG_HAS_INITIAL | PHONEME_FLAG_HAS_MEDIAL | PHONEME_FLAG_HAS_W, PHONEME_FLAG_HAS_MEDIAL | PHONEME_FLAG_HAS_W }, // "ㄥ"
     {"eng",  0x3125, PHONEME_FLAG_HAS_MEDIAL, 0}, // "ㄥ"
@@ -253,6 +253,13 @@ const P_Z_Rule P_Z_RULES[]={
     {"_",    0x005F, 0, 0}, // "_"
     {"%",    0x0025, 0, 0}, // "%"
     {NULL, 0, 0, 0}
+};
+
+const gunichar PINYIN_COMBINING_TONED_ACCENTS[4]={
+    0x0304,	// combining macron, 1st tone.
+    0x0301,     // combining acute accent, 2nd tone.
+    0x030C,	// combining caron, 3rd tone.
+    0x0300,	// combining grave accent, 4th tone.
 };
 
 
@@ -314,6 +321,63 @@ const gunichar *PINYIN_TONEMARKS[6]={
     U_DIAERESIS_TONEMARKS
 };
 
+Pinyin *pinyin_new_normalized(const char *pinyin_str){
+    Pinyin *pinyin;
+    gboolean hasUpperCase=FALSE;
+    gboolean hasLowerCase=FALSE;
+    gboolean has_y=FALSE;
+    gboolean has_u=FALSE;
+    gboolean has_v=FALSE;
+    gboolean has_i=FALSE;
+    gboolean has_e=FALSE;
+
+    pinyin=NEW_ARRAY_INSTANCE(PINYIN_MAX_LENGTH,char);
+    initString(pinyin);
+    if (!isEmptyString(pinyin_str)){
+	pinyin=g_utf8_normalize(pinyin_str,PINYIN_MAX_LENGTH,G_NORMALIZE_NFD);
+	int i,items_written;
+	gunichar *uniStr=g_utf8_to_ucs4_fast(pinyin, -1 , &items_written);
+	gunichar uniCh,uniCh_prev,uniCh_next;
+	for(i=0;i<items_written;i++){
+	    uniCh=uniStr[i];
+	    uniCh_prev=(i>0)? uniStr[i-1] : 0;
+	    uniCh_next=(i<items_written-1)? uniStr[i+1] : 0;
+	    switch(uniCh){
+		case E:
+		case e:
+		    if (!uniCh_prev && !uniCh_next){
+			/* Single e, no change case */
+
+
+			continue;
+		    }
+		case Y:
+		    uniCh='y';
+		case y:
+		    has
+		    caae y
+			case U
+	    }
+
+	    uniStr
+	}
+
+    }
+    return pinyin;
+
+
+    initString(pinyin);
+
+    if (isEmptyString(pinyin_str)){
+	pinyin=NEW_ARRAY_INSTANCE(PINYIN_MAX_LENGTH,char);
+	initString(pinyin);
+    }else{
+	pinyin=g_strdup(pinyin_str,PINYIN_MAX_LENGTH);
+    }
+    return pinyin_result;
+}
+
+
 
 Pinyin *pinyin_new(const char *pinyin_str){
     Pinyin *pinyin;
@@ -321,10 +385,11 @@ Pinyin *pinyin_new(const char *pinyin_str){
 	pinyin=NEW_ARRAY_INSTANCE(PINYIN_MAX_LENGTH,char);
 	initString(pinyin);
     }else{
-	pinyin=g_utf8_strup(pinyin_str,PINYIN_MAX_LENGTH);
+	pinyin=g_strdup(pinyin_str,PINYIN_MAX_LENGTH);
     }
     return pinyin;
 }
+
 
 static gboolean uniChar_tone_mark_lookup(gunichar uniChar, int *i, int *j, int depth){
     for (*i=0;*i<6;(*i)++){
@@ -424,43 +489,60 @@ static guint pinyin_scan_fingerPrint(gunichar *uniStr){
 	}
 	switch(uniStr[i]){
 	    case 'W':
+	    case 'w':
 		flags |= PHONEME_FLAG_HAS_MEDIAL | PHONEME_FLAG_HAS_W;
 		break;
 	    case 'V':
+	    case 'v':
+	    case 0xDC:   // 'Ü'
+	    case 0xFC:   // 'ü'
 		flags |= PHONEME_FLAG_HAS_U_DIAERESIS | PHONEME_FLAG_HAS_MEDIAL;
 		break;
 	    case 0xCA:  // 'Ê'
+	    case 0xEA:  // 'ê'
 		flags |= PHONEME_FLAG_HAS_E_CIRCUMFLEX | PHONEME_FLAG_HAS_FINAL;
 		break;
 	    case 'Y':
+	    case 'y':
 		flags |= PHONEME_FLAG_HAS_Y | PHONEME_FLAG_HAS_MEDIAL;
 		break;
 	    case 'L':
+	    case 'l':
 		flags |= PHONEME_FLAG_HAS_LN | PHONEME_FLAG_HAS_INITIAL;
 		break;
 	    case 'N':
+	    case 'n':
 		if (i>0)
 		    flags |= PHONEME_FLAG_HAS_FINAL_N | PHONEME_FLAG_HAS_FINAL;
 		else 
 		    flags |= PHONEME_FLAG_HAS_LN | PHONEME_FLAG_HAS_INITIAL;
 		break;
 	    case 'J':
+	    case 'j':
 	    case 'Q':
+	    case 'q':
 	    case 'X':
+	    case 'x':
 		flags |= PHONEME_FLAG_HAS_JQX | PHONEME_FLAG_HAS_INITIAL;
 		break;
 	    case 'Z':
+	    case 'z':
 	    case 'C':
+	    case 'c':
 	    case 'S':
+	    case 's':
 	    case 'R':
+	    case 'r':
 		if (i==0)
 		    flags |= PHONEME_FLAG_HAS_ZCSR | PHONEME_FLAG_HAS_INITIAL;
 		break;
 	    case 'H':
+	    case 'h':
 		if (i==0)
 		    flags |= PHONEME_FLAG_HAS_INITIAL;
 		break;
 	    case 'G':
+	    case 'g':
 		if (i>0)
 		    /* HAS_FINAL already */
 		    flags |= PHONEME_FLAG_HAS_FINAL_G;
@@ -718,7 +800,86 @@ void pinyin_add_tone(Pinyin* pinyin, guint tone, gboolean useTrailNumber){
     g_strlcpy(pinyin,pinyin_tmp,PINYIN_MAX_LENGTH);
 }
 
-Pinyin *pinyin_convert_accent_format(const Pinyin* pinyin, Pinyin_Accent_Format toFormat, gboolean useTrailNumber){
+static guint pinyin_strip_and_convert_to_internal_format(Pinyin *pinyin){
+    guint tone;
+
+
+
+}
+
+Pinyin *pinyin_convert_format(const Pinyin *pinyin, PinyinFormatFlags formatFlags){
+    glong i,items_written;
+    Pinyin *pinyin_result=pinyin_new(pinyin);
+    guint tone=pinyin_strip_tone(pinyin_result);
+    gunichar *uniStr=g_utf8_to_ucs4_fast(pinyin_result, -1 , &items_written);
+    initString(pinyin_result);
+    gboolean hasWildChar=FALSE;
+
+    gboolean accentRequired;
+    for(i=0;i<items_written;i++){
+	if (uniChar_is_SQL_wildchar(uniStr[i])){
+	    hasWildChar=TRUE;
+	    utf8_concat_ucs4(pinyin_result,uniStr[i]);
+	} else	if (is_diaeresis_u(uniStr,&i,&accentRequired)){
+	    if (accentRequired){
+		switch(toFormat){
+		    case PINYIN_ACCENT_ALWAYS:
+		    case PINYIN_ACCENT_ORIGINAL:
+		    case PINYIN_ACCENT_UNIHAN:
+			g_strlcat(pinyin_result,"Ü",PINYIN_MAX_LENGTH);
+			break;
+		    case PINYIN_ACCENT_TRAILING:
+			g_strlcat(pinyin_result,"U:",PINYIN_MAX_LENGTH);
+			break;
+		    case PINYIN_ACCENT_INPUT_METHOD:
+			g_strlcat(pinyin_result,"V",PINYIN_MAX_LENGTH);
+			break;
+		    case PINYIN_ACCENT_NONE:
+			g_strlcat(pinyin_result,"U",PINYIN_MAX_LENGTH);
+			break;
+		}
+	    }else{
+		if (toFormat==PINYIN_ACCENT_ALWAYS){
+		    g_strlcat(pinyin_result,"Ü",PINYIN_MAX_LENGTH);
+		}else{
+		    g_strlcat(pinyin_result,"U",PINYIN_MAX_LENGTH);
+		}
+	    }
+	}else if(is_circumflex_e(uniStr,&i,&accentRequired)){
+	    //	    printf("is_circumflex_e=TRUE, accent=%d\n",accentRequired);
+	    if (accentRequired){
+		switch(toFormat){
+		    case PINYIN_ACCENT_ALWAYS:
+		    case PINYIN_ACCENT_ORIGINAL:
+			g_strlcat(pinyin_result,"Ê",PINYIN_MAX_LENGTH);
+			break;
+		    case PINYIN_ACCENT_UNIHAN:
+		    case PINYIN_ACCENT_TRAILING:
+		    case PINYIN_ACCENT_INPUT_METHOD:
+		    case PINYIN_ACCENT_NONE:
+			g_strlcat(pinyin_result,"E",PINYIN_MAX_LENGTH);
+			break;
+		}
+	    }else{
+		if (toFormat==PINYIN_ACCENT_ALWAYS){
+		    g_strlcat(pinyin_result,"Ê",PINYIN_MAX_LENGTH);
+		}else{
+		    g_strlcat(pinyin_result,"E",PINYIN_MAX_LENGTH);
+		}
+	    }
+	}else{
+	    utf8_concat_ucs4(pinyin_result,uniStr[i]);
+	}
+    }
+    if (!hasWildChar && tone==0){
+	pinyin_add_tone(pinyin_result, 5, useTrailNumber);
+    }else{
+	pinyin_add_tone(pinyin_result, tone, useTrailNumber);
+    }
+    return pinyin_result;
+}
+
+Pinyin *pinyin_convert_accent_format(const Pinyin* pinyin, PinyinAccentFormat toFormat, gboolean useTrailNumber){
     glong i,items_written;
     Pinyin *pinyin_result=pinyin_new(pinyin);
     guint tone=pinyin_strip_tone(pinyin_result);
@@ -797,13 +958,13 @@ static const P_Z_Rule *pinyin_find_rule(const char *pinyin_str,guint phonemeFlag
 	if (flags_are_suitable(phonemeFlags, rule->mask, rule->match)){
 //	    printf(" rule->pinyin_phoneme=%s, rule->zhuyin_symbol=%X\n", rule->pinyin_phoneme,  rule->zhuyin_symbol);
 	    if (g_str_has_prefix(pinyin_str,rule->pinyin_phoneme)){
-		if ((pos & PHONEME_FLAG_HAS_INITIAL) && zhuyin_Symbol_is_initial(rule->zhuyin_symbol)){
+		if ((pos & PHONEME_FLAG_HAS_INITIAL) && zhuyinSymbol_is_initial(rule->zhuyin_symbol)){
 		    return rule;
-		}else if ((pos & PHONEME_FLAG_HAS_MEDIAL) && zhuyin_Symbol_is_medial(rule->zhuyin_symbol)){
+		}else if ((pos & PHONEME_FLAG_HAS_MEDIAL) && zhuyinSymbol_is_medial(rule->zhuyin_symbol)){
 		    return rule;
-		}else if ((pos & PHONEME_FLAG_HAS_FINAL) && zhuyin_Symbol_is_final(rule->zhuyin_symbol)){
+		}else if ((pos & PHONEME_FLAG_HAS_FINAL) && zhuyinSymbol_is_final(rule->zhuyin_symbol)){
 		    return rule;
-		}else if ( zhuyin_Symbol_is_tone(rule->zhuyin_symbol)){
+		}else if ( zhuyinSymbol_is_tone(rule->zhuyin_symbol)){
 		    return rule;
 		}
 	    }
@@ -814,7 +975,7 @@ static const P_Z_Rule *pinyin_find_rule(const char *pinyin_str,guint phonemeFlag
 }
 
 
-Zhuyin *pinyin_to_zhuyin(const Pinyin* pinyin, Zhuyin_ToneMark_Format toFormat){
+Zhuyin *pinyin_to_zhuyin(const Pinyin* pinyin, ZhuyinToneMarkFormat toFormat){
     Pinyin *pinyinTmp=pinyin_convert_accent_format(pinyin, PINYIN_ACCENT_ALWAYS,TRUE);
     Zhuyin zhuyinTmp[ZHUYIN_MAX_LENGTH];
     initString(zhuyinTmp);
@@ -829,11 +990,11 @@ Zhuyin *pinyin_to_zhuyin(const Pinyin* pinyin, Zhuyin_ToneMark_Format toFormat){
         // printf("p=%s| *p=%d\n",p,*p);
 	rule=pinyin_find_rule(p,flags,pos);
 	g_assert(rule);
-	if (zhuyin_Symbol_is_initial(rule->zhuyin_symbol)){
+	if (zhuyinSymbol_is_initial(rule->zhuyin_symbol)){
 	    pos &= ~PHONEME_FLAG_HAS_INITIAL;
-	}else if (zhuyin_Symbol_is_medial(rule->zhuyin_symbol)){
+	}else if (zhuyinSymbol_is_medial(rule->zhuyin_symbol)){
 	    pos &= ~(PHONEME_FLAG_HAS_INITIAL | PHONEME_FLAG_HAS_MEDIAL);
-	}else if (zhuyin_Symbol_is_final(rule->zhuyin_symbol)){
+	}else if (zhuyinSymbol_is_final(rule->zhuyin_symbol)){
 	    pos &= ~(PHONEME_FLAG_HAS_INITIAL | PHONEME_FLAG_HAS_MEDIAL | PHONEME_FLAG_HAS_FINAL);
 	}
 	utf8_concat_ucs4(zhuyinTmp,rule->zhuyin_symbol);
@@ -864,7 +1025,7 @@ guint zhuyin_get_tone(const Zhuyin* zhuyin){
     glong i,items_written;
     gunichar *uniStr=g_utf8_to_ucs4_fast(zhuyin, -1 , &items_written);
     for (i=0;i<items_written;i++){
-	toneTmp=zhuyin_Symbol_to_toneMark_id(uniStr[i]);
+	toneTmp=zhuyinSymbol_to_toneMark_id(uniStr[i]);
 	if (toneTmp){
 	    tone=toneTmp;
 	}
@@ -879,7 +1040,7 @@ guint zhuyin_strip_tone(Zhuyin* zhuyin){
     gunichar *uniStr=g_utf8_to_ucs4_fast(zhuyin, -1 , &items_written);
     initString(zhuyin);
     for (i=0;i<items_written;i++){
-	toneTmp=zhuyin_Symbol_to_toneMark_id(uniStr[i]);
+	toneTmp=zhuyinSymbol_to_toneMark_id(uniStr[i]);
 	if (toneTmp){
 	    tone=toneTmp;
 	}else{
@@ -890,7 +1051,7 @@ guint zhuyin_strip_tone(Zhuyin* zhuyin){
     return tone;
 }
 
-void zhuyin_add_tone(Zhuyin* zhuyin, guint tone, Zhuyin_ToneMark_Format toFormat){
+void zhuyin_add_tone(Zhuyin* zhuyin, guint tone, ZhuyinToneMarkFormat toFormat){
     Zhuyin zhuyin_tmp[ZHUYIN_MAX_LENGTH];
     initString(zhuyin_tmp);
     if (tone==5 && toFormat==ZHUYIN_TONEMARK_ORIGINAL){
@@ -901,12 +1062,12 @@ void zhuyin_add_tone(Zhuyin* zhuyin, guint tone, Zhuyin_ToneMark_Format toFormat
 	if (tone>0){
 	    switch (toFormat){
 		case ZHUYIN_TONEMARK_ALWAYS:
-		    utf8_concat_ucs4(zhuyin_tmp,zhuyin_Symbol_from_toneMark_id(tone));
+		    utf8_concat_ucs4(zhuyin_tmp,zhuyinSymbol_from_toneMark_id(tone));
 		    break;
 		case ZHUYIN_TONEMARK_ORIGINAL:
 		case ZHUYIN_TONEMARK_INPUT_METHOD:
 		    if (tone!=1){
-			utf8_concat_ucs4(zhuyin_tmp,zhuyin_Symbol_from_toneMark_id(tone));
+			utf8_concat_ucs4(zhuyin_tmp,zhuyinSymbol_from_toneMark_id(tone));
 		    }else{
 			/* 1st tone omitted */
 		    }
@@ -920,7 +1081,7 @@ void zhuyin_add_tone(Zhuyin* zhuyin, guint tone, Zhuyin_ToneMark_Format toFormat
     g_strlcpy(zhuyin,zhuyin_tmp,ZHUYIN_MAX_LENGTH);
 }
 
-Zhuyin *zhuyin_convert_toneMark_format(const Zhuyin* zhuyin, Zhuyin_ToneMark_Format toFormat){
+Zhuyin *zhuyin_convert_toneMark_format(const Zhuyin* zhuyin, ZhuyinToneMarkFormat toFormat){
     Zhuyin *zhuyin_result=zhuyin_new(zhuyin);
     guint tone=zhuyin_strip_tone(zhuyin_result);
     int i;
@@ -942,33 +1103,33 @@ Zhuyin *zhuyin_convert_toneMark_format(const Zhuyin* zhuyin, Zhuyin_ToneMark_For
 static guint zhuyin_scan_fingerPrint(gunichar *uniStr){
     guint phonemeFlags=0;
     int i;
-    Zhuyin_Symbol_Id zuId;
+    ZhuyinSymbolId zuId;
     
     for(i=0;uniStr[i]!=0;i++){
 	if (uniChar_is_SQL_wildchar(uniStr[i])){
 	    phonemeFlags |= PHONEME_FLAG_HAS_WILDCHAR;
 	}else{
-	    zuId=zhuyin_Symbol_get_id(uniStr[i]);
+	    zuId=zhuyinSymbol_get_id(uniStr[i]);
 	    phonemeFlags |=ZHUYIN_SYMBOL_PROPERTIES[zuId].phonemeFlags;
 	}
     }
     return phonemeFlags;
 }
 
-static const P_Z_Rule *zhuyin_find_rule(Zhuyin_Symbol zSym,guint phonemeFlags,guint pos){
+static const P_Z_Rule *zhuyin_find_rule(ZhuyinSymbol zSym,guint phonemeFlags,guint pos){
     int i=0;
     const P_Z_Rule *rule=&P_Z_RULES[i];
     while(rule!=NULL && rule->pinyin_phoneme!=NULL){
 	if (flags_are_suitable(phonemeFlags, rule->mask, rule->match)){
 	    if (zSym==rule->zhuyin_symbol){
 //                printf(" rule->pinyin_phoneme=%s, rule->zhuyin_symbol=%X\n", rule->pinyin_phoneme,  rule->zhuyin_symbol);
-		if ((pos & PHONEME_FLAG_HAS_INITIAL) && zhuyin_Symbol_is_initial(zSym)){
+		if ((pos & PHONEME_FLAG_HAS_INITIAL) && zhuyinSymbol_is_initial(zSym)){
 		    return rule;
-		}else if ((pos & PHONEME_FLAG_HAS_MEDIAL) && zhuyin_Symbol_is_medial(zSym)){
+		}else if ((pos & PHONEME_FLAG_HAS_MEDIAL) && zhuyinSymbol_is_medial(zSym)){
 		    return rule;
-		}else if ((pos & PHONEME_FLAG_HAS_FINAL) && zhuyin_Symbol_is_final(zSym)){
+		}else if ((pos & PHONEME_FLAG_HAS_FINAL) && zhuyinSymbol_is_final(zSym)){
 		    return rule;
-		}else if (zhuyin_Symbol_is_tone(zSym)){
+		}else if (zhuyinSymbol_is_tone(zSym)){
 		    return rule;
 		}else if (uniChar_is_SQL_wildchar(zSym)){
 		    return rule;
@@ -982,7 +1143,7 @@ static const P_Z_Rule *zhuyin_find_rule(Zhuyin_Symbol zSym,guint phonemeFlags,gu
 }
 
 
-Pinyin *zhuyin_to_pinyin(const Zhuyin* zhuyin, Pinyin_Accent_Format toFormat,gboolean useTrailNumber){
+Pinyin *zhuyin_to_pinyin(const Zhuyin* zhuyin, PinyinAccentFormat toFormat,gboolean useTrailNumber){
     const P_Z_Rule *rule=NULL;
     glong i,items_written;
     Zhuyin *zhuyinTmp=zhuyin_convert_toneMark_format(zhuyin,ZHUYIN_TONEMARK_ALWAYS);
@@ -996,11 +1157,11 @@ Pinyin *zhuyin_to_pinyin(const Zhuyin* zhuyin, Pinyin_Accent_Format toFormat,gbo
 //	printf(" phonemeFlags=%X, pos %X uniStr[%d]=%X\n", phonemeFlags, pos,i,uniStr[i]);
 	rule=zhuyin_find_rule(uniStr[i],phonemeFlags,pos);
 	g_assert(rule);
-	if (zhuyin_Symbol_is_initial(rule->zhuyin_symbol)){
+	if (zhuyinSymbol_is_initial(rule->zhuyin_symbol)){
 	    pos &= ~PHONEME_FLAG_HAS_INITIAL;
-	}else if (zhuyin_Symbol_is_medial(rule->zhuyin_symbol)){
+	}else if (zhuyinSymbol_is_medial(rule->zhuyin_symbol)){
 	    pos &= ~(PHONEME_FLAG_HAS_INITIAL | PHONEME_FLAG_HAS_MEDIAL);
-	}else if (zhuyin_Symbol_is_final(rule->zhuyin_symbol)){
+	}else if (zhuyinSymbol_is_final(rule->zhuyin_symbol)){
 	    pos &= ~(PHONEME_FLAG_HAS_INITIAL | PHONEME_FLAG_HAS_MEDIAL | PHONEME_FLAG_HAS_FINAL);
 	}
 	g_strlcat(pinyinTmp,rule->pinyin_phoneme,PINYIN_MAX_LENGTH);
@@ -1011,13 +1172,13 @@ Pinyin *zhuyin_to_pinyin(const Zhuyin* zhuyin, Pinyin_Accent_Format toFormat,gbo
 }
 
 
-Zhuyin_Symbol zhuyin_Symbol_from_id(Zhuyin_Symbol_Id id){
+ZhuyinSymbol zhuyinSymbol_from_id(ZhuyinSymbolId id){
     if (id<0 || id >= ZHUYIN_SYMBOL_COUNT )
 	return 0;
     return ZHUYIN_SYMBOL_LIST[id];
 }
 
-Zhuyin_Symbol_Id zhuyin_Symbol_get_id(Zhuyin_Symbol zSym){
+ZhuyinSymbolId zhuyinSymbol_get_id(ZhuyinSymbol zSym){
     int j;
     for (j=ZHUYIN_SYMBOL_COUNT-1;j>=0;j--){
 	if (ZHUYIN_SYMBOL_LIST[j]==zSym){
@@ -1027,7 +1188,7 @@ Zhuyin_Symbol_Id zhuyin_Symbol_get_id(Zhuyin_Symbol zSym){
     return ZHUYIN_INVALID_SYMBOL;
 }
 
-gboolean zhuyin_Symbol_is_initial(Zhuyin_Symbol zSym){
+gboolean zhuyinSymbol_is_initial(ZhuyinSymbol zSym){
     if ((zSym>= ZHUYIN_SYMBOL_LIST[ZHUYIN_SYMBOL_B]) &&
 	    (zSym<=ZHUYIN_SYMBOL_LIST[ZHUYIN_SYMBOL_S])){
 	return TRUE;
@@ -1035,7 +1196,7 @@ gboolean zhuyin_Symbol_is_initial(Zhuyin_Symbol zSym){
     return FALSE;
 }
 
-gboolean zhuyin_Symbol_is_medial(Zhuyin_Symbol zSym){
+gboolean zhuyinSymbol_is_medial(ZhuyinSymbol zSym){
     if ((zSym>= ZHUYIN_SYMBOL_LIST[ZHUYIN_SYMBOL_I]) &&
 	    (zSym<=ZHUYIN_SYMBOL_LIST[ZHUYIN_SYMBOL_U_DIAERESIS])){
 	return TRUE;
@@ -1043,7 +1204,7 @@ gboolean zhuyin_Symbol_is_medial(Zhuyin_Symbol zSym){
     return FALSE;
 }
 
-gboolean zhuyin_Symbol_is_final(Zhuyin_Symbol zSym){
+gboolean zhuyinSymbol_is_final(ZhuyinSymbol zSym){
     if ((zSym>= ZHUYIN_SYMBOL_LIST[ZHUYIN_SYMBOL_A]) &&
 	(zSym<=ZHUYIN_SYMBOL_LIST[ZHUYIN_SYMBOL_ER])){
 	return TRUE;
@@ -1052,11 +1213,11 @@ gboolean zhuyin_Symbol_is_final(Zhuyin_Symbol zSym){
 }
 
 
-gboolean zhuyin_Symbol_is_tone(Zhuyin_Symbol zSym){
-    return (zhuyin_Symbol_to_toneMark_id(zSym)==0) ? FALSE : TRUE;
+gboolean zhuyinSymbol_is_tone(ZhuyinSymbol zSym){
+    return (zhuyinSymbol_to_toneMark_id(zSym)==0) ? FALSE : TRUE;
 }
 
-guint zhuyin_Symbol_to_toneMark_id(Zhuyin_Symbol zSym){
+guint zhuyinSymbol_to_toneMark_id(ZhuyinSymbol zSym){
     switch (zSym){
 	case  '1':
 	case  0x02C9:   // "ˉ"
@@ -1079,7 +1240,7 @@ guint zhuyin_Symbol_to_toneMark_id(Zhuyin_Symbol zSym){
     return 0;
 }
 
-Zhuyin_Symbol zhuyin_Symbol_from_toneMark_id(guint toneMark_id){
+ZhuyinSymbol zhuyinSymbol_from_toneMark_id(guint toneMark_id){
     switch (toneMark_id){
 	case 1:
 	    return ZHUYIN_SYMBOL_LIST[ZHUYIN_SYMBOL_1];

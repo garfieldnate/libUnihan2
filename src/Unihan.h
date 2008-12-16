@@ -119,7 +119,7 @@ typedef guint UnihanQueryOption;
  * Get Pinyin format from UnihanQueryOption.
  *
  * @param options A UnihanQueryOption.
- * @return Pinyin_Accent_Format
+ * @return PinyinAccentFormat
  */
 #define UNIHAN_QUERY_OPTION_GET_PINYIN_FORMAT(options) (options & UNIHAN_QUERY_OPTION_PINYIN_FORMAT_MASK) >> 4
 
@@ -127,7 +127,7 @@ typedef guint UnihanQueryOption;
  * Set Pinyin format to UnihanQueryOption.
  *
  * @param options A UnihanQueryOption.
- * @param format Pinyin_Accent_Format.
+ * @param format PinyinAccentFormat.
  */
 #define UNIHAN_QUERY_OPTION_SET_PINYIN_FORMAT(options,format) options |= format << 4
 
@@ -135,7 +135,7 @@ typedef guint UnihanQueryOption;
  * Get Zhuyin format from UnihanQueryOption.
  *
  * @param options A UnihanQueryOption.
- * @return Zhuyin_ToneMark_Format
+ * @return ZhuyinToneMarkFormat
  */
 #define UNIHAN_QUERY_OPTION_GET_ZHUYIN_FORMAT(options) (options & UNIHAN_QUERY_OPTION_ZHUYIN_FORMAT_MASK) >> 8
 
