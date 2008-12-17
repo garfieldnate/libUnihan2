@@ -236,20 +236,19 @@ void stringList_free(StringList *sList){
 //    return rResult;
 //}
 
-#define SUBPATTERN_FLAG_IS_INVALID		0x1
-#define SUBPATTERN_FLAG_IS_DOLLARSIGN		0x2 	//'$'
-#define SUBPATTERN_FLAG_IS_EMPTY		0x4 	//'E'
-#define SUBPATTERN_FLAG_IS_NONEMPTY		0x8 	//'N'
-#define SUBPATTERN_FLAG_IS_UPPERCASE		0x10	//'U'
-#define SUBPATTERN_FLAG_IS_LOWERCASE		0x20	//'L'
-#define SUBPATTERN_FLAG_IS_PLUS			0x40	//'+'
-#define SUBPATTERN_FLAG_IS_MINUS		0x80	//'-'
-#define SUBPATTERN_FLAG_IS_PADDED_LEFT		0x100 	//'P'
-#define SUBPATTERN_FLAG_IS_PADDED_RIGHT		0x200 	//'p'
-#define SUBPATTERN_FLAG_IS_HEXADECIMAL		0x400 	//'X'
-#define SUBPATTERN_FLAG_IS_UTF8			0x800 	//'T'
-#define SUBPATTERN_FLAG_IS_SUBSTRING		0x1000 	//'S'
-#define SUBPATTERN_FLAG_IS_IDENTICAL			0x2000 	//'I'
+#define SUBPATTERN_FLAG_IS_ESCAPED		0x1     //'$' or escaped character
+#define SUBPATTERN_FLAG_IS_EMPTY		0x2 	//'E'
+#define SUBPATTERN_FLAG_IS_NONEMPTY		0x4 	//'N'
+#define SUBPATTERN_FLAG_IS_UPPERCASE		0x8	//'U'
+#define SUBPATTERN_FLAG_IS_LOWERCASE		0x10	//'L'
+#define SUBPATTERN_FLAG_IS_PLUS			0x20	//'+'
+#define SUBPATTERN_FLAG_IS_MINUS		0x40	//'-'
+#define SUBPATTERN_FLAG_IS_PADDED_LEFT		0x80 	//'P'
+#define SUBPATTERN_FLAG_IS_PADDED_RIGHT		0x100 	//'p'
+#define SUBPATTERN_FLAG_IS_HEXADECIMAL		0x200 	//'X'
+#define SUBPATTERN_FLAG_IS_UTF8			0x400 	//'T'
+#define SUBPATTERN_FLAG_IS_SUBSTRING		0x800 	//'S'
+#define SUBPATTERN_FLAG_IS_IDENTICAL		0x1000 	//'I'
 
 typedef enum{
     REGEX_EVAL_STAGE_INIT,
@@ -262,154 +261,146 @@ typedef enum{
 } RegexReplaceStage;
 
 
-/* 
- * Return >=0: index of subpattern
- *         -1: escaped char, not error,
- *         -2: error
- */
-static int string_formatted_output_expand_subSubIndex(const gchar *format, StringList *sList,guint *currPos_ptr, GString *optionStr){
-    char c=format[*currPos_ptr];
-    gboolean hasIndex=FALSE;
-    int subIndex=0;
-    if (c=='\0'){
-	verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_expand_getSubSubIndex(): At character %d: Characters expected after '$'",*currPos_ptr);
-	return -2;
-    }
-    while(isdigit(c)){
-	hasIndex=TRUE;
-	subIndex=subIndex*10+c-'0';
-	c=format[*currPos_ptr++];
-    }
-    if (!hasIndex){
-	/* No index, escaped  */
-	g_string_append_c(optionStr,c);
-	return -1;
-    }
-    if (subIndex>=sList->len){
-	verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_expand_subSubIndex():index %d should be less than the number of string in stringList %d\n",subIndex,sList->len);
-	return -2;
-    }
 
-    g_string_append(optionStr,stringList_index(sList,subIndex));
-    guint currPos=*currPos_ptr--;
-    verboseMsg_print(VERBOSE_MSG_INFO5,"***** string_formatted_output_expand_subSubIndex():currPos=%d\n",currPos);
-    return subIndex;
-}
+typedef struct {
+    int errno;
+    int index;
+    guint statusFlags;
+    gchar *option1;
+    gchar *option2;
+    gchar *option3;
+} FormattedOutputDirective;
+
+static FormattedOutputDirective *formattedOutputDirective_new(){
+    FormattedOutputDirective *directive=NEW_INSTANCE(FormattedOutputDirective);
+    directive->errno=0;
+    directive->index=0;
+    directive->statusFlags=0;
+    directive->option1=directive->option2=directive->option3=NULL;
+    return directive;
+};
+
+static void formattedOutputDirective_free(FormattedOutputDirective* directive){
+    g_free(directive->option1);
+    g_free(directive->option2);
+    g_free(directive->option3);
+    g_free(directive);
+};
+
+static int  string_formatted_combine_expand_directive(
+	GString *strBuf, StringList *sList, int *counter_ptr, FormattedOutputDirective* directive);
 
 /* 
- * Return >=0: index of subpattern
- *         -1: escaped char, not error,
- *         -2: error
+ * errno 0: index of subpattern
+ *       >0: error
  */
-static int string_formatted_output_getSubIndex(const gchar *format, StringList *sList,guint *currPos_ptr, guint *statusFlags_ptr, 
-	gchar **option1_ptr, gchar **option2_ptr, gchar **option3_ptr){
-    int index=0;
-    int subIndex=-1;
-    *statusFlags_ptr=0;
+static FormattedOutputDirective* string_formatted_combine_get_directive(
+	const gchar *format, StringList *sList,guint *currPos_ptr,int *counter_ptr){
+    
     gchar c;
-    gboolean error=FALSE;
     RegexReplaceStage stage=REGEX_EVAL_STAGE_INIT;
     GString *option1Str=NULL;
     GString *option2Str=NULL;
     GString *option3Str=NULL;
-    *option1_ptr=*option2_ptr=*option3_ptr=NULL;
-    verboseMsg_print(VERBOSE_MSG_INFO3,"*** string_formatted_getSubIndex() start\n");
+    verboseMsg_print(VERBOSE_MSG_INFO3,"*** string_formatted_combine_get_directive() start\n");
+    FormattedOutputDirective *directive=formattedOutputDirective_new();
+    FormattedOutputDirective *subDirective=NULL;
+    int ret;
 
     do{
-    
 	c=format[*currPos_ptr];
-	verboseMsg_print(VERBOSE_MSG_INFO4,"**** string_formatted_getSubIndex() stage=%d c=%c(%d)\n",stage,c,c);
+	verboseMsg_print(VERBOSE_MSG_INFO4,
+		"**** string_formatted_combine_get_directive() stage=%d c=%c(%d)\n",stage,c,c);
 	switch(stage){
 	    case REGEX_EVAL_STAGE_INIT:
 		if (c=='\0'){
-		    error=TRUE;
-		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_regex_t_getSubIndex(): At character %d: Characters expected after '$'",*currPos_ptr);
+		    directive->errno=1;
+		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_combine_get_directive(): ");
+		    verboseMsg_print(VERBOSE_MSG_ERROR,"At character %d: Characters expected after '$'",*currPos_ptr);
 		    break;
 		}
 		if (isdigit(c)){
 		    stage=REGEX_EVAL_STAGE_INDEX;
-		    index=c-'0';
+		    directive->index=c-'0';
 		    break;
 		}
 		if (c=='E'){
 		    stage=REGEX_EVAL_STAGE_FLAG;
-		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_EMPTY;
+		    directive->statusFlags |=SUBPATTERN_FLAG_IS_EMPTY;
 		    break;
 		}else if (c=='N'){
 		    stage=REGEX_EVAL_STAGE_FLAG;
-		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_NONEMPTY;
+		    directive->statusFlags |=SUBPATTERN_FLAG_IS_NONEMPTY;
 		    break;
 		}else if (c=='U'){
 		    stage=REGEX_EVAL_STAGE_FLAG;
-		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_UPPERCASE;
+		    directive->statusFlags |=SUBPATTERN_FLAG_IS_UPPERCASE;
 		    break;
 		}else if (c=='L'){
 		    stage=REGEX_EVAL_STAGE_FLAG;
-		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_LOWERCASE;
+		    directive->statusFlags |=SUBPATTERN_FLAG_IS_LOWERCASE;
 		    break;
 		}else if (c=='+'){
 		    stage=REGEX_EVAL_STAGE_FLAG;
-		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_PLUS;
+		    directive->statusFlags |=SUBPATTERN_FLAG_IS_PLUS;
 		    break;
 		}else if (c=='-'){
 		    stage=REGEX_EVAL_STAGE_FLAG;
-		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_MINUS;
+		    directive->statusFlags |=SUBPATTERN_FLAG_IS_MINUS;
 		    break;
 		}else if (c=='P'){
 		    stage=REGEX_EVAL_STAGE_FLAG;
-		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_PADDED_LEFT;
+		    directive->statusFlags |=SUBPATTERN_FLAG_IS_PADDED_LEFT;
 		    break;
 		}else if (c=='p'){
 		    stage=REGEX_EVAL_STAGE_FLAG;
-		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_PADDED_RIGHT;
+		    directive->statusFlags |=SUBPATTERN_FLAG_IS_PADDED_RIGHT;
 		    break;
 		}else if (c=='X'){
 		    stage=REGEX_EVAL_STAGE_FLAG;
-		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_HEXADECIMAL;
+		    directive->statusFlags |=SUBPATTERN_FLAG_IS_HEXADECIMAL;
 		    break;
 		}else if (c=='T'){
 		    stage=REGEX_EVAL_STAGE_FLAG;
-		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_UTF8;
+		    directive->statusFlags |=SUBPATTERN_FLAG_IS_UTF8;
 		    break;
 		}else if (c=='S'){
 		    stage=REGEX_EVAL_STAGE_FLAG;
-		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_SUBSTRING;
+		    directive->statusFlags |=SUBPATTERN_FLAG_IS_SUBSTRING;
 		    break;
 		}else if (c=='I'){
 		    stage=REGEX_EVAL_STAGE_FLAG;
-		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_IDENTICAL;
-		    break;
-		}else if (c=='$'){
-		    stage=REGEX_EVAL_STAGE_DONE;
-		    *statusFlags_ptr |=SUBPATTERN_FLAG_IS_DOLLARSIGN;
+		    directive->statusFlags |=SUBPATTERN_FLAG_IS_IDENTICAL;
 		    break;
 		}
-		error=TRUE;
-		verboseMsg_print(VERBOSE_MSG_ERROR,
-			"string_formatted_output_regex_t_getSubIndex(): At character %d : Invalid flag %c.",
-			*currPos_ptr,c);
+		/* Escaped character */
+		directive->statusFlags |=SUBPATTERN_FLAG_IS_ESCAPED;
+		directive->option1=NEW_ARRAY_INSTANCE(2,gchar);
+		directive->option1[0]=c;
+		directive->option1[1]='\0';
+		stage=REGEX_EVAL_STAGE_DONE;
 		break;
 	    case REGEX_EVAL_STAGE_FLAG:
 		if (c=='\0'){
-		    error=TRUE;
-		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_regex_t_getSubIndex(): No sub pattern index!\n");
+		    directive->errno=1;
+		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_combine_regex_t_getSubIndex(): No sub pattern directive->index!\n");
 		    break;
 		}
 		if (isdigit(c)){
 		    stage=REGEX_EVAL_STAGE_INDEX;
-		    index=index*10+c-'0';
+		    directive->index=directive->index*10+c-'0';
 		    break;
 		}
+		directive->errno=3;
 		verboseMsg_print(VERBOSE_MSG_ERROR,
-			"string_formatted_output_regex_t_getSubIndex(): At character %d : Should only have at most one flag.",
+			"string_formatted_combine_regex_t_getSubIndex(): At character %d : Should only have at most one flag.",
 			*currPos_ptr);
-		error=TRUE;
 		break;
 
 	    case REGEX_EVAL_STAGE_INDEX:
 		if (isdigit(c)){
 		    stage=REGEX_EVAL_STAGE_INDEX;
-		    index=index*10+c-'0';
+		    directive->index=directive->index*10+c-'0';
 		    break;
 		}
 		if (c=='{'){
@@ -433,12 +424,36 @@ static int string_formatted_output_getSubIndex(const gchar *format, StringList *
 		}
 		if (c=='$'){
 		    (*currPos_ptr)++;
-		    subIndex=string_formatted_output_expand_subSubIndex(format, sList,currPos_ptr,option1Str);
-		    if (subIndex<=-2){
-			/* Verbose message already printed in string_formatted_output_expand_subSubIndex() */
-			error=TRUE;
+		    subDirective=string_formatted_combine_get_directive(format, sList, currPos_ptr, counter_ptr);
+		    if (verboseMsg_get_level()>=VERBOSE_MSG_INFO4){
+			verboseMsg_print(VERBOSE_MSG_INFO4,
+				"**** string_formatted_combine_get_directive(): subDirective: ");
+			verboseMsg_print(VERBOSE_MSG_INFO4,"currPos=%d index=%d errno=%d\n",
+				*currPos_ptr,subDirective->index,subDirective->errno);
+				
+			if (subDirective->option1){
+			    verboseMsg_print(VERBOSE_MSG_INFO4," option1=%s",subDirective->option1);
+			}
+			if (subDirective->option2){
+			    verboseMsg_print(VERBOSE_MSG_INFO4," option2=%s",subDirective->option2);
+			}
+			if (subDirective->option3){
+			    verboseMsg_print(VERBOSE_MSG_INFO4," option3=%s",subDirective->option3);
+			}
+			verboseMsg_print(VERBOSE_MSG_INFO4,"\n");
+		    }
+		    if (subDirective->errno>0){
+			formattedOutputDirective_free(subDirective);
+			directive->errno=6;
 			break;
 		    }
+		    ret=string_formatted_combine_expand_directive(option1Str, sList, counter_ptr, subDirective);
+		    formattedOutputDirective_free(subDirective);
+		    if (ret){
+			directive->errno=6;
+			break;
+		    }
+		    (*currPos_ptr)--;
 		    break;
 		}
 		g_string_append_c(option1Str,c);
@@ -458,12 +473,36 @@ static int string_formatted_output_getSubIndex(const gchar *format, StringList *
 		}
 		if (c=='$'){
 		    (*currPos_ptr)++;
-		    subIndex=string_formatted_output_expand_subSubIndex(format, sList,currPos_ptr,option2Str);
-		    if (subIndex<=-2){
-			/* Verbose message already printed in string_formatted_output_expand_subSubIndex() */
-			error=TRUE;
+		    subDirective=string_formatted_combine_get_directive(format, sList, currPos_ptr, counter_ptr);
+		    if (verboseMsg_get_level()>=VERBOSE_MSG_INFO4){
+			verboseMsg_print(VERBOSE_MSG_INFO4,
+				"**** string_formatted_combine_get_directive(): subDirective: ");
+			verboseMsg_print(VERBOSE_MSG_INFO4,"currPos=%d index=%d errno=%d\n",
+				*currPos_ptr,subDirective->index,subDirective->errno);
+
+			if (subDirective->option1){
+			    verboseMsg_print(VERBOSE_MSG_INFO4," option1=%s",subDirective->option1);
+			}
+			if (subDirective->option2){
+			    verboseMsg_print(VERBOSE_MSG_INFO4," option2=%s",subDirective->option2);
+			}
+			if (subDirective->option3){
+			    verboseMsg_print(VERBOSE_MSG_INFO4," option3=%s",subDirective->option3);
+			}
+			verboseMsg_print(VERBOSE_MSG_INFO4,"\n");
+		    }
+		    if (subDirective->errno>0){
+			formattedOutputDirective_free(subDirective);
+			directive->errno=6;
 			break;
 		    }
+		    ret=string_formatted_combine_expand_directive(option2Str, sList, counter_ptr,  subDirective);
+		    formattedOutputDirective_free(subDirective);
+		    if (ret){
+			directive->errno=6;
+			break;
+		    }
+		    (*currPos_ptr)--;
 		    break;
 		}
 		g_string_append_c(option2Str,c);
@@ -479,12 +518,37 @@ static int string_formatted_output_getSubIndex(const gchar *format, StringList *
 		}
 		if (c=='$'){
 		    (*currPos_ptr)++;
-		    subIndex=string_formatted_output_expand_subSubIndex(format, sList,currPos_ptr,option2Str);
-		    if (subIndex<=-2){
-			/* Verbose message already printed in string_formatted_output_expand_subSubIndex() */
-			error=TRUE;
+		    subDirective=string_formatted_combine_get_directive(format, sList, currPos_ptr, counter_ptr);
+		    if (verboseMsg_get_level()>=VERBOSE_MSG_INFO4){
+			verboseMsg_print(VERBOSE_MSG_INFO4,
+				"**** string_formatted_combine_get_directive(): subDirective: ");
+			verboseMsg_print(VERBOSE_MSG_INFO4,"currPos=%d index=%d errno=%d\n",
+				*currPos_ptr,subDirective->index,subDirective->errno);
+
+			if (subDirective->option1){
+			    verboseMsg_print(VERBOSE_MSG_INFO4," option1=%s",subDirective->option1);
+			}
+			if (subDirective->option2){
+			    verboseMsg_print(VERBOSE_MSG_INFO4," option2=%s",subDirective->option2);
+			}
+			if (subDirective->option3){
+			    verboseMsg_print(VERBOSE_MSG_INFO4," option3=%s",subDirective->option3);
+			}
+			verboseMsg_print(VERBOSE_MSG_INFO4,"\n");
+		    }
+		    if (subDirective->errno>0){
+			formattedOutputDirective_free(subDirective);
+			directive->errno=6;
 			break;
 		    }
+		    ret=string_formatted_combine_expand_directive(option3Str, sList, counter_ptr,  subDirective);
+		    formattedOutputDirective_free(subDirective);
+		    if (ret){
+			formattedOutputDirective_free(subDirective);
+			directive->errno=6;
+			break;
+		    }
+		    (*currPos_ptr)--;
 		    break;
 		}
 		g_string_append_c(option3Str,c);
@@ -492,13 +556,24 @@ static int string_formatted_output_getSubIndex(const gchar *format, StringList *
 	    case REGEX_EVAL_STAGE_DONE:
 		break;
 	}
-	if (!error && stage!=REGEX_EVAL_STAGE_DONE){
+	if (directive->errno<=0 && stage!=REGEX_EVAL_STAGE_DONE){
 	    (*currPos_ptr)++;
 	}
-    }while(!error && stage!=REGEX_EVAL_STAGE_DONE);
-    verboseMsg_print(VERBOSE_MSG_INFO3,"*** string_formatted_getSubIndex() stage=%d error=%d\n",stage,error);
-    if (error){
+    }while(directive->errno<=0 && stage!=REGEX_EVAL_STAGE_DONE);
+    verboseMsg_print(VERBOSE_MSG_INFO3,"*** string_formatted_combine_get_directive() stage=%d error=%d\n",
+	    stage,directive->errno);
+    if (!directive->errno){
 	if (option1Str)
+	    directive->option1=g_string_free(option1Str,FALSE);
+
+	if (option2Str)
+	    directive->option2=g_string_free(option2Str,FALSE);
+
+	if (option3Str)
+	    directive->option3=g_string_free(option3Str,FALSE);
+    }else{
+	if (option1Str)
+
 	    g_string_free(option1Str,TRUE);
 
 	if (option2Str)
@@ -506,261 +581,237 @@ static int string_formatted_output_getSubIndex(const gchar *format, StringList *
 
 	if (option3Str)
 	    g_string_free(option3Str,TRUE);
-	verboseMsg_print(VERBOSE_MSG_INFO3,"*** string_formatted_getSubIndex() return -2\n");
-	return -2;
     }
 
-    if (*statusFlags_ptr & SUBPATTERN_FLAG_IS_DOLLARSIGN){
-	if (option1Str)
-	    g_string_free(option1Str,TRUE);
-
-	if (option2Str)
-	    g_string_free(option2Str,TRUE);
-	
-	if (option3Str)
-	    g_string_free(option3Str,TRUE);
-	verboseMsg_print(VERBOSE_MSG_INFO3,"*** string_formatted_getSubIndex() return -1\n");
-	return -1;
+    if (directive->index >=sList->len ){
+	directive->errno=5;
+	verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_combine_get_directive():");
+	verboseMsg_print(VERBOSE_MSG_ERROR,"index %d should be less than the number of string in stringList %d\n",
+		directive->index,sList->len);
     }
 
-    if (option1Str)
-	*option1_ptr=g_string_free(option1Str,FALSE);
-
-    if (option2Str)
-	*option2_ptr=g_string_free(option2Str,FALSE);
-
-    if (option3Str)
-	*option3_ptr=g_string_free(option3Str,FALSE);
-    verboseMsg_print(VERBOSE_MSG_INFO3,"*** string_formatted_getSubIndex() return %d\n",index);
-    return index;
+    return directive;
 }
 
-gchar *string_formatted_output(const gchar *format,StringList *sList,int *counter_ptr){
-    GString *strBuf=g_string_new(NULL);
-
-    int subIndex=0;
-    gunichar ucs4_code;
-    guint j,formatLen=strlen(format);
-    guint statusFlags;
-    gboolean error=FALSE;
-    const gchar *str=NULL;
-    gchar *option1Str=NULL;
-    gchar *option2Str=NULL;
-    gchar *option3Str=NULL;
+/*
+ * Return 0 for success.
+ */
+static int  string_formatted_combine_expand_directive(
+	GString *strBuf, StringList *sList, int *counter_ptr, FormattedOutputDirective* directive){
     gchar *strtolEnd_ptr=NULL;
     gchar *strTmp=NULL;
-    gchar *paddedStr;
+    gchar *paddedStr=NULL;
+
+    const gchar *str=NULL;
     int beginIndex,length;
     gchar buf[MAX_STRING_BUFFER_SIZE];
+    gunichar ucs4_code;
 
-    for(j=0;j<formatLen && (!error);j++){
-	verboseMsg_print(VERBOSE_MSG_INFO3,"*** string_formatted_output():Current strBuf=%s|\n",strBuf->str);
+
+    if (directive->errno){
+	return -1;
+    }
+    if (directive->statusFlags & SUBPATTERN_FLAG_IS_ESCAPED){
+	g_string_append(strBuf,directive->option1);
+	return 0;
+    }
+    str=stringList_index(sList,directive->index);
+    if (isEmptyString(str)){
+	/* This substring is not empty */
+	if (directive->statusFlags & SUBPATTERN_FLAG_IS_EMPTY && directive->option1){
+	    g_string_append(strBuf,directive->option1);
+	}else if (directive->statusFlags & SUBPATTERN_FLAG_IS_NONEMPTY && directive->option2){
+	    g_string_append(strBuf,directive->option2);
+	}
+    }else{
+	/* This substring is not empty */
+	if (directive->statusFlags & SUBPATTERN_FLAG_IS_NONEMPTY){
+	    if (directive->option1)
+		g_string_append(strBuf,directive->option1);
+	}else if (directive->statusFlags & SUBPATTERN_FLAG_IS_EMPTY){
+	    if (directive->option2)
+		g_string_append(strBuf,directive->option2);
+	}else if (directive->statusFlags & SUBPATTERN_FLAG_IS_UPPERCASE){
+	    strTmp=g_utf8_strup(str,-1);
+	    g_string_append(strBuf,strTmp);
+	    g_free(strTmp);
+	}else if (directive->statusFlags & SUBPATTERN_FLAG_IS_LOWERCASE){
+	    strTmp=g_utf8_strdown(str,-1);
+	    g_string_append(strBuf,strTmp);
+	    g_free(strTmp);
+	}else if (directive->statusFlags & SUBPATTERN_FLAG_IS_PADDED_LEFT){
+	    length=(int) strtol(directive->option1,&strtolEnd_ptr,10);
+	    verboseMsg_print(VERBOSE_MSG_INFO4,
+		    "**** string_formatted_combine_expand_directive() SUBPATTERN_FLAG_IS_PADDED_LEFT length=%d\n",
+		    length);
+	    if (strtolEnd_ptr==directive->option1){
+		/* Length is not number! */
+		verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_combine_expand_directive():index %d:  should have an integer number instead of %s\n",directive->index,directive->option1);
+		return 1;
+	    }
+	    if (directive->option2){
+		paddedStr=directive->option2;
+	    }else{
+		paddedStr=" ";
+	    }
+	    strTmp=string_padding_left(str,paddedStr,length);
+	    g_string_append(strBuf,strTmp);
+	    g_free(strTmp);
+	}else if (directive->statusFlags & SUBPATTERN_FLAG_IS_PADDED_RIGHT){
+	    length=(int) strtol(directive->option1,&strtolEnd_ptr,10);
+	    verboseMsg_print(VERBOSE_MSG_INFO4,
+		    "**** string_formatted_combine_expand_directive() SUBPATTERN_FLAG_IS_PADDED_RIGHT length=%d\n",
+		    length);
+	    if (strtolEnd_ptr==directive->option1){
+		/* Length is not number! */
+		verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_combine_expand_directive():index %d:  should have an integer number instead of %s\n",directive->index,directive->option1);
+		return 1;
+	    }
+	    if (directive->option2){
+		paddedStr=directive->option2;
+	    }else{
+		paddedStr=" ";
+	    }
+	    strTmp=string_padding_right(str,paddedStr,length);
+	    g_string_append(strBuf,strTmp);
+	    g_free(strTmp);
+	}else if (directive->statusFlags & SUBPATTERN_FLAG_IS_PLUS && counter_ptr){
+	    g_string_append_printf(strBuf,"%d",++(*counter_ptr));
+	}else if (directive->statusFlags & SUBPATTERN_FLAG_IS_MINUS && counter_ptr){
+	    g_string_append_printf(strBuf,"%d",--(*counter_ptr));
+	}else if (directive->statusFlags & SUBPATTERN_FLAG_IS_HEXADECIMAL){
+	    ucs4_code=(gunichar) strtol(str,&strtolEnd_ptr,10);
+	    verboseMsg_print(VERBOSE_MSG_INFO4,"**** string_formatted_combine_expand_directive() ucs_code=%ld(%X)\n"
+		    ,ucs4_code,ucs4_code);
+	    if (strtolEnd_ptr==str){
+		/* Number string is expected. */
+		verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_combine_expand_directive():index %d:  should have an integer number instead of %s\n",directive->index,str);
+		return 1;
+	    }
+	    g_snprintf(buf,MAX_STRING_BUFFER_SIZE,"%X",ucs4_code);
+	    if (directive->option1){
+		length=(int) strtol(directive->option1,&strtolEnd_ptr,10);
+		if (strtolEnd_ptr==directive->option1){
+		    /* Length is not number! */
+		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_combine_expand_directive():index %d:  should have an integer number instead of %s\n",directive->index,directive->option1);
+		    return 1;
+		}
+		strTmp=string_padding_left(buf,"0",length);
+		g_string_append(strBuf,strTmp);
+		g_free(strTmp);
+	    }else{
+		g_string_append(strBuf,buf);
+	    }
+	}else if (directive->statusFlags & SUBPATTERN_FLAG_IS_UTF8){
+	    ucs4_code=(gunichar) strtol(str,&strtolEnd_ptr,10);
+	    if (strtolEnd_ptr==str){
+		/* Number string is expected. */
+		verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_combine_expand_directive():index %d:  should have an integer number instead of %s\n",directive->index,str);
+		return 1;
+	    }
+	    strTmp=ucs4_to_utf8(ucs4_code);
+	    g_string_append(strBuf,strTmp);
+	    g_free(strTmp);
+	}else if (directive->statusFlags & SUBPATTERN_FLAG_IS_SUBSTRING){
+	    verboseMsg_print(VERBOSE_MSG_INFO4,
+		    "**** string_formatted_combine() SUBPATTERN_FLAG_IS_SUBSTRING\n");
+	    if (directive->option1){
+		beginIndex=(int) strtol(directive->option1,&strtolEnd_ptr,10);
+		if (strtolEnd_ptr==directive->option1){
+		    /* Start is not number! */
+		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_combine_expand_directive():index %d:  should have an integer number instead of %s\n",directive->index,directive->option1);
+		    return 1;
+		}
+	    }else{
+		/* No Start ! */
+		verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_combine_expand_directive():index %d:  should have an integer number as start!\n",directive->index);
+		return 1;
+	    }
+	    if (directive->option2){
+		length=(int) strtol(directive->option2,&strtolEnd_ptr,10);
+		if (strtolEnd_ptr==directive->option2){
+		    /* Length is not number! */
+		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_combine_expand_directive():index %d:  should have an integer number instead of %s\n",directive->index,directive->option2);
+		    return 1;
+		}
+	    }else{
+		length=-1;
+	    }
+	    subString_buffer(buf,str,beginIndex,length);
+	    g_string_append(strBuf,buf);
+	}else if (directive->statusFlags & SUBPATTERN_FLAG_IS_IDENTICAL){
+	    verboseMsg_print(VERBOSE_MSG_INFO4,
+		    "**** string_formatted_combine_expand_directive() SUBPATTERN_FLAG_IS_IDENTICAL\n");
+	    if (!directive->option1){
+		/* No expression ! */
+		verboseMsg_print(VERBOSE_MSG_ERROR,
+			"string_formatted_combine_expand_directive():index %d: flag I require compare_str.\n");
+
+		return 1;
+	    }
+	    if (!directive->option2){
+		/* No true substitute ! */
+		verboseMsg_print(VERBOSE_MSG_ERROR,
+			"string_formatted_combine_expand_directive():index %d: flag I require true substitute\n");
+		return 1;
+	    }
+
+	    if (strcmp(str,directive->option1)==0){
+		g_string_append(strBuf,directive->option2);
+	    }else if (directive->option3){
+		g_string_append(strBuf,directive->option3);
+	    }
+	}else{
+	    g_string_append(strBuf,str);
+	}
+    }
+    return 0;
+}
+
+
+gchar *string_formatted_combine(const gchar *format,StringList *sList,int *counter_ptr){
+    GString *strBuf=g_string_new(NULL);
+
+    int ret;
+    guint j,formatLen=strlen(format);
+    FormattedOutputDirective* directive=NULL;
+
+    for(j=0;j<formatLen;j++){
+	verboseMsg_print(VERBOSE_MSG_INFO3,"*** string_formatted_combine():Current strBuf=%s|\n",strBuf->str);
 	if (format[j]=='$'){
 	    j++;
-	    subIndex=string_formatted_output_getSubIndex(format, sList, &j, &statusFlags,  
-		    &option1Str, &option2Str, &option3Str);
-	    paddedStr=NULL;
+	    directive=string_formatted_combine_get_directive(format, sList, &j, counter_ptr);
 	    if (verboseMsg_get_level()>=VERBOSE_MSG_INFO4){
-		verboseMsg_print(VERBOSE_MSG_INFO4,"**** string_formatted_output(): j=%d, subIndex=%d",j,subIndex);
-		if (option1Str){
-		    verboseMsg_print(VERBOSE_MSG_INFO4," option1Str=%s",option1Str);
+		verboseMsg_print(VERBOSE_MSG_INFO4,"**** string_formatted_combine(): directive:");
+		verboseMsg_print(VERBOSE_MSG_INFO4,"j=%d index=%d errno=%d\n",
+			j,directive->index,directive->errno);
+		if (directive->option1){
+		    verboseMsg_print(VERBOSE_MSG_INFO4," option1=%s",directive->option1);
 		}
-		if (option2Str){
-		    verboseMsg_print(VERBOSE_MSG_INFO4," option2Str=%s",option2Str);
+		if (directive->option2){
+		    verboseMsg_print(VERBOSE_MSG_INFO4," option2=%s",directive->option2);
 		}
-		if (option3Str){
-		    verboseMsg_print(VERBOSE_MSG_INFO4," option3Str=%s",option3Str);
+		if (directive->option3){
+		    verboseMsg_print(VERBOSE_MSG_INFO4," option3=%s",directive->option3);
 		}
 		verboseMsg_print(VERBOSE_MSG_INFO4,"\n");
 	    }
-	    if (subIndex>=0){
-		if (subIndex>=sList->len){
-		    error=TRUE;
-		    verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output():index %d should be less than the number of string in stringList %d\n",subIndex,sList->len);
-		    break;
-		}
-		str=stringList_index(sList,subIndex);
-		if (isEmptyString(str)){
-		    /* This substring is not empty */
-		    if (statusFlags & SUBPATTERN_FLAG_IS_EMPTY && option1Str){
-			g_string_append(strBuf,option1Str);
-		    }else if (statusFlags & SUBPATTERN_FLAG_IS_NONEMPTY && option2Str){
-			g_string_append(strBuf,option2Str);
-		    }
-		}else{
-		    /* This substring is not empty */
-		    if (statusFlags & SUBPATTERN_FLAG_IS_NONEMPTY){
-			if (option1Str)
-			    g_string_append(strBuf,option1Str);
-		    }else if (statusFlags & SUBPATTERN_FLAG_IS_EMPTY){
-			if (option2Str)
-			    g_string_append(strBuf,option2Str);
-		    }else if (statusFlags & SUBPATTERN_FLAG_IS_UPPERCASE){
-			strTmp=g_utf8_strup(str,-1);
-			g_string_append(strBuf,strTmp);
-			g_free(strTmp);
-		    }else if (statusFlags & SUBPATTERN_FLAG_IS_LOWERCASE){
-			strTmp=g_utf8_strdown(str,-1);
-			g_string_append(strBuf,strTmp);
-			g_free(strTmp);
-		    }else if (statusFlags & SUBPATTERN_FLAG_IS_PADDED_LEFT){
-			length=(int) strtol(option1Str,&strtolEnd_ptr,10);
-			verboseMsg_print(VERBOSE_MSG_INFO4,
-				"**** string_formatted_output() SUBPATTERN_FLAG_IS_PADDED_LEFT length=%d\n",
-				length);
-			if (strtolEnd_ptr==option1Str){
-			    /* Length is not number! */
-			    error=TRUE;
-			    verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_regex_t():index %d:  should have an integer number instead of %s\n",subIndex,option1Str);
-			    break;
-			}
-			if (option2Str){
-			    paddedStr=option2Str;
-			}else{
-			    paddedStr=" ";
-			}
-			strTmp=string_padding_left(str,paddedStr,length);
-			g_string_append(strBuf,strTmp);
-			g_free(strTmp);
-		    }else if (statusFlags & SUBPATTERN_FLAG_IS_PADDED_RIGHT){
-			length=(int) strtol(option1Str,&strtolEnd_ptr,10);
-			verboseMsg_print(VERBOSE_MSG_INFO4,
-				"**** string_formatted_output() SUBPATTERN_FLAG_IS_PADDED_RIGHT length=%d\n",
-				length);
-			if (strtolEnd_ptr==option1Str){
-			    /* Length is not number! */
-			    error=TRUE;
-			    verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_regex_t():index %d:  should have an integer number instead of %s\n",subIndex,option1Str);
-			    break;
-			}
-			if (option2Str){
-			    paddedStr=option2Str;
-			}else{
-			    paddedStr=" ";
-			}
-			strTmp=string_padding_right(str,paddedStr,length);
-			g_string_append(strBuf,strTmp);
-			g_free(strTmp);
-		    }else if (statusFlags & SUBPATTERN_FLAG_IS_PLUS && counter_ptr){
-			g_string_append_printf(strBuf,"%d",++(*counter_ptr));
-		    }else if (statusFlags & SUBPATTERN_FLAG_IS_MINUS && counter_ptr){
-			g_string_append_printf(strBuf,"%d",--(*counter_ptr));
-		    }else if (statusFlags & SUBPATTERN_FLAG_IS_HEXADECIMAL){
-				ucs4_code=(gunichar) strtol(str,&strtolEnd_ptr,10);
-			verboseMsg_print(VERBOSE_MSG_INFO4,"**** string_formatted_output() ucs_code=%ld(%X)\n"
-				,ucs4_code,ucs4_code);
-			if (strtolEnd_ptr==str){
-			    /* Number string is expected. */
-			    error=TRUE;
-			    verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_regex_t():index %d:  should have an integer number instead of %s\n",subIndex,str);
-			    break;
-			}
-			g_snprintf(buf,MAX_STRING_BUFFER_SIZE,"%X",ucs4_code);
-			if (option1Str){
-			    length=(int) strtol(option1Str,&strtolEnd_ptr,10);
-			    if (strtolEnd_ptr==option1Str){
-				/* Length is not number! */
-				error=TRUE;
-				verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_regex_t():index %d:  should have an integer number instead of %s\n",subIndex,option1Str);
-				break;
-			    }
-			    strTmp=string_padding_left(buf,"0",length);
-			    g_string_append(strBuf,strTmp);
-			    g_free(strTmp);
-			}else{
-			    g_string_append(strBuf,buf);
-			}
-		    }else if (statusFlags & SUBPATTERN_FLAG_IS_UTF8){
-			ucs4_code=(gunichar) strtol(str,&strtolEnd_ptr,10);
-			if (strtolEnd_ptr==str){
-			    /* Number string is expected. */
-			    error=TRUE;
-			    verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_regex_t():index %d:  should have an integer number instead of %s\n",subIndex,str);
-			    break;
-			}
-			strTmp=ucs4_to_utf8(ucs4_code);
-			g_string_append(strBuf,strTmp);
-			g_free(strTmp);
-		    }else if (statusFlags & SUBPATTERN_FLAG_IS_SUBSTRING){
-			verboseMsg_print(VERBOSE_MSG_INFO4,
-				"**** string_formatted_output() SUBPATTERN_FLAG_IS_SUBSTRING\n");
-			if (option1Str){
-			    beginIndex=(int) strtol(option1Str,&strtolEnd_ptr,10);
-			    if (strtolEnd_ptr==option1Str){
-				/* Start is not number! */
-				error=TRUE;
-				verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_regex_t():index %d:  should have an integer number instead of %s\n",subIndex,option1Str);
-				break;
-			    }
-			}else{
-			    /* No Start ! */
-			    error=TRUE;
-			    verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_regex_t():index %d:  should have an integer number as start!\n",subIndex);
-			    break;
-			}
-			if (option2Str){
-			    length=(int) strtol(option2Str,&strtolEnd_ptr,10);
-			    if (strtolEnd_ptr==option2Str){
-				/* Length is not number! */
-				error=TRUE;
-				verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_output_regex_t():index %d:  should have an integer number instead of %s\n",subIndex,option2Str);
-				break;
-			    }
-			}else{
-			    length=-1;
-			}
-			subString_buffer(buf,str,beginIndex,length);
-			g_string_append(strBuf,buf);
-		    }else if (statusFlags & SUBPATTERN_FLAG_IS_IDENTICAL){
-			verboseMsg_print(VERBOSE_MSG_INFO4,
-				"**** string_formatted_output() SUBPATTERN_FLAG_IS_IDENTICAL\n");
-			if (!option1Str){
-			    /* No expression ! */
-			    error=TRUE;
-			    verboseMsg_print(VERBOSE_MSG_ERROR,
-				    "string_formatted_output_regex_t():index %d: flag I require compare_str\n");
-			    break;
-			}
-			if (!option2Str){
-			    /* No true substitute ! */
-			    error=TRUE;
-			    verboseMsg_print(VERBOSE_MSG_ERROR,
-				    "string_formatted_output_regex_t():index %d: flag I require true substitute\n");
-			    break;
-			}
-
-			if (strcmp(str,option1Str)==0){
-			    g_string_append(strBuf,option2Str);
-			}else if (option3Str){
-			    g_string_append(strBuf,option3Str);
-			}
-		    }else{
-			g_string_append(strBuf,str);
-		    }
-		}
-		j--;
-		if (option1Str)
-		    g_free(option1Str);
-		if (option2Str)
-		    g_free(option2Str);
-		if (option3Str)
-		    g_free(option3Str);
-	    }else if (subIndex==-1){
-		/* Dollar sign */
-		g_string_append_c(strBuf,'$');
-	    }else{
-		/* replace pattern error */
-		error=TRUE;
-		break;
+	    if (directive->errno>0){
+		formattedOutputDirective_free(directive);
+		g_string_free(strBuf,TRUE);
+		return NULL;
 	    }
+	    ret=string_formatted_combine_expand_directive(strBuf, sList, counter_ptr,  directive);
+	    formattedOutputDirective_free(directive);
+	    if (ret){
+		g_string_free(strBuf,TRUE);
+		return NULL;
+	    }
+	    j--;
 	}else{
 	    /* Normal character */
 	    g_string_append_c(strBuf,format[j]);
 	}
-    }
-    if (error){
-	g_string_free(strBuf,TRUE);
-	return NULL;
     }
     return g_string_free(strBuf,FALSE);
     
@@ -779,7 +830,7 @@ static gchar *string_get_matched_substring(const gchar *str, regmatch_t *pmatch,
     return result;
 }
 
-gchar *string_regex_formatted_output_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
+gchar *string_regex_formatted_combine_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
 	int eflags, int *counter_ptr){
     guint nmatch=preg->re_nsub+1;
     regmatch_t *pmatch=NEW_ARRAY_INSTANCE(nmatch,regmatch_t);
@@ -803,12 +854,12 @@ gchar *string_regex_formatted_output_regex_t(const gchar *str, const regex_t *pr
 	    g_free(strTmp);
 	}
     }
-    gchar *result=string_formatted_output(format,sList,counter_ptr);
+    gchar *result=string_formatted_combine(format,sList,counter_ptr);
     stringList_free(sList);
     return result;
 }
 
-gchar *string_regex_formatted_output(const gchar *str, const gchar *pattern, const gchar *format, 
+gchar *string_regex_formatted_combine(const gchar *str, const gchar *pattern, const gchar *format, 
 	int cflags, int eflags, int *counter_ptr){
 
 
@@ -819,11 +870,11 @@ gchar *string_regex_formatted_output(const gchar *str, const gchar *pattern, con
 	/* Invalid pattern */
 	char buf[MAX_STRING_BUFFER_SIZE];
 	regerror(ret,&preg,buf,MAX_STRING_BUFFER_SIZE);
-	verboseMsg_print(VERBOSE_MSG_ERROR, "string_formatted_output():Invalid pattern %s\n"
+	verboseMsg_print(VERBOSE_MSG_ERROR, "string_formatted_combine():Invalid pattern %s\n"
 		,buf);
 	return NULL;
     }
-    gchar *result=string_regex_formatted_output_regex_t(str, &preg, format, eflags, counter_ptr);
+    gchar *result=string_regex_formatted_combine_regex_t(str, &preg, format, eflags, counter_ptr);
     regfree(&preg);
     return result;
 }
@@ -848,7 +899,7 @@ gchar *string_regex_replace_regex_t(const gchar *str, const regex_t *preg, const
 	g_string_append_c(strBuf,str[i]);
     }
 
-    gchar *evalStr=string_regex_formatted_output_regex_t(str, preg, format, eflags, counter_ptr);
+    gchar *evalStr=string_regex_formatted_combine_regex_t(str, preg, format, eflags, counter_ptr);
     
     if (evalStr){
 	g_string_append(strBuf,evalStr);
@@ -880,7 +931,7 @@ gchar *string_regex_replace(const gchar *str, const gchar *pattern, const gchar 
 		,buf);
 	return NULL;
     }
-    gchar *result=string_regex_formatted_output_regex_t(str, &preg, format, eflags, counter_ptr);
+    gchar *result=string_regex_formatted_combine_regex_t(str, &preg, format, eflags, counter_ptr);
     regfree(&preg);
     return result;
 }

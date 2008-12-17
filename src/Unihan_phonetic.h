@@ -67,6 +67,25 @@ typedef char Zhuyin;
  */
 typedef char Pinyin;
 
+/**
+ * Syllable holds transcription and tone.
+ *
+ * Syllable contains a unit of organization for a sequence of speech sounds. 
+ * In libUnihan, it contains a toneless-transcription and a tone.
+ *
+ * A transcription is a sequence of phonemes that represents sounds.
+ * Unlike Pinyin that stores various format, transcription store only
+ * the internal format, such as PINYIN_ACCENT_INTERNAL.
+ * This makes conversion to/from other Pinyin or Zhuyin easier.
+ *
+ * A tone notates the pitch contour. Valid values for Mandarin are 1-5,
+ * where 0 if tone is not given.
+ *
+ */
+typedef struct{
+    char *transcription;  //!< A phonemes that represents sounds. Can be Pinyin or Zhuyin.
+    guint tone;		  //!< Notation of pitch contour.
+} Syllable;
 
 /**
  * @defgroup Pinyin_Regex Regex pattern and output format for Pinyin importing.
@@ -81,46 +100,62 @@ typedef char Pinyin;
 /**
  * Regex pattern for tone accent mark.
  */
-#define PINYIN_TONE_ACCENTS  "((\xCC\x84)?(\xCC\x81)?(\xCC\x8C)?(\xCC\x80)?)?"
+#define PINYIN_REGEX_IMPORT_TONE_ACCENTS  "((\xCC\x84)?(\xCC\x81)?(\xCC\x8C)?(\xCC\x80)?)?" // 13-17
 
-#define PINYIN_TEST_JQXY "(([JjQqXx])?([Yy])?)?"
-#define PINYIN_TEST_Y "((([JjQqXxYy])[UuVv](\xCC\x88)?)([Ee](\xCC\x82)?)?)?"
+#define PINYIN_REGEX_IMPORT_TEST_JQXY "(([JjQqXx])?([Yy])?)?"             // 2-4
+#define PINYIN_REGEX_IMPORT_TEST_INITIAL "("  PINYIN_REGEX_IMPORT_TEST_JQXY\
+    "([b-df-hk-npr-twzB-DF-HK-NPR-TWZ]*))"             // 1-5
+#define PINYIN_REGEX_IMPORT_TEST_IUVE  "(([Ii])?([Uu]\xCC\x88|[Vv]|[Uu]:)?([Uu])?)?"\
+    "([Ee]\xCC\x82|[Ee]\\^)?([Ee])?" // 6-9 10-11
 /**
  * Regex pattern for tone accents.
  */
-#define PINYIN_REGEX PINYIN_TEST_JQXY "([b-df-hk-npr-twzB-DF-HK-NPR-TWZ]*)([Ii])?([Uu](\xCC\x88)?)?([Vv])?([Ee](\xCC\x82)?)?([aeiouAEIOU]*)?" PINYIN_TONE_ACCENTS "([a-zA-Z]*)([1-5])?"
+#define PINYIN_REGEX_IMPORT PINYIN_REGEX_IMPORT_TEST_INITIAL \
+    PINYIN_REGEX_IMPORT_TEST_IUVE "([aeiouAEIOU]*)" \
+    PINYIN_REGEX_IMPORT_TONE_ACCENTS "([ginoruGINORU]*)([1-5])?"
 
+
+#define PINYIN_SUBSTITUTE_E "$N11{$N6{E,$E1{$E12{$E18{$11,e},e},e}}}"
 /**
  * Pinyin pattern substitute (store format). Pinyin fields are stored as \c PINYIN_ACCENT_INTERNAL, without tone accent mark or number.
  */
-#define PINYIN_PATTERN_SUBSTITUTE "$L1$N2{yv}$L3$N4{v}$N5{iE}$N6{vE}$L7$L13"
-/**
- * Pinyin tone number pattern substitute (store format).
- */
-#define PINYIN_TONE_PATTERN_SUBSTITUTE "$14"
+#define PINYIN_SUBSTITUTE "$L1$L7$N8{v}$N9{$N2{v,u}}$N10{E}" \
+    PINYIN_SUBSTITUTE_E "$L12$L18"
+
 /**
  * Pinyin tone accent mark pattern substitute (store format).
  */
-#define PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE "$E8{5}$N9{1}$N10{2}$N11{3}$N12{4}"
+#define PINYIN_SUBSTITUTE_TONE_ACCENT "$E13{$E19{5}}$N14{1}$N15{2}$N16{3}$N17{4}"
 
+/**
+ * Pinyin tone number pattern substitute (store format).
+ */
+#define PINYIN_SUBSTITUTE_TONE PINYIN_SUBSTITUTE_TONE_ACCENT "$19"
+
+
+
+#define PINYIN_SUBSTITUTE_E_XHC "$N15{$N10{E,$E5{$E16{$E22{$15,e},e},e}}}"
 /**
  * Pinyin pattern substitute (store format) for Xiandai Hanyu Cidian (XHC1983).
  *
- * Similar to \c PINYIN_PATTERN_SUBSTITUTE, but for kXHC1983 only.
+ * Similar to \c PINYIN_SUBSTITUTE, but for kXHC1983 only.
  */
-#define PINYIN_PATTERN_SUBSTITUTE_XHC "$L5$N6{yv}$L7$N8{v}$N8{iE}$N10{vE}$L11$L17"
-/**
- * Pinyin tone number pattern substitute (store format) for Xiandai Hanyu Cidian (XHC1983).
- *
- * Similar to \c PINYIN_TONE_PATTERN_SUBSTITUTE, but for kXHC1983 only.
- */
-#define PINYIN_TONE_PATTERN_SUBSTITUTE_XHC "$18"
+#define PINYIN_SUBSTITUTE_XHC "$L5$L11$N12{v}$N13{$N6{v,u}}$N14{E}" \
+    PINYIN_SUBSTITUTE_E_XHC "$L16$L22"
+
 /**
  * Pinyin tone accent mark pattern substitute (store format) for Xiandai Hanyu Cidian (XHC1983).
  *
- * Similar to \c PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE, but for kXHC1983 only.
+ * Similar to \c PINYIN_SUBSTITUTE_TONE_ACCENT, but for kXHC1983 only.
  */
-#define PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE_XHC "$E12{5}$N13{1}$N14{2}$N15{3}$N16{4}"
+#define PINYIN_SUBSTITUTE_TONE_ACCENT_XHC "$E17{$E23{5}}$N18{1}$N19{2}$N20{3}$N21{4}"
+
+/**
+ * Pinyin tone number pattern substitute (store format) for Xiandai Hanyu Cidian (XHC1983).
+ *
+ * Similar to \c PINYIN_SUBSTITUTE_TONE, but for kXHC1983 only.
+ */
+#define PINYIN_SUBSTITUTE_TONE_XHC PINYIN_SUBSTITUTE_TONE_ACCENT_XHC "$23"
 /**
  * @}
  * @}
@@ -327,6 +362,14 @@ typedef enum{
 
 
 /*==========================================================
+ * Syllable functions.
+ */
+
+Syllable *syllable_new_pinyin(const Pinyin *pinyin_str);
+
+void syllable_free(Syllable *syl);
+
+/*==========================================================
  * Pinyin functions.
  */
 
@@ -444,6 +487,32 @@ Pinyin *pinyin_convert_accent_format(const Pinyin *pinyin, PinyinAccentFormat to
  * @see zhuyin_convert_toneMark_format()
  */
 Zhuyin *pinyin_to_zhuyin(const Pinyin* pinyin, ZhuyinToneMarkFormat toFormat);
+
+/**
+ * Initialize all pinyin related regex expressions for subsequent search.
+ *
+ * This function compiles regex expressions into forms that are
+ *   suitable for subsequent regexec() searches.
+ *
+ * @return 0 if success; otherwise return the error code of reg_comp().
+ */
+int pinyin_regex_t_init();
+
+/**
+ * Combine sub-matches of a pinyin regex import search into a specified format.
+ *
+ * This function used the compiled pinyin regex import expression, #PINYIN_REGEX_IMPORT,
+ * for search, then matched sub patterns are combined as specified in \a format.
+ * 
+ *
+ * @param str String to be searched.
+ * @param format Format of the output string.
+ * @return An newly allocated combined string, or NULL if no match or have error.
+ * @see PINYIN_REGEX_IMPORT
+ */
+gchar *pinyin_regex_import_formatted_combine(const gchar *str, const gchar *format);
+
+
 
 /*==========================================================
  * Zhuyin functions.

@@ -54,36 +54,46 @@ RegexEval_DataRec REGEX_EVAL_DATA_SET[]={
     {"[[:alnum:]]*","1-9999","G$0","G1",0},
     {"[[:alnum:]]*","4K","G$0","G4K",0},
     {"([[:alnum:]]*)-(.*)","4K","G$0",NULL,0},
-    {PINYIN_REGEX "\\(([[:digit:]]*)\\)","lüan4(439)",
+    {PINYIN_REGEX_IMPORT "\\(([[:digit:]]*)\\)","lüan4(439)",
 	"$0","lu\xCC\x88""an4(439)",0},
-    {PINYIN_REGEX "\\(([[:digit:]]*)\\)","lun4(439)",
+    {PINYIN_REGEX_IMPORT "\\(([[:digit:]]*)\\)","lun4(439)",
 	"$0","lun4(439)",0},
-    {PINYIN_REGEX "\\(([[:digit:]]*)\\)","lüan4(439)",
-	PINYIN_PATTERN_SUBSTITUTE,"lvan",0},
-    {PINYIN_REGEX "\\(([[:digit:]]*)\\)","lün4(439)",
-	PINYIN_TONE_PATTERN_SUBSTITUTE,"4",0},
-    {PINYIN_REGEX ,"hòu",
-	PINYIN_PATTERN_SUBSTITUTE,"hou",0},
-    {PINYIN_REGEX ,"hòu",
-	PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE,"4",0},
-    {PINYIN_REGEX ,"lǜ",
-	PINYIN_PATTERN_SUBSTITUTE,"lv",0},
-    {PINYIN_REGEX ,"lǜ",
-	PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE,"4",0},
-    {PINYIN_REGEX ,"xie",
-	PINYIN_PATTERN_SUBSTITUTE,"xiE",0},
-    {PINYIN_REGEX ,"xie",
-	PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE,"5",0},
-    {PINYIN_REGEX ,"zhuāng",
-	PINYIN_PATTERN_SUBSTITUTE,"zhuang",0},
-    {PINYIN_REGEX ,"zhuāng",
-	PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE,"1",0},
-    {PINYIN_REGEX ,"YIN2",
-	PINYIN_PATTERN_SUBSTITUTE" $+0","yin 1",0},
-    {PINYIN_REGEX ,"YI2",
-	PINYIN_TONE_PATTERN_SUBSTITUTE" $+0","2 2",0},
-    {PINYIN_REGEX ,"YI1",
-	PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE" $+0","5 3",0},
+    {PINYIN_REGEX_IMPORT "\\(([[:digit:]]*)\\)","lüan4(439)",
+	PINYIN_SUBSTITUTE,"lvan",0},
+    {PINYIN_REGEX_IMPORT "\\(([[:digit:]]*)\\)","lün4(439)",
+	PINYIN_SUBSTITUTE_TONE,"4",0},
+    {PINYIN_REGEX_IMPORT ,"hòu",
+	PINYIN_SUBSTITUTE,"hou",0},
+    {PINYIN_REGEX_IMPORT ,"hòu",
+	PINYIN_SUBSTITUTE_TONE_ACCENT,"4",0},
+    {PINYIN_REGEX_IMPORT ,"lǜ",
+	PINYIN_SUBSTITUTE,"lv",0},
+    {PINYIN_REGEX_IMPORT ,"lǜ",
+	PINYIN_SUBSTITUTE_TONE_ACCENT,"4",0},
+    {PINYIN_REGEX_IMPORT ,"xie",
+	PINYIN_SUBSTITUTE,"xiE",0},
+    {PINYIN_REGEX_IMPORT ,"xie",
+	PINYIN_SUBSTITUTE_TONE_ACCENT,"5",0},
+    {PINYIN_REGEX_IMPORT ,"zhuāng",
+	PINYIN_SUBSTITUTE,"zhuang",0},
+    {PINYIN_REGEX_IMPORT ,"zhuāng",
+	PINYIN_SUBSTITUTE_TONE_ACCENT,"1",0},
+    {PINYIN_REGEX_IMPORT ,"YIN2",
+	PINYIN_SUBSTITUTE " $+0","yin 1",0},
+    {PINYIN_REGEX_IMPORT ,"YI2",
+	PINYIN_SUBSTITUTE_TONE " $+0","2 2",0},
+    {PINYIN_REGEX_IMPORT ,"YI1",
+	PINYIN_SUBSTITUTE_TONE " $+0","1 3",0},
+    {PINYIN_REGEX_IMPORT ,"E2",
+	PINYIN_SUBSTITUTE,"E",0},
+    {PINYIN_REGEX_IMPORT ,"E^2",
+	PINYIN_SUBSTITUTE,"E",0},
+    {PINYIN_REGEX_IMPORT ,"e2",
+	PINYIN_SUBSTITUTE,"e",0},
+    {PINYIN_REGEX_IMPORT ,"e^2",
+	PINYIN_SUBSTITUTE,"E",0},
+    {PINYIN_REGEX_IMPORT ,"Ēr",
+	PINYIN_SUBSTITUTE PINYIN_SUBSTITUTE_TONE,"er1",0},
     {"([[:digit:]]*)\\.([[:digit:]]*)([01])","0526.211",
 	"$1 $2 $3","0526 21 1",0},
     {"([[:digit:]]+)(')?\\.([[:digit:]]+)","75.6",
@@ -100,9 +110,9 @@ RegexEval_DataRec REGEX_EVAL_DATA_SET[]={
 	"$1<$3", "U+5275<kHanYu:TZ",0},
     {"(U\\+[[:xdigit:]]*)<(k[[:alpha:]]*)(:(T?)(B?)(Z?))?","U+5275<kMeyerWempe",
 	"$1 $+0 $2 $N3{1,0} $N4{1,0} $N5{1,0}","U+5275 2 kMeyerWempe 0 0 0",0},
-    {"([[:digit:]]{4})\\.([[:digit:]]{2})([[:digit:]])(\\*)?[^[:space:]]*:" PINYIN_REGEX,
+    {"([[:digit:]]{4})\\.([[:digit:]]{2})([[:digit:]])(\\*)?[^[:space:]]*:" PINYIN_REGEX_IMPORT,
 	"0484.052,0485.021:huà",
-       	"$1 $2 $3 $N4{1,0} $+0 " PINYIN_PATTERN_SUBSTITUTE_XHC " " PINYIN_TONE_ACCENT_PATTERN_SUBSTITUTE_XHC,
+       	"$1 $2 $3 $N4{1,0} $+0 " PINYIN_SUBSTITUTE_XHC " " PINYIN_SUBSTITUTE_TONE_ACCENT_XHC,
 	"0484 05 2 0 1 hua 4",RESET_COUNTER},
     {"([0-9]*)-([0-9]*)-([0-9]*)",
 	"4040-4041-20142",
@@ -158,7 +168,7 @@ int compare_strings(const char *prompt, const char *expect, const char *actual){
  * Start of testing functions.
  */
 
-gboolean test_regex_formatted_output(void *param,DataSet *dataSet){
+gboolean test_regex_formatted_combine(void *param,DataSet *dataSet){
     RegexEval_DataRec *examSet= (RegexEval_DataRec *) dataSet;
     int n,ret;
     int j;
@@ -192,12 +202,12 @@ gboolean test_regex_formatted_output(void *param,DataSet *dataSet){
 	    printf("\n");
 	}
 
-	g_snprintf(buf,MAX_STRING_BUFFER_SIZE,"string_regex_formatted_output(%s,%s,%s,%X,%X,&(%d))\n",
+	g_snprintf(buf,MAX_STRING_BUFFER_SIZE,"string_regex_formatted_combine(%s,%s,%s,%X,%X,&(%d))\n",
 		str_normalized, pattern, format, REG_EXTENDED, 0, counter);
 	if (examSet[n].options & RESET_COUNTER){
 	    counter=0;
 	}
-	actualResult=string_regex_formatted_output(str_normalized, pattern, format, REG_EXTENDED, 0, &counter);
+	actualResult=string_regex_formatted_combine(str_normalized, pattern, format, REG_EXTENDED, 0, &counter);
 
 	ret=compare_strings(buf,examSet[n].output,actualResult);
 	if(str_normalized){
@@ -218,7 +228,7 @@ gboolean test_regex_formatted_output(void *param,DataSet *dataSet){
  */
 
 TestStruct TEST_COLLECTION[]={
-    {"regex eval functions",NULL,REGEX_EVAL_DATA_SET, test_regex_formatted_output},
+    {"regex eval functions",NULL,REGEX_EVAL_DATA_SET, test_regex_formatted_combine},
     {NULL,NULL, NULL, NULL},
 };
 

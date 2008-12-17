@@ -31,6 +31,8 @@
 #include "Unihan_phonetic.h"
 
 
+regex_t pinyin
+
 const ZhuyinSymbol ZHUYIN_SYMBOL_LIST[ZHUYIN_SYMBOL_COUNT]={
     0x3105,   // "ㄅ"
     0x3106,   // "ㄆ"
@@ -262,6 +264,15 @@ const gunichar PINYIN_COMBINING_TONED_ACCENTS[4]={
     0x0300,	// combining grave accent, 4th tone.
 };
 
+const gunichar ZHUYIN_TONED_SYMBOLS[5]={
+    0x02C9,	// "ˉ", 1st tone.
+    0x02CA,     // "ˊ", 2nd tone.
+    0x02C7,	// "ˇ", 3rd tone.
+    0x02CB,	// "ˋ", 4th tone.
+    0x02D9,     // "˙", 5th tone
+};
+
+
 
 const gunichar A_TONEMARKS[5]={
     0x0100,  // "Ā"
@@ -315,70 +326,51 @@ const gunichar U_DIAERESIS_TONEMARKS[5]={
 const gunichar *PINYIN_TONEMARKS[6]={
     A_TONEMARKS,
     E_TONEMARKS,
-    I_TONEMARKS,
+        Pinyin *pinyin=NEW_ARRAY_INSTANCE(PINYIN_MAX_LENGTH,char);
+    initString(pinyin);
+I_TONEMARKS,
     O_TONEMARKS,
     U_TONEMARKS,
     U_DIAERESIS_TONEMARKS
 };
 
-Pinyin *pinyin_new_normalized(const char *pinyin_str){
-    Pinyin *pinyin;
-    gboolean hasUpperCase=FALSE;
-    gboolean hasLowerCase=FALSE;
-    gboolean has_y=FALSE;
-    gboolean has_u=FALSE;
-    gboolean has_v=FALSE;
-    gboolean has_i=FALSE;
-    gboolean has_e=FALSE;
 
-    pinyin=NEW_ARRAY_INSTANCE(PINYIN_MAX_LENGTH,char);
-    initString(pinyin);
+/*==========================================================
+ * Syllable functions.
+ */
+
+Syllable *syllable_new_pinyin(const Pinyin *pinyin_str){
+    Syllable *syl=NEW_INSTANCE(Syllable);
+    Pinyin *pinyin=NULL;
+    int tone=0;
     if (!isEmptyString(pinyin_str)){
-	char *pinyin_tmp=g_utf8_normalize(pinyin_str,PINYIN_MAX_LENGTH,G_NORMALIZE_NFD);
-	
-
-	int i,items_written;
-	gunichar *uniStr=g_utf8_to_ucs4_fast(pinyin, -1 , &items_written);
-	gunichar uniCh,uniCh_prev,uniCh_next;
-	for(i=0;i<items_written;i++){
-	    uniCh=uniStr[i];
-	    switch(uniCh){
-
-		case E:
-		case e:
-		    if (!uniCh_prev && !uniCh_next){
-			/* Single e, no change case */
-			utf8_concat_ucs4(pinyin,uniCh);
-			continue;
-		    }else if (uniCh_prev==''{
-		    }
-		case Y:
-		    uniCh='y';
-		case y:
-		    has
-		    caae y
-			case U
-	    }
-
-	    uniStr
+	pinyin=g_utf8_normalize(pinyin_str,PINYIN_MAX_LENGTH,G_NORMALIZE_NFD);
+	g_assert(pinyin);
+	gchar *pinyin_tmp=pinyin_regex_import_formatted_combine(pinyin,PINYIN_SUBSTITUTE);
+	gchar *toneStr=pinyin_regex_import_formatted_combine(pinyin,PINYIN_SUBSTITUTE_TONE);
+	tone=atoi(toneStr);
+	if (pinyin_tmp){
+	    g_strlcpy(pinyin,pinyin_tmp,PINYIN_MAX_LENGTH);
 	}
-
-    }
-    return pinyin;
-
-
-    initString(pinyin);
-
-    if (isEmptyString(pinyin_str)){
+    }else{
 	pinyin=NEW_ARRAY_INSTANCE(PINYIN_MAX_LENGTH,char);
 	initString(pinyin);
-    }else{
-	pinyin=g_strdup(pinyin_str,PINYIN_MAX_LENGTH);
     }
-    return pinyin_result;
+    syl->transcription=pinyin;
+    syl->tone=tone
+	return syl;
 }
 
+void syllable_free(Syllable *syl){
+    g_free(syl->transcription);
+    g_free(syl);
+}
 
+/*==========================================================
+ * Pinyin functions.
+ */
+
+	
 
 Pinyin *pinyin_new(const char *pinyin_str){
     Pinyin *pinyin;
@@ -413,6 +405,25 @@ static gboolean uniChar_is_vowel(gunichar uniChar, int *i, int *j){
 static gboolean uniChar_has_toneMark(gunichar uniChar, int *i, int *j){
     return uniChar_tone_mark_lookup(uniChar, i, j, 4);
 }
+
+static guint uniChar_get_tone(gunichar uniChar){
+    int i;
+    if (uniChar>='1' && uniChar<='9'){
+	return uniChar-'0';
+    }
+    for(i=0;i<4;i++){
+	if (PINYIN_COMBINING_TONED_ACCENTS[i]==uniChar){
+	    return i+1;
+	}
+    }
+    for(i=0;i<5;i++){
+	if (ZHUYIN_TONED_SYMBOLS[i]==uniChar){
+	    return i+1;
+	}
+    }
+    return 0;
+}
+
 
 static gboolean uniChar_is_SQL_wildchar(gunichar uniChar){
     switch(uniChar){
@@ -672,59 +683,54 @@ gboolean is_circumflex_e(gunichar *uniStr, glong *index, gboolean *accentRequire
 }
 
 gboolean pinyin_has_tone(const Pinyin* pinyin){
-    glong i,items_written;
-    gunichar *uniStr=g_utf8_to_ucs4_fast(pinyin, -1 , &items_written);
-    gboolean result=FALSE;
-    int j,k;
-    for (i=0;i<items_written;i++){
-	if (uniChar_has_toneMark(uniStr[i],&j,&k)){
-	    result=TRUE;
-	    break;
-	}
-	if (g_unichar_isdigit(uniStr[i])){
-	    result=TRUE;
-	    break;
-	}
+    if (pinyin_get_tone(pinyin)){
+	return TRUE;
     }
-    g_free(uniStr);
-    return result;
+    return FALSE;
 }
 
 guint pinyin_get_tone(const Pinyin* pinyin){
+    Pinyin* pinyin_norm=g_utf8_normalize(pinyin_str,PINYIN_MAX_LENGTH,G_NORMALIZE_NFD);
     guint tone=0;
     glong i,items_written;
-    int j,k;
-    gunichar *uniStr=g_utf8_to_ucs4_fast(pinyin, -1 , &items_written);
+    gunichar *uniStr=g_utf8_to_ucs4_fast(pinyin_norm, -1 , &items_written);
     for (i=0;i<items_written;i++){
-	if (uniChar_has_toneMark(uniStr[i],&j,&k)){
-	    tone=k+1;
-	    break;
-	}else if (g_unichar_isdigit(uniStr[i])){
-	    tone=uniStr[i]-'0';
-	    break;
+	tone =uniChar_get_tone(uniStr[i]);
+	if (tone){
+	   break;
 	}
     }
+    g_free(pinyin_norm);
     g_free(uniStr);
     return tone;
 }
 
 guint pinyin_strip_tone(Pinyin* pinyin){
+    Pinyin* pinyin_norm=g_utf8_normalize(pinyin,PINYIN_MAX_LENGTH,G_NORMALIZE_NFD);
     guint tone=0;
     glong i,items_written;
-    int j,k;
-    gunichar *uniStr=g_utf8_to_ucs4_fast(pinyin, -1 , &items_written);
-    initString(pinyin);
+    gboolean need_NFC=FALSE;
+    gunichar *uniStr=g_utf8_to_ucs4_fast(pinyin_norm, -1 , &items_written);
+    Pinyin* pinyin_tmp=pinyin_new(NULL);
+
     for (i=0;i<items_written;i++){
-	if (uniChar_has_toneMark(uniStr[i],&j,&k)){
-	    utf8_concat_ucs4(pinyin,PINYIN_TONEMARKS[j][4]);
-	    tone=k+1;
+	tone =uniChar_get_tone(uniStr[i]);
+	if (tone){
 	    continue;
-	}else if (g_unichar_isdigit(uniStr[i])){
-	    tone=uniStr[i]-'0';
 	}else{
-	    utf8_concat_ucs4(pinyin,uniStr[i]);
+	    if (uniStr[i]==0x0308 || uniStr[i]==0x0302){
+		need_NFC=TRUE;
+	    }
+	    utf8_concat_ucs4(pinyin_tmp,uniStr[i]);
 	}
     }
+    if (need_NFC){
+	pinyin=g_utf8_normalize(pinyin_tmp,PINYIN_MAX_LENGTH,G_NORMALIZE_NFC);
+    }else{
+	g_strlcpy(pinyin,pinyin_tmp,PINYIN_MAX_LENGTH);
+    }
+    g_free(pinyin_tmp);
+    g_free(pinyin_norm);
     g_free(uniStr);
     return tone;
 }
@@ -975,7 +981,6 @@ static const P_Z_Rule *pinyin_find_rule(const char *pinyin_str,guint phonemeFlag
     return NULL;
 }
 
-
 Zhuyin *pinyin_to_zhuyin(const Pinyin* pinyin, ZhuyinToneMarkFormat toFormat){
     Pinyin *pinyinTmp=pinyin_convert_accent_format(pinyin, PINYIN_ACCENT_ALWAYS,TRUE);
     Zhuyin zhuyinTmp[ZHUYIN_MAX_LENGTH];
@@ -1006,6 +1011,40 @@ Zhuyin *pinyin_to_zhuyin(const Pinyin* pinyin, ZhuyinToneMarkFormat toFormat){
     g_free(uniStr);
     return zhuyin;
 }
+
+
+/*----------------------------------------------------------
+ * Pinyin regex functions.
+ */
+
+regex_t pinyin_import_regex_t;
+gboolean pinyin_regex_t_initialized=FALSE;
+
+int pinyin_regex_t_init(){
+    int ret=0;
+    gchar buf[MAX_STRING_BUFFER_SIZE];
+    if (!pinyin_regex_t_initialized){
+	ret=regcomp(&pinyin_import_regex_t, PINYIN_REGEX_IMPORT, REG_EXTENDED);
+	if (ret){
+	    regerror(ret, &pinyin_import_regex_t, buf, MAX_STRING_BUFFER_SIZE);
+	    verboseMsg_print(VERBOSE_MSG_ERROR,"[Error] pinyin_regex_init(): %s\n",buf);
+	}else{
+	    pinyin_regex_t_initialized=TRUE;
+	}
+    }
+    return ret;
+}
+
+gchar *pinyin_regex_import_formatted_combine(const gchar *str, const gchar *format){
+    int ret=pinyin_regex_init();
+    if (ret)
+	return NULL;
+    return string_regex_formatted_combine_regex_t(str, &pinyin_import_regex_t, format, 0, NULL);
+
+}
+
+
+
 
 /*========================================
  * Zhuyin functions.
