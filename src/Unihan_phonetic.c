@@ -31,8 +31,6 @@
 #include "Unihan_phonetic.h"
 
 
-regex_t pinyin
-
 const ZhuyinSymbol ZHUYIN_SYMBOL_LIST[ZHUYIN_SYMBOL_COUNT]={
     0x3105,   // "ㄅ"
     0x3106,   // "ㄆ"
@@ -77,6 +75,97 @@ const ZhuyinSymbol ZHUYIN_SYMBOL_LIST[ZHUYIN_SYMBOL_COUNT]={
     0x02CB,   // "ˋ"
     0x02D9,   // "˙"
 };
+
+// neutral 
+#define ZHUYIN_REGEX_LEADING_NEUTRAL "(˙)?" // 1
+#define ZHUYIN_REGEX_INITIAL_OTHERS "((ㄅ)?(ㄆ)?(ㄇ)?(ㄈ)?(ㄉ)?(ㄊ)?(ㄋ)?(ㄌ)?(ㄍ)?(ㄎ)?(ㄏ)?" // 2-13
+#define ZHUYIN_REGEX_INITIAL_JQX "((ㄐ)?(ㄑ)?(ㄒ)?)?"			// 14-17
+#define ZHUYIN_REGEX_INITIAL_ZCSR "((ㄓ)?(ㄔ)?(ㄕ)?(ㄖ)?(ㄗ)?(ㄘ)?(ㄙ)?)?" // 18-25
+#define ZHUYIN_REGEX_INITIAL  ZHUYIN_REGEX_INITIAL_OTHER\
+    ZHUYIN_REGEX_INITIAL_JQX ZHUYIN_REGEX_INITIAL_ZCSR ")?"   // 1-25
+#define ZHUYIN_REGEX_MEDIAL "(((ㄧ)?(ㄩ)?)?(ㄨ)?)?"  // 26-30
+#define ZHUYIN_REGEX_FINAL  "((ㄚ)?(ㄛ)?(ㄜ)?(ㄝ)?(ㄞ)?(ㄟ)?(ㄠ)?(ㄡ)?(ㄢ)?(ㄤ)?((ㄣ)?(ㄥ)?)?(ㄦ)?)?" // 31-45
+#define ZHUYIN_REGEX_TONE  "((ˉ|1)?(ˊ|2)?(ˇ|3)?(ˋ|4)?(˙|5)?)?" // 46-51
+#define ZHUYIN_REGEX	ZHUYIN_REGEX_LEADING_NEUTRAL ZHUYIN_REGEX_INITIAL ZHUYIN_REGEX_MEDIAL ZHUYIN_REGEX_FINAL ZHUYIN_REGEX_TONE
+
+#define ZHUYIN_PINYIN_SUBSTITUTE_INITIAL_OTHER "$N3{b}$N4{p}$N5{m}$N6{f}$N7{f}$N8{d}$N9{t}$N10{n}$N11{l}$N12{g}$N13{k}$N14{h}"
+#define ZHUYIN_PINYIN_SUBSTITUTE_INITIAL_JQX "$N15{j}$N16{q}$N17{x}"
+/*
+ * $N18{$E26{$E30{i}}: if no medial or final, then an 'i' is appended.
+ */
+#define ZHUYIN_PINYIN_SUBSTITUTE_INITIAL_ZCSR "$N19{zh}$N20{ch}$N21{sh}$N22{r}$N23{z}$N24{c}$N25{s}$N18{$E26{$E31{i}}"
+#define ZHUYIN_PINYIN_SUBSTITUTE_INITIAL ZHUYIN_PINYIN_SUBSTITUTE_INITIAL_OTHER ZHUYIN_PINYIN_SUBSTITUTE_INITIAL_JQX ZHUYIN_PINYIN_SUBSTITUTE_INITIAL_ZCSR
+
+/*
+ * $N27{$E2{y}}: prepend 'y' if no initial for 'ㄧ' or 'ㄩ'
+ *
+ * ㄧ: $N28{$N42{i}}: 
+ *     append 'i' if ㄣ or ㄥ presents 
+ *
+ * ㄩ:$N29{$N44{$N14{io,o},v}: 
+ *     if 'ㄥ' presents, 
+ *         if jqx presents, then 'ㄩ' is translated as 'io',
+ *         else 'ㄩ' is translated as 'o'
+ *     else  'ㄩ' is translated as 'v'
+ *
+ * ㄨ:$N30{$E2{$E31{wu,$N42{we,w}},$N44{o,u}}}:
+ *     if no initials
+ *        if no final then translate to 'wu' 
+ *        else if has ㄣ or ㄥ then translate to 'we'
+ *             else translate to 'w'
+ *     else if has  ㄥ then translate to 'o'
+ *          else translate to 'u'
+ *
+ */
+#define ZHUYIN_PINYIN_SUBSTITUTE_MEDIAL "$N27{$E2{y}}$N28{$N2{i}}$N29{$N44{$N14{io,o},v}$N30{$E2{$E31{wu,$N42{we,w}},$N44{o,u}}}"
+/**
+ * ㄟ: $N37{$N26{i,ei}}
+ *     if medial present then translate to i
+ *     else  translate to ei
+ *
+ * ㄡ: $N39{$N26{$N2{u,ou},ou}
+ *     if medial present:
+ *        if initial present then translate to 'u'
+ *        else translate to 'ou'
+ *     else  translate to 'ou'
+ *
+ * ㄣ: $N43{$N26{n,en}}
+ *     if medial present then translate to 'n'
+ *     else  translate to 'en'
+ *         
+ * ㄥ: $N44{$N26{ng,eng}}
+ *     if medial present then translate to 'ng'
+ *     else  translate to 'eug'
+ * 
+ */
+#define ZHUYIN_PINYIN_SUBSTITUTE_FINAL "$N32{a}$N33{o}$N34{e}$N35{E}"\
+    "$N36{ai}$N37{$N26{i,ei}}$N38{ao}$N39{$N26{$N2{u,ou},ou}"\
+    "$N40{ang}$N41{an}$N43{$N26{n,en}}$N44{$N26{ng,eng}}$N45{er}"
+
+#define ZHUYIN_PINYIN_SUBSTITUTE	ZHUYIN_PINYIN_SUBSTITUTE_INITIAL ZHUYIN_PINYIN_SUBSTITUTE_MEDIAL ZHUYIN_PINYIN_SUBSTITUTE_FINAL
+
+#define ZHUYIN_SUBSTITUTE_TONE "$N1{5}$N47{1}$N48{2}$N49{3}$N50{4}$N51{5}"
+
+
+#define PINYIN_REGEX_INITIAL_OTHERS "((b)?(p)?(m)?(f)?(d)?(t)?(n)?(l)?(g)?(k)?(h)?)?" 	// 1-12
+#define PINYIN_REGEX_INITIAL_JQX "((j)?(q)?(x)?)?"					// 13-16
+#define PINYIN_REGEX_INITIAL_ZCSR "((z(h)?)?(c(h)?)?(s(h)?)?(r)?)?"			// 17-24
+
+#define PINYIN_REGEX_INITIAL "(" PINYIN_REGEX_INITIAL_OTHERS\
+    PINYIN_REGEX_INITIAL_JQX PINYIN_REGEX_INITIAL_ZCSR ")?"   // 1-24
+
+/* 
+ * yi: -> ^ㄧ
+ * w:  -> ^ㄨ
+ * yv: -> ^ㄩ
+ * i: -> +ㄧ*
+ * u: -> +ㄩ*
+ *
+ */
+#define PINYIN_REGEX_MEDIAL "((yi?)?(w[eu]?)?(y?v)?(io)?((i)|(u))?)?"		// 25-32
+#define PINYIN_REGEX_FINAL  "((ang)?(e?ng)?(e?n)?(e?ng)?(er)?(ai)?(e?i)?(ao)?(o?u)?(an)?(a)?(o)?(e)?(E)?)?"  // 33-46
+
+#define PINYIN_REGEX	PINYIN_REGEX_INITIAL PINYIN_REGEX_MEDIAL PINYIN_REGEX_FINAL
 
 
 #define PHONEME_FLAG_HAS_INITIAL   	1
@@ -338,27 +427,280 @@ I_TONEMARKS,
 /*==========================================================
  * Syllable functions.
  */
+static PinYin *zhuyin_to_pinyin_normalized_toneless(Zhuyin *zhuyin){
+    return zhuyin_regex_formatted_combine(zhuyin,ZHUYIN_PINYIN_SUBSTITUTE);
+}
+
+
+Syllable *syllable_new(){
+    Syllable *syl=NEW_INSTANCE(Syllable);
+    initString( syl->transcription);
+    syl->tone=0;
+    return syl;
+}
 
 Syllable *syllable_new_pinyin(const Pinyin *pinyin_str){
-    Syllable *syl=NEW_INSTANCE(Syllable);
-    Pinyin *pinyin=NULL;
-    int tone=0;
+    Syllable *syl=syllable_new();
+    guint tone=0;
     if (!isEmptyString(pinyin_str)){
-	pinyin=g_utf8_normalize(pinyin_str,PINYIN_MAX_LENGTH,G_NORMALIZE_NFD);
+	Pinyin *pinyin=g_utf8_normalize(pinyin_str,PINYIN_MAX_LENGTH,G_NORMALIZE_NFD);
 	g_assert(pinyin);
 	gchar *pinyin_tmp=pinyin_regex_import_formatted_combine(pinyin,PINYIN_SUBSTITUTE);
 	gchar *toneStr=pinyin_regex_import_formatted_combine(pinyin,PINYIN_SUBSTITUTE_TONE);
 	tone=atoi(toneStr);
 	if (pinyin_tmp){
-	    g_strlcpy(pinyin,pinyin_tmp,PINYIN_MAX_LENGTH);
+	    g_strlcpy(syl->transcription,pinyin_tmp,TRANSCRIPTION_MAX_LENGTH);
+	    g_free(pinyin_tmp);
 	}
-    }else{
-	pinyin=NEW_ARRAY_INSTANCE(PINYIN_MAX_LENGTH,char);
-	initString(pinyin);
+	g_free(pinyin);
+	g_free(toneStr);
     }
-    syl->transcription=pinyin;
-    syl->tone=tone
-	return syl;
+    syl->tone=tone;
+    return syl;
+}
+
+
+Syllable *syllable_new_zhuyin(const Zhuyin *zhuyin_str){
+    Syllable *syl=syllable_new();
+    guint tone=0;
+    if (!isEmptyString(zhuyin_str)){
+	Zhuyin *zhuyin=zhuyin_new(zhuyin_str);
+	tone=zhuyin_strip_tone(zhuyin);
+	g_strlcpy(syl->transcription,zhuyin,TRANSCRIPTION_MAX_LENGTH);
+	g_free(zhuyin);
+    }
+    syl->tone=tone;
+    return syl;
+}
+
+Syllable *syllable_clone(Syllable *syl){
+    Syllable *syl_new=syllable_new();
+    g_strlcpy(syl_new->transcription,syl_new->transcription,TRANSCRIPTION_MAX_LENGTH);
+    syl_new->tone=syl->tone;
+    return syl_new;
+}
+
+Pinyin *syllable_to_pinyin(Syllable *syl,PinyinFormatFlags *formatFlags){
+    Pinyin *pinyin_tmp=NULL;
+    Pinyin *pinyin_curr=NULL;
+    Pinyin *pinyin=pinyin_new(NULL);
+    gboolean canNFC=FALSE;
+	
+    if (syllable_is_zhuyin_fast(syl)){
+	pinyin_tmp=zhuyin_to_pinyin_normalized(syl->transcription);
+	pinyin_curr=pinyin_tmp;
+    }else{
+	pinyin_curr=syl->transcription;
+    }
+    int i,j=0;
+    for(i=0;pinyin_curr[i]!='\0';i++){
+	switch (pinyin_curr[i]){
+	    case 'v':
+		if (formatFlags & PINYIN_FORMAT_FLAG_STRIP_DIAERESIS){
+		    pinyin[j++]='u';
+		    break;
+		}
+		if (formatFlags & PINYIN_FORMAT_FLAG_STRIP_TRIVIAL_ACCENT){
+		    if (i>0 && ((pinyin_curr[i-1]=='j' || pinyin_curr[i-1]=='q' || pinyin_curr[i-1]=='x' || || pinyin_curr[i-1]=='y'))){
+			pinyin[j++]='u';
+		    }else (pinyin_curr[i+1]!='\0' && pinyin_curr[i+1]=='E'){
+			pinyin[j++]='u';
+		    }else{
+			/* Non trivial v */
+			if (formatFlags & PINYIN_FORMAT_FLAG_ASCII_ONLY){
+			    if (formatFlags & PINYIN_FORMAT_FLAG_NFD){
+				pinyin[j++]='u';
+				pinyin[j++]=':';
+			    }else{
+				pinyin[j++]='v';
+			    }
+			}else{
+			    /* Allow non-ascii, add diaeresis */
+			    pinyin[j++]='u';
+			    pinyin[j++]='\xCC';
+			    pinyin[j++]='\x88';
+			    canNFC=TRUE;
+			}
+		    }
+		}else{
+		    /* Do not remove trivial accent. */
+		    if (formatFlags & PINYIN_FORMAT_FLAG_ASCII_ONLY){
+			if (formatFlags & PINYIN_FORMAT_FLAG_NFD){
+			    pinyin[j++]='u';
+			    pinyin[j++]=':';
+			}else{
+			    pinyin[j++]='v';
+			}
+		    }else{
+			/* Allow non-ascii, add diaeresis */
+			pinyin[j++]='u';
+			pinyin[j++]='\xCC';
+			pinyin[j++]='\x88';
+			canNFC=TRUE;
+		    }
+		}
+		break;
+	    case 'E':
+		if (formatFlags & PINYIN_FORMAT_FLAG_STRIP_TRIVIAL_ACCENT){
+		    pinyin[j++]='e';
+		}else{
+		    if (formatFlags & PINYIN_FORMAT_FLAG_STRIP_ASCII_ONLY){
+			if (formatFlags & PINYIN_FORMAT_FLAG_NFD){
+			    pinyin[j++]='e';
+			    pinyin[j++]='^';
+			}else{
+			    pinyin[j++]='v';
+			}
+		    }else{
+			/* Allow non-ascii, add circumflex */
+			pinyin[j++]='e';
+			pinyin[j++]='\xCC';
+			pinyin[j++]='\x82';
+			canNFC=TRUE;
+		    }
+		}
+		break;
+	    default:
+		pinyin[j++]=pinyin_curr[i];
+		break;
+	}
+    }
+    pinyin[j]='\0';
+    Pinyin* pinyin_tone=pinyin_add_tone(pinyin,syl->tone);
+    if (pinyin_tmp){
+	g_free(pinyin_tmp);
+    }	
+    g_free(pinyin);
+
+    Pinyin* result=NULL;
+    if (canNFC && !(formatFlags & PINYIN_FORMAT_FLAG_NFD)){
+	result=g_utf8_normalize(pinyin_tone,PINYIN_MAX_LENGTH,G_NORMALIZE_NFC);
+	g_free(pinyin_tone);
+    }else{
+	result=pinyin_tone;
+    }
+    return result;
+}
+
+Pinyin *syllable_to_zhuyin(Syllable *syl,PinyinFormatFlags *formatFlags){
+    Pinyin *pinyin_tmp=NULL;
+    Pinyin *pinyin_curr=NULL;
+    Pinyin *pinyin=pinyin_new(NULL);
+    gboolean canNFC=FALSE;
+
+    if (syllable_is_zhuyin_fast(syl)){
+	pinyin_tmp=zhuyin_to_pinyin_normalized(syl->transcription);
+	pinyin_curr=pinyin_tmp;
+    }else{
+	pinyin_curr=syl->transcription;
+    }
+    int i,j=0;
+    for(i=0;pinyin_curr[i]!='\0';i++){
+	switch (pinyin_curr[i]){
+	    case 'v':
+		if (formatFlags & PINYIN_FORMAT_FLAG_STRIP_DIAERESIS){
+		    pinyin[j++]='u';
+		    break;
+		}
+		if (formatFlags & PINYIN_FORMAT_FLAG_STRIP_TRIVIAL_ACCENT){
+		    if (i>0 && ((pinyin_curr[i-1]=='j' || pinyin_curr[i-1]=='q' || pinyin_curr[i-1]=='x' || || pinyin_curr[i-1]=='y'))){
+			pinyin[j++]='u';
+		    }else (pinyin_curr[i+1]!='\0' && pinyin_curr[i+1]=='E'){
+			pinyin[j++]='u';
+		    }else{
+			/* Non trivial v */
+			if (formatFlags & PINYIN_FORMAT_FLAG_ASCII_ONLY){
+			    if (formatFlags & PINYIN_FORMAT_FLAG_NFD){
+				pinyin[j++]='u';
+				pinyin[j++]=':';
+			    }else{
+				pinyin[j++]='v';
+			    }
+			}else{
+			    /* Allow non-ascii, add diaeresis */
+			    pinyin[j++]='u';
+			    pinyin[j++]='\xCC';
+			    pinyin[j++]='\x88';
+			    canNFC=TRUE;
+			}
+		    }
+		}else{
+		    /* Do not remove trivial accent. */
+		    if (formatFlags & PINYIN_FORMAT_FLAG_ASCII_ONLY){
+			if (formatFlags & PINYIN_FORMAT_FLAG_NFD){
+			    pinyin[j++]='u';
+			    pinyin[j++]=':';
+			}else{
+			    pinyin[j++]='v';
+			}
+		    }else{
+			/* Allow non-ascii, add diaeresis */
+			pinyin[j++]='u';
+			pinyin[j++]='\xCC';
+			pinyin[j++]='\x88';
+			canNFC=TRUE;
+		    }
+		}
+		break;
+	    case 'E':
+		if (formatFlags & PINYIN_FORMAT_FLAG_STRIP_TRIVIAL_ACCENT){
+		    pinyin[j++]='e';
+		}else{
+		    if (formatFlags & PINYIN_FORMAT_FLAG_STRIP_ASCII_ONLY){
+			if (formatFlags & PINYIN_FORMAT_FLAG_NFD){
+			    pinyin[j++]='e';
+			    pinyin[j++]='^';
+			}else{
+			    pinyin[j++]='v';
+			}
+		    }else{
+			/* Allow non-ascii, add circumflex */
+			pinyin[j++]='e';
+			pinyin[j++]='\xCC';
+			pinyin[j++]='\x82';
+			canNFC=TRUE;
+		    }
+		}
+		break;
+	    default:
+		pinyin[j++]=pinyin_curr[i];
+		break;
+	}
+    }
+    pinyin[j]='\0';
+    Pinyin* pinyin_tone=pinyin_add_tone(pinyin,syl->tone);
+    if (pinyin_tmp){
+	g_free(pinyin_tmp);
+    }	
+    g_free(pinyin);
+
+    Pinyin* result=NULL;
+    if (canNFC && !(formatFlags & PINYIN_FORMAT_FLAG_NFD)){
+	result=g_utf8_normalize(pinyin_tone,PINYIN_MAX_LENGTH,G_NORMALIZE_NFC);
+	g_free(pinyin_tone);
+    }else{
+	result=pinyin_tone;
+    }
+    return result;
+}
+gboolean syllable_is_zhuyin(Syllable *syl){
+    glong i.items_written;
+    gunichar *uniStr=g_utf8_to_ucs4_fast(syl->transcript, -1 , &items_written);
+    for(i=0;i<items_written;i++){
+	if (zhuyinSymbol_get_id(uniCh)==ZHUYIN_INVALID_SYMBOL){
+	    return FALSE;
+	}
+    }
+    return TRUE;
+}
+
+
+gboolean syllable_is_zhuyin_fast(Syllable *syl){
+    gunichar uniCh=g_utf8_get_char(syl->transcript);
+    if (zhuyinSymbol_get_id(uniCh)==ZHUYIN_INVALID_SYMBOL){
+	return FALSE;
+    }
+    return TRUE;
 }
 
 void syllable_free(Syllable *syl){
@@ -805,13 +1147,6 @@ void pinyin_add_tone(Pinyin* pinyin, guint tone, gboolean useTrailNumber){
     }
     g_free(uniStr);
     g_strlcpy(pinyin,pinyin_tmp,PINYIN_MAX_LENGTH);
-}
-
-static guint pinyin_strip_and_convert_to_internal_format(Pinyin *pinyin){
-    guint tone;
-
-
-
 }
 
 Pinyin *pinyin_convert_format(const Pinyin *pinyin, PinyinFormatFlags formatFlags){
@@ -1295,6 +1630,37 @@ ZhuyinSymbol zhuyinSymbol_from_toneMark_id(guint toneMark_id){
     }
     return 0;
 }
+
+/*----------------------------------------------------------
+ * Zhuyin regex functions.
+ */
+
+regex_t zhuyin_regex_t;
+gboolean zhuyin_regex_t_initialized=FALSE;
+
+int zhuyin_regex_t_init(){
+    int ret=0;
+    gchar buf[MAX_STRING_BUFFER_SIZE];
+    if (!zhuyin_regex_t_initialized){
+	ret=regcomp(&zhuyin_regex_t, ZHUNYIN_REGEX, REG_EXTENDED);
+	if (ret){
+	    regerror(ret, &zhuyin_regex_t, buf, MAX_STRING_BUFFER_SIZE);
+	    verboseMsg_print(VERBOSE_MSG_ERROR,"[Error] zhuyin_regex_init(): %s\n",buf);
+	}else{
+	    zhuyin_regex_t_initialized=TRUE;
+	}
+    }
+    return ret;
+}
+
+gchar *zhuyin_regex_formatted_combine(const gchar *str, const gchar *format){
+    int ret=zhuyin_regex_init();
+    if (ret)
+	return NULL;
+    return string_regex_formatted_combine_regex_t(str, &zhuyin_regex_t, format, 0, NULL);
+
+}
+
 
 /*========================================
  * Zhuyin database conversion functions.

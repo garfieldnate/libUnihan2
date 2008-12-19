@@ -53,6 +53,11 @@
 #define ZHUYIN_MAX_LENGTH 13
 
 /**
+ * Maximum length of transcription in syllable in byte.
+ */
+#define TRANSCRIPTION_MAX_LENGTH 13
+
+/**
  * Zhuyin symbol.
  */
 typedef gunichar  ZhuyinSymbol;
@@ -83,7 +88,7 @@ typedef char Pinyin;
  *
  */
 typedef struct{
-    char *transcription;  //!< A phonemes that represents sounds. Can be Pinyin or Zhuyin.
+    char transcription[TRANSCRIPTION_MAX_LENGTH];  //!< A phonemes that represents sounds. Can be Pinyin or Zhuyin.
     guint tone;		  //!< Notation of pitch contour.
 } Syllable;
 
