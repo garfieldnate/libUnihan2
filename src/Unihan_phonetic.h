@@ -343,6 +343,44 @@ typedef enum{
 
 
 /**
+ * @defgroup Zhuyin_Format_Flags Zhuyin format flags.
+ * @{
+ * @name Zhuyin format flags.
+ *
+ * These bitwise flags specify the zhuyin string output format.
+ * There are various way to represent Zhuyin, 
+ * some put the neutral (5th) tone in the front, some omits the first tone.
+ * See #ZhuyinAccentFormat for widely adopted format.
+ *
+ *
+ * @see ZhuyinAccentFormat
+ * @{
+ */
+/**
+ * Data structure for Zhuyin format flags.
+ */
+typedef guint ZhuyinFormatFlags;
+
+/**
+ * Flag for strip the first tone.
+ */
+#define ZHUYIN_FORMAT_FLAG_STRIP_1ST_TONE	0x1
+/**
+ * Flag for putting 5-th tone in the front
+ */
+#define ZHUYIN_FORMAT_FLAG_FRONT_5TH_TONE	0x2
+/**
+ * Flag for showing tone as number.
+ */
+#define ZHUYIN_FORMAT_FLAG_NUMERICAL_TONE	0x4
+
+/**
+ * @}
+ * @}
+ */
+
+
+/**
  * Enumeration of Zhuyin tone mark handling.
  * Originally, the neutral (fifth) tone mark of zhuyin is put in the front, while the first tone mark is omitted.
  * Use ZHUYIN_TONEMARK_ORIGINAL for this.
@@ -361,7 +399,7 @@ typedef enum{
 typedef enum{
     ZHUYIN_TONEMARK_ALWAYS,   //!<  Neutral (fifth) tone mark is put in the end, while the first tone mark is kept.
     ZHUYIN_TONEMARK_ORIGINAL,   //!< Neutral (fifth) tone mark is put in the front, while the first tone mark is omitted.
-    ZHUYIN_TONEMARK_INPUT_METHOD,  //!< Neutral (fifth) tone mark is put in the front, while the first tone mark is omitted.
+    ZHUYIN_TONEMARK_INPUT_METHOD,  //!< Neutral (fifth) tone mark is put in the end, while the first tone mark is omitted.
     ZHUYIN_TONEMARK_NUMERICAL,  //!< Tone mark are represented as numerical, in the end of Zhuyin.
 } ZhuyinToneMarkFormat;
 
