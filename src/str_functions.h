@@ -647,6 +647,36 @@ char*
 subString_buffer(char *buf,const char *str,int beginIndex, int length);
 
 /**
+ * Append a char to a string.
+ *
+ * This function appends a character \a ch to the end of \a str, 
+ * if the length of the string including the trailing '\0' is less than the given \a length.
+ * It returns \c NULL if \a ch cannot be appended because the length limit.
+ *
+ * \note The \c str will be modified if \a ch is successfully appended.
+ *
+ * @param str The string.
+ * @param ch The char to be appended to \a str.
+ * @param length The maximum length of \a str ('\0' included).
+ * @return \a str if success, NULL if failed.
+ */
+gchar* string_append_c(gchar *str, const char ch,size_t length);
+
+/**
+ * Whether a string is decomposed (no validation).
+ *
+ * The main purpose of this function is to provides a quick check of whether a
+ * \a str is decomposed, so developers can determine to leave it or composite it back.
+ * However, it only compares lengths before and after the normalization, and nothing beyond.
+ * Use this function with care.
+ *
+ * 
+ * @param str The string to be checked.
+ * @param TRUE if the string is decomposed, FALSE otherwise.
+ */
+gboolean string_is_decomposed_fast(const gchar *str);
+
+/**
  * Pad a string on the left up to certain length.
  *
  * Note that if \c padding_str is multi-bytes, the padding will not exceed the \c length.

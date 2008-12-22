@@ -74,18 +74,18 @@ const char *data_msgs[]={
 
 
 const char *testFiles[]={
-    "Pinyin_test_always_f.txt",
-    "Pinyin_test_always_t.txt",
-    "Pinyin_test_original_f.txt",
-    "Pinyin_test_original_t.txt",
-    "Pinyin_test_unihan_f.txt",
-    "Pinyin_test_unihan_t.txt",
-    "Pinyin_test_trailing_f.txt",
-    "Pinyin_test_trailing_t.txt",
-    "Pinyin_test_inputMethod_f.txt",
-    "Pinyin_test_inputMethod_t.txt",
-    "Pinyin_test_none_f.txt",
-    "Pinyin_test_none_t.txt",
+    "PinYin_test_always_f.txt",
+    "PinYin_test_always_t.txt",
+    "PinYin_test_original_f.txt",
+    "PinYin_test_original_t.txt",
+    "PinYin_test_unihan_f.txt",
+    "PinYin_test_unihan_t.txt",
+    "PinYin_test_trailing_f.txt",
+    "PinYin_test_trailing_t.txt",
+    "PinYin_test_inputMethod_f.txt",
+    "PinYin_test_inputMethod_t.txt",
+    "PinYin_test_none_f.txt",
+    "PinYin_test_none_t.txt",
     "ZhuYin_test_always.txt",
     "ZhuYin_test_original.txt",
     "ZhuYin_test_inputMethod.txt",
@@ -190,7 +190,7 @@ gboolean perform_test(TEST_ID testId){
 		}
 
 		if (testId<ZHUYIN_ALWAYS){
-		    out=pinYin_convert_accent_format(fromBuf,testId/2,(testId%2==0) ? FALSE : TRUE);
+		    out=pinyin_convert_accent_format(fromBuf,testId/2,(testId%2==0) ? FALSE : TRUE);
 		}else{
 		    if (j>=PINYIN_UNIHAN_F){
 			if (strcmp(fromBuf,"E")==0){
@@ -204,16 +204,16 @@ gboolean perform_test(TEST_ID testId){
 			    }
 			}
 		    }
-		    out=pinYin_to_zhuYin(fromBuf,testId-ZHUYIN_ALWAYS);
+		    out=pinyin_to_zhuyin(fromBuf,testId-ZHUYIN_ALWAYS);
 		}
 	    }else{
 		/* j>= ZHUYIN_ALWAYS*/
 		/* Skip non-functional dependency test */
 
 		if (testId<ZHUYIN_ALWAYS){
-		    out=zhuYin_to_pinYin(fromBuf,testId/2,(testId%2==0) ? FALSE : TRUE);
+		    out=zhuyin_to_pinyin(fromBuf,testId/2,(testId%2==0) ? FALSE : TRUE);
 		}else{
-		    out=zhuYin_convert_toneMark_format(fromBuf,testId-ZHUYIN_ALWAYS);
+		    out=zhuyin_convert_toneMark_format(fromBuf,testId-ZHUYIN_ALWAYS);
 		}
 	    }
 	    if (strcmp(out,toBuf)!=0){

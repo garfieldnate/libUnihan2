@@ -5,6 +5,9 @@
   + UNIHAN_FIELD_PINYIN_BASE "pinYin_base".
   + UNIHAN_FIELD_PINYIN_TONE "pinYin_tone".
 
+- New data structures:
+  Syllable: store normalized phonetic transcription and tone.
+
 - New functions:
   file_functions.h: lsDir().
   unihan.h: unihanDb_get_all_fields().

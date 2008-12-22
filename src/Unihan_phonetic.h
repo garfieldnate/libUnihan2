@@ -262,8 +262,9 @@ typedef guint PinyinFormatFlags;
  * or diaeresis accent '‥' (U+0302) which are omissible, should be stripped.
  */
 #define PINYIN_FORMAT_FLAG_STRIP_TRIVIAL_ACCENT 0x1 
-#define PINYIN_FORMAT_FLAG_STRIP_DIAERESIS	0x2  //!< Flag for forcedly removing combining diaeresis  '‥' (U+0302) from ü.
-#define PINYIN_FORMAT_FLAG_NFD			0x4  //!< Flag Decompose into Normalized form D (NFD).
+#define PINYIN_FORMAT_FLAG_STRIP_CIRCUMFLEX	0x2  //!< Flag for forcedly removing combining circumflex  '^' (U+0302) from ü.
+#define PINYIN_FORMAT_FLAG_STRIP_DIAERESIS	0x4  //!< Flag for forcedly removing combining diaeresis  '‥' (U+0308) from ü.
+#define PINYIN_FORMAT_FLAG_NFD			0x8  //!< Flag Decompose into Normalized form D (NFD).
 /**
  * Flag for forcedly showing in ASCII symbols.
  *
@@ -272,7 +273,7 @@ typedef guint PinyinFormatFlags;
  * diaeresis  '‥' (U+0302) is converted to ':';
  * while circumflex '^' (U+0302) is converted.
  */
-#define PINYIN_FORMAT_FLAG_ASCII_ONLY		0x8  //!< Show only ASCII symbol, ü is outputted as v, and ê is as E,
+#define PINYIN_FORMAT_FLAG_ASCII_ONLY		0x10  //!< Show only ASCII symbol, ü is outputted as v, and ê is as E,
                                          
 /**
  * Flag for showing tone as accent.
@@ -283,12 +284,12 @@ typedef guint PinyinFormatFlags;
  * diaeresis  '‥' (U+0302) is converted to ':';
  * while circumflex '^' (U+0302) is converted.
  */
-#define PINYIN_FORMAT_FLAG_TONE_AS_ACCENT		0x10
+#define PINYIN_FORMAT_FLAG_TONE_AS_ACCENT		0x20
 
 /**
  * Flag for stripping the trivial (5-th) tone.
  */
-#define PINYIN_FORMAT_FLAG_STRIP_TRIVIAL_TONE		0x20
+#define PINYIN_FORMAT_FLAG_STRIP_TRIVIAL_TONE		0x40
 
 /**
  * @}
@@ -408,9 +409,27 @@ typedef enum{
  * Syllable functions.
  */
 
+Syllable *syllable_new();
 Syllable *syllable_new_pinyin(const Pinyin *pinyin_str);
+Syllable *syllable_new_zhuyin(const Zhuyin *zhuyin_str);
+Syllable *syllable_clone(Syllable *syl);
+Pinyin *syllable_to_pinyin(Syllable *syl,PinyinFormatFlags formatFlags);
+Zhuyin *syllable_to_zhuyin(Syllable *syl,ZhuyinFormatFlags formatFlags);
+gboolean syllable_is_zhuyin(Syllable *syl);
+gboolean syllable_is_zhuyin_fast(Syllable *syl);
 
 void syllable_free(Syllable *syl);
+
+/**
+ * Initialize all pinyin/zhuyin related regex expressions for subsequent search.
+ *
+ * This function compiles regex expressions into forms that are
+ *   suitable for subsequent regexec() searches.
+ *
+ * @return 0 if success; otherwise return the error code of reg_comp().
+ */
+int syllabel_regex_t_init();
+
 
 /*==========================================================
  * Pinyin functions.
@@ -465,6 +484,8 @@ guint pinyin_get_tone(const Pinyin* pinyin);
  */
 guint pinyin_strip_tone(Pinyin* pinyin);
 
+guint pinyin_strip_tone_normalized(Pinyin* pinyin);
+
 /**
  * Add the tone mark to pinyin.
  *
@@ -478,6 +499,7 @@ guint pinyin_strip_tone(Pinyin* pinyin);
  * @param useTrailNumber TRUE trailing number is preferred, FALSE to use traditional tonemark.
  */
 void pinyin_add_tone(Pinyin* pinyin, guint tone, gboolean useTrailNumber);
+void pinyin_add_tone_formatFlags(Pinyin* pinyin, guint tone, PinyinFormatFlags formatFlags);
 
 
 /**
@@ -499,7 +521,8 @@ void pinyin_add_tone(Pinyin* pinyin, guint tone, gboolean useTrailNumber);
  * @see PinyinFormatFlags
  * @see pinyin_convert_accent_format()
  */
-Pinyin *pinyin_convert_format(const Pinyin *pinyin, PinyinFormatFlags formatFlags);
+Pinyin *pinyin_convert_formatFlags(const Pinyin *pinyin, PinyinFormatFlags formatFlags);
+
 
 /**
  * Convert pinyin to new accent format.
@@ -515,7 +538,7 @@ Pinyin *pinyin_convert_format(const Pinyin *pinyin, PinyinFormatFlags formatFlag
  * @return a newly allocated converted Pinyin instance.
  * @see zhuyin_to_pinyin()
  * @see PinyinAccentFormat
- * @see pinyin_convert_format()
+ * @see pinyin_convert_formatFlags()
  */
 Pinyin *pinyin_convert_accent_format(const Pinyin *pinyin, PinyinAccentFormat toFormat, gboolean useTrailNumber);
 
@@ -530,15 +553,8 @@ Pinyin *pinyin_convert_accent_format(const Pinyin *pinyin, PinyinAccentFormat to
  * @see zhuyin_convert_toneMark_format()
  */
 Zhuyin *pinyin_to_zhuyin(const Pinyin* pinyin, ZhuyinToneMarkFormat toFormat);
+Zhuyin *pinyin_to_zhuyin_formatFlags(const Pinyin* pinyin, ZhuyinFormatFlags formatFlags);
 
-/**
- * Initialize all pinyin related regex expressions for subsequent search.
- *
- * This function compiles regex expressions into forms that are
- *   suitable for subsequent regexec() searches.
- *
- * @return 0 if success; otherwise return the error code of reg_comp().
- */
 int pinyin_regex_t_init();
 
 /**
@@ -555,7 +571,7 @@ int pinyin_regex_t_init();
  */
 gchar *pinyin_regex_import_formatted_combine(const gchar *str, const gchar *format);
 
-
+gchar *pinyin_regex_formatted_combine(const gchar *str, const gchar *format);
 
 /*==========================================================
  * Zhuyin functions.
@@ -623,6 +639,7 @@ guint zhuyin_strip_tone(Zhuyin* zhuyin);
  * @param toFormat the Zhuyin tone mark mode to be converted to.
  */
 void zhuyin_add_tone(Zhuyin* zhuyin, guint tone, ZhuyinToneMarkFormat toFormat);
+void zhuyin_add_tone_formatFlags(Zhuyin* zhuyin, guint tone, ZhuyinFormatFlags formatFlags);
 
 /**
  * Convert zhuyin to another tone mark format.
@@ -639,6 +656,7 @@ void zhuyin_add_tone(Zhuyin* zhuyin, guint tone, ZhuyinToneMarkFormat toFormat);
  * @see pinyin_to_zhuyin()
  */
 Zhuyin *zhuyin_convert_toneMark_format(const Zhuyin* zhuyin, ZhuyinToneMarkFormat toFormat);
+Zhuyin *zhuyin_convert_formatFlags(const Zhuyin *zhuyin, PinyinFormatFlags formatFlags);
 
 /**
  * Zhuyin to Pinyin
@@ -650,8 +668,9 @@ Zhuyin *zhuyin_convert_toneMark_format(const Zhuyin* zhuyin, ZhuyinToneMarkForma
  * @see pinyin_convert_accent_format()
  */
 Pinyin *zhuyin_to_pinyin(const Zhuyin* zhuyin, PinyinAccentFormat toFormat, gboolean useTrailNumber);
+Pinyin *zhuyin_to_pinyin_formatFlags(const Zhuyin* zhuyin, PinyinFormatFlags formatFlags);
 
-
+gchar *zhuyin_regex_formatted_combine(const gchar *str, const gchar *format);
 /*----------------------------------------------------------
  * Zhuyin symbol functions.
  */

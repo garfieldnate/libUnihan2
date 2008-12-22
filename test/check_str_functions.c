@@ -26,21 +26,10 @@
 #include "verboseMsg.h"
 #include "str_functions.h"
 #include "Unihan_phonetic.h"
+#include "check_functions.h"
 
-typedef gboolean (* TestFunc)(void *param,void *dataSet);
 
 #define RESET_COUNTER 1
-#define MAX_STRING_BUFFER_SIZE 2000
-
-typedef struct{
-    char *prompt;
-    void *param;
-    void *dataSet;
-    TestFunc func;
-} TestStruct;
-
-typedef void DataSet;
-
 
 typedef struct {
     const char *pattern;
@@ -135,34 +124,6 @@ RegexEval_DataRec REGEX_EVAL_DATA_SET[]={
     {NULL,NULL,NULL,NULL,0}
 };
 
-int testId;
-
-int compare_strings(const char *prompt, const char *expect, const char *actual){
-    int ret;
-    if (expect==NULL && actual==NULL){
-	verboseMsg_print(VERBOSE_MSG_INFO1,"[Ok]: both are NULL\n");
-	return 0;
-    }
-    if (expect==NULL){
-	verboseMsg_print(VERBOSE_MSG_ERROR,"[Error]: %s:",prompt);
-	verboseMsg_print(VERBOSE_MSG_ERROR,"    Expect:[NULL]\tActual:%s\n",actual);
-	return -1;
-    }
-    if (actual==NULL){
-	verboseMsg_print(VERBOSE_MSG_ERROR,"[Error]: %s:",prompt);
-	verboseMsg_print(VERBOSE_MSG_ERROR,"    Expect:%s\tActual:[NULL]\n",expect);
-	return 1;
-    }
-
-    ret=strcmp(expect,actual);
-    if (ret){
-	verboseMsg_print(VERBOSE_MSG_ERROR,"[Error]: %s:",prompt);
-	verboseMsg_print(VERBOSE_MSG_ERROR,"    Expect:%s\tActual:%s\n",expect,actual);
-    }else{
-	verboseMsg_print(VERBOSE_MSG_INFO1,"[Ok]: expect and actual matched: %s\n",actual);
-    }
-    return ret;
-}
 
 /*==========================================================
  * Start of testing functions.
@@ -228,49 +189,18 @@ gboolean test_regex_formatted_combine(void *param,DataSet *dataSet){
  */
 
 TestStruct TEST_COLLECTION[]={
-    {"regex eval functions",NULL,REGEX_EVAL_DATA_SET, test_regex_formatted_combine},
-    {NULL,NULL, NULL, NULL},
+    {"regex eval functions",NULL,REGEX_EVAL_DATA_SET, test_regex_formatted_combine,NULL,NULL},
+    {NULL,NULL, NULL, NULL,NULL,NULL},
 };
 
 
-gboolean perform_test(unsigned int testId){
-    if (TEST_COLLECTION[testId].func(TEST_COLLECTION[testId].param, TEST_COLLECTION[testId].dataSet)){
-	printf("All sub-test completed.\n");
-	return TRUE;
-    }
-    return FALSE;
-}
 
 int main(int argc, char** argv){
-    int argIndex=1;
-    int verboseLevel=VERBOSE_MSG_WARNING;
-    if (argc<2){
-	printf("Usage: %s [-V num] <test num> \n",argv[0]);
-	return -1;
+    int testId=get_testId(argc,argv,TEST_COLLECTION);
+    if (testId<0){
+	return testId;
     }
-    if (strcmp(argv[argIndex],"-V")==0){
-	verboseLevel=atoi(argv[++argIndex]);
-	argIndex++;
-    }
-    verboseMsg_set_level(verboseLevel);
-
-    unsigned int test_index=atoi(argv[argIndex]);
-    int i;
-
-    /* Detect Invalid test number */
-    if (test_index<0){
-	printf("Invalid test number.\n");
-	return -2;
-    }
-    for(i=0;i<=test_index;i++){
-	if (TEST_COLLECTION[i].func==NULL){
-	    printf("Invalid test number.\n");
-	    return -2;
-	}
-    }
-
-    if (perform_test(test_index)){
-	printf("Success!\n");
+    if (perform_test(testId, TEST_COLLECTION)){
 	return 0;
     }
     return 1;

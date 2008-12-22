@@ -269,10 +269,10 @@ typedef struct {
     gchar *option1;
     gchar *option2;
     gchar *option3;
-} FormattedOutputDirective;
+} FormattedCombineDirective;
 
-static FormattedOutputDirective *formattedOutputDirective_new(){
-    FormattedOutputDirective *directive=NEW_INSTANCE(FormattedOutputDirective);
+static FormattedCombineDirective *formattedOutputDirective_new(){
+    FormattedCombineDirective *directive=NEW_INSTANCE(FormattedCombineDirective);
     directive->errno=0;
     directive->index=0;
     directive->statusFlags=0;
@@ -280,7 +280,7 @@ static FormattedOutputDirective *formattedOutputDirective_new(){
     return directive;
 };
 
-static void formattedOutputDirective_free(FormattedOutputDirective* directive){
+static void formattedOutputDirective_free(FormattedCombineDirective* directive){
     g_free(directive->option1);
     g_free(directive->option2);
     g_free(directive->option3);
@@ -288,13 +288,13 @@ static void formattedOutputDirective_free(FormattedOutputDirective* directive){
 };
 
 static int  string_formatted_combine_expand_directive(
-	GString *strBuf, StringList *sList, int *counter_ptr, FormattedOutputDirective* directive);
+	GString *strBuf, StringList *sList, int *counter_ptr, FormattedCombineDirective* directive);
 
 /* 
  * errno 0: index of subpattern
  *       >0: error
  */
-static FormattedOutputDirective* string_formatted_combine_get_directive(
+static FormattedCombineDirective* string_formatted_combine_get_directive(
 	const gchar *format, StringList *sList,guint *currPos_ptr,int *counter_ptr){
     
     gchar c;
@@ -303,8 +303,8 @@ static FormattedOutputDirective* string_formatted_combine_get_directive(
     GString *option2Str=NULL;
     GString *option3Str=NULL;
     verboseMsg_print(VERBOSE_MSG_INFO3,"*** string_formatted_combine_get_directive() start\n");
-    FormattedOutputDirective *directive=formattedOutputDirective_new();
-    FormattedOutputDirective *subDirective=NULL;
+    FormattedCombineDirective *directive=formattedOutputDirective_new();
+    FormattedCombineDirective *subDirective=NULL;
     int ret;
 
     do{
@@ -597,7 +597,7 @@ static FormattedOutputDirective* string_formatted_combine_get_directive(
  * Return 0 for success.
  */
 static int  string_formatted_combine_expand_directive(
-	GString *strBuf, StringList *sList, int *counter_ptr, FormattedOutputDirective* directive){
+	GString *strBuf, StringList *sList, int *counter_ptr, FormattedCombineDirective* directive){
     gchar *strtolEnd_ptr=NULL;
     gchar *strTmp=NULL;
     gchar *paddedStr=NULL;
@@ -774,7 +774,7 @@ gchar *string_formatted_combine(const gchar *format,StringList *sList,int *count
 
     int ret;
     guint j,formatLen=strlen(format);
-    FormattedOutputDirective* directive=NULL;
+    FormattedCombineDirective* directive=NULL;
 
     for(j=0;j<formatLen;j++){
 	verboseMsg_print(VERBOSE_MSG_INFO3,"*** string_formatted_combine():Current strBuf=%s|\n",strBuf->str);
@@ -956,6 +956,27 @@ isEmptyString(const gchar *str){
     return FALSE;
 }
 
+gchar* string_append_c(gchar *str, const char ch,size_t length){
+    int len=strlen(str);
+    if (len>=length-1){
+	return NULL;
+    }
+    str[len]=ch;
+    str[len+1]='\0';
+    return str;
+}
+
+gboolean string_is_decomposed_fast(const gchar *str){
+    gchar* str_norm=g_utf8_normalize(str,-1,G_NORMALIZE_NFD);
+    size_t len=strlen(str);
+    size_t len_norm=strlen(str_norm);
+    if (len==len_norm){
+	return TRUE;
+    }
+    return FALSE;
+}
+
+
 static gchar* string_padding(const gchar *str, const gchar *padding_str, size_t length, gboolean left){
     int len=strlen(str);
     int len_padding=strlen(padding_str);
@@ -984,6 +1005,8 @@ gchar* string_padding_left(const gchar *str, const gchar *padding_str, size_t le
 gchar* string_padding_right(const gchar *str, const gchar *padding_str, size_t length){
     return string_padding(str, padding_str, length, FALSE);
 }
+
+
 
 void string_trim(gchar *str){
     int i,j,k,len=strlen(str);
