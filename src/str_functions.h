@@ -36,6 +36,7 @@
 #include <sys/types.h>
 #include <regex.h>
 
+#define CHAR_TO_UNSIGNEDINT(c)  (unsigned int)  ((int) c >=0)? c : c+256
 #define CHAR_TO_UNSIGNEDCHAR(c) (unsigned char) ((int) c >=0)? c : c+256
 
 /**

@@ -108,8 +108,9 @@ gboolean perform_test(TEST_ID testId){
     char fromBuf[100];
     char toBuf[100];
     printf("Testing on converting to %s \n",data_msgs[testId]);
-    char *out;
-    guint j;
+    char *out,*out_norm;
+    char *toBuf_norm=NULL;
+    guint i,j;
     genDataPath(toDataPath,testId);
     for(j=0;j<TEST_NUM;j++){
 	if (j==testId)
@@ -133,29 +134,29 @@ gboolean perform_test(TEST_ID testId){
 	    string_trim(toBuf);
 	    /* Skip non-functional dependency test */
 	    if (testId%2==0){
-		if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"Ê")){
-		    // Tone make cannot be add upon Ê 
+		if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"ê")){
+		    // Tone mark cannot be add upon ê 
 		    continue;
-		}else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"V")){
-		    // Tone make cannot be add upon V
+		}else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"v")){
+		    // Tone mark cannot be add upon v
 		    continue;
 		}
 	    }
 	    if (j%2==0){
-		if (g_strstr_len(fromBuf,PINYIN_MAX_LENGTH,"Ê")){
-		    // Tone make cannot be add upon Ê 
+		if (g_strstr_len(fromBuf,PINYIN_MAX_LENGTH,"ê")){
+		    // Tone make cannot be add upon ê 
 		    continue;
-		}else if (g_strstr_len(fromBuf,PINYIN_MAX_LENGTH,"V")){
-		    // Tone make cannot be add upon V
+		}else if (g_strstr_len(fromBuf,PINYIN_MAX_LENGTH,"v")){
+		    // Tone make cannot be add upon v
 		    continue;
 		}
 	    }
 	    if (j<ZHUYIN_ALWAYS){
 		/* Skip non-functional dependency test */
 		if (j>=PINYIN_UNIHAN_F){
-		    if (strcmp(fromBuf,"E")==0){
+		    if (strcmp(fromBuf,"e")==0){
 			continue;
-		    }else if (g_str_has_prefix(toBuf,"Ê")){
+		    }else if (g_str_has_prefix(toBuf,"ê")){
 			// Ê only appears in ORIGINAL and ALWAYS.
 			continue;
 		    }else if (g_str_has_prefix(toBuf,"ㄝ")){
@@ -163,18 +164,18 @@ gboolean perform_test(TEST_ID testId){
 			continue;
 		    }
 		    if (j==PINYIN_NONE_F || j==PINYIN_NONE_T){
-			if (g_str_has_prefix(toBuf,"N") || g_str_has_prefix(toBuf,"L")){
-			    if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"Ǖ")){
+			if (g_str_has_prefix(toBuf,"n") || g_str_has_prefix(toBuf,"l")){
+			    if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"ǖ")){
 				continue;
-			    }else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"Ǘ")){
+			    }else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"ǘ")){
 				continue;
-			    }else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"Ǚ")){
+			    }else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"ǚ")){
 				continue;
-			    }else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"Ǜ")){
+			    }else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"ǜ")){
 				continue;
-			    }else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"Ü")){
+			    }else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"ü")){
 				continue;
-			    }else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"V")){
+			    }else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,"v")){
 				continue;
 			    }else if (g_strstr_len(toBuf,PINYIN_MAX_LENGTH,":")){
 				continue;
@@ -193,13 +194,13 @@ gboolean perform_test(TEST_ID testId){
 		    out=pinyin_convert_accent_format(fromBuf,testId/2,(testId%2==0) ? FALSE : TRUE);
 		}else{
 		    if (j>=PINYIN_UNIHAN_F){
-			if (strcmp(fromBuf,"E")==0){
+			if (strcmp(fromBuf,"e")==0){
 			    continue;
 			}
 			if (j==PINYIN_NONE_F || j==PINYIN_NONE_T){
-			    if (g_str_has_prefix(fromBuf,"NU")){
+			    if (g_str_has_prefix(fromBuf,"nu")){
 				continue;
-			    }else if (g_str_has_prefix(fromBuf,"LU")){
+			    }else if (g_str_has_prefix(fromBuf,"lu")){
 				continue;
 			    }
 			}
@@ -216,12 +217,25 @@ gboolean perform_test(TEST_ID testId){
 		    out=zhuyin_convert_toneMark_format(fromBuf,testId-ZHUYIN_ALWAYS);
 		}
 	    }
-	    if (strcmp(out,toBuf)!=0){
-		printf(" Failed: Orig=%s Out=%s Exp=%s\n",fromBuf,out,toBuf);
+	    out_norm=g_utf8_normalize(out,-1,G_NORMALIZE_NFD);
+	    toBuf_norm=g_utf8_normalize(toBuf,-1,G_NORMALIZE_NFD);
+	    if (strcmp(out_norm,toBuf_norm)!=0){
+		printf(" Failed: Orig=%s Out=%s Exp=%s\n",fromBuf,out_norm,toBuf_norm);
+		printf("                 Out=");
+		for(i=0;i<strlen(out_norm);i++){
+		    printf(" %X", CHAR_TO_UNSIGNEDINT(out_norm[i]));
+		}
+		printf("\n                 exp=");
+		for(i=0;i<strlen(toBuf_norm);i++){
+		    printf(" %X", CHAR_TO_UNSIGNEDINT(toBuf_norm[i]));
+		}
+		printf("\n");
 		return FALSE;
 	    }else{
-		verboseMsg_print(VERBOSE_MSG_INFO2,"  out=%s, exp=%s matched.\n",out,toBuf);
+		verboseMsg_print(VERBOSE_MSG_INFO2,"  out=%s, exp=%s matched.\n",out_norm,toBuf_norm);
 	    }
+	    g_free(out_norm);
+	    g_free(toBuf_norm);
 	}
 	
 	printf(" completed.\n");

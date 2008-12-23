@@ -117,25 +117,25 @@ typedef struct{
  */
 #define PINYIN_REGEX_IMPORT PINYIN_REGEX_IMPORT_TEST_INITIAL \
     PINYIN_REGEX_IMPORT_TEST_IUVE "([aeiouAEIOU]*)" \
-    PINYIN_REGEX_IMPORT_TONE_ACCENTS "([ginoruGINORU]*)([1-5])?"
+    PINYIN_REGEX_IMPORT_TONE_ACCENTS "(:)?([ginoruGINORU]*)([1-5])?" // 1-5 6-12 13-20
 
 
-#define PINYIN_SUBSTITUTE_E "$N11{$N6{E,$N4{E,$E1{$E12{$E18{$11,e},e},e}}}}"
+#define PINYIN_SUBSTITUTE_E "$N11{$N6{E,$N4{E,$E1{$E12{$E19{$11,e},e},e}}}}"
 /**
  * Pinyin pattern substitute (store format). Pinyin fields are stored as \c PINYIN_ACCENT_INTERNAL, without tone accent mark or number.
  */
-#define PINYIN_SUBSTITUTE "$L1$L7$N8{v}$N9{$N2{$E7{v,u},u}}$N10{E}" \
-    PINYIN_SUBSTITUTE_E "$L12$L18"
+#define PINYIN_SUBSTITUTE "$L1$L7$N8{v}$N9{$N18{v,$N2{$E7{v,u},u}}}$N10{E}" \
+    PINYIN_SUBSTITUTE_E "$L12$L19"
 
 /**
  * Pinyin tone accent mark pattern substitute (store format).
  */
-#define PINYIN_SUBSTITUTE_TONE_ACCENT "$E13{$E19{5}}$N14{1}$N15{2}$N16{3}$N17{4}"
+#define PINYIN_SUBSTITUTE_TONE_ACCENT "$E13{$E20{5}}$N14{1}$N15{2}$N16{3}$N17{4}"
 
 /**
  * Pinyin tone number pattern substitute (store format).
  */
-#define PINYIN_SUBSTITUTE_TONE PINYIN_SUBSTITUTE_TONE_ACCENT "$19"
+#define PINYIN_SUBSTITUTE_TONE PINYIN_SUBSTITUTE_TONE_ACCENT "$20"
 
 
 
@@ -145,22 +145,22 @@ typedef struct{
  *
  * Similar to \c PINYIN_SUBSTITUTE, but for kXHC1983 only.
  */
-#define PINYIN_SUBSTITUTE_XHC "$L5$L11$N12{v}$N13{$N6{$E11{v,u},u}}$N14{E}" \
-    PINYIN_SUBSTITUTE_E_XHC "$L16$L22"
+#define PINYIN_SUBSTITUTE_XHC "$L5$L11$N12{v}$N13{$N22{v,$N6{$E11{v,u},u}}}$N14{E}" \
+    PINYIN_SUBSTITUTE_E_XHC "$L16$L23"
 
 /**
  * Pinyin tone accent mark pattern substitute (store format) for Xiandai Hanyu Cidian (XHC1983).
  *
  * Similar to \c PINYIN_SUBSTITUTE_TONE_ACCENT, but for kXHC1983 only.
  */
-#define PINYIN_SUBSTITUTE_TONE_ACCENT_XHC "$E17{$E23{5}}$N18{1}$N19{2}$N20{3}$N21{4}"
+#define PINYIN_SUBSTITUTE_TONE_ACCENT_XHC "$E17{$E24{5}}$N18{1}$N19{2}$N20{3}$N21{4}"
 
 /**
  * Pinyin tone number pattern substitute (store format) for Xiandai Hanyu Cidian (XHC1983).
  *
  * Similar to \c PINYIN_SUBSTITUTE_TONE, but for kXHC1983 only.
  */
-#define PINYIN_SUBSTITUTE_TONE_XHC PINYIN_SUBSTITUTE_TONE_ACCENT_XHC "$23"
+#define PINYIN_SUBSTITUTE_TONE_XHC PINYIN_SUBSTITUTE_TONE_ACCENT_XHC "$24"
 /**
  * @}
  * @}
@@ -288,6 +288,7 @@ typedef guint PinyinFormatFlags;
 
 /**
  * Flag for stripping the trivial (5-th) tone.
+ *
  */
 #define PINYIN_FORMAT_FLAG_STRIP_TRIVIAL_TONE		0x40
 
@@ -413,7 +414,31 @@ Syllable *syllable_new();
 Syllable *syllable_new_pinyin(const Pinyin *pinyin_str);
 Syllable *syllable_new_zhuyin(const Zhuyin *zhuyin_str);
 Syllable *syllable_clone(Syllable *syl);
+
+/**
+ * Output syllable as pinyin.
+ * 
+ * This function returns a newly allocated \c Pinyin instance as result.
+ * Note that if \c PINYIN_FORMAT_FLAG_STRIP_TRIVIAL_TONE is not set in \a formatFlags,
+ * this function will "guess" the tone if it is not previously given.
+ * 
+ * @param syl The syllable to be outputted.
+ * @param formatFlags The format of the outputted pinyin.
+ * @return A newly allocated Pinyin instance as result.
+ */
 Pinyin *syllable_to_pinyin(Syllable *syl,PinyinFormatFlags formatFlags);
+
+/**
+ * Output syllable as zhuyin.
+ * 
+ * This function returns a newly allocated \c Zhunyin instance as result.
+ * Note that if \c ZHUYIN_FORMAT_FLAG_STRIP_1ST_TONE is not set in \a formatFlags,
+ * this function will "guess" the tone if it is not previously given.
+ * 
+ * @param syl The syllable to be outputted.
+ * @param formatFlags The format of the outputted pinyin.
+ * @return A newly allocated Zhuyin instance as result.
+ */
 Zhuyin *syllable_to_zhuyin(Syllable *syl,ZhuyinFormatFlags formatFlags);
 gboolean syllable_is_zhuyin(Syllable *syl);
 gboolean syllable_is_zhuyin_fast(Syllable *syl);

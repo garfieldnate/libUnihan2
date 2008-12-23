@@ -89,22 +89,24 @@ const ZhuyinSymbol ZHUYIN_SYMBOL_LIST[ZHUYIN_SYMBOL_COUNT]={
 #define ZHUYIN_REGEX_TONE  "((ˉ|1)?(ˊ|2)?(ˇ|3)?(ˋ|4)?(˙|5)?)?" // 46-51
 #define ZHUYIN_REGEX	ZHUYIN_REGEX_LEADING_NEUTRAL ZHUYIN_REGEX_INITIAL ZHUYIN_REGEX_MEDIAL ZHUYIN_REGEX_FINAL ZHUYIN_REGEX_TONE
 
-#define ZHUYIN_PINYIN_SUBSTITUTE_INITIAL_OTHERS "$N3{b}$N4{p}$N5{m}$N6{f}$N7{f}$N8{d}$N9{t}$N10{n}$N11{l}$N12{g}$N13{k}$N14{h}"
+#define ZHUYIN_PINYIN_SUBSTITUTE_INITIAL_OTHERS "$N3{b}$N4{p}$N5{m}$N6{f}$N7{d}$N8{t}$N9{n}$N10{l}$N11{g}$N12{k}$N13{h}"
 #define ZHUYIN_PINYIN_SUBSTITUTE_INITIAL_JQX "$N15{j}$N16{q}$N17{x}"
 /*
- * $N18{$E26{$E30{i}}: if no medial or final, then an 'i' is appended.
+ * $N18{$E26{$E30{i}}}: if no medial or final, then an 'i' is appended.
  */
-#define ZHUYIN_PINYIN_SUBSTITUTE_INITIAL_ZCSR "$N19{zh}$N20{ch}$N21{sh}$N22{r}$N23{z}$N24{c}$N25{s}$N18{$E26{$E31{i}}"
+#define ZHUYIN_PINYIN_SUBSTITUTE_INITIAL_ZCSR "$N19{zh}$N20{ch}$N21{sh}$N22{r}$N23{z}$N24{c}$N25{s}$N18{$E26{$E31{i}}}"
 #define ZHUYIN_PINYIN_SUBSTITUTE_INITIAL ZHUYIN_PINYIN_SUBSTITUTE_INITIAL_OTHERS\
     ZHUYIN_PINYIN_SUBSTITUTE_INITIAL_JQX ZHUYIN_PINYIN_SUBSTITUTE_INITIAL_ZCSR
 
 /*
  * $N27{$E2{y}}: prepend 'y' if no initial for 'ㄧ' or 'ㄩ'
  *
- * ㄧ: $N28{$N42{i}}: 
- *     append 'i' if ㄣ or ㄥ presents 
+ * ㄧ: $N28{$N2{i,$E31{i,$N42{i}}}}: 
+ *     if Initial presents, then append 'i'
+ *     else if no final, then append 'i'
+ *          else  ㄣ or ㄥ presents, then append i
  *
- * ㄩ:$N29{$N44{$N14{io,o},v}: 
+ * ㄩ:$N29{$N44{$N14{io,o},v}}: 
  *     if 'ㄥ' presents, 
  *         if jqx presents, then 'ㄩ' is translated as 'io',
  *         else 'ㄩ' is translated as 'o'
@@ -119,13 +121,15 @@ const ZhuyinSymbol ZHUYIN_SYMBOL_LIST[ZHUYIN_SYMBOL_COUNT]={
  *          else translate to 'u'
  *
  */
-#define ZHUYIN_PINYIN_SUBSTITUTE_MEDIAL "$N27{$E2{y}}$N28{$N2{i}}$N29{$N44{$N14{io,o},v}$N30{$E2{$E31{wu,$N42{we,w}},$N44{o,u}}}"
+#define ZHUYIN_PINYIN_SUBSTITUTE_MEDIAL "$N27{$E2{y}}$N28{$N2{i,$E31{i,$N42{i}}}}$N29{$N44{$N14{io,o},v}}$N30{$E2{$E31{wu,$N42{we,w}},$N44{o,u}}}"
 /**
- * ㄟ: $N37{$N26{i,ei}}
- *     if medial present then translate to i
- *     else  translate to ei
+ * ㄟ: $N37{$N26{$N2{i,ei},ei}}
+ *     if medial presents 
+ *        if initial present, then append i
+ *        else append ei
+ *     else  append ei
  *
- * ㄡ: $N39{$N26{$N2{u,ou},ou}
+ * ㄡ: $N39{$N26{$N2{u,ou},ou}}
  *     if medial present:
  *        if initial present then translate to 'u'
  *        else translate to 'ou'
@@ -141,8 +145,8 @@ const ZhuyinSymbol ZHUYIN_SYMBOL_LIST[ZHUYIN_SYMBOL_COUNT]={
  * 
  */
 #define ZHUYIN_PINYIN_SUBSTITUTE_FINAL "$N32{a}$N33{o}$N34{e}$N35{E}"\
-    "$N36{ai}$N37{$N26{i,ei}}$N38{ao}$N39{$N26{$N2{u,ou},ou}"\
-    "$N40{ang}$N41{an}$N43{$N26{n,en}}$N44{$N26{ng,eng}}$N45{er}"
+    "$N36{ai}$N37{$N26{$N2{i,ei},ei}}$N38{ao}$N39{$N26{$N2{u,ou},ou}}"\
+    "$N40{an}$N41{ang}$N43{$N26{n,en}}$N44{$N26{ng,eng}}$N45{er}"
 #define ZHUYIN_PINYIN_SUBSTITUTE	ZHUYIN_PINYIN_SUBSTITUTE_INITIAL ZHUYIN_PINYIN_SUBSTITUTE_MEDIAL ZHUYIN_PINYIN_SUBSTITUTE_FINAL
 
 #define ZHUYIN_SUBSTITUTE_TONE "$N1{5}$N47{1}$N48{2}$N49{3}$N50{4}$N51{5}"
@@ -258,11 +262,18 @@ Pinyin *syllable_to_pinyin(Syllable *syl,PinyinFormatFlags formatFlags){
     Pinyin *pinyin_curr=NULL;
     Pinyin *pinyin=pinyin_new(NULL);
     gboolean canNFC=FALSE;
+    int tone=syl->tone;
 	
     if (syllable_is_zhuyin_fast(syl)){
+	if (tone==0 && !(formatFlags &  PINYIN_FORMAT_FLAG_STRIP_TRIVIAL_TONE)){
+	    tone=1;
+	}
 	pinyin_tmp=zhuyin_to_pinyin_normalized_toneless(syl->transcription);
 	pinyin_curr=pinyin_tmp;
     }else{
+	if (tone==0 && !(formatFlags &  PINYIN_FORMAT_FLAG_STRIP_TRIVIAL_TONE)){
+	    tone=5;
+	}
 	pinyin_curr=syl->transcription;
     }
     int i,j=0;
@@ -332,7 +343,7 @@ Pinyin *syllable_to_pinyin(Syllable *syl,PinyinFormatFlags formatFlags){
 	}
     }
     pinyin[j]='\0';
-    pinyin_add_tone(pinyin,syl->tone,formatFlags);
+    pinyin_add_tone_formatFlags(pinyin,tone,formatFlags);
     if (pinyin_tmp){
 	g_free(pinyin_tmp);
     }	
@@ -351,16 +362,23 @@ Zhuyin *syllable_to_zhuyin(Syllable *syl,ZhuyinFormatFlags formatFlags){
     Zhuyin *zhuyin_tmp=NULL;
     Zhuyin *zhuyin_curr=NULL;
     Zhuyin *zhuyin=zhuyin_new(NULL);
+    int tone=syl->tone;
 
     if (!syllable_is_zhuyin_fast(syl)){
+	if (tone==0 && !(formatFlags &  ZHUYIN_FORMAT_FLAG_STRIP_1ST_TONE)){
+	    tone=5;
+	}
 	zhuyin_tmp=pinyin_normalized_to_zhuyin_toneless(syl->transcription);
 	zhuyin_curr=zhuyin_tmp;
     }else{
+	if (tone==0 && !(formatFlags &  ZHUYIN_FORMAT_FLAG_STRIP_1ST_TONE)){
+	    tone=1;
+	}
 	zhuyin_curr=syl->transcription;
     }
 
     g_strlcpy(zhuyin,zhuyin_curr,ZHUYIN_MAX_LENGTH);
-    zhuyin_add_tone(zhuyin,syl->tone,formatFlags);
+    zhuyin_add_tone_formatFlags(zhuyin,tone,formatFlags);
     if (zhuyin_tmp){
 	g_free(zhuyin_tmp);
     }
@@ -465,6 +483,7 @@ static PinyinFormatFlags pinyinAccentFormat_to_pinyinFormatFlags(
 	    formatFlags |= PINYIN_FORMAT_FLAG_ASCII_ONLY;
 	    break;
     }
+//    printf("*** pinyinAccentFormat_to_pinyinFormatFlags(%d,%d)=%X\n",toFormat,useTrailNumber,formatFlags);
     return formatFlags;
 }
 
@@ -615,14 +634,14 @@ void pinyin_add_tone_formatFlags(Pinyin* pinyin, guint tone, PinyinFormatFlags f
 		hasVowel |= HAS_O;
 	    case 'i':
 		hasVowel |= HAS_I;
-		if (hasVowel & ~ (HAS_A| HAS_E| HAS_O)){
+		if (!(hasVowel &  (HAS_A| HAS_E| HAS_O))){
 		    index=i+1;
 		}
 		break;
 	    case 0x308: // combining diaeresis
 	    case 'u':
 		hasVowel |= HAS_U;
-		if (hasVowel & ~ (HAS_A| HAS_E| HAS_O)){
+		if (!(hasVowel & (HAS_A| HAS_E| HAS_O))){
 		    index=i+1;
 		}
 		break;
