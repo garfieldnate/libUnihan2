@@ -129,67 +129,72 @@ RegexEval_DataRec REGEX_EVAL_DATA_SET[]={
  * Start of testing functions.
  */
 
-gboolean test_regex_formatted_combine(void *param,DataSet *dataSet){
-    RegexEval_DataRec *examSet= (RegexEval_DataRec *) dataSet;
-    int n,ret;
-    int j;
-    const gchar *pattern;
-    const gchar *str;
-    gchar *str_normalized;
-    const gchar *format;
+DataRec *nextRecFunc(Param *param, DataSet *dataSet){
+    RegexEval_DataRec *rRec=(RegexEval_DataRec *) dataSet;
+    static int index=0;
+    RegexEval_DataRec *currRec=&rRec[index++];
+    if (rRec[index].pattern==NULL){
+	return NULL;
+    }
+    return (DataRec *) currRec;
+}
+
+gboolean examRecFunc(Param *param, DataRec *dataRec){
+    RegexEval_DataRec *rRec=(RegexEval_DataRec *) dataRec;
+    const gchar *pattern=rRec->pattern;
+    const gchar *str=rRec->str;
+    const gchar *format=rRec->format;
+    gchar *str_normalized=g_utf8_normalize(str,-1,G_NORMALIZE_NFD);
+
     gchar *actualResult;
-    int counter=0;
+    static int counter=0;
     gchar buf[MAX_STRING_BUFFER_SIZE];
+    int j,ret;
 
-    for (n=0;examSet[n].pattern!=NULL;n++){
-	pattern=examSet[n].pattern;
-	str=examSet[n].str;
-	str_normalized=g_utf8_normalize(str,-1,G_NORMALIZE_NFD);
-	format=examSet[n].format;
 
-	verboseMsg_print(VERBOSE_MSG_INFO2,"[Info2]: str(%d)=%s\tstr_normalized(%d)=%s\tpattern=%s\tformat=%s\n",
-		strlen(str),str,strlen(str_normalized),str_normalized,pattern,format);
+    verboseMsg_print(VERBOSE_MSG_INFO3,"[Info3]: str(%d)=%s\tstr_normalized(%d)=%s\tpattern=%s\tformat=%s\n",
+	    strlen(str),str,strlen(str_normalized),str_normalized,pattern,format);
+    if (verboseMsg_get_level()>=VERBOSE_MSG_INFO4){
+	printf("*** str_normalized=");
+	for(j=0;j<strlen(str_normalized);j++){
+	    printf("%X ", CHAR_TO_UNSIGNEDCHAR(str_normalized[j]));
+	}
+	printf("\n");
+	printf("*** str=");
+	for(j=0;j<strlen(str);j++){
+	    printf("%X ",CHAR_TO_UNSIGNEDCHAR(str[j]));
+	}
+	printf("\n");
+    }
 
-	if (verboseMsg_get_level()>=VERBOSE_MSG_INFO3){
-	    printf("*** str_normalized=");
-	    for(j=0;j<strlen(str_normalized);j++){
-		printf("%X ", CHAR_TO_UNSIGNEDCHAR(str_normalized[j]));
-	    }
-	    printf("\n");
-	    printf("*** str=");
-	    for(j=0;j<strlen(str);j++){
-		printf("%X ",CHAR_TO_UNSIGNEDCHAR(str[j]));
-	    }
-	    printf("\n");
-	}
+    g_snprintf(buf,MAX_STRING_BUFFER_SIZE,"string_regex_formatted_combine(%s,%s,%s,%X,%X,&(%d))\n",
+	    str_normalized, pattern, format, REG_EXTENDED, 0, counter);
+    if (rRec->options & RESET_COUNTER){
+	counter=0;
+    }
+    actualResult=string_regex_formatted_combine(str_normalized, pattern, format, REG_EXTENDED, 0, &counter);
 
-	g_snprintf(buf,MAX_STRING_BUFFER_SIZE,"string_regex_formatted_combine(%s,%s,%s,%X,%X,&(%d))\n",
-		str_normalized, pattern, format, REG_EXTENDED, 0, counter);
-	if (examSet[n].options & RESET_COUNTER){
-	    counter=0;
-	}
-	actualResult=string_regex_formatted_combine(str_normalized, pattern, format, REG_EXTENDED, 0, &counter);
-
-	ret=compare_strings(buf,examSet[n].output,actualResult);
-	if(str_normalized){
-	    g_free(str_normalized);
-	}
-	if (actualResult){
-	    g_free(actualResult);
-	}
-	if (ret){
-	    return FALSE;
-	}
+    ret=compare_strings(buf,rRec->output,actualResult);
+    if(str_normalized){
+	g_free(str_normalized);
+    }
+    if (actualResult){
+	g_free(actualResult);
+    }
+    if (ret){
+	return FALSE;
     }
     return TRUE;
+
 }
+
 
 /*==========================================================
  * End of testing functions.
  */
 
 TestStruct TEST_COLLECTION[]={
-    {"regex eval functions",NULL,REGEX_EVAL_DATA_SET, test_regex_formatted_combine,NULL,NULL},
+    {"regex eval functions",NULL,REGEX_EVAL_DATA_SET, NULL, nextRecFunc, examRecFunc},
     {NULL,NULL, NULL, NULL,NULL,NULL},
 };
 

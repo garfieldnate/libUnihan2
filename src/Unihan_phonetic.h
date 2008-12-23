@@ -120,11 +120,11 @@ typedef struct{
     PINYIN_REGEX_IMPORT_TONE_ACCENTS "([ginoruGINORU]*)([1-5])?"
 
 
-#define PINYIN_SUBSTITUTE_E "$N11{$N6{E,$E1{$E12{$E18{$11,e},e},e}}}"
+#define PINYIN_SUBSTITUTE_E "$N11{$N6{E,$N4{E,$E1{$E12{$E18{$11,e},e},e}}}}"
 /**
  * Pinyin pattern substitute (store format). Pinyin fields are stored as \c PINYIN_ACCENT_INTERNAL, without tone accent mark or number.
  */
-#define PINYIN_SUBSTITUTE "$L1$L7$N8{v}$N9{$N2{v,u}}$N10{E}" \
+#define PINYIN_SUBSTITUTE "$L1$L7$N8{v}$N9{$N2{$E7{v,u},u}}$N10{E}" \
     PINYIN_SUBSTITUTE_E "$L12$L18"
 
 /**
@@ -139,13 +139,13 @@ typedef struct{
 
 
 
-#define PINYIN_SUBSTITUTE_E_XHC "$N15{$N10{E,$E5{$E16{$E22{$15,e},e},e}}}"
+#define PINYIN_SUBSTITUTE_E_XHC "$N15{$N10{E,$N8{E,$E5{$E16{$E22{$15,e},e},e}}}}"
 /**
  * Pinyin pattern substitute (store format) for Xiandai Hanyu Cidian (XHC1983).
  *
  * Similar to \c PINYIN_SUBSTITUTE, but for kXHC1983 only.
  */
-#define PINYIN_SUBSTITUTE_XHC "$L5$L11$N12{v}$N13{$N6{v,u}}$N14{E}" \
+#define PINYIN_SUBSTITUTE_XHC "$L5$L11$N12{v}$N13{$N6{$E11{v,u},u}}$N14{E}" \
     PINYIN_SUBSTITUTE_E_XHC "$L16$L22"
 
 /**

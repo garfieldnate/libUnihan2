@@ -143,10 +143,10 @@ const ZhuyinSymbol ZHUYIN_SYMBOL_LIST[ZHUYIN_SYMBOL_COUNT]={
 #define ZHUYIN_PINYIN_SUBSTITUTE_FINAL "$N32{a}$N33{o}$N34{e}$N35{E}"\
     "$N36{ai}$N37{$N26{i,ei}}$N38{ao}$N39{$N26{$N2{u,ou},ou}"\
     "$N40{ang}$N41{an}$N43{$N26{n,en}}$N44{$N26{ng,eng}}$N45{er}"
-
 #define ZHUYIN_PINYIN_SUBSTITUTE	ZHUYIN_PINYIN_SUBSTITUTE_INITIAL ZHUYIN_PINYIN_SUBSTITUTE_MEDIAL ZHUYIN_PINYIN_SUBSTITUTE_FINAL
 
 #define ZHUYIN_SUBSTITUTE_TONE "$N1{5}$N47{1}$N48{2}$N49{3}$N50{4}$N51{5}"
+
 
 
 #define PINYIN_REGEX_INITIAL_OTHERS "(b)?(p)?(m)?(f)?(d)?(t)?(n)?(l)?(g)?(k)?(h)?" 	// 2-12
@@ -274,10 +274,7 @@ Pinyin *syllable_to_pinyin(Syllable *syl,PinyinFormatFlags formatFlags){
 		    break;
 		}
 		if (formatFlags & PINYIN_FORMAT_FLAG_STRIP_TRIVIAL_ACCENT){
-		    if (i>0 && ((pinyin_curr[i-1]=='j' || pinyin_curr[i-1]=='q' 
-				    || pinyin_curr[i-1]=='x'  || pinyin_curr[i-1]=='y'))){
-			pinyin[j++]='u';
-		    }else if (pinyin_curr[i+1]!='\0' && pinyin_curr[i+1]=='E'){
+		    if (i>0 && (pinyin_curr[0]!='l' && pinyin_curr[0]!='n' )){
 			pinyin[j++]='u';
 		    }
 		    break;
@@ -789,7 +786,7 @@ Zhuyin *zhuyin_convert_toneMark_format(const Zhuyin* zhuyin, ZhuyinToneMarkForma
 
 Pinyin *zhuyin_to_pinyin_formatFlags(const Zhuyin* zhuyin, PinyinFormatFlags formatFlags){
     Syllable *syl=syllable_new_zhuyin(zhuyin);
-    return syllable_to_zhuyin(syl,formatFlags);
+    return syllable_to_pinyin(syl,formatFlags);
 }
 
 Pinyin *zhuyin_to_pinyin(const Zhuyin* zhuyin, PinyinAccentFormat toFormat,gboolean useTrailNumber){
@@ -803,7 +800,7 @@ gchar *zhuyin_regex_formatted_combine(const gchar *str, const gchar *format){
     int ret=syllabel_regex_t_init();
     if (ret)
 	return NULL;
-    return string_regex_formatted_combine_regex_t(str, &pinyin_regex_t, format, 0, NULL);
+    return string_regex_formatted_combine_regex_t(str, &zhuyin_regex_t, format, 0, NULL);
 }
 
 

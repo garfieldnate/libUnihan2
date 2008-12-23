@@ -23,30 +23,13 @@
 #include <stdlib.h>
 #include "verboseMsg.h"
 #include "Unihan.h"
+#include "check_functions.h"
 #include "phonetic_test_tables.c"
 
 
-
-typedef enum{
-    PINYIN_ALWAYS,
-    PINYIN_ORIGINAL,
-    PINYIN_UNIHAN,
-    PINYIN_TRAILING,
-    PINYIN_INPUT_METHOD,
-    PINYIN_NONE,
-    ZHUYIN_ALWAYS,
-} TEST_ID;
-
-const char *data_msgs[]={
-    "pinyin ALWAYS",
-    "pinyin ORIGINAL",
-    "pinyin UNIHAN",
-    "pinyin TRAILING",
-    "pinyin INPUT METHOD",
-    "pinyin NONE",
-    "zhuyin ALWAYS",
-    NULL
-};
+#define ZHUYIN_START 7
+#define PINYIN_UNIHAN 2
+#define PINYIN_NONE 5
 
 const char **dataSet[]={
     PINYIN_COMBINATION_TABLES_ALWAYS,
@@ -55,101 +38,129 @@ const char **dataSet[]={
     PINYIN_COMBINATION_TABLES_TRAILING,
     PINYIN_COMBINATION_TABLES_INPUT_METHOD,
     PINYIN_COMBINATION_TABLES_NONE,
+    PINYIN_COMBINATION_TABLES_INTERNAL,
     ZHUYIN_COMBINATION_TABLES,
+    NULL
 };
 
-#define TEST_NUM 7
+typedef struct{
+    const gchar *inStr;
+    const gchar *expectedStr;
+    int fromIndex;
+} StrDataRec;
 
-gboolean perform_test(TEST_ID testId){
-    const char **fromArray=NULL;
-    const char **toArray=NULL;
-    printf("Testing on converting to %s \n",data_msgs[testId]);
+StrDataRec strDataRec;
 
-    char *out;
-    guint i,j;
-    for(j=0;j<TEST_NUM;j++){
-	printf(" %d: From %s To %s \t...",j,data_msgs[j],data_msgs[testId]);
-	toArray=dataSet[testId];
-	fromArray=dataSet[j];
-	for(i=0;fromArray[i]!=NULL;i++){
-	    verboseMsg_print(VERBOSE_MSG_INFO2,"  j=%d i=%d String=%s   ",j,i,fromArray[i]);
-	    if (j<ZHUYIN_ALWAYS){
-		if (testId<ZHUYIN_ALWAYS){
-		    /* Skip non-functional dependency test */
-		    if (j>=PINYIN_UNIHAN){
-			if (strcmp(fromArray[i],"E")==0){
-			    continue;
-			}
-			if (j==PINYIN_NONE){
-			    if (g_str_has_prefix(fromArray[i],"NU")){
-				continue;
-			    }else if (g_str_has_prefix(fromArray[i],"LU")){
-				continue;
-			    }
-			}
-		    }
-		    out=pinyin_convert_accent_format(fromArray[i],testId,TRUE);
-		    pinyin_strip_tone(out);
-		}else{
-		    if (j>=PINYIN_UNIHAN){
-			if (strcmp(fromArray[i],"E")==0){
-			    continue;
-			}
-			if (j==PINYIN_NONE){
-			    if (g_str_has_prefix(fromArray[i],"NU")){
-				continue;
-			    }else if (g_str_has_prefix(fromArray[i],"LU")){
-				continue;
-			    }
-			}
-		    }
-		    out=pinyin_to_zhuyin(fromArray[i],testId-ZHUYIN_ALWAYS);
-		    zhuyin_strip_tone(out);
-		}
-	    }else{
-		if (testId<ZHUYIN_ALWAYS){
-		    out=zhuyin_to_pinyin(fromArray[i],testId,TRUE);
-		    pinyin_strip_tone(out);
-		}else{
-		    out=zhuyin_convert_toneMark_format(fromArray[i],testId-ZHUYIN_ALWAYS);
-		    zhuyin_strip_tone(out);
-		}
-	    }
-	    if (strcmp(out,toArray[i])!=0){
-		printf(" Failed: Orig=%s Out=%s Exp=%s\n",fromArray[i],out,toArray[i]);
-		return FALSE;
-	    }else{
-		verboseMsg_print(VERBOSE_MSG_INFO2,"  out=%s, exp=%s matched.\n",out,toArray[i]);
-	    }
-	}
-	printf(" completed.\n");
+TestStruct TEST_COLLECTION[];
+/*==========================================================
+ * Start of testing functions.
+ */
+
+DataRec *nextRecFunc(Param *param, DataSet *dataSet){
+    const char ***rRec=(const char ***) dataSet;
+    int toIndex=((char *)param)[0]-'0';
+    static int fromIndex=0;
+    static int i=0;
+    if (fromIndex==toIndex){
+	fromIndex++;
     }
-    printf("All sub-test completed.\n");
-    return TRUE;
+    if (rRec[fromIndex]==NULL){
+	return NULL;
+    }
+    strDataRec.inStr=rRec[fromIndex][i];
+    strDataRec.expectedStr=rRec[toIndex][i];
+    strDataRec.fromIndex=fromIndex;
+    if (rRec[fromIndex][++i]==NULL){
+	fromIndex++;
+	i=0;
+    }
+    return (DataRec *) &strDataRec;
 }
 
-int main(int argc, char** argv){
-    int argIndex=1;
-    int verboseLevel=VERBOSE_MSG_WARNING;
-    if (argc<2){
-	printf("Usage: %s [-V num] <test num> \n",argv[0]);
-	return 1;
-    }
-    if (strcmp(argv[argIndex],"-V")==0){
-	verboseLevel=atoi(argv[++argIndex]);
-	argIndex++;
-    }
-    verboseMsg_set_level(verboseLevel);
+gboolean examRecFunc(Param *param, DataRec *dataRec){
+    StrDataRec *strRec=(StrDataRec *) dataRec;
+    int toIndex=((char *)param)[0]-'0';
+    int fromIndex=strRec->fromIndex;
+    char *actualStr=NULL;
+    char buf[MAX_STRING_BUFFER_SIZE];
 
-    int test_index=atoi(argv[argIndex]);
-    if (test_index>=TEST_NUM || test_index<0){
-	printf("Invalid test number.\n");
-	return 2;
+    verboseMsg_print(VERBOSE_MSG_INFO2,"[Info2]: inStr=%s\tfrom %s to %s\n",strRec->inStr,TEST_COLLECTION[fromIndex].prompt,TEST_COLLECTION[toIndex].prompt);
+    if (fromIndex<ZHUYIN_START){
+	if (toIndex<ZHUYIN_START){
+	    /* Skip non-functional dependency test */
+	    if (fromIndex>=PINYIN_UNIHAN && fromIndex<=PINYIN_NONE){
+		if (strcmp(strRec->inStr,"e")==0){
+		    return TRUE;
+		}
+		if (fromIndex==PINYIN_NONE){
+		    if (g_str_has_prefix(strRec->inStr,"nu")){
+			return TRUE;
+		    }else if (g_str_has_prefix(strRec->inStr,"lu")){
+			return TRUE;
+		    }
+		}
+	    }
+	    actualStr=pinyin_convert_accent_format(strRec->inStr,toIndex,TRUE);
+	    pinyin_strip_tone(actualStr);
+
+	}else{
+
+	    if (fromIndex>=PINYIN_UNIHAN){
+		if (strcmp(strRec->inStr,"e")==0){
+		    return TRUE;
+		}
+		if (fromIndex==PINYIN_NONE){
+		    if (g_str_has_prefix(strRec->inStr,"nu")){
+			return TRUE;
+		    }else if (g_str_has_prefix(strRec->inStr,"lu")){
+			return TRUE;
+		    }
+		}
+	    }
+	    actualStr=pinyin_to_zhuyin(strRec->inStr,toIndex-ZHUYIN_START);
+	    zhuyin_strip_tone(actualStr);
+	}
+    }else{
+	if (toIndex<ZHUYIN_START){
+	    actualStr=zhuyin_to_pinyin(strRec->inStr,toIndex,TRUE);
+	    pinyin_strip_tone(actualStr);
+	}else{
+	    actualStr=zhuyin_convert_toneMark_format(strRec->inStr,toIndex-ZHUYIN_START);
+	    zhuyin_strip_tone(actualStr);
+	}
+
     }
-    if (perform_test(test_index)){
-	printf("Success!\n");
+    g_snprintf(buf,MAX_STRING_BUFFER_SIZE,"inStr=%s from %s to %s",strRec->inStr,TEST_COLLECTION[fromIndex].prompt,TEST_COLLECTION[toIndex].prompt);
+    return (compare_strings(buf, strRec->expectedStr, actualStr))? FALSE: TRUE;
+}
+
+
+/*==========================================================
+ * End of testing functions.
+ */
+TestStruct TEST_COLLECTION[]={
+    {"pinyin ALWAYS",	"0", dataSet , NULL, nextRecFunc, examRecFunc},
+    {"pinyin ORIGINAL",	"1",	dataSet, NULL, nextRecFunc, examRecFunc},
+    {"pinyin UNIHAN",	"2", dataSet, NULL, nextRecFunc, examRecFunc},
+    {"pinyin TRAILING", "3", dataSet, NULL, nextRecFunc, examRecFunc},
+    {"pinyin INPUT METHOD","4", dataSet, NULL, nextRecFunc, examRecFunc},
+    {"pinyin NONE", 	"5", dataSet, NULL, nextRecFunc, examRecFunc},
+    {"pinyin INTERNAL",	"6", dataSet, NULL, nextRecFunc, examRecFunc},
+    {"zhuyin ALWAYS", "7", dataSet, NULL, nextRecFunc, examRecFunc},
+    {NULL,NULL, NULL, NULL,NULL,NULL},
+};
+
+
+
+int main(int argc, char** argv){
+    int testId=get_testId(argc,argv,TEST_COLLECTION);
+    if (testId<0){
+	return testId;
+    }
+    if (perform_test(testId, TEST_COLLECTION)){
 	return 0;
     }
     return 1;
-
 }
+
+

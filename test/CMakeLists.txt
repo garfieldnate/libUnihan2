@@ -13,7 +13,8 @@ SET(check_functions_SRCS
 
 # Test programs
 #ADD_EXECUTABLE(check_unihan_functions  check_unihan_functions.c)
-ADD_EXECUTABLE(check_phonetic  check_phonetic.c )
+ADD_EXECUTABLE(check_phonetic  check_phonetic.c 
+    ${check_functions_SRCS})
 ADD_EXECUTABLE(check_toneMark  check_toneMark.c )
 #ADD_EXECUTABLE(unihan_field_validation  ../src/unihan_converter.c)
 ADD_EXECUTABLE(check_str_functions check_str_functions.c

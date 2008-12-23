@@ -28,22 +28,19 @@
 
 typedef void DataSet;
 typedef void Param;
-
-typedef struct{
-    void *inputRec;
-    void *expectedRec;
-} DataRec;
+typedef void DataRec;
 
 typedef gboolean (* TestFunc)(Param *param, DataSet *dataSet);
-typedef DataRec (* NextRecFunc)(Param *param, DataSet *dataSet);
-typedef DataRec (* ExamRecFunc)(Param *param, DataRec *dataSet);
+typedef DataRec *(* NextRecFunc)(Param *param, DataSet *dataSet);
+typedef gboolean (* ExamRecFunc)(Param *param, DataRec *dataRec);
 
 typedef struct{
     char *prompt;
-    void *param;
+    Param *param;
     DataSet *dataSet;
     TestFunc testFunc;
     NextRecFunc nextRecFunc;
+    ExamRecFunc examRecFunc;
 } TestStruct;
 
 

@@ -31,7 +31,7 @@
 int compare_strings(const char *prompt, const char *expect, const char *actual){
     int ret;
     if (expect==NULL && actual==NULL){
-	verboseMsg_print(VERBOSE_MSG_INFO1,"[Ok]: both are NULL\n");
+	verboseMsg_print(VERBOSE_MSG_INFO2,"[Ok]: both are NULL\n");
 	return 0;
     }
     if (expect==NULL){
@@ -50,7 +50,7 @@ int compare_strings(const char *prompt, const char *expect, const char *actual){
 	verboseMsg_print(VERBOSE_MSG_ERROR,"[Error]: %s:",prompt);
 	verboseMsg_print(VERBOSE_MSG_ERROR,"    Expect:%s\tActual:%s\n",expect,actual);
     }else{
-	verboseMsg_print(VERBOSE_MSG_INFO1,"[Ok]: expect and actual matched: %s\n",actual);
+	verboseMsg_print(VERBOSE_MSG_INFO2,"[Ok]: expect:(%s) and actual:(%s) matched: \n",expect,actual);
     }
     return ret;
 }
@@ -77,7 +77,7 @@ int get_testId(int argc, char** argv, TestStruct *testCollection){
 	return -2;
     }
     for(i=0;i<=test_index;i++){
-	if (testCollection[i].testFunc==NULL){
+	if (testCollection[i].prompt==NULL){
 	    printf("Invalid test number.\n");
 	    return -2;
 	}
@@ -86,10 +86,26 @@ int get_testId(int argc, char** argv, TestStruct *testCollection){
 }
 
 gboolean perform_test(unsigned int testId, TestStruct *testCollection){
-    if (testCollection[testId].testFunc(testCollection[testId].param, testCollection[testId].dataSet)){
+    if (testCollection[testId].testFunc!=NULL){
+	if (testCollection[testId].testFunc(testCollection[testId].param, testCollection[testId].dataSet)){
+	    printf("All sub-test completed.\n");
+	    return TRUE;
+	}
+	return FALSE;
+    }
+    if (testCollection[testId].nextRecFunc!=NULL && testCollection[testId].examRecFunc!=NULL){
+	DataRec *dataRec=NULL;
+	verboseMsg_print(VERBOSE_MSG_INFO1," Testing on %s.\n",testCollection[testId].prompt);
+	for(dataRec=testCollection[testId].nextRecFunc(testCollection[testId].param,testCollection[testId].dataSet);dataRec!=NULL;
+		    dataRec=testCollection[testId].nextRecFunc(testCollection[testId].param,testCollection[testId].dataSet)){
+	    if (!testCollection[testId].examRecFunc(testCollection[testId].param,dataRec)){
+		return FALSE;
+	    }
+	}
 	printf("All sub-test completed.\n");
 	return TRUE;
     }
+
     return FALSE;
 }
 
