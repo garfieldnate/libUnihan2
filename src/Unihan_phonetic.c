@@ -223,8 +223,8 @@ Syllable *syllable_new_pinyin(const Pinyin *pinyin_str){
     if (!isEmptyString(pinyin_str)){
 	Pinyin *pinyin=g_utf8_normalize(pinyin_str,PINYIN_MAX_LENGTH,G_NORMALIZE_NFD);
 	g_assert(pinyin);
-	gchar *pinyin_tmp=pinyin_regex_import_formatted_combine(pinyin,PINYIN_SUBSTITUTE);
-	gchar *toneStr=pinyin_regex_import_formatted_combine(pinyin,PINYIN_SUBSTITUTE_TONE);
+	gchar *pinyin_tmp=pinyin_regex_import_formatted_combine(pinyin,PINYIN_IMPORT_SUBSTITUTE);
+	gchar *toneStr=pinyin_regex_import_formatted_combine(pinyin,PINYIN_IMPORT_SUBSTITUTE_TONE);
 	tone=atoi(toneStr);
 	if (pinyin_tmp){
 	    g_strlcpy(syl->transcription,pinyin_tmp,TRANSCRIPTION_MAX_LENGTH);
