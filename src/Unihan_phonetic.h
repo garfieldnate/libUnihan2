@@ -41,6 +41,7 @@
 #define UNIHAN_PHONETIC_H_
 
 #include <sqlite3.h>
+#include "Unihan_phonetic-private.h"
 
 /**
  * Maximum length of pinyin in byte.
@@ -119,6 +120,20 @@ typedef struct{
  */
 #define PINYIN_IMPORT_SUBSTITUTE_TONE PINYIN_IMPORT_SUBSTITUTE_TONE_ACCENT "$20"
 
+
+/**
+ * Pinyin pattern substitute (store format) for Xiandai Hanyu Cidian (XHC1983).
+ *
+ * Similar to \c PINYIN_IMPORT_SUBSTITUTE, but for kXHC1983 only.
+ */
+#define PINYIN_IMPORT_SUBSTITUTE_XHC PINYIN_IMPORT_SUBSTITUTE_XHC_PRIVATE
+
+/**
+ * Pinyin tone accent mark pattern substitute (store format) for Xiandai Hanyu Cidian (XHC1983).
+ *
+ * Similar to \c PINYIN_IMPORT_SUBSTITUTE_TONE_ACCENT, but for kXHC1983 only.
+ */
+#define PINYIN_IMPORT_SUBSTITUTE_TONE_ACCENT_XHC PINYIN_IMPORT_SUBSTITUTE_TONE_ACCENT_XHC_PRIVATE 
 
 /**
  * Pinyin tone number pattern substitute (store format) for Xiandai Hanyu Cidian (XHC1983).

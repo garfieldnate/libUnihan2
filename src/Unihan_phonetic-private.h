@@ -69,19 +69,10 @@
  */
 
 #define PINYIN_IMPORT_SUBSTITUTE_E_XHC "$N15{$N10{E,$N8{E,$E5{$E16{$E22{$15,e},e},e}}}}"
-/**
- * Pinyin pattern substitute (store format) for Xiandai Hanyu Cidian (XHC1983).
- *
- * Similar to \c PINYIN_IMPORT_SUBSTITUTE, but for kXHC1983 only.
- */
+
 #define PINYIN_IMPORT_SUBSTITUTE_XHC_PRIVATE "$L5$L11$N12{v}$N13{$N22{v,$N6{$E11{v,u},u}}}$N14{E}" \
     PINYIN_IMPORT_SUBSTITUTE_E_XHC "$L16$L23"
 
-/**
- * Pinyin tone accent mark pattern substitute (store format) for Xiandai Hanyu Cidian (XHC1983).
- *
- * Similar to \c PINYIN_IMPORT_SUBSTITUTE_TONE_ACCENT, but for kXHC1983 only.
- */
 #define PINYIN_IMPORT_SUBSTITUTE_TONE_ACCENT_XHC_PRIVATE "$E17{$E24{5}}$N18{1}$N19{2}$N20{3}$N21{4}"
 
 

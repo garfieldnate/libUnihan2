@@ -166,23 +166,35 @@ const ZhuyinSymbol ZHUYIN_SYMBOL_LIST[ZHUYIN_SYMBOL_COUNT]={
  * yv: -> ^ㄩ
  * i: -> +ㄧ*
  * u: -> +ㄩ*
+ * v: -> +ㄩ*
  *
  */
-#define PINYIN_REGEX_MEDIAL "((yi?)?(w[eu]?)?(y?v)?(io)?((i)|(u))?)?"		// 25-32
-#define PINYIN_REGEX_FINAL  "((ang)?(e?ng)?(e?n)?(er)?(ai)?(e?i)?(ao)?(o?u)?(an)?(a)?(o)?(e)?(E)?)?"  // 33
+#define PINYIN_REGEX_MEDIAL "((wu?)?(io)?(y)?((i)|(u)|(v))?)?"		// 25-32
+#define PINYIN_REGEX_MF "(o)?"		// 33
+#define PINYIN_REGEX_FINAL  "((ang)?(e?ng)?(e?n)?(er)?(ai)?(e?i)?(ao)?(u)?(an)?(a)?(e)?(E)?)?"  // 34-46
 
-#define PINYIN_REGEX	PINYIN_REGEX_INITIAL PINYIN_REGEX_MEDIAL PINYIN_REGEX_FINAL
+#define PINYIN_REGEX	PINYIN_REGEX_INITIAL PINYIN_REGEX_MEDIAL PINYIN_REGEX_MF PINYIN_REGEX_FINAL
 
 #define PINYIN_ZHUYIN_SUBSTITUTE_INITIAL_OTHERS "$N2{ㄅ}$N3{ㄆ}$N4{ㄇ}$N5{ㄈ}$N6{ㄉ}$N7{ㄊ}$N8{ㄋ}$N9{ㄌ}$N10{ㄍ}$N11{ㄎ}$N12{ㄏ}"
-#define PINYIN_ZHUYIN_SUBSTITUTE_INITIAL_JQX "$N14{ㄐ}$N15{(ㄑ}$N16{ㄒ}"
+#define PINYIN_ZHUYIN_SUBSTITUTE_INITIAL_JQX "$N14{ㄐ}$N15{ㄑ}$N16{ㄒ}"
 #define PINYIN_ZHUYIN_SUBSTITUTE_INITIAL_ZCSR "$N18{ㄓ}$N19{ㄔ}$N20{ㄕ}$N21{ㄖ}$N22{ㄗ}$N23{ㄘ}$N24{ㄙ}"
 #define PINYIN_ZHUYIN_SUBSTITUTE_INITIAL	PINYIN_ZHUYIN_SUBSTITUTE_INITIAL_OTHERS\
     PINYIN_ZHUYIN_SUBSTITUTE_INITIAL_JQX PINYIN_ZHUYIN_SUBSTITUTE_INITIAL_ZCSR
-#define PINYIN_ZHUYIN_SUBSTITUTE_MEDIAL		"$N26{ㄧ}$N27{ㄨ}$N28{ㄩ}$N29{ㄩ}$N31{ㄧ}$N32{ㄨ}"
-#define PINYIN_ZHUYIN_SUBSTITUTE_FINAL		"$N35{ㄤ}$N36{ㄥ}$N37{ㄣ}$N38{ㄦ}$N39{ㄞ}$N40{ㄟ}$N41{ㄠ}$N42{ㄡ}$N43{ㄢ}$N44{ㄚ}$N45{ㄛ}$N46{ㄜ}$N47{ㄝ}"
+#define PINYIN_ZHUYIN_SUBSTITUTE_MEDIAL		"$N26{ㄨ}$N27{ㄩ}$N28{$E29{$E36{ㄧ}}}$N30{$E17{ㄧ}}$N31{ㄨ}$N32{ㄩ}"
+/*
+ * o:    ㄛ
+ * fo:   ㄈㄛ
+ * yo: ㄧㄛ
+ * hong: ㄏㄨㄥ
+ * yong: ㄩㄥ
+ * pou: ㄆㄡ
+ * you: ㄧㄡ
+ */
+#define PINYIN_ZHUYIN_SUBSTITUTE_MF		"$N33{$E34{ㄛ,$E42{$N1{ㄨ,$N36{ㄩ}}}}}"
+#define PINYIN_ZHUYIN_SUBSTITUTE_FINAL		"$N35{ㄤ}$N36{ㄥ}$N37{ㄣ}$N38{ㄦ}$N39{ㄞ}$N40{ㄟ}$N41{ㄠ}$N42{ㄡ}$N43{ㄢ}$N44{ㄚ}$N45{ㄜ}$N46{ㄝ}"
 
 #define PINYIN_ZHUYIN_SUBSTITUTE PINYIN_ZHUYIN_SUBSTITUTE_INITIAL\
-    PINYIN_ZHUYIN_SUBSTITUTE_MEDIAL PINYIN_ZHUYIN_SUBSTITUTE_FINAL
+    PINYIN_ZHUYIN_SUBSTITUTE_MEDIAL  PINYIN_ZHUYIN_SUBSTITUTE_MF PINYIN_ZHUYIN_SUBSTITUTE_FINAL
 
 const gunichar PINYIN_COMBINING_TONED_ACCENTS[4]={
     0x0304,	// combining macron, 1st tone.
@@ -287,6 +299,21 @@ Pinyin *syllable_to_pinyin(Syllable *syl,PinyinFormatFlags formatFlags){
 		if (formatFlags & PINYIN_FORMAT_FLAG_STRIP_TRIVIAL_ACCENT){
 		    if (i>0 && (pinyin_curr[0]!='l' && pinyin_curr[0]!='n' )){
 			pinyin[j++]='u';
+		    }else{
+			if (formatFlags & PINYIN_FORMAT_FLAG_ASCII_ONLY){
+			    if (formatFlags & PINYIN_FORMAT_FLAG_NFD){
+				pinyin[j++]='u';
+				pinyin[j++]=':';
+			    }else{
+				pinyin[j++]='v';
+			    }
+			}else{
+			    /* Allow non-ascii, add diaeresis */
+			    pinyin[j++]='u';
+			    pinyin[j++]='\xCC';
+			    pinyin[j++]='\x88';
+			    canNFC=TRUE;
+			}
 		    }
 		    break;
 		}else{
@@ -494,6 +521,7 @@ static ZhuyinFormatFlags zhuyinToneMarkFormat_to_zhuyinFormatFlags(
 	case ZHUYIN_TONEMARK_ALWAYS:
 	    break;
 	case ZHUYIN_TONEMARK_ORIGINAL:
+	    formatFlags |= ZHUYIN_FORMAT_FLAG_STRIP_1ST_TONE;
 	    formatFlags |= ZHUYIN_FORMAT_FLAG_FRONT_5TH_TONE;
 	    break;
 	case ZHUYIN_TONEMARK_INPUT_METHOD:
