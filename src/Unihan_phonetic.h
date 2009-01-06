@@ -395,11 +395,48 @@ typedef enum{
 /**
  * New a syllable instance.
  *
+ * This function new an empty syllable instance.
+ * Free it with syllable_free()
+ *
  * @return a newly allocated syllable instance.
+ * @see syllable_free()
  */
 Syllable *syllable_new();
+
+/**
+ * New a syllable instance from pinyin.
+ *
+ * This function new a syllable instance according to given pinyin string.
+ * The pinyin can be in any format from #PinyinAccentFormat.
+ * And can be toned or toneless.
+ *
+ * \note Tone of toneless syllable is zero (i.e. syl->tone==0). 
+ * It does not try to guess what it is.
+ *
+ * @param pinyin_str pinyin string 
+ * @return a newly allocated syllable instance.
+ */
 Syllable *syllable_new_pinyin(const Pinyin *pinyin_str);
+
+/**
+ * New a syllable instance from zhuyin.
+ *
+ * This function new a syllable instance according to given zhuyin string.
+ * The zinyin string can be in any format from #ZhuyinToneMarkFormat .
+ * And can be toned or toneless.
+ *
+ * @param pinyin_str pinyin string 
+ * @return a newly allocated syllable instance.
+ */
 Syllable *syllable_new_zhuyin(const Zhuyin *zhuyin_str);
+
+
+/**
+ * Clone a syllable instance.
+ *
+ * @param syl The syllable to be processed.
+ * @return a newly allocated syllable instance.
+ */
 Syllable *syllable_clone(Syllable *syl);
 
 /**
@@ -427,8 +464,30 @@ Pinyin *syllable_to_pinyin(Syllable *syl,PinyinFormatFlags formatFlags);
  * @return A newly allocated Zhuyin instance as result.
  */
 Zhuyin *syllable_to_zhuyin(Syllable *syl,ZhuyinFormatFlags formatFlags);
+
+/**
+ * Whether the transcription of syllable is Zhuyin.
+ *
+ * @param syl The syllable to be processed.
+ * @return TRUE if every characters in syl->transcription are either ZhuyinSymbol or numbers; 
+ *         FALSE otherwise.
+ */
 gboolean syllable_is_zhuyin(Syllable *syl);
+
+/**
+ * Whether the first character of transcription of syllable is Zhuyin.
+ *
+ * @param syl The syllable to be processed.
+ * @return TRUE if the first in syl->transcription is a ZhuyinSymbol;
+ *         FALSE otherwise.
+ */
 gboolean syllable_is_zhuyin_fast(Syllable *syl);
+
+/**
+ * Free a syllable instance.
+ *
+ * @param syl The syllable to be freed.
+ */
 
 void syllable_free(Syllable *syl);
 
@@ -488,14 +547,30 @@ guint pinyin_get_tone(const Pinyin* pinyin);
  * Strip the tone mark of Pinyin and return explicit-specified the tone Id.
  *
  * This function strips the tone mark of pinyin,
- * otherwise is similar to pinyin_get_tone().
+ * then returns the stripped tone id.
+ *
+ * Note that this function returns 0 if no tone notation is in \a pinyin,
+ * disregard of whether the tone is neutral or \a pinyin is already toneless.
+ *
+ * @param pinyin the pinyin instance to be stripped.
+ * @return the tone id from 1 to 5 if the tone is explicit-specified, otherwise return 0.
+ * @see pinyin_get_tone()
+ * @see pinyin_strip_tone_normalized()
+ */
+guint pinyin_strip_tone(Pinyin* pinyin);
+
+/**
+ * Normalize pinyin into NFD, strip the tone mark of Pinyin, then return explicit-specified the tone Id.
+ *
+ * This function normalizes pinyin into Unicode Normalization Form D (NFD),
+ * otherwise it is similar with pinyin_strip_tone()
+ *
  *
  * @param pinyin the pinyin instance to be stripped.
  * @return the tone id from 1 to 5 if the tone is explicit-specified, 0
  * @see pinyin_get_tone()
+ * @see pinyin_strip_tone()
  */
-guint pinyin_strip_tone(Pinyin* pinyin);
-
 guint pinyin_strip_tone_normalized(Pinyin* pinyin);
 
 /**
