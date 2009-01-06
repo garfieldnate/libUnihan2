@@ -392,6 +392,11 @@ typedef enum{
  * Syllable functions.
  */
 
+/**
+ * New a syllable instance.
+ *
+ * @return a newly allocated syllable instance.
+ */
 Syllable *syllable_new();
 Syllable *syllable_new_pinyin(const Pinyin *pinyin_str);
 Syllable *syllable_new_zhuyin(const Zhuyin *zhuyin_str);
