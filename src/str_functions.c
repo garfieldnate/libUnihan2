@@ -84,6 +84,14 @@ int stringList_find_string(StringList *sList,const gchar* str){
     return -1;
 }
 
+gboolean stringList_has_string(StringList *sList,const gchar* str){
+    gchar *strPtr=(gchar *) g_hash_table_lookup(sList->hTable,str);
+    if (strPtr){
+	return TRUE;
+    }
+    return FALSE;
+}
+
 gchar **stringList_to_gcharPointerPointer(StringList *sList){
     return (gchar**) sList->ptrArray->pdata;
 }
@@ -111,7 +119,6 @@ guint stringList_insert(StringList *sList, const gchar *str){
 guint stringList_insert_const(StringList *sList, const gchar *str){
     g_ptr_array_remove_index_fast (sList->ptrArray,sList->len);
     gchar *strPtr=(gchar *) g_hash_table_lookup(sList->hTable,str);
-
 
     if (!strPtr){
 	strPtr=g_string_chunk_insert_const (sList->chunk,str);

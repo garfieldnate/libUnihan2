@@ -75,5 +75,49 @@
 
 #define PINYIN_IMPORT_SUBSTITUTE_TONE_ACCENT_XHC_PRIVATE "$E17{$E24{5}}$N18{1}$N19{2}$N20{3}$N21{4}"
 
+/**
+ * Combine sub-matches of a pinyin regex import search into a specified format.
+ *
+ * This function used the compiled pinyin regex import expression, #PINYIN_REGEX_IMPORT,
+ * for search, then matched sub patterns are combined as specified in \a format.
+ * 
+ *
+ * @param str String to be searched.
+ * @param format Format of the output string.
+ * @return An newly allocated combined string, or NULL if no match or have error.
+ * @see #PINYIN_REGEX_IMPORT
+ */
+gchar *pinyin_regex_import_formatted_combine(const gchar *str, const gchar *format);
+
+
+
+/**
+ * Combine sub-matches of a pinyin regex search into a specified format.
+ *
+ * This function used the compiled pinyin regex import expression, #PINYIN_REGEX,
+ * for search, then matched sub patterns are combined as specified in \a format.
+ * 
+ *
+ * @param str String to be searched.
+ * @param format Format of the output string.
+ * @return An newly allocated combined string, or NULL if no match or have error.
+ * @see PINYIN_REGEX_IMPORT
+ */
+gchar *pinyin_regex_formatted_combine(const gchar *str, const gchar *format);
+
+/**
+ * Combine sub-matches of a zhuyin regex search into a specified format.
+ *
+ * This function used the compiled zhuyin regex import expression, #ZHUYIN_REGEX,
+ * for search, then matched sub patterns are combined as specified in \a format.
+ * 
+ *
+ * @param str String to be searched.
+ * @param format Format of the output string.
+ * @return An newly allocated combined string, or NULL if no match or have error.
+ * @see ZHUYIN_REGEX_IMPORT
+ */
+gchar *zhuyin_regex_formatted_combine(const gchar *str, const gchar *format);
+
 
 #endif /* UNIHAN_PHONETIC_PRIVATE_H_ */

@@ -576,7 +576,22 @@ guint pinyin_strip_tone_normalized(Pinyin* pinyin);
 /**
  * Add the tone mark to pinyin.
  *
- * This function add tone mark to zhuyin, existing tone will be removed before adding new tone.
+ * This function add \a tone to \a pinyin, as trailing number if \a useTrailNumber=TRUE 
+ * or as tone accent mark if \a useTrailNumber=FALSE. 
+ * Otherwise it is similar to pinyin_add_tone_formatFlags()
+ *
+ * @param pinyin the pinyin instance to be processed.
+ * @param tone the tone to be added.
+ * @param useTrailNumber TRUE trailing number is preferred, FALSE to use traditional tonemark.
+ * @see pinyin_add_tone_formatFlags()
+ */
+void pinyin_add_tone(Pinyin* pinyin, guint tone, gboolean useTrailNumber);
+
+/**
+ * Add the tone mark to pinyin, according to PinyinFormatFlags.
+ *
+ * This function add tone mark to pinyin according to PinyinFormatFlags,
+ * existing tone will be removed before adding new tone.
  * If tone is 0, then existing tone will be removed, but no new tone will be added.
  * 
  * The result will be stored in pinyin, so backup it with strdup() or g_strdup() to keep the original.
@@ -584,22 +599,22 @@ guint pinyin_strip_tone_normalized(Pinyin* pinyin);
  * @param pinyin the pinyin instance to be processed.
  * @param tone the tone to be added.
  * @param useTrailNumber TRUE trailing number is preferred, FALSE to use traditional tonemark.
+ * @see pinyin_add_tone()
  */
-void pinyin_add_tone(Pinyin* pinyin, guint tone, gboolean useTrailNumber);
 void pinyin_add_tone_formatFlags(Pinyin* pinyin, guint tone, PinyinFormatFlags formatFlags);
 
 
 /**
  * Convert pinyin to new format.
- * Return a newly allocated Pinyin instance which contains the converted content.
  *
- * This function converts pinyin to new accent format and return the result as a newly allocated pinyin instance.
- * Unlike pinyin_get_tone() and pinyin_strip_tone(), 
- * it treats the toneless pinyin as if it is in neutral (5-th) tone, 
- * unless SQL wild characters '%' and '_' also present.
+ * Return a newly allocated Pinyin instance which contains the pinyin in new format,
+ * which is specified in \a formatFlags.
+ *
+ * Note that this function does not try to convert toneless pinyin to 5th tone.
+ * Use \c syl=syllabel_new(pinyin); \c syllable_to_pinyin(syl,formatFlags) for 
+ * that.
  *
  * Use free() or g_free() to free the newly allocated instance.
- *
  *
  * @param pinyin the Pinyin to be converted.
  * @param formatFlags Pinyin Format Flags.
@@ -614,10 +629,13 @@ Pinyin *pinyin_convert_formatFlags(const Pinyin *pinyin, PinyinFormatFlags forma
 /**
  * Convert pinyin to new accent format.
  *
- * This function performs exactly the same with pinyin_convert_format()
+ * This function performs exactly the same with pinyin_convert_formatFlags()
  * except this function accepts PinyinAccentFormat and a boolean value as arguments.
  *
+ *
  * Use free() or g_free() to free the newly allocated instance.
+ *
+ * \note From version 1.0, this function no longer handle SQL wild characters.
  *
  * @param pinyin the Pinyin to be converted.
  * @param toFormat the Pinyin accent mode to be converted to.
@@ -632,33 +650,26 @@ Pinyin *pinyin_convert_accent_format(const Pinyin *pinyin, PinyinAccentFormat to
 
 
 /**
- * Pinyin to Zhuyin
+ * Pinyin to Zhuyin.
  *
  * @param pinyin the Pinyin to be converted.
  * @param toFormat the Zhuyin tone mark mode.
  * @return a newly located Zhuyin instance.
  * @see zhuyin_convert_toneMark_format()
+ * @see pinyin_to_zhuyin_formatFlags()
  */
 Zhuyin *pinyin_to_zhuyin(const Pinyin* pinyin, ZhuyinToneMarkFormat toFormat);
-Zhuyin *pinyin_to_zhuyin_formatFlags(const Pinyin* pinyin, ZhuyinFormatFlags formatFlags);
-
-int pinyin_regex_t_init();
 
 /**
- * Combine sub-matches of a pinyin regex import search into a specified format.
+ * Pinyin to Zhuyin, according to ZhuyinFormatFlags.
  *
- * This function used the compiled pinyin regex import expression, #PINYIN_REGEX_IMPORT,
- * for search, then matched sub patterns are combined as specified in \a format.
- * 
- *
- * @param str String to be searched.
- * @param format Format of the output string.
- * @return An newly allocated combined string, or NULL if no match or have error.
- * @see PINYIN_REGEX_IMPORT
+ * @param pinyin the Pinyin to be converted.
+ * @param formatFlags Zhuyin format flags.
+ * @return a newly located Zhuyin instance.
+ * @see zhuyin_convert_toneMark_format()
+ * @see pinyin_to_zhuyin()
  */
-gchar *pinyin_regex_import_formatted_combine(const gchar *str, const gchar *format);
-
-gchar *pinyin_regex_formatted_combine(const gchar *str, const gchar *format);
+Zhuyin *pinyin_to_zhuyin_formatFlags(const Pinyin* pinyin, ZhuyinFormatFlags formatFlags);
 
 /*==========================================================
  * Zhuyin functions.
@@ -714,28 +725,44 @@ guint zhuyin_get_tone(const Zhuyin* zhuyin);
 guint zhuyin_strip_tone(Zhuyin* zhuyin);
 
 /**
- * Add the tone mark to zhuyin.
+ * Add the tone mark to zhuyin, according to ZhuyinToneMarkFormat.
  *
- * This function add tone mark to zhuyin, existing tone will be removed before adding new tone.
+ * This function add \a tone to \a zhuyin, according to the format specified in \a toFormat.
+ * Otherwise it is similar to pinyin_add_tone_formatFlags().
+ *
+ * @param zhuyin the zhuyin instance to be processed.
+ * @param tone the tone to be added.
+ * @param toFormat the Zhuyin tone mark mode to be converted to.
+ * @see zhuyin_add_tone_formatFlags()
+ */
+void zhuyin_add_tone(Zhuyin* zhuyin, guint tone, ZhuyinToneMarkFormat toFormat);
+
+/**
+ * Add the tone mark to zhuyin, according to ZhuyinFormatFlags.
+ *
+ * This function add tone mark to zhuyin according to ZhuyinFormatFlags,
+ * existing tone will be removed before adding new tone.
+ *
  * If tone is 0, then existing tone will be removed, but no new tone will be added.
  * 
  * The result will be stored in zhuyin, so backup it with strdup() or g_strdup() to keep the original.
  *
  * @param zhuyin the zhuyin instance to be processed.
  * @param tone the tone to be added.
- * @param toFormat the Zhuyin tone mark mode to be converted to.
+ * @param formatFlags the Zhuyin format flags.
+ * @see zhuyin_add_tone()
  */
-void zhuyin_add_tone(Zhuyin* zhuyin, guint tone, ZhuyinToneMarkFormat toFormat);
 void zhuyin_add_tone_formatFlags(Zhuyin* zhuyin, guint tone, ZhuyinFormatFlags formatFlags);
 
 /**
- * Convert zhuyin to another tone mark format.
+ * Convert zhuyin to new tone mark format.
  *
- * Unlike zhuyin_get_tone() and zhuyin_strip_tone() which only identify the explicit-specified tone,
- * this function treats the unspecified tone as 1st tone,  unless SQL
- * wild characters '%' and '_' are encountered. 
+ * Return a newly allocated Zhuyin instance which contains the zhuyin in new tone mark format,
+ * which is specified in \a toFormat.
  *
- * Note: use g_free to free the newly allocated instance.
+ * \note From version 1.0, this function no longer handle SQL wild characters.
+ *
+ * Use free() or g_free() to free the newly allocated instance.
  *
  * @param zhuyin the Zhuyin to be converted.
  * @param toFormat the Zhuyin tone mark mode to be converted to.
@@ -743,7 +770,25 @@ void zhuyin_add_tone_formatFlags(Zhuyin* zhuyin, guint tone, ZhuyinFormatFlags f
  * @see pinyin_to_zhuyin()
  */
 Zhuyin *zhuyin_convert_toneMark_format(const Zhuyin* zhuyin, ZhuyinToneMarkFormat toFormat);
-Zhuyin *zhuyin_convert_formatFlags(const Zhuyin *zhuyin, PinyinFormatFlags formatFlags);
+
+/**
+ * Convert zhuyin to new format.
+ *
+ * Return a newly allocated Zhuyin instance which contains the zhuyin in new format,
+ * which is specified in \a formatFlags.
+ *
+ * Note that this function does not try to convert toneless zhuyin to 5th tone.
+ * Use \c syl=syllabel_new(zhuyin); \c syllable_to_zhuyin(syl,formatFlags) for 
+ * that.
+ *
+ * Use free() or g_free() to free the newly allocated instance.
+ *
+ * @param zhuyin the Zhuyin to be converted.
+ * @param toFormat the Zhuyin tone mark mode to be converted to.
+ * @return the newly allocated Zhuyin instance that 
+ * @see pinyin_to_zhuyin_formatFlags()
+ */
+Zhuyin *zhuyin_convert_formatFlags(const Zhuyin *zhuyin, ZhuyinFormatFlags formatFlags);
 
 /**
  * Zhuyin to Pinyin
@@ -752,12 +797,22 @@ Zhuyin *zhuyin_convert_formatFlags(const Zhuyin *zhuyin, PinyinFormatFlags forma
  * @param toFormat the Pinyin accent mode.
  * @param useTrailNumber TRUE to present tone as  trailing number, FALSE to present tone as combining accent.
  * @return a newly located Pinyin instance.
+ * @see zhuyin_to_pinyin_formatFlags()
  * @see pinyin_convert_accent_format()
  */
 Pinyin *zhuyin_to_pinyin(const Zhuyin* zhuyin, PinyinAccentFormat toFormat, gboolean useTrailNumber);
+
+/**
+ * Zhuyin to Pinyin, according to PinyinFormatFlags.
+ *
+ * @param zhuyin the Zhuyin to be converted.
+ * @param formatFlags Pinyin format flags.
+ * @return a newly located Zhuyin instance.
+ * @see zhuyin_to_pinyin()
+ * @see pinyin_convert_formatFlags()
+ */
 Pinyin *zhuyin_to_pinyin_formatFlags(const Zhuyin* zhuyin, PinyinFormatFlags formatFlags);
 
-gchar *zhuyin_regex_formatted_combine(const gchar *str, const gchar *format);
 /*----------------------------------------------------------
  * Zhuyin symbol functions.
  */

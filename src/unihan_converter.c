@@ -39,19 +39,32 @@
 #include "verboseMsg.h"
 #include "Unihan.h"
 
-#define USAGE_MSG "Usage: %s [-h] [-V num] -v <Unihan.txt> <Unihan.db>\n"
+#define USAGE_MSG "Usage: %s [-h] [-V num] [-v] [-t dbTableFile] <Unihan.txt> <mainUnihan.db>\n\
+ -h: this help\n\
+ -V num: verbose level\n\
+ -v: show version\n\
+ -t dbTableFile: DB-Table file which specifies what tables the db files contains.\n\
+ Unihan.txt: Unihan.txt from Unicode Unihan\n\
+ mainUnihan.db: Main unihan.db holds every tables that are not defined in dbTableFile\n"
+
 #define BUFFER_SIZE 2000
 FILE *logFile=NULL;
+FILE *dbTableFile=NULL;
 gboolean testMode=FALSE;
+sqlite3 *mainDb=NULL;
+GPtrArray *dbArry=NULL;
+StringList *dbFileNameList=NULL;
+StringList *createdTableList=NULL;
 
 static void printUsage(char **argv){
     printf(USAGE_MSG,argv[0]);
 }
 
-int create_table(UnihanTable table){
+
+int create_table(UnihanTable table, sqlite3 *db){
     char *zErrMsg = NULL;
     GString *strBuf=g_string_new("CREATE TABLE ");
-    g_string_append_printf(strBuf,"%s (",unihanTable_to_string(table));
+    g_string_append_printf(strBuf,"%s (",unihanTable_builtin_to_string(table));
     UnihanField *fields=unihanTable_get_fields(table);
     UnihanField *pKeys=unihanTable_get_primary_key_fields(table);
     int i;
@@ -318,6 +331,61 @@ void parse_record(gchar* rec_string){
     }
 }
 
+static void createDbs(const char *mainDbFilename){
+
+    int ret= sqlite_open(mainDbFilename,  &mainDb,  SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
+    if (ret) {
+	fprintf(stderr, "Can't open to database: %s, err msg:%s\n", argv[optind+1],sqlite3_errmsg(mainDb));
+	sqlite3_close(mainDb);
+	exit(ret);
+    }
+
+    createdTableList=stringList_new();
+    if (dbTableFile){
+	char readBuf[BUFFER_SIZE];
+	char *dbFilename=NULL;
+	char *tableName=NULL;
+	char *pathTmp=g_strdup(mainDbFilename);
+	char *dirName=dirname(pathTmp);
+	dbArray=g_ptr_array_new();
+	dbFileNameList=stringList_new();
+	sqlite3 *db=NULL;
+	char **strs;
+	char *currDbFilename;
+
+	while(fgets(readBuf,BUFFER_SIZE,dbTableFile)!=NULL){
+	    g_strstrip(readBuf);
+	    if (isEmptyString(readBuf)){
+		continue;
+	    }
+	    if (readBuf[0]=='#'){
+		// Comment line, skip
+		continue;
+	    }
+	    strs=g_strsplit_set(readBuf," \t",-1);
+	    if (!stringList_has_string(sList,strs[0])){
+		stringList_insert(sList,strs[0]);
+		ret= sqlite_open(strs[0],  &db,  SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
+		if (ret) {
+		    fprintf(stderr, "Can't open to database: %s, err msg:%s\n", ,sqlite3_errmsg(db));
+		    sqlite3_close(db);
+		    exit(ret);
+		}
+
+	    }else{
+		index=stringList_find_string(sList,strs[0]);
+	    }
+	    currDbFilename=stringList(index);
+	    db=NULL;
+
+	    
+	    parse_record(readBuf);
+
+	}
+
+    }
+}
+
 /**
  * Whether the command line options are valid.
  */
@@ -328,17 +396,23 @@ static gboolean is_valid_arguments(int argc, char **argv) {
 	printUsage(argv);
 	exit(0);
     }
-    while ((opt = getopt(argc, argv, "hV:v")) != -1) {
+    while ((opt = getopt(argc, argv, "hV:vt:")) != -1) {
 	switch (opt) {
 	    case 'h':
 		printUsage(argv);
 		exit(0);
-	    case 'V':
-		verboseLevel=atoi(optarg);
-		break;
 	    case 'v':
 		printf("libUnihan %s\n",PRJ_VERSION);
 		exit(0);
+	    case 'V':
+		verboseLevel=atoi(optarg);
+		break;
+	    case 't':
+		if ((dbTableFile=fopen(optarg,"r"))==NULL){
+		    fprintf(stderr, "Unable to read from file %s\n",argv[optind]);
+		    exit (-2);
+		}
+		break;
 	    default: /* ’? */
 		printf("Unrecognized Option -%c\n\n",opt);
 		return FALSE;
@@ -364,14 +438,6 @@ int main(int argc,char** argv){
 	return -2;
     }
 
-    int ret = unihanDb_open(argv[optind+1],SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
-
-    if (ret) {
-        sqlite3 *db=unihanDb_get();
-	fprintf(stderr, "Can't open to database: %s, err msg:%s\n", argv[optind+1],sqlite3_errmsg(db));
-	unihanDb_close();
-	exit(ret);
-    }
     if ((logFile=fopen("Unihan.log","w"))==NULL){
 	fprintf(stderr, "Unable to open log file Unihan.log\n");
 	return -2;

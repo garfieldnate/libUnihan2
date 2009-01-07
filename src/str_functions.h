@@ -84,15 +84,30 @@ StringList *stringList_sized_new(size_t chunk_size, size_t element_count);
 void stringList_clear(StringList *sList);
 
 /**
- * Find a string in StringList.
+ * Return index of the first match string in StringList.
  *
- * If found, this function returns the index of the string from 0, otherwise returns -1.
+ * This function returns index of the first match string in StringList,
+ * if no such string, then return -1.
  *
  * @param sList The StringList to be processed.
- * @param str The character to be found.
+ * @param str The string to be found.
  * @return The index of the string from 0 if found; -1 otherwise.
  */
 int stringList_find_string(StringList *sList,const char* str);
+
+
+/**
+ * Whether a string is in StringList.
+ *
+ * Return TRUE if at least one string in \a sList is identical with \a str;
+ *  otherwise return FALSE.
+ *
+ * @param sList The StringList to be processed.
+ * @param str The string to be found.
+ * @return TRUE if at least one string in \a sList is identical with \a str;
+ *         FALSE otherwise.
+ */
+gboolean stringList_has_string(StringList *sList,const gchar* str);
 
 /**
  * Return a char pointer pointer (char **) which points to the list of strings. 
