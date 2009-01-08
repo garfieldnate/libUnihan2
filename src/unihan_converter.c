@@ -52,7 +52,7 @@ FILE *logFile=NULL;
 FILE *dbTableFile=NULL;
 gboolean testMode=FALSE;
 sqlite3 *mainDb=NULL;
-GPtrArray *dbArry=NULL;
+GPtrArray *dbArray=NULL;
 StringList *dbFileNameList=NULL;
 StringList *createdTableList=NULL;
 
@@ -365,9 +365,10 @@ static void createDbs(const char *mainDbFilename){
 		continue;
 	    }
 	    strs=g_strsplit_set(readBuf," \t",-1);
-	    if (!stringList_has_string(sList,strs[0])){
-		stringList_insert(sList,strs[0]);
+	    if (!stringList_has_stringdbFileNameList,strs[0])){
+		stringList_insert(dbFileNameList,strs[0]);
 		ret= sqlite_open(strs[0],  &db,  SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
+
 		if (ret) {
 		    fprintf(stderr, "Can't open to database: %s, err msg:%s\n", ,sqlite3_errmsg(db));
 		    sqlite3_close(db);
@@ -375,7 +376,7 @@ static void createDbs(const char *mainDbFilename){
 		}
 
 	    }else{
-		index=stringList_find_string(sList,strs[0]);
+		index=stringList_find_string(dbFileNameList,strs[0]);
 	    }
 	    currDbFilename=stringList(index);
 	    db=NULL;
