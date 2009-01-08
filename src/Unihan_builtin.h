@@ -53,7 +53,6 @@
  */
 UnihanTable unihanField_get_builtin_preferred_table(UnihanField field);
 
-
 /**
  * Return an array of tables which are required by the given field (Builtin).
  *
@@ -75,6 +74,35 @@ UnihanTable unihanField_get_builtin_preferred_table(UnihanField field);
  * @see unihanField_get_all_builtin_tables(UnihanField field)
  */
 UnihanTable *unihanField_get_builtin_required_tables(UnihanField field);
+
+
+/**
+ * Returns a string representing a built-in UnihanField.
+ *
+ * @param field		the UnihanField.
+ * @return		a string representing the #UnihanField.
+ */
+const char *unihanField_builtin_to_string(UnihanField field);
+
+/**
+ * Returns all built-in fields of the table in an UnihanField array.
+ *
+ * Returns all built-in fields of the table in an UnihanField array.
+ * The returned UnihanField array is terminated by UNIHAN_INVALID_FIELD.
+ * Use free() or g_free() to free the UnihanField array.
+ *
+ * @param table		the UnihanTable.
+ * @return		all fields of the table in an UnihanField array.
+ */
+UnihanField* unihanTable_get_builtin_fields(UnihanTable table);
+
+/**
+ * Returns a string representing a built-in UnihanTable.
+ *
+ * @param table		the UnihanTable.
+ * @return		a string representing the #UnihanTable.
+ */
+const char *unihanTable_builtin_to_string(UnihanTable table);
 
 /**
  * Import a single tag value of a character from Unihan.txt.

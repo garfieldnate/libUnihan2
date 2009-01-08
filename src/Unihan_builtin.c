@@ -71,6 +71,34 @@ UnihanTable *unihanField_get_builtin_required_tables(UnihanField field){
     return tables;
 }
 
+gboolean unihanField_builtin_has_flags(UnihanField field, guint flags){
+    return UNIHAN_FIELD_PROPERTIES[field].flags & flags;
+}
+
+const char *unihanField_builtin_to_string(UnihanField field){
+    if (table<0){
+	return NULL;
+    }
+    return UNIHAN_FIELD_PROPERTIES[field].fieldName;
+}
+
+UnihanField* unihanTable_get_builtin_fields(UnihanTable table){
+    UnihanField *fields=NEW_ARRAY_INSTANCE(UNIHAN_FIELD_ARRAY_MAX_LEN,UnihanField);
+    int i=0,j;
+    if (table<0){
+	fields[i]=UNIHAN_INVALID_FIELD;
+	return fields;
+    }
+    fields[i++]=UNIHAN_FIELD_CODE;
+    for(j=0;REALFIELD_TABLES[j].field!=UNIHAN_INVALID_FIELD;j++){
+	if (REALFIELD_TABLES[j].table==table){
+	    fields[i++]=REALFIELD_TABLES[j].field;
+	}
+    }
+    fields[i]=UNIHAN_INVALID_FIELD;
+    return fields;
+}
+
 static UnihanImportData_Post *unihanField_get_builtin_importData_post(UnihanField field,UnihanTable table){
     int i;
     UnihanImportData_Post *importData_post_ptr=NULL;
@@ -82,22 +110,11 @@ static UnihanImportData_Post *unihanField_get_builtin_importData_post(UnihanFiel
     return NULL;
 }
 
-gboolean unihanField_builtin_has_flags(UnihanField field, guint flags){
-    return UNIHAN_FIELD_PROPERTIES[field].flags & flags;
-}
-
 const char *unihanTable_builtin_to_string(UnihanTable table){
     if (table<0){
 	return NULL;
     }
     return UNIHAN_TABLE_NAMES[table];
-}
-
-const char *unihanField_builtin_to_string(UnihanField field){
-    if (table<0){
-	return NULL;
-    }
-    return UNIHAN_FIELD_PROPERTIES[field].fieldName;
 }
 
 int unihanField_builtin_pseudo_import_data_next_index(UnihanField field,int previousIndex){

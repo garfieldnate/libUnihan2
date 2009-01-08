@@ -65,26 +65,28 @@ int create_table(UnihanTable table, sqlite3 *db){
     char *zErrMsg = NULL;
     GString *strBuf=g_string_new("CREATE TABLE ");
     g_string_append_printf(strBuf,"%s (",unihanTable_builtin_to_string(table));
-    UnihanField *fields=unihanTable_get_fields(table);
-    UnihanField *pKeys=unihanTable_get_primary_key_fields(table);
+    UnihanField *fields=unihanTable_get_builtin_fields(table);
     int i;
     for(i=0;fields[i]>=0;i++){
 	if (i>0)
 	    g_string_append_c(strBuf,',');
 	g_string_append_printf(strBuf," %s %s NOT NULL",
-		unihanField_to_string(fields[i]),
-		unihanField_is_integer(fields[i]) ? "integer" : "text");
+		unihanField_builtin_to_string(fields[i]),
+		unihanField_builtin_has_flags(fields[i], UNIHAN_FIELDFLAG_INTEGER) ? "integer" : "text");
 
     }
     g_string_append(strBuf,", PRIMARY KEY (");
-    for(i=0;pKeys[i]>=0;i++){
+    for(i=0;fields[i]>=0;i++){
+	if (unihanField_builtin_has_flags(fields[i], UNIHAN_FIELDFLAG_NO_PRIMARY_KEY | UNIHAN_FIELDFLAG_SINGLETON))
+	    continue;
 	if (i>0)
 	    g_string_append_c(strBuf,',');
-	g_string_append_printf(strBuf," %s",unihanField_to_string(pKeys[i]));
+	g_string_append_printf(strBuf," %s",unihanField_builtin_to_string(fields[i]));
 
     }
     g_string_append(strBuf,") );");
-    printf("*** %s\n",strBuf->str);
+    verboseMsg_print(VERBOSE_MSG_INFO1,"[I1] %s\n",strBuf->str);
+    int ret=sqlite_exec_handle_error(db, strBuf->str, NULL, NULL, sqlite_error_callback_print_message, "Error ");
     int ret=unihanSql_exec(strBuf->str, NULL, NULL, &zErrMsg);
     if (ret){
 	fprintf(stderr, "Fail to create table %s, err msg:%s\n",unihanTable_to_string(table),zErrMsg);
