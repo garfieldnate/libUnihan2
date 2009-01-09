@@ -34,9 +34,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <libgen.h>
 #include <glib/gprintf.h>
 #include "allocate.h"
+#include "file_functions.h"
 #include "verboseMsg.h"
+#include "Unihan_builtin.h"
 #include "Unihan.h"
 
 #define USAGE_MSG "Usage: %s [-h] [-V num] [-v] [-t dbTableFile] <Unihan.txt> <mainUnihan.db>\n\
@@ -52,18 +55,22 @@ FILE *logFile=NULL;
 FILE *dbTableFile=NULL;
 gboolean testMode=FALSE;
 sqlite3 *mainDb=NULL;
-GPtrArray *dbArray=NULL;
+StringList *dbAliasList=NULL;
 StringList *dbFileNameList=NULL;
 StringList *createdTableList=NULL;
+StringList *allAliasList=NULL;
+StringList *allTableList=NULL;
 
 static void printUsage(char **argv){
     printf(USAGE_MSG,argv[0]);
 }
 
 
-int create_table(UnihanTable table, sqlite3 *db){
-    char *zErrMsg = NULL;
+static int create_table(UnihanTable table, sqlite3 *db, const char* databaseName){
     GString *strBuf=g_string_new("CREATE TABLE ");
+    if (databaseName){
+	g_string_append_printf(strBuf,"%s.",databaseName);
+    }
     g_string_append_printf(strBuf,"%s (",unihanTable_builtin_to_string(table));
     UnihanField *fields=unihanTable_get_builtin_fields(table);
     int i;
@@ -77,7 +84,7 @@ int create_table(UnihanTable table, sqlite3 *db){
     }
     g_string_append(strBuf,", PRIMARY KEY (");
     for(i=0;fields[i]>=0;i++){
-	if (unihanField_builtin_has_flags(fields[i], UNIHAN_FIELDFLAG_NO_PRIMARY_KEY | UNIHAN_FIELDFLAG_SINGLETON))
+	if (unihanField_builtin_has_flags(fields[i], UNIHAN_FIELDFLAG_NO_PRIMARYKEY | UNIHAN_FIELDFLAG_SINGLETON))
 	    continue;
 	if (i>0)
 	    g_string_append_c(strBuf,',');
@@ -86,62 +93,36 @@ int create_table(UnihanTable table, sqlite3 *db){
     }
     g_string_append(strBuf,") );");
     verboseMsg_print(VERBOSE_MSG_INFO1,"[I1] %s\n",strBuf->str);
-    int ret=sqlite_exec_handle_error(db, strBuf->str, NULL, NULL, sqlite_error_callback_print_message, "Error ");
-    int ret=unihanSql_exec(strBuf->str, NULL, NULL, &zErrMsg);
-    if (ret){
-	fprintf(stderr, "Fail to create table %s, err msg:%s\n",unihanTable_to_string(table),zErrMsg);
-    }
-    g_string_free(strBuf,TRUE);
-    return ret;
-}
+    int ret=sqlite_exec_handle_error(db, strBuf->str, NULL, NULL, sqlite_error_callback_print_message, 
+	    "create_table(): Error");
 
-gboolean create_tables(){
-    int i;
-    for(i=0;i<UNIHAN_TABLES_COUNT;i++){
-	if (create_table(i)){
-	    return FALSE;
-	}
-    }
-    return TRUE;
-}
+    if (ret)
+	return ret;
 
-int create_index(UnihanTable table){
-    char *zErrMsg = NULL;
-    GString *strBuf=g_string_new("CREATE INDEX ");
-    g_string_append_printf(strBuf,"%sIndex ON %s (",
-	    unihanTable_to_string(table),
-	    unihanTable_to_string(table));
-    UnihanField *fields=unihanTable_get_fields(table);
-    int i;
+    /* Create index */
+    g_string_printf(strBuf,"CREATE INDEX ");
+    if (databaseName){
+	g_string_append_printf(strBuf,"%s.",databaseName);
+    }
+    g_string_append_printf(strBuf,"%sIndex ON %s ( ",
+	    unihanTable_builtin_to_string(table),
+	    unihanTable_builtin_to_string(table));
     for(i=0;fields[i]>=0;i++){
-	if (!unihanField_is_indexed(fields[i])){
+	if (unihanField_builtin_has_flags(fields[i], UNIHAN_FIELDFLAG_NO_INDEX | UNIHAN_FIELDFLAG_SINGLETON))
 	    continue;
-	}
-
 	if (i>0)
 	    g_string_append_c(strBuf,',');
 	g_string_append_printf(strBuf," %s",
-		unihanField_to_string(fields[i]));
+		unihanField_builtin_to_string(fields[i]));
 
     }
     g_string_append(strBuf,");");
-    printf("*** %s\n",strBuf->str);
-    int ret=unihanSql_exec(strBuf->str, NULL, NULL, &zErrMsg);
-    if (ret){
-	fprintf(stderr, "Fail to create index %s, err msg:%s\n",unihanTable_to_string(table),zErrMsg);
-    }
+    verboseMsg_print(VERBOSE_MSG_INFO1,"[I1] %s\n",strBuf->str);
+    ret=sqlite_exec_handle_error(db, strBuf->str, NULL, NULL, sqlite_error_callback_print_message, 
+	    "create_table(): Index Error");
+
     g_string_free(strBuf,TRUE);
     return ret;
-}
-
-gboolean create_indices(){
-    int i;
-    for(i=0;i<UNIHAN_TABLES_COUNT;i++){
-	if (create_index(i)){
-	    return FALSE;
-	}
-    }
-    return TRUE;
 }
 
 gboolean isKSemanticValue_matched(const char *value, const char *resultField){
@@ -176,109 +157,109 @@ int unihan_test_record(gunichar code, UnihanField field, char *value){
     char codeStr[10];
     g_snprintf(codeStr,10,"%d",code);
 
-    char *charStr=ucs4_to_utf8(code);
-    int ret;
-    gboolean found=FALSE;
-    int i;
-    int colCount,totalCount;
+//    char *charStr=ucs4_to_utf8(code);
+//    int ret;
+//    gboolean found=FALSE;
+//    int i;
+//    int colCount,totalCount;
 
-    /* code -> value */
-    printf("=== code -> value \n");
-    SQL_Result *sResult=unihan_find_all_matched(UNIHAN_FIELD_CODE,codeStr,field, UNIHAN_QUERY_OPTION_SCALAR_STRING);
-    ret=sResult->execResult;
-    if (ret) {
-	printf(" Database error:%s\n", sResult->errMsg);
-	sql_result_free(sResult,TRUE);
-	unihanDb_close();
-	exit(ret);
-    }
-    colCount=sResult->colCount;
-    totalCount=sResult->resultList->len;
+//    /* code -> value */
+//    printf("=== code -> value \n");
+//    SQL_Result *sResult=unihan_find_all_matched(UNIHAN_FIELD_CODE,codeStr,field, UNIHAN_QUERY_OPTION_SCALAR_STRING);
+//    ret=sResult->execResult;
+//    if (ret) {
+//        printf(" Database error:%s\n", sResult->errMsg);
+//        sql_result_free(sResult,TRUE);
+//        unihanDb_close();
+//        exit(ret);
+//    }
+//    colCount=sResult->colCount;
+//    totalCount=sResult->resultList->len;
 
-    if (totalCount<=0){
-	printf(" Field %s of character %d(%s) does not have any value\n",unihanField_to_string(field),code, charStr);
-	exit(-10);
-    }
+//    if (totalCount<=0){
+//        printf(" Field %s of character %d(%s) does not have any value\n",unihanField_to_string(field),code, charStr);
+//        exit(-10);
+//    }
 
-    for(i=0;i<totalCount;i++){
-        switch(field){
-            case UNIHAN_FIELD_kSEMANTICVARIANT:
-            case UNIHAN_FIELD_kSPECIALIZEDSEMANTICVARIANT:
-                found=isKSemanticValue_matched(value,stringList_index(sResult->resultList,(i+1)*colCount-1));
-                break;
-            default:
-		if (strcmp(value,stringList_index(sResult->resultList,(i+1)*colCount-1))==0){
-	            found=TRUE;
-                }
-	        break;
-	} 
-	if (found){    
-                break;
-        }
-	
-    }
-    if (!found){
-	printf(" Field %s of character %d(%s) value: [%s]  does not equal the original value [%s]\n",
-		unihanField_to_string(field),code, charStr, stringList_index(sResult->resultList,totalCount-1), value );
-	exit(-11);
-    }
-    sql_result_free(sResult,TRUE);
+//    for(i=0;i<totalCount;i++){
+//        switch(field){
+//            case UNIHAN_FIELD_kSEMANTICVARIANT:
+//            case UNIHAN_FIELD_kSPECIALIZEDSEMANTICVARIANT:
+//                found=isKSemanticValue_matched(value,stringList_index(sResult->resultList,(i+1)*colCount-1));
+//                break;
+//            default:
+//                if (strcmp(value,stringList_index(sResult->resultList,(i+1)*colCount-1))==0){
+//                    found=TRUE;
+//                }
+//                break;
+//        } 
+//        if (found){    
+//                break;
+//        }
+//        
+//    }
+//    if (!found){
+//        printf(" Field %s of character %d(%s) value: [%s]  does not equal the original value [%s]\n",
+//                unihanField_to_string(field),code, charStr, stringList_index(sResult->resultList,totalCount-1), value );
+//        exit(-11);
+//    }
+//    sql_result_free(sResult,TRUE);
 
-    
-    /* value -> utf8 */
-    printf("=== value -> utf8 \n");
-    
+//    
+//    /* value -> utf8 */
+//    printf("=== value -> utf8 \n");
+//    
 
-    char buf[1000];
-    gunichar c;
-    found=FALSE;
+//    char buf[1000];
+//    gunichar c;
+//    found=FALSE;
 
-    switch(field){
-	case UNIHAN_FIELD_kCOMPATIBILITYVARIANT:
-	case UNIHAN_FIELD_kSIMPLIFIEDVARIANT:
-	case UNIHAN_FIELD_kTRADITIONALVARIANT:
-	    c=unihanChar_parse(value);
-	    g_snprintf(buf,1000,"%d",c);
-	    break;
-	default:
-	    g_strlcpy(buf,value,1000);
-	    break;
-    }
+//    switch(field){
+//        case UNIHAN_FIELD_kCOMPATIBILITYVARIANT:
+//        case UNIHAN_FIELD_kSIMPLIFIEDVARIANT:
+//        case UNIHAN_FIELD_kTRADITIONALVARIANT:
+//            c=unihanChar_parse(value);
+//            g_snprintf(buf,1000,"%d",c);
+//            break;
+//        default:
+//            g_strlcpy(buf,value,1000);
+//            break;
+//    }
 
-    sResult=unihan_find_all_matched(field,buf,UNIHAN_FIELD_CODE, UNIHAN_QUERY_OPTION_DEFAULT);
+//    sResult=unihan_find_all_matched(field,buf,UNIHAN_FIELD_CODE, UNIHAN_QUERY_OPTION_DEFAULT);
 
-    ret=sResult->execResult;
-    if (ret) {
-	printf(" Database error:%s\n", sResult->errMsg);
-	sql_result_free(sResult,TRUE);
-	unihanDb_close();
-	exit(ret);
-    }
-    colCount=sResult->colCount;
-    totalCount=sResult->resultList->len;
+//    ret=sResult->execResult;
+//    if (ret) {
+//        printf(" Database error:%s\n", sResult->errMsg);
+//        sql_result_free(sResult,TRUE);
+//        unihanDb_close();
+//        exit(ret);
+//    }
+//    colCount=sResult->colCount;
+//    totalCount=sResult->resultList->len;
 
 
-    if (totalCount<=0){
-	printf(" Cannot found value %s in field %s.\n",buf,unihanField_to_string(field));
-	exit(-12);
-    }
+//    if (totalCount<=0){
+//        printf(" Cannot found value %s in field %s.\n",buf,unihanField_to_string(field));
+//        exit(-12);
+//    }
 
-    for(i=0;i<totalCount;i++){
-	verboseMsg_print(VERBOSE_MSG_INFO3,"  Result returned from database: %s\n",
-		stringList_index(sResult->resultList,(i+1)*colCount-1));
-	if (strcmp(codeStr,stringList_index(sResult->resultList,(i+1)*colCount-1))==0){
-	    found=TRUE;
-	    break;
-	}
-    }
-    if (!found){
-	printf(" Field %s of character %d(%s) does not associate with value %s \n",
-		unihanField_to_string(field),code,charStr,value);
-	exit(-13);
-    }
+//    for(i=0;i<totalCount;i++){
+//        verboseMsg_print(VERBOSE_MSG_INFO3,"  Result returned from database: %s\n",
+//                stringList_index(sResult->resultList,(i+1)*colCount-1));
+//        if (strcmp(codeStr,stringList_index(sResult->resultList,(i+1)*colCount-1))==0){
+//            found=TRUE;
+//            break;
+//        }
+//    }
+//    if (!found){
+//        printf(" Field %s of character %d(%s) does not associate with value %s \n",
+//                unihanField_to_string(field),code,charStr,value);
+//        exit(-13);
+//    }
 
-    sql_result_free(sResult,TRUE);
-    g_free(charStr);
+//    sql_result_free(sResult,TRUE);
+//    g_free(charStr);
     return 0;
 }
 
@@ -294,35 +275,39 @@ void parse_record(gchar* rec_string){
     gchar** fields=g_strsplit(rec_string,"\t",3);
     int ret=0;
 
-    gunichar code=unihanChar_parse(fields[0]);
+    gunichar code=  g_utf8_get_char(fields[0]);
     static gunichar lastCode=0;
+    char sqlBuf[BUFFER_SIZE];
     if ((code!=lastCode) && (!testMode)){
-	gchar* utf8Str=ucs4_to_utf8((gunichar) code);
-	unihan_insert_value(code, UNIHAN_FIELD_UTF8, utf8Str );
-	g_free(utf8Str);
+	g_snprintf(sqlBuf, BUFFER_SIZE, "INSERT INTO codeTable VALUES (%u);",code);
+	ret=sqlite_exec_handle_error(mainDb, sqlBuf, NULL, NULL, sqlite_error_callback_print_message, 
+		"create_table(): Error");
+	if (ret)
+	    exit(ret);
 	lastCode=code;
     }
 
-    UnihanField field=unihanField_parse(fields[1]);
+    UnihanField field=unihanField_builtin_parse(fields[1]);
 
-    if (unihanField_is_singleton(field)){
-	if (testMode){
+    if (testMode){
+	if (unihanField_builtin_has_flags(field,UNIHAN_FIELDFLAG_SINGLETON)){
 	    unihan_test_record(code, field, fields[2]);
 	}else{
-	    ret=unihan_insert_value(code, field, fields[2]);
+	    gchar** values=g_strsplit(fields[2]," ",-1);
+	    int i;
+	    for(i=0;values[i]!=NULL;i++){
+		ret=unihan_test_record(code, field, values[i]);
+		if (ret>0){
+		    break;
+		}
+	    }
+	    g_strfreev(values);
 	}
     }else{
-	gchar** values=g_strsplit(fields[2]," ",-1);
-	int i;
-	for(i=0;values[i]!=NULL;i++){
-	    if (testMode){
-		ret=unihan_test_record(code, field, values[i]);
-	    }else{
-		ret=unihan_insert_value(code, field, values[i]);
-	    }
-	}
-	g_strfreev(values);
+	/* Import Mode */
+	ret=unihan_import_builtin_table_tagValue(mainDb, code, field, fields[2]);
     }
+
     g_strfreev(fields);
     if (ret>0){
 	fprintf(stderr,"parse_record(): Database error!\n");
@@ -333,27 +318,31 @@ void parse_record(gchar* rec_string){
     }
 }
 
-static void createDbs(const char *mainDbFilename){
-
-    int ret= sqlite_open(mainDbFilename,  &mainDb,  SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
+static int createDbs(const char *mainDbFilename){
+    int ret;
+    ret= sqlite_open(mainDbFilename,  &mainDb,  SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
     if (ret) {
-	fprintf(stderr, "Can't open to database: %s, err msg:%s\n", argv[optind+1],sqlite3_errmsg(mainDb));
+	fprintf(stderr, "Can't open to database: %s, err msg:%s\n", mainDbFilename,sqlite3_errmsg(mainDb));
 	sqlite3_close(mainDb);
 	exit(ret);
     }
 
+    char sqlBuf[PATH_MAX];
+
+    char *pathTmp=g_strdup(mainDbFilename);
+    char *dirName=dirname(pathTmp);
+    char pathBuf[PATH_MAX];
     createdTableList=stringList_new();
+    dbAliasList=stringList_new();
+    dbFileNameList=stringList_new();
+    gboolean isAlias=FALSE;
+    UnihanTable table;
+
     if (dbTableFile){
 	char readBuf[BUFFER_SIZE];
-	char *dbFilename=NULL;
-	char *tableName=NULL;
-	char *pathTmp=g_strdup(mainDbFilename);
-	char *dirName=dirname(pathTmp);
-	dbArray=g_ptr_array_new();
-	dbFileNameList=stringList_new();
+	char *openPath=NULL;
 	sqlite3 *db=NULL;
 	char **strs;
-	char *currDbFilename;
 
 	while(fgets(readBuf,BUFFER_SIZE,dbTableFile)!=NULL){
 	    g_strstrip(readBuf);
@@ -364,29 +353,55 @@ static void createDbs(const char *mainDbFilename){
 		// Comment line, skip
 		continue;
 	    }
-	    strs=g_strsplit_set(readBuf," \t",-1);
-	    if (!stringList_has_stringdbFileNameList,strs[0])){
-		stringList_insert(dbFileNameList,strs[0]);
-		ret= sqlite_open(strs[0],  &db,  SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
-
-		if (ret) {
-		    fprintf(stderr, "Can't open to database: %s, err msg:%s\n", ,sqlite3_errmsg(db));
-		    sqlite3_close(db);
-		    exit(ret);
-		}
-
-	    }else{
-		index=stringList_find_string(dbFileNameList,strs[0]);
+	    if (readBuf[0]=='='){
+		isAlias=TRUE;
+		continue;
 	    }
-	    currDbFilename=stringList(index);
-	    db=NULL;
-
-	    
-	    parse_record(readBuf);
-
+	    strs=g_strsplit_set(readBuf," \t",2);
+	    if (isAlias){
+		if (!stringList_has_string(dbAliasList,strs[0])){
+		    g_strlcpy(pathBuf,dirName,PATH_MAX);
+		    openPath=path_concat(pathBuf,strs[1],PATH_MAX);
+		    stringList_insert(dbAliasList,strs[0]);
+		    stringList_insert(dbFileNameList,openPath);
+		    ret= sqlite_open(openPath,  &db,  SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
+		    if (ret) {
+			fprintf(stderr, "Can't open to database: %s, err msg:%s\n", openPath, sqlite3_errmsg(db));
+			sqlite3_close(db);
+			exit(ret);
+		    }
+		    sqlite3_close(db);
+		    db=NULL;
+		    sqlite3_snprintf(PATH_MAX,sqlBuf,"ATTACH DATABASE %Q AS %q;",openPath,strs[0]);
+		    ret=sqlite_exec_handle_error(mainDb, sqlBuf, NULL, NULL, 
+			    sqlite_error_callback_print_message,  "createDbs(): Error");
+		    if (ret)
+			exit(ret);
+		}
+	    }else{
+		/* Create table */
+		table=unihanTable_builtin_parse(strs[1]);
+		if ((ret=create_table(table,db,strs[0]))==0){
+		    stringList_insert_const(createdTableList,strs[1]);
+		    verboseMsg_print(VERBOSE_MSG_INFO2,"[I2 ] Table %s in Db %s is created\n",strs[1],strs[0]);
+		}else{
+		    return ret;
+		}
+	    }
 	}
-
     }
+
+    /* Create rest tables in main db */
+    for (table=0;table<UNIHAN_TABLE_3RD_PARTY;table++){
+	if (!stringList_has_string(createdTableList,unihanTable_builtin_to_string(table))){
+	    if ((ret=create_table(table,mainDb,NULL))!=0){
+		/* Return error */
+		return ret;
+	    }
+	}
+    }
+
+    return 0;
 }
 
 /**
@@ -446,6 +461,7 @@ int main(int argc,char** argv){
 	return -2;
     }
 
+
     char readBuf[BUFFER_SIZE];
 
     if (g_strrstr(argv[0],"_validation")){
@@ -453,7 +469,8 @@ int main(int argc,char** argv){
     }else{
 	verboseMsg_set_logFile(logFile);
 	verboseMsg_set_fileLevel(verboseMsg_get_level());
-	if (!create_tables()){
+	if (createDbs(argv[optind+1])){
+	    fprintf(stderr, "Unable to create database files.\n");
 	    return 3;
 	}
     }
@@ -469,14 +486,12 @@ int main(int argc,char** argv){
 	}
 	parse_record(readBuf);
     }
-    if (!testMode){
-	create_indices();
-    }
-    unihanDb_close();
+    sqlite3_close(mainDb);
     fclose(inF);
     if (!testMode){
 	fclose(logFile);
     }
-    
+   
     return 0;
 }
+

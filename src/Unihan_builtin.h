@@ -31,6 +31,8 @@
  * Boston, MA  02111-1307  USA
  */
 
+#include "Unihan.h"
+
 /**
  * Return the preferred table of field (Builtin).
  *
@@ -75,6 +77,29 @@ UnihanTable unihanField_get_builtin_preferred_table(UnihanField field);
  */
 UnihanTable *unihanField_get_builtin_required_tables(UnihanField field);
 
+/**
+ * Whether field has given flags.
+ *
+ * Whether field has given flags. 
+ * Always return FALSE if field is  UNIHAN_INVALID_FIELD or 
+ * field is not built-in (field >=UNIHAN_FIELD_3RD_PARTY).
+ *
+ * @param field field to be checked.
+ * @param flags flags to be checked.
+ * @return TRUE if \a field has \a flags; FALSE otherwise.
+ */
+gboolean unihanField_builtin_has_flags(UnihanField field, guint flags);
+
+/**
+ * Parses the string argument as a UnihanField.
+ *
+ * Parses the string argument as a UnihanField. 
+ * Note that the match is case-sensitive.
+ *
+ * @param str		the string to be parsed.
+ * @return		the equivalent UnihanField; UNIHAN_INVALID_FIELD if str does not match any of the field name.
+ */
+UnihanField unihanField_builtin_parse(const char *str);
 
 /**
  * Returns a string representing a built-in UnihanField.
@@ -97,6 +122,29 @@ const char *unihanField_builtin_to_string(UnihanField field);
 UnihanField* unihanTable_get_builtin_fields(UnihanTable table);
 
 /**
+ * Parses the string argument as a UnihanTable.
+ *
+ * Parses the string argument as a UnihanTable.
+ * Note that the match is case-sensitive.
+ *
+ * @param str		the string to be parsed.
+ * @return		the equivalent UnihanTable; UNIHAN_INVALID_Table if str does not match any of the table name.
+ */
+UnihanTable unihanTable_builtin_parse(const char *str);
+
+/**
+ * Returns all built-in fields of the table in an UnihanField array.
+ *
+ * Returns all built-in fields of the table in an UnihanField array.
+ * The returned UnihanField array is terminated by UNIHAN_INVALID_FIELD.
+ * Use free() or g_free() to free the UnihanField array.
+ *
+ * @param table		the UnihanTable.
+ * @return		all fields of the table in an UnihanField array.
+ */
+const char *unihanTable_builtin_to_string(UnihanTable table);
+
+/**
  * Returns a string representing a built-in UnihanTable.
  *
  * @param table		the UnihanTable.
@@ -104,29 +152,12 @@ UnihanField* unihanTable_get_builtin_fields(UnihanTable table);
  */
 const char *unihanTable_builtin_to_string(UnihanTable table);
 
-/**
- * Import a single tag value of a character from Unihan.txt.
- *
- * This function imports a single tag value of character from Unihan.txt. 
- * Note that multi-valued fields should use unihan_import_builtin_table_tagValue_original() instread.
- * 
- * @param db Db handle
- * @param code the UCS4 representation of the character.
- * @param field The UnihanField to be import.
- * @param tagValue The value of the field.
- * @param counter_ptr Pointer to an integer counter. Can be NULL if $+ or $- flags are not used.
- * @return 0 if success, otherwise return nonzero value.
- * @see unihan_import_builtin_table_tagValue().
- */
-int unihan_import_builtin_table_single_tagValue(sqlite3 *db, gunichar code, UnihanField field, 
-	const char *tagValue, int *counter_ptr);
-
 
 /**
  * Import a tag value of a character from a line of Unihan.txt.
  *
  * This function imports a line in Unihan.txt to database \c db.
- * For non-singleton fields (fields that can have multiple value for each character),
+ * For non-singleton fields (fields which may have multiple values for each character),
  * the tag value is split with the delimiter ' ', and each 
  * chunk is passed to unihan_import_builtin_table_single_tagValue() for further process.
  *
@@ -134,7 +165,7 @@ int unihan_import_builtin_table_single_tagValue(sqlite3 *db, gunichar code, Unih
  * @param db Db handle
  * @param code the UCS4 representation of the character.
  * @param field The UnihanField to be import.
- * @param tagValue The value of the field.
+ * @param tagValues The value of the field.
  * @return 0 if success, otherwise return nonzero value.
  * @see unihan_import_builtin_table_tagValue_original.
  */

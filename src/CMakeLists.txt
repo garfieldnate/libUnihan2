@@ -20,8 +20,14 @@ CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/confi
 #SET(libUnihan_SRCS Unihan.c Unihan.h Unihan_enum.h 
 #    Unihan_phonetic.c Unihan_phonetic.h
 #)
+
+
 SET(libUnihan_SRCS 
-    Unihan_phonetic.c Unihan_phonetic.h
+    Unihan_phonetic.c Unihan_phonetic.h Unihan.h
+)
+
+SET(libUnihan_builder_SRCS 
+    Unihan_builtin.c Unihan_builtin.h
 )
 
 SET(supporting_SRCS allocate.c allocate.h
@@ -37,13 +43,14 @@ SET(DOCUMENTED_HEADERS Unihan.h Unihan_enum.h Unihan_phonetic.h
 
 ADD_LIBRARY(Unihan_supporting SHARED ${supporting_SRCS})
 ADD_LIBRARY(Unihan SHARED ${libUnihan_SRCS} )
-SET_TARGET_PROPERTIES(Unihan Unihan_supporting PROPERTIES 
+ADD_LIBRARY(Unihan_builder SHARED ${libUnihan_builder_SRCS} )
+SET_TARGET_PROPERTIES(Unihan Unihan_supporting Unihan_builder PROPERTIES 
     VERSION "${SO_VER_MAJOR}.${SO_VER_MINOR}"
     SOVERSION "${SO_VER_MAJOR}")
 
 
 # executable built from some source
-#ADD_EXECUTABLE(unihan_converter  unihan_converter.c)
+ADD_EXECUTABLE(unihan_converter  unihan_converter.c ) 
 #ADD_EXECUTABLE(unihan_query	 unihan_query.c)
 #ADD_EXECUTABLE(unihan_rebuild_cache unihan_rebuild_cache.c)
 
@@ -52,7 +59,9 @@ SET_TARGET_PROPERTIES(Unihan Unihan_supporting PROPERTIES
 TARGET_LINK_LIBRARIES(Unihan_supporting ${SQLITE3_LIBRARIES} ${GLIB2_LIBRARIES})
 TARGET_LINK_LIBRARIES(Unihan ${SQLITE3_LIBRARIES} ${GLIB2_LIBRARIES}
     Unihan_supporting)
-#TARGET_LINK_LIBRARIES(unihan_converter Unihan_supporting Unihan)
+TARGET_LINK_LIBRARIES(Unihan_builder ${SQLITE3_LIBRARIES} ${GLIB2_LIBRARIES}
+    Unihan_supporting Unihan)
+TARGET_LINK_LIBRARIES(unihan_converter Unihan_supporting Unihan Unihan_builder)
 #TARGET_LINK_LIBRARIES(unihan_query Unihan_supporting Unihan)
 #TARGET_LINK_LIBRARIES(unihan_rebuild_cache Unihan_supporting Unihan)
 
