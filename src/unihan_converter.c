@@ -58,8 +58,6 @@ sqlite3 *mainDb=NULL;
 StringList *dbAliasList=NULL;
 StringList *dbFileNameList=NULL;
 StringList *createdTableList=NULL;
-StringList *allAliasList=NULL;
-StringList *allTableList=NULL;
 
 static void printUsage(char **argv){
     printf(USAGE_MSG,argv[0]);
@@ -96,14 +94,20 @@ static int create_table(UnihanTable table, sqlite3 *db, const char* databaseName
     int ret=sqlite_exec_handle_error(db, strBuf->str, NULL, NULL, sqlite_error_callback_print_message, 
 	    "create_table(): Error");
 
-    if (ret)
-	return ret;
+    g_string_free(strBuf,TRUE);
+    g_free(fields);
+    return ret;
+}
 
-    /* Create index */
-    g_string_printf(strBuf,"CREATE INDEX ");
+static int create_index(UnihanTable table, sqlite3 *db, const char* databaseName){
+    GString *strBuf=g_string_new("CREATE INDEX ");
     if (databaseName){
 	g_string_append_printf(strBuf,"%s.",databaseName);
     }
+    UnihanField *fields=unihanTable_get_builtin_fields(table);
+    int i;
+
+    /* Create index */
     g_string_append_printf(strBuf,"%sIndex ON %s ( ",
 	    unihanTable_builtin_to_string(table),
 	    unihanTable_builtin_to_string(table));
@@ -118,31 +122,45 @@ static int create_table(UnihanTable table, sqlite3 *db, const char* databaseName
     }
     g_string_append(strBuf,");");
     verboseMsg_print(VERBOSE_MSG_INFO1,"[I1] %s\n",strBuf->str);
-    ret=sqlite_exec_handle_error(db, strBuf->str, NULL, NULL, sqlite_error_callback_print_message, 
+    int ret=sqlite_exec_handle_error(db, strBuf->str, NULL, NULL, sqlite_error_callback_print_message, 
 	    "create_table(): Index Error");
 
     g_string_free(strBuf,TRUE);
+    g_free(fields);
     return ret;
 }
+
+static int create_indices(sqlite3 *db){
+    UnihanTable table;
+    int ret;
+    for(table=0;table<=UNIHAN_TABLE_3RD_PARTY;table++){
+	ret=create_index(table,db,NULL);
+	if (ret)
+	    break;
+    }
+    return ret;
+}
+
+
 
 gboolean isKSemanticValue_matched(const char *value, const char *resultField){
     char** resultArray=g_strsplit_set(resultField,"<,", -1);
     char** valueArray=g_strsplit_set(value,"<,",-1);
-    
+
     if (strcmp(resultArray[0],valueArray[0])!=0){
-        g_strfreev(resultArray);
-        g_strfreev(valueArray);
-        return FALSE;
+	g_strfreev(resultArray);
+	g_strfreev(valueArray);
+	return FALSE;
     }
     int i=1,j=1;
     for(i=1;resultArray[i]!=NULL;i++){
-        for(j=1;valueArray[j]!=NULL;j++){
+	for(j=1;valueArray[j]!=NULL;j++){
 	    if (strcmp(resultArray[i],valueArray[j])==0){
-                g_strfreev(resultArray);
-                g_strfreev(valueArray);
-                return TRUE;
-            }
-        }
+		g_strfreev(resultArray);
+		g_strfreev(valueArray);
+		return TRUE;
+	    }
+	}
     }    
     g_strfreev(resultArray);
     g_strfreev(valueArray);
@@ -152,7 +170,6 @@ gboolean isKSemanticValue_matched(const char *value, const char *resultField){
     }
     return FALSE;    
 }
-
 int unihan_test_record(gunichar code, UnihanField field, char *value){
     char codeStr[10];
     g_snprintf(codeStr,10,"%d",code);
@@ -318,6 +335,7 @@ void parse_record(gchar* rec_string){
     }
 }
 
+
 static int createDbs(const char *mainDbFilename){
     int ret;
     ret= sqlite_open(mainDbFilename,  &mainDb,  SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
@@ -389,6 +407,7 @@ static int createDbs(const char *mainDbFilename){
 		}
 	    }
 	}
+	fclose(dbTableFile);
     }
 
     /* Create rest tables in main db */
@@ -400,6 +419,7 @@ static int createDbs(const char *mainDbFilename){
 	    }
 	}
     }
+    g_free(pathTmp);
 
     return 0;
 }
@@ -486,6 +506,9 @@ int main(int argc,char** argv){
 	}
 	parse_record(readBuf);
     }
+
+    /* Create index */
+    create_indices(mainDb);
     sqlite3_close(mainDb);
     fclose(inF);
     if (!testMode){

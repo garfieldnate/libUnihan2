@@ -101,7 +101,7 @@ RegexEval_DataRec REGEX_EVAL_DATA_SET[]={
 	"$1 $+0 $2 $N3{1,0} $N4{1,0} $N5{1,0}","U+5275 2 kMeyerWempe 0 0 0",0},
     {"([[:digit:]]{4})\\.([[:digit:]]{2})([[:digit:]])(\\*)?[^[:space:]]*:" PINYIN_REGEX_IMPORT,
 	"0484.052,0485.021:huà",
-       	"$1 $2 $3 $N4{1,0} $+0 " PINYIN_IMPORT_SUBSTITUTE_XHC " " PINYIN_IMPORT_SUBSTITUTE_TONE_ACCENT_XHC,
+	       "$1 $2 $3 $N4{1,0} $+0 " PINYIN_IMPORT_SUBSTITUTE_XHC " " PINYIN_IMPORT_SUBSTITUTE_TONE_ACCENT_XHC,
 	"0484 05 2 0 1 hua 4",RESET_COUNTER},
     {"([0-9]*)-([0-9]*)-([0-9]*)",
 	"4040-4041-20142",
@@ -133,7 +133,7 @@ DataRec *nextRecFunc(Param *param, DataSet *dataSet){
     RegexEval_DataRec *rRec=(RegexEval_DataRec *) dataSet;
     static int index=0;
     RegexEval_DataRec *currRec=&rRec[index++];
-    if (rRec[index].pattern==NULL){
+    if (currRec->pattern==NULL){
 	return NULL;
     }
     return (DataRec *) currRec;
@@ -146,7 +146,7 @@ gboolean examRecFunc(Param *param, DataRec *dataRec){
     const gchar *format=rRec->format;
     gchar *str_normalized=g_utf8_normalize(str,-1,G_NORMALIZE_NFD);
 
-    gchar *actualResult;
+    gchar *actualResult=NULL;
     static int counter=0;
     gchar buf[MAX_STRING_BUFFER_SIZE];
     int j,ret;

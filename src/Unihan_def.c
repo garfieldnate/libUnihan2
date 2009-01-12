@@ -1,6 +1,6 @@
 /** 
  * @file Unihan_def.c
- * @brief This file consist definition and constants.
+ * @brief This file consist definitions and constants.
  * 
  */
 

@@ -262,7 +262,6 @@ typedef enum{
      */
     UNIHAN_FIELD_SEMANTICVARIANT,   	//!< Semantic Variant in UCS4, without dictionary information.
     UNIHAN_FIELD_SPECIALIZEDSEMANTICVARIANT,   	//!< Specialized Semantic Variant in UCS4, without dictionary information.
-    UNIHAN_FIELD_VARIANT_CODE,		//!< Unicode code point of variant character in integer.
     UNIHAN_FIELD_FROM_DICT,		//!< The dictionary that define the semantic relation.
     UNIHAN_FIELD_SEMANTIC_T,		//!< "Tong" (同,synonym). The character and variant one are interchangeable.
     UNIHAN_FIELD_SEMANTIC_B,		//!< "Bu" (不,incompatible). The character and variant one  are not interchangeable.

@@ -218,7 +218,7 @@ extern const ZhuyinSymbol ZHUYIN_SYMBOL_LIST[];
 
 
 /**
- * @defgroup Pinyin_Format_Flags Pinyin format flags.
+ * @defgroup Pinyin_Format Pinyin format.
  * @{
  * @name Pinyin format flags.
  *
@@ -229,7 +229,7 @@ extern const ZhuyinSymbol ZHUYIN_SYMBOL_LIST[];
  * See #PinyinAccentFormat for widely adopted format.
  *
  *
- * @see PinyinAccentFormat
+ * @see #PinyinAccentFormat
  * @{
  */
 /**
@@ -276,11 +276,10 @@ typedef guint PinyinFormatFlags;
 
 /**
  * @}
- * @}
  */
 
 /**
- * @name Pinyin format flags.
+ * @name Pinyin accent format.
  * Enumeration of Pinyin accent (not tone mark) formats.
  *
  * There are two Pinyin symbols with accents, diaeresis u (ü,ㄩ), and circumflex e (ê,ㄝ) .
@@ -323,21 +322,35 @@ typedef enum{
     PINYIN_ACCENT_NONE,      //!< ü is represented as u, ê is represented as e.
     PINYIN_ACCENT_INTERNAL  //!< ü is represented as v, ê is represented as E.
 } PinyinAccentFormat;
-/* @} */
+
+/**
+ * Convert Pinyin accent format to Pinyin format flags.
+ *
+ * This function converts \c PinyinAccentFormat to \c PinyinFormatFlags.
+ * @param toFormat PinyinAccentFormat to be converted.
+ * @param useTrailNumber TRUE trailing number is preferred, FALSE to use traditional tonemark.
+ * @return Converted Pinyin format flags
+ */
+PinyinFormatFlags pinyinAccentFormat_to_pinyinFormatFlags(
+	PinyinAccentFormat toFormat, gboolean useTrailNumber);
+/**
+ * @} 
+ * @} 
+ */
 
 
 /**
- * @defgroup Zhuyin_Format_Flags Zhuyin format flags.
+ * @defgroup Zhuyin_Format Zhuyin format.
  * @{
  * @name Zhuyin format flags.
  *
  * These bitwise flags specify the zhuyin string output format.
  * There are various way to represent Zhuyin, 
  * some put the neutral (5th) tone in the front, some omits the first tone.
- * See #ZhuyinAccentFormat for widely adopted format.
+ * See #ZhuyinToneMarkFormat for widely adopted format.
  *
  *
- * @see ZhuyinAccentFormat
+ * @see ZhuyinToneMarkFormat
  * @{
  */
 /**
@@ -360,11 +373,11 @@ typedef guint ZhuyinFormatFlags;
 
 /**
  * @}
- * @}
  */
 
-
 /**
+ * @name Zhuyin tone mark format.
+ *
  * Enumeration of Zhuyin tone mark handling.
  * Originally, the neutral (fifth) tone mark of zhuyin is put in the front, while the first tone mark is omitted.
  * Use ZHUYIN_TONEMARK_ORIGINAL for this.
@@ -379,6 +392,7 @@ typedef guint ZhuyinFormatFlags;
  * If numerical tone mark is desired, use ZHUYIN_TONEMARK_NUMERICAL.
  *
  * @see zhuyin_convert_toneMark_format()
+ * @{
  */
 typedef enum{
     ZHUYIN_TONEMARK_ALWAYS,   //!<  Neutral (fifth) tone mark is put in the end, while the first tone mark is kept.
@@ -386,6 +400,23 @@ typedef enum{
     ZHUYIN_TONEMARK_INPUT_METHOD,  //!< Neutral (fifth) tone mark is put in the end, while the first tone mark is omitted.
     ZHUYIN_TONEMARK_NUMERICAL,  //!< Tone mark are represented as numerical, in the end of Zhuyin.
 } ZhuyinToneMarkFormat;
+
+/**
+ * Convert Zhuyin tone mark  format to Zhuyin format flags.
+ *
+ * This function converts \c ZhuyinToneMarkFormat to \c ZhuyinFormatFlags.
+ * @param toFormat ZhuyinToneMarkFormat to be converted.
+ * @return Converted Zhuyin format flags
+ */
+
+ZhuyinFormatFlags zhuyinToneMarkFormat_to_zhuyinFormatFlags(
+	ZhuyinToneMarkFormat toFormat);
+/**
+ * @}
+ * @}
+ */
+
+
 
 
 /*==========================================================
@@ -598,7 +629,7 @@ void pinyin_add_tone(Pinyin* pinyin, guint tone, gboolean useTrailNumber);
  *
  * @param pinyin the pinyin instance to be processed.
  * @param tone the tone to be added.
- * @param useTrailNumber TRUE trailing number is preferred, FALSE to use traditional tonemark.
+ * @param formatFlags Pinyin Format Flags.
  * @see pinyin_add_tone()
  */
 void pinyin_add_tone_formatFlags(Pinyin* pinyin, guint tone, PinyinFormatFlags formatFlags);

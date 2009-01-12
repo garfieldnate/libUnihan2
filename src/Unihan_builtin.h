@@ -165,7 +165,7 @@ const char *unihanTable_builtin_to_string(UnihanTable table);
  * @param db Db handle
  * @param code the UCS4 representation of the character.
  * @param field The UnihanField to be import.
- * @param tagValues The value of the field.
+ * @param tagValue The value of the field.
  * @return 0 if success, otherwise return nonzero value.
  * @see unihan_import_builtin_table_tagValue_original.
  */

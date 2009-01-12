@@ -85,11 +85,9 @@ int stringList_find_string(StringList *sList,const gchar* str){
 }
 
 gboolean stringList_has_string(StringList *sList,const gchar* str){
-    gchar *strPtr=(gchar *) g_hash_table_lookup(sList->hTable,str);
-    if (strPtr){
-	return TRUE;
-    }
-    return FALSE;
+    if (stringList_find_string(sList,str)<0)
+	return FALSE;
+    return TRUE;
 }
 
 gchar **stringList_to_gcharPointerPointer(StringList *sList){
@@ -826,10 +824,12 @@ gchar *string_formatted_combine(const gchar *format,StringList *sList,int *count
 
 static gchar *string_get_matched_substring(const gchar *str, regmatch_t *pmatch, guint index){
     if (pmatch[index].rm_so<0 || pmatch[index].rm_so==pmatch[index].rm_eo){
+	/* This subpattern is empty */
 	return NULL;
     }
-    gchar *result=NEW_ARRAY_INSTANCE(pmatch[index].rm_eo-pmatch[index].rm_so+1,gchar);
+    /* This subpattern is not empty */
     int i;
+    gchar *result=NEW_ARRAY_INSTANCE(pmatch[index].rm_eo-pmatch[index].rm_so+1,gchar);
     for(i=0;i<pmatch[index].rm_eo-pmatch[index].rm_so;i++){
 	result[i]=str[pmatch[index].rm_so+i];
     }
@@ -843,33 +843,26 @@ gchar *string_regex_formatted_combine_regex_t(const gchar *str, const regex_t *p
     regmatch_t *pmatch=NEW_ARRAY_INSTANCE(nmatch,regmatch_t);
     if (regexec(preg,str,nmatch,pmatch,eflags)!=0){
 	/* No Match */
+	g_free(pmatch);
 	return NULL;
     }
     guint i;
     gchar *strTmp=NULL;
 
-
     StringList *sList=stringList_new();
     for(i=0;i<nmatch;i++){
-	if ( pmatch[i].rm_so<0 || pmatch[i].rm_so==pmatch[i].rm_eo){
-	    /* This subpattern is empty */
-	    stringList_insert(sList,NULL);
-	}else{
-	    /* This subpattern is not empty */
-	    strTmp=string_get_matched_substring(str,pmatch,i);
-	    stringList_insert(sList,strTmp);
-	    g_free(strTmp);
-	}
+        strTmp=string_get_matched_substring(str,pmatch,i);
+        stringList_insert(sList,strTmp);
+        g_free(strTmp);
     }
     gchar *result=string_formatted_combine(format,sList,counter_ptr);
     stringList_free(sList);
+    g_free(pmatch);
     return result;
 }
 
 gchar *string_regex_formatted_combine(const gchar *str, const gchar *pattern, const gchar *format, 
 	int cflags, int eflags, int *counter_ptr){
-
-
     regex_t preg;
     int ret;
 

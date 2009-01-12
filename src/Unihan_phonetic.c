@@ -480,10 +480,10 @@ int syllabel_regex_t_init(){
 }
 
 /*==========================================================
- * Pinyin <=> Zhuyin functions.
+ * Format flags functions.
  */
 
-static PinyinFormatFlags pinyinAccentFormat_to_pinyinFormatFlags(
+PinyinFormatFlags pinyinAccentFormat_to_pinyinFormatFlags(
 	PinyinAccentFormat toFormat, gboolean useTrailNumber){
     PinyinFormatFlags formatFlags=(useTrailNumber)? 0 : PINYIN_FORMAT_FLAG_TONE_AS_ACCENT;
     switch(toFormat){
@@ -514,7 +514,7 @@ static PinyinFormatFlags pinyinAccentFormat_to_pinyinFormatFlags(
     return formatFlags;
 }
 
-static ZhuyinFormatFlags zhuyinToneMarkFormat_to_zhuyinFormatFlags(
+ZhuyinFormatFlags zhuyinToneMarkFormat_to_zhuyinFormatFlags(
 	ZhuyinToneMarkFormat toFormat){
     ZhuyinFormatFlags formatFlags=0;
     switch(toFormat){

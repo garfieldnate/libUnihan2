@@ -36,7 +36,20 @@
 #include <sys/types.h>
 #include <regex.h>
 
+/**
+ * Convert char to unsigned integer.
+ *
+ * @param c char to be converted.
+ * @return unsigned integer representation of \a c.
+ */
 #define CHAR_TO_UNSIGNEDINT(c)  (unsigned int)  ((int) c >=0)? c : c+256
+
+/**
+ * Convert char to unsigned char.
+ *
+ * @param c char to be converted.
+ * @return unsigned char representation of \a c.
+ */
 #define CHAR_TO_UNSIGNEDCHAR(c) (unsigned char) ((int) c >=0)? c : c+256
 
 /**
@@ -122,7 +135,7 @@ gboolean stringList_has_string(StringList *sList,const gchar* str);
  * @param sList The StringList to be processed.
  * @return The index of the string from 0 if found; -1 otherwise.
  */
-char **stringList_to_charPointerPointer(StringList *sList);
+gchar **stringList_to_charPointerPointer(StringList *sList);
 
 /**
  * Return the string at the given index.
@@ -131,7 +144,7 @@ char **stringList_to_charPointerPointer(StringList *sList);
  * @param index The given index.
  * @return The string at the given index. 
  */
-const char *stringList_index(StringList *sList,guint index);
+const gchar *stringList_index(StringList *sList,guint index);
 
 /**
  * Adds a copy of string to the StringList.
@@ -152,7 +165,7 @@ const char *stringList_index(StringList *sList,guint index);
  * @return the index of the newly inserted string.
  * @see stringList_insert_const()
  */
-guint stringList_insert(StringList *sList, const char *str);
+guint stringList_insert(StringList *sList, const gchar *str);
 
 /**
  * Adds a copy of string to the StringList, unless the identical string has already 
@@ -179,7 +192,7 @@ guint stringList_insert(StringList *sList, const char *str);
  * @return the index of the newly inserted string.
  * @see stringList_insert()
  */
-guint stringList_insert_const(StringList *sList, const char *str);
+guint stringList_insert_const(StringList *sList, const gchar *str);
 
 /**
  * Free the StringList instance.
@@ -192,7 +205,7 @@ guint stringList_insert_const(StringList *sList, const char *str);
  */
 void stringList_free(StringList *sList);
 
-///**
+///*
 // * @defgroup RegexResult_Match_Flags Regex substring match flags.
 // * @{
 // * @name Regex substring match flags.
@@ -239,7 +252,7 @@ void stringList_free(StringList *sList);
 // * @{ 
 // */
 
-///**
+///*
 // * Flag to indicate that only the first result is needed.
 // *
 // * With this flag, results for \c aaa match \c a* will be \c aaa only.
@@ -255,7 +268,7 @@ void stringList_free(StringList *sList);
 // * \note This flag has no effect if REGEX_RESULT_MATCH_ONCE is also set.
 // */
 //#define REGEX_RESULT_ALLOW_OVERLAP 2
-///**
+///*
 // * Flag to indicate that major matches should be excluded.
 // *
 // * Major match means the matches of whole regex pattern.
@@ -264,7 +277,7 @@ void stringList_free(StringList *sList);
 // * but not major match \c ab.
 // */
 //#define REGEX_RESULT_EXCLUDE_MAJOR_MATCH 4
-///**
+///*
 // * Flag to indicate that sub matches should be excluded.
 // *
 // * Sub match means the matches of the parenthesized sub regex pattern.
@@ -272,12 +285,12 @@ void stringList_free(StringList *sList);
 // */
 //#define REGEX_RESULT_EXCLUDE_SUB_MATCH 8
 
-///**
+///*
 // * @}
 // * @}
 // */
 
-///**
+///*
 // * @defgroup RegexResult_Match_Functions Regex substring match functions.
 // * @{
 // * @name Regex substring match functions.
@@ -308,7 +321,7 @@ void stringList_free(StringList *sList);
 // */
 
 
-///**
+///*
 // * The data structure that holds result of regex match.
 // *
 // */
@@ -317,21 +330,21 @@ void stringList_free(StringList *sList);
 //    GArray *startOffsets;    //!< Start offset of the actual matched substrings.
 //} RegexResult;
 
-///**
+///*
 // * New a RegexResult instance.
 // *
 // * @return A newly allocated RegexResult instance.
 // */
 //RegexResult *regexResult_new();
 
-///**
+///*
 // * Free a RegexResult instance.
 // *
 // * @param rResult RegexResult to be freed.
 // */
 //void regexResult_free(RegexResult *rResult);
 
-///**
+///*
 // * Return regex-matched substrings.
 // *
 // * This function is a convenient wrap of regcomp() and 
@@ -362,7 +375,7 @@ void stringList_free(StringList *sList);
 //RegexResult *regexResult_match(const gchar *pattern,const gchar *str, 
 //        int cflags, int eflags, guint regexResultFlags);
 
-///**
+///*
 // * Return regex-matched substrings, given an instance of regex_t.
 // *
 // * This function adds subsequence substring handling routine to regexec(), and 
@@ -384,7 +397,7 @@ void stringList_free(StringList *sList);
 //        regex_t *preg,
 //        const gchar *str, int eflags, guint regexResultFlags);
 
-///**
+///*
 // * @}
 // * @}
 // */
@@ -393,7 +406,7 @@ void stringList_free(StringList *sList);
 /**
  * Combine a list of strings into a specified format.
  *
- * This function combines a list of strings (\c sList) into a newly allocated string,
+ * This function combines a list of strings (\a sList) into a newly allocated string,
  * according to the format string \c format. 
  *
  * The format string a character string, which is composed of zero or more directives: 
@@ -406,46 +419,46 @@ void stringList_free(StringList *sList);
  * options. Note that at most one flag can be used in format directives.
  *
  * The format of a format directive is:
- * <code>$[flag]<argument id>[{[option1[,option2[,option3]]]}]</code>
+ * <code>$[flag]&lt;argument id&gt;[{[option1[,option2[,option3]]]}]</code>
  * If no flags are given, format directives are substituted by arguments they refer.
  *
  * The argument id starts from 0, but should not exceed the number of arguments.
  *
  * Following flags provide additional output control:
- * - N<id>{str1 [,str2]}: 
+ * - N&lt;id&gt;{str1 [,str2]}: 
  *   if argument \c id is nonempty, then \c str1 is outputted for this format directives; 
  *   otherwise outputs str2, or empty string if str2 is omitted.
- * - E<id>{str1 [,str2]}: 
+ * - E&lt;id&gt;{str1 [,str2]}: 
  *   similar with -N, but output str1 if argument \c id is empty, i.e, is NULL or has 0 length.
- * - U<id>: 
+ * - U&lt;id&gt;: 
  *   argument \c id should be outputted as uppercase. This directive is backed by g_utf8_strup(),
  *   so it will convert non-ascii unicode character as well.
- * - L<id>: 
+ * - L&lt;id&gt;: 
  *   argument \c id should be outputted as lowercase. This directive is backed by g_utf8_strdown(),
  *   so it will convert non-ascii unicode character as well.
- * - P<id>{length[,pad_char]}: 
+ * - P&lt;id&gt;{length[,pad_char]}: 
  *   argument \c id should be padded with \c pad_char on the left till it reaches the \c length.
  *   Space (' ') is used as pad_char if it is not given.
- * - p<id>{length[,pad_char]}: 
+ * - p&lt;id&gt;{length[,pad_char]}: 
  *   argument \c id should be padded with \c pad_char on the right till it reaches the \c length.
  *   Space (' ') is used as pad_char if it is not given.
- * - X<id>[{length}]:
+ * - X&lt;id&gt;[{length}]:
  *   output argument \c id as hexadecimal if it contains a literal integer.
  *   If length is given, 0  will be padded on the left of the argument. 
  *   Note that NULL is returned if argument \c id cannot be converted by strtol().
- * - T<id>:
+ * - T&lt;id&gt;:
  *   output argument \c id as UTF-8 string if it contains a literal integer.
  *   Note that NULL is returned if argument \c id cannot be converted by strtol() and g_unichar_to_utf8 ().
- * - S<id>{beginIndex[,length]}:
+ * - S&lt;id&gt;{beginIndex[,length]}:
  *   output substring of argument \c id which begins from \c beginIndex,
  *   if \c length is not given, the it will output till the end of argument \c id.
- * - I<id>{compare_str,true_substitute[,false_substitute]}:
+ * - I&lt;id&gt;{compare_str,true_substitute[,false_substitute]}:
  *   output \c true_substitute if \c compare_str is identical to argument \c id;
  *   otherwise output \c false_substitute if given.
- * - +<id>: 
+ * - +&lt;id&gt;: 
  *   if argument \c id is nonempty, then adds 1 to provided counter and output the number.
  *   if argument \c id is empty, then outputs a empty string.
- * - -<id>: 
+ * - -&lt;id&gt;: 
  *   if argument \c id is nonempty, then minuses 1 to provided counter and output the number.
  *   if argument \c id is empty, then outputs a empty string.
  * - $: 
@@ -601,8 +614,8 @@ gchar *string_regex_replace(const gchar *str, const gchar *pattern, const gchar 
  * @param str String to be initialize, NULL for allocate a new string..
  * @return The initialized string.
  */
-char*
-initString(char *str);
+gchar*
+initString(gchar *str);
 
 
 /**
@@ -612,7 +625,7 @@ initString(char *str);
  * @return False if the string is not empty, true otherwise.
  */
 gboolean
-isEmptyString(const char *str);
+isEmptyString(const gchar *str);
 
 /**
  * Trim the leading and trailing whitespace of the string.
@@ -622,7 +635,7 @@ isEmptyString(const char *str);
  *
  * @param str String to be trim.
  */
-void string_trim(char *str);
+void string_trim(gchar *str);
 
 
 /**
@@ -639,8 +652,8 @@ void string_trim(char *str);
  * @return A newly allocated string which is a substring of \c str.
  * @see subString_buffer()
  */
-char*
-subString(const char *str,int beginIndex, int length);
+gchar*
+subString(const gchar *str,int beginIndex, int length);
 
 /**
  * Return a substring of the given string in given buffer.
@@ -659,18 +672,17 @@ subString(const char *str,int beginIndex, int length);
  * @return The buffer that stores the result.
  * @see subString()
  */
-char*
-subString_buffer(char *buf,const char *str,int beginIndex, int length);
+gchar*
+subString_buffer(gchar *buf,const gchar *str,int beginIndex, int length);
 
 /**
- * Append a char to a string.
+ * Append a character to a string.
  *
  * This function appends a character \a ch to the end of \a str, 
  * if the length of the string including the trailing '\0' is less than the given \a length.
  * It returns \c NULL if \a ch cannot be appended because the length limit.
  *
- * \note The \c str will be modified if \a ch is successfully appended.
- *
+ * Note that \a str will be modified if \a ch is successfully appended.
  * @param str The string.
  * @param ch The char to be appended to \a str.
  * @param length The maximum length of \a str ('\0' included).
@@ -688,7 +700,7 @@ gchar* string_append_c(gchar *str, const char ch,size_t length);
  *
  * 
  * @param str The string to be checked.
- * @param TRUE if the string is decomposed, FALSE otherwise.
+ * @return TRUE if the string is decomposed, FALSE otherwise.
  */
 gboolean string_is_decomposed_fast(const gchar *str);
 
