@@ -275,7 +275,7 @@ void parse_record(gchar* rec_string){
     gchar** fields=g_strsplit(rec_string,"\t",3);
     int ret=0;
 
-    gunichar code=  g_utf8_get_char(fields[0]);
+    gunichar code=  unihanChar_parse(fields[0]);
     static gunichar lastCode=0;
     char sqlBuf[BUFFER_SIZE];
     if ((code!=lastCode) && (!testMode)){
