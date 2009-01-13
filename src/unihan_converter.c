@@ -133,7 +133,7 @@ static int create_index(UnihanTable table, sqlite3 *db, const char* databaseName
 static int create_indices(sqlite3 *db){
     UnihanTable table;
     int ret;
-    for(table=0;table<=UNIHAN_TABLE_3RD_PARTY;table++){
+    for(table=0;table<UNIHAN_TABLE_3RD_PARTY;table++){
 	ret=create_index(table,db,NULL);
 	if (ret)
 	    break;

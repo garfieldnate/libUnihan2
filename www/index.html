@@ -56,11 +56,11 @@ themeStart(getLanguageObject("title",getLanguageIndex(preferredLanguage)));
       then it is not normalized as it violates the "no-multiple values in one cell" requirement
       of 1NF.
       </p>
-      <h1>Announce (2008/12/08)</h1>
+      <h1>Announce (2009/01/13)</h1>
       Since we nearly rewrite the whole libUnihan, we hereby make name the upcoming release as 1.0.0.
       The major changes are:
       <ol>
-	  <li>Database scheme change:
+	  <li>Database scheme changes:
 	  The database is reformed to become more consist. Fields with same name has same semantic meaning, 
 	  and carry sensible information when performing union, intersection and exception.
 	  The values of same field are also in same format, including number padding, cases and tone format.
@@ -70,12 +70,22 @@ themeStart(getLanguageObject("title",getLanguageIndex(preferredLanguage)));
 	      <li>Romanized pronunciation (e.g. mandarin) are always stored as lowercase.</li>
 	      <li>Major standards are now stored as integer, display as hexdecimal.</li>
 	  </ul>
-	  <li>API change:
-
+	  <li>API changes:
+  	       <ul>
+		   <li>Functions in <code>Unihan.h</code> deals not only built-in DBs, but custom DB as well.</li>
+		   <li>String formatted combine functions.  These functions like printf() in C,
+		       they combine a list of string arguments into a new string according to the directives 
+		       from format string. 
+		       So far they can do: conditional substitution, case changing, padding, 
+		       sub string, and counter support.
+		       Moreover, the directives are nestable, which enables further output control.
+		       They can also combine with regex functions for making versatile parsers.
+		   </li>
+	       </ul>
+	       API of Older version (0.5.3) is kept <a href="api-0.5/">here</a> for referencing.
 	  </li>
-	  
       </ol>
-      <h3>Note: For original Unihan compatibility, the output of Unihan original fields (the fields that appear in Unicode's <code>Unihan.txt</code> are identical as in Unihan.txt. The </h3>
+      <h3>Note: For original Unihan compatibility, the output of Unihan original fields (the fields that appear in Unicode's <code>Unihan.txt</code> are identical as in Unihan.txt. </h3>
   </div>
   <div id="featureEn" style="position: relative; ">
       <h1>Features</h1>

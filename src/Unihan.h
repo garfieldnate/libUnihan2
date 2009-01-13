@@ -57,8 +57,8 @@ typedef struct {
  * This struct stores a pair of UnihanField and UnihanTable.
  */
 typedef struct {
-    UnihanField field;
-    UnihanTable table;
+    UnihanField field; //!< DB Field.
+    UnihanTable table; //!< DB Table.
 } UnihanFieldTablePair;
 
 /**

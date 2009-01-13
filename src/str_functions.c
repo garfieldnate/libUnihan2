@@ -265,8 +265,6 @@ typedef enum{
     REGEX_EVAL_STAGE_DONE
 } RegexReplaceStage;
 
-
-
 typedef struct {
     int errno;
     int index;
@@ -594,7 +592,6 @@ static FormattedCombineDirective* string_formatted_combine_get_directive(
 	verboseMsg_print(VERBOSE_MSG_ERROR,"index %d should be less than the number of string in stringList %d\n",
 		directive->index,sList->len);
     }
-
     return directive;
 }
 

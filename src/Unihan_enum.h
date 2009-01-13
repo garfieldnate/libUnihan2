@@ -346,11 +346,11 @@ typedef enum{
  * Struct of Field Properties.
  *
  * This struct defines the properties of a field, include the field name, and 
- * field flags which are described in #Unihan_Field_Flags.
+ * field flags which are described in @ref Unihan_Field_Flags.
  */
 typedef struct {
     const gchar *fieldName;	//!< Field Name.
-    guint flags;	//!< Combined Unihan field flags.
+    guint flags;		//!< Combined Unihan field flags.
 } FieldProperties;
 
 

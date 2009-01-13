@@ -251,7 +251,7 @@ typedef guint PinyinFormatFlags;
  * Flag for forcedly showing in ASCII symbols.
  *
  * With this flag, ü is outputted as v, and ê is as E.
- * If \s PINYIN_FORMAT_FLAG_NFD is also set, 
+ * If @c PINYIN_FORMAT_FLAG_NFD is also set, 
  * diaeresis  '‥' (U+0302) is converted to ':';
  * while circumflex '^' (U+0302) is converted.
  */
@@ -262,7 +262,7 @@ typedef guint PinyinFormatFlags;
  *
  * By default the tone is represented as trailing number of 
  * With this flag, ü is outputted as v, and ê is as E.
- * If \s PINYIN_FORMAT_FLAG_NFD is also set, 
+ * If @c PINYIN_FORMAT_FLAG_NFD is also set, 
  * diaeresis  '‥' (U+0302) is converted to ':';
  * while circumflex '^' (U+0302) is converted.
  */
@@ -456,7 +456,7 @@ Syllable *syllable_new_pinyin(const Pinyin *pinyin_str);
  * The zinyin string can be in any format from #ZhuyinToneMarkFormat .
  * And can be toned or toneless.
  *
- * @param pinyin_str pinyin string 
+ * @param zhuyin_str pinyin string 
  * @return a newly allocated syllable instance.
  */
 Syllable *syllable_new_zhuyin(const Zhuyin *zhuyin_str);
@@ -815,7 +815,7 @@ Zhuyin *zhuyin_convert_toneMark_format(const Zhuyin* zhuyin, ZhuyinToneMarkForma
  * Use free() or g_free() to free the newly allocated instance.
  *
  * @param zhuyin the Zhuyin to be converted.
- * @param toFormat the Zhuyin tone mark mode to be converted to.
+ * @param formatFlags Zhuyin format flags.
  * @return the newly allocated Zhuyin instance that 
  * @see pinyin_to_zhuyin_formatFlags()
  */
@@ -837,7 +837,7 @@ Pinyin *zhuyin_to_pinyin(const Zhuyin* zhuyin, PinyinAccentFormat toFormat, gboo
  * Zhuyin to Pinyin, according to PinyinFormatFlags.
  *
  * @param zhuyin the Zhuyin to be converted.
- * @param formatFlags Pinyin format flags.
+ * @param formatFlags Zhuyin format flags.
  * @return a newly located Zhuyin instance.
  * @see zhuyin_to_pinyin()
  * @see pinyin_convert_formatFlags()

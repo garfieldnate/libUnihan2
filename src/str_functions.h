@@ -414,7 +414,7 @@ void stringList_free(StringList *sList);
  * which are copied unchanged to the output string;  and  format directives,  each  of
  * which  results in fetching zero or more subsequent arguments.  
  * Each format directives is introduced by the character $, followed by optional flags, 
- * mandatory pattern id, and optional options like substitute strings or padding instruction.
+ * mandatory argument id, and optional options like substitute strings or padding instruction.
  * In  between  there may be (in this order) zero or more flags, one to three optional 
  * options. Note that at most one flag can be used in format directives.
  *
@@ -546,7 +546,7 @@ gchar *string_regex_formatted_combine_regex_t(const gchar *str, const regex_t *p
  * @see string_regex_replace()
  */
 gchar *string_regex_formatted_combine(const gchar *str, const gchar *pattern, const gchar *format, 
-	int cflags, int eflag, int *counter_ptr);
+	int cflags, int eflags, int *counter_ptr);
 
 
 /**
