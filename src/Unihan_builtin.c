@@ -303,6 +303,7 @@ int unihan_import_builtin_table_single_tagValue(sqlite3 *db, gunichar code, Unih
 	    }
 	}
     }else{
+	printf("***Realfield field=%d (%s)\n",field,unihanField_builtin_to_string(field));
 	/* Is Real field */
 	for(table=0;REALFIELD_TABLES[table].field!=UNIHAN_INVALID_FIELD;table++){
 	    if (REALFIELD_TABLES[table].field==field){
@@ -310,10 +311,17 @@ int unihan_import_builtin_table_single_tagValue(sqlite3 *db, gunichar code, Unih
 		   unihanTable_builtin_to_string(table),code);
 	       unihan_import_value_append(sqlClause,field,tagValue);
 	       g_strlcat(sqlClause,");",MAX_STRING_BUFFER_SIZE);
-
+	       verboseMsg_print(VERBOSE_MSG_INFO2," Executing: %s\n",sqlClause);
+	       ret=sqlite_exec_handle_error(db, sqlClause, NULL, NULL,
+		       sqlite_error_callback_print_message, "unihan_import_builtin_table_tagValue()" );
+	       break;
 	    }
-	    break;
 	}
+	if (table>=UNIHAN_TABLE_3RD_PARTY){
+	    printf("No table contain this field %d (%s)!\n",field,unihanField_builtin_to_string(field));
+	    exit(1);
+	}
+	    
     }
 
     g_free(tagValue_normalized);
@@ -323,18 +331,18 @@ int unihan_import_builtin_table_single_tagValue(sqlite3 *db, gunichar code, Unih
 int unihan_import_builtin_table_tagValue(sqlite3 *db, gunichar code, UnihanField field, const char *tagValue){
     int counter=0;
     if (UNIHAN_FIELD_PROPERTIES[field].flags & UNIHAN_FIELDFLAG_SINGLETON){
-	int ret,i;
-	gchar **values=g_strsplit_set(tagValue," ",-1);
-	for(i=0;values[i]!=NULL;i++){
-	    ret=unihan_import_builtin_table_single_tagValue(db,code,field,values[i],&counter);
-	    if (ret!=SQLITE_OK){
-		return ret;
-	    }
-	}
-	g_strfreev(values);
-	return ret;
+	return unihan_import_builtin_table_single_tagValue(db,code,field,tagValue,&counter);
     }
-    return unihan_import_builtin_table_single_tagValue(db,code,field,tagValue,&counter);
+    int ret,i;
+    gchar **values=g_strsplit_set(tagValue," ",-1);
+    for(i=0;values[i]!=NULL;i++){
+	ret=unihan_import_builtin_table_single_tagValue(db,code,field,values[i],&counter);
+	if (ret!=SQLITE_OK){
+	    return ret;
+	}
+    }
+    g_strfreev(values);
+    return ret;
 }
 
     

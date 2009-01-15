@@ -59,6 +59,41 @@ StringList *stringList_sized_new(size_t chunk_size, size_t element_count){
     return sList;
 }
 
+StringList *stringList_new_strsplit_set(const gchar *string, const gchar *delimiters, gint max_tokens){
+    StringList *sList=stringList_new();
+    GString *strBuf=g_string_new(NULL);
+    int counter=0,i=-1;
+    int j,jLen=strlen(delimiters);
+    gboolean isDelimiter;
+    while(string[++i]!='\0'){
+	if (max_tokens>0 && counter>=max_tokens){
+	    g_string_free(strBuf, TRUE);
+	    return sList;
+	}
+	isDelimiter=FALSE;
+	for(j=0;j<jLen;j++){
+	    if (string[i]==delimiters[j]){
+		isDelimiter=TRUE;
+		break;
+	    }
+	}
+	if (isDelimiter){
+	    if (strBuf->len>0){
+		stringList_insert(sList,strBuf->str);
+		g_string_set_size(strBuf,0);
+		counter++;
+	    }
+	    continue;
+	}
+	g_string_append_c(strBuf,string[i]);
+    }
+    if (strBuf->len>0){
+	stringList_insert(sList,strBuf->str);
+    }
+    g_string_free(strBuf, TRUE);
+    return sList;
+}
+
 void stringList_clear(StringList *sList){
     g_assert(sList);
     sList->len=0;
@@ -305,14 +340,14 @@ static FormattedCombineDirective* string_formatted_combine_get_directive(
     GString *option1Str=NULL;
     GString *option2Str=NULL;
     GString *option3Str=NULL;
-    verboseMsg_print(VERBOSE_MSG_INFO4,"*** string_formatted_combine_get_directive() start\n");
+    verboseMsg_print(VERBOSE_MSG_INFO5,"*** string_formatted_combine_get_directive() start\n");
     FormattedCombineDirective *directive=formattedOutputDirective_new();
     FormattedCombineDirective *subDirective=NULL;
     int ret;
 
     do{
 	c=format[*currPos_ptr];
-	verboseMsg_print(VERBOSE_MSG_INFO5,
+	verboseMsg_print(VERBOSE_MSG_INFO6,
 		"**** string_formatted_combine_get_directive() stage=%d c=%c(%d)\n",stage,c,c);
 	switch(stage){
 	    case REGEX_EVAL_STAGE_INIT:
@@ -428,22 +463,17 @@ static FormattedCombineDirective* string_formatted_combine_get_directive(
 		if (c=='$'){
 		    (*currPos_ptr)++;
 		    subDirective=string_formatted_combine_get_directive(format, sList, currPos_ptr, counter_ptr);
-		    if (verboseMsg_get_level()>=VERBOSE_MSG_INFO5){
-			verboseMsg_print(VERBOSE_MSG_INFO5,
-				"**** string_formatted_combine_get_directive(): subDirective: ");
-			verboseMsg_print(VERBOSE_MSG_INFO5,"currPos=%d index=%d errno=%d\n",
-				*currPos_ptr,subDirective->index,subDirective->errno);
-				
+		    if (verboseMsg_get_level()>=VERBOSE_MSG_INFO6){
 			if (subDirective->option1){
-			    verboseMsg_print(VERBOSE_MSG_INFO5," option1=%s",subDirective->option1);
+			    verboseMsg_print(VERBOSE_MSG_INFO6," option1=%s",subDirective->option1);
 			}
 			if (subDirective->option2){
-			    verboseMsg_print(VERBOSE_MSG_INFO5," option2=%s",subDirective->option2);
+			    verboseMsg_print(VERBOSE_MSG_INFO6," option2=%s",subDirective->option2);
 			}
 			if (subDirective->option3){
-			    verboseMsg_print(VERBOSE_MSG_INFO5," option3=%s",subDirective->option3);
+			    verboseMsg_print(VERBOSE_MSG_INFO6," option3=%s",subDirective->option3);
 			}
-			verboseMsg_print(VERBOSE_MSG_INFO5,"\n");
+			verboseMsg_print(VERBOSE_MSG_INFO6,"\n");
 		    }
 		    if (subDirective->errno>0){
 			formattedOutputDirective_free(subDirective);
@@ -477,22 +507,22 @@ static FormattedCombineDirective* string_formatted_combine_get_directive(
 		if (c=='$'){
 		    (*currPos_ptr)++;
 		    subDirective=string_formatted_combine_get_directive(format, sList, currPos_ptr, counter_ptr);
-		    if (verboseMsg_get_level()>=VERBOSE_MSG_INFO5){
-			verboseMsg_print(VERBOSE_MSG_INFO5,
+		    if (verboseMsg_get_level()>=VERBOSE_MSG_INFO6){
+			verboseMsg_print(VERBOSE_MSG_INFO6,
 				"**** string_formatted_combine_get_directive(): subDirective: ");
-			verboseMsg_print(VERBOSE_MSG_INFO5,"currPos=%d index=%d errno=%d\n",
+			verboseMsg_print(VERBOSE_MSG_INFO6,"currPos=%d index=%d errno=%d\n",
 				*currPos_ptr,subDirective->index,subDirective->errno);
 
 			if (subDirective->option1){
-			    verboseMsg_print(VERBOSE_MSG_INFO5," option1=%s",subDirective->option1);
+			    verboseMsg_print(VERBOSE_MSG_INFO6," option1=%s",subDirective->option1);
 			}
 			if (subDirective->option2){
-			    verboseMsg_print(VERBOSE_MSG_INFO5," option2=%s",subDirective->option2);
+			    verboseMsg_print(VERBOSE_MSG_INFO6," option2=%s",subDirective->option2);
 			}
 			if (subDirective->option3){
-			    verboseMsg_print(VERBOSE_MSG_INFO5," option3=%s",subDirective->option3);
+			    verboseMsg_print(VERBOSE_MSG_INFO6," option3=%s",subDirective->option3);
 			}
-			verboseMsg_print(VERBOSE_MSG_INFO5,"\n");
+			verboseMsg_print(VERBOSE_MSG_INFO6,"\n");
 		    }
 		    if (subDirective->errno>0){
 			formattedOutputDirective_free(subDirective);
@@ -522,22 +552,22 @@ static FormattedCombineDirective* string_formatted_combine_get_directive(
 		if (c=='$'){
 		    (*currPos_ptr)++;
 		    subDirective=string_formatted_combine_get_directive(format, sList, currPos_ptr, counter_ptr);
-		    if (verboseMsg_get_level()>=VERBOSE_MSG_INFO5){
-			verboseMsg_print(VERBOSE_MSG_INFO5,
+		    if (verboseMsg_get_level()>=VERBOSE_MSG_INFO6){
+			verboseMsg_print(VERBOSE_MSG_INFO6,
 				"**** string_formatted_combine_get_directive(): subDirective: ");
-			verboseMsg_print(VERBOSE_MSG_INFO5,"currPos=%d index=%d errno=%d\n",
+			verboseMsg_print(VERBOSE_MSG_INFO6,"currPos=%d index=%d errno=%d\n",
 				*currPos_ptr,subDirective->index,subDirective->errno);
 
 			if (subDirective->option1){
-			    verboseMsg_print(VERBOSE_MSG_INFO5," option1=%s",subDirective->option1);
+			    verboseMsg_print(VERBOSE_MSG_INFO6," option1=%s",subDirective->option1);
 			}
 			if (subDirective->option2){
-			    verboseMsg_print(VERBOSE_MSG_INFO5," option2=%s",subDirective->option2);
+			    verboseMsg_print(VERBOSE_MSG_INFO6," option2=%s",subDirective->option2);
 			}
 			if (subDirective->option3){
-			    verboseMsg_print(VERBOSE_MSG_INFO5," option3=%s",subDirective->option3);
+			    verboseMsg_print(VERBOSE_MSG_INFO6," option3=%s",subDirective->option3);
 			}
-			verboseMsg_print(VERBOSE_MSG_INFO5,"\n");
+			verboseMsg_print(VERBOSE_MSG_INFO6,"\n");
 		    }
 		    if (subDirective->errno>0){
 			formattedOutputDirective_free(subDirective);
@@ -563,7 +593,7 @@ static FormattedCombineDirective* string_formatted_combine_get_directive(
 	    (*currPos_ptr)++;
 	}
     }while(directive->errno<=0 && stage!=REGEX_EVAL_STAGE_DONE);
-    verboseMsg_print(VERBOSE_MSG_INFO4,"*** string_formatted_combine_get_directive() stage=%d error=%d\n",
+    verboseMsg_print(VERBOSE_MSG_INFO5,"*** string_formatted_combine_get_directive() stage=%d error=%d\n",
 	    stage,directive->errno);
     if (!directive->errno){
 	if (option1Str)
@@ -643,7 +673,7 @@ static int  string_formatted_combine_expand_directive(
 	    g_free(strTmp);
 	}else if (directive->statusFlags & SUBPATTERN_FLAG_IS_PADDED_LEFT){
 	    length=(int) strtol(directive->option1,&strtolEnd_ptr,10);
-	    verboseMsg_print(VERBOSE_MSG_INFO5,
+	    verboseMsg_print(VERBOSE_MSG_INFO6,
 		    "**** string_formatted_combine_expand_directive() SUBPATTERN_FLAG_IS_PADDED_LEFT length=%d\n",
 		    length);
 	    if (strtolEnd_ptr==directive->option1){
@@ -661,7 +691,7 @@ static int  string_formatted_combine_expand_directive(
 	    g_free(strTmp);
 	}else if (directive->statusFlags & SUBPATTERN_FLAG_IS_PADDED_RIGHT){
 	    length=(int) strtol(directive->option1,&strtolEnd_ptr,10);
-	    verboseMsg_print(VERBOSE_MSG_INFO5,
+	    verboseMsg_print(VERBOSE_MSG_INFO6,
 		    "**** string_formatted_combine_expand_directive() SUBPATTERN_FLAG_IS_PADDED_RIGHT length=%d\n",
 		    length);
 	    if (strtolEnd_ptr==directive->option1){
@@ -683,7 +713,7 @@ static int  string_formatted_combine_expand_directive(
 	    g_string_append_printf(strBuf,"%d",--(*counter_ptr));
 	}else if (directive->statusFlags & SUBPATTERN_FLAG_IS_HEXADECIMAL){
 	    ucs4_code=(gunichar) strtol(str,&strtolEnd_ptr,10);
-	    verboseMsg_print(VERBOSE_MSG_INFO5,"**** string_formatted_combine_expand_directive() ucs_code=%ld(%X)\n"
+	    verboseMsg_print(VERBOSE_MSG_INFO6,"**** string_formatted_combine_expand_directive() ucs_code=%ld(%X)\n"
 		    ,ucs4_code,ucs4_code);
 	    if (strtolEnd_ptr==str){
 		/* Number string is expected. */
@@ -715,7 +745,7 @@ static int  string_formatted_combine_expand_directive(
 	    g_string_append(strBuf,strTmp);
 	    g_free(strTmp);
 	}else if (directive->statusFlags & SUBPATTERN_FLAG_IS_SUBSTRING){
-	    verboseMsg_print(VERBOSE_MSG_INFO5,
+	    verboseMsg_print(VERBOSE_MSG_INFO6,
 		    "**** string_formatted_combine() SUBPATTERN_FLAG_IS_SUBSTRING\n");
 	    if (directive->option1){
 		beginIndex=(int) strtol(directive->option1,&strtolEnd_ptr,10);
@@ -742,7 +772,7 @@ static int  string_formatted_combine_expand_directive(
 	    subString_buffer(buf,str,beginIndex,length);
 	    g_string_append(strBuf,buf);
 	}else if (directive->statusFlags & SUBPATTERN_FLAG_IS_IDENTICAL){
-	    verboseMsg_print(VERBOSE_MSG_INFO5,
+	    verboseMsg_print(VERBOSE_MSG_INFO6,
 		    "**** string_formatted_combine_expand_directive() SUBPATTERN_FLAG_IS_IDENTICAL\n");
 	    if (!directive->option1){
 		/* No expression ! */
@@ -779,24 +809,24 @@ gchar *string_formatted_combine(const gchar *format,StringList *sList,int *count
     FormattedCombineDirective* directive=NULL;
 
     for(j=0;j<formatLen;j++){
-	verboseMsg_print(VERBOSE_MSG_INFO4,"*** string_formatted_combine():Current strBuf=%s|\n",strBuf->str);
+	verboseMsg_print(VERBOSE_MSG_INFO6,"*** string_formatted_combine():Current strBuf=%s|\n",strBuf->str);
 	if (format[j]=='$'){
 	    j++;
 	    directive=string_formatted_combine_get_directive(format, sList, &j, counter_ptr);
-	    if (verboseMsg_get_level()>=VERBOSE_MSG_INFO5){
-		verboseMsg_print(VERBOSE_MSG_INFO5,"**** string_formatted_combine(): directive:");
-		verboseMsg_print(VERBOSE_MSG_INFO5,"j=%d index=%d errno=%d\n",
+	    if (verboseMsg_get_level()>=VERBOSE_MSG_INFO6){
+		verboseMsg_print(VERBOSE_MSG_INFO6,"**** string_formatted_combine(): directive:");
+		verboseMsg_print(VERBOSE_MSG_INFO6,"j=%d index=%d errno=%d\n",
 			j,directive->index,directive->errno);
 		if (directive->option1){
-		    verboseMsg_print(VERBOSE_MSG_INFO5," option1=%s",directive->option1);
+		    verboseMsg_print(VERBOSE_MSG_INFO6," option1=%s",directive->option1);
 		}
 		if (directive->option2){
-		    verboseMsg_print(VERBOSE_MSG_INFO5," option2=%s",directive->option2);
+		    verboseMsg_print(VERBOSE_MSG_INFO6," option2=%s",directive->option2);
 		}
 		if (directive->option3){
-		    verboseMsg_print(VERBOSE_MSG_INFO5," option3=%s",directive->option3);
+		    verboseMsg_print(VERBOSE_MSG_INFO6," option3=%s",directive->option3);
 		}
-		verboseMsg_print(VERBOSE_MSG_INFO5,"\n");
+		verboseMsg_print(VERBOSE_MSG_INFO6,"\n");
 	    }
 	    if (directive->errno>0){
 		formattedOutputDirective_free(directive);

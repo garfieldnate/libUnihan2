@@ -90,6 +90,25 @@ StringList *stringList_new();
 StringList *stringList_sized_new(size_t chunk_size, size_t element_count);
 
 /**
+ * Create a new StringList instance from splitting string into a number of tokens not containing any of the characters in delimiter. 
+ *
+ * A token is the non-empty longest string that does not contain any of the characters in delimiters. 
+ * If max_tokens is reached, the remainder is appended to the last token. Unlike g_strsplit_set(),
+ * this function does not insert empty string in StringList.
+ *
+ * For example the result of stringList_new_strsplit_set("abc +def"," +",-1) and stringList_new_strsplit_set("abc def"," +",-1)
+ * are the same.
+ *
+ * Note that this function works on bytes not characters, so it can't be used to delimit UTF-8 strings for anything but ASCII characters.
+ *
+ * @param string	The string to be tokenized. 
+ * @param delimiters	A nul-terminated string containing bytes that are used to split the string. 
+ * @param max_tokens The maximum number of tokens to split string into. If this is less than 1, the string is split completely
+ * @return A newly allocated StringList instance that holds the split string.
+ */
+StringList *stringList_new_strsplit_set(const gchar *string, const gchar *delimiters, gint max_tokens);
+
+/**
  * Clear all content of Stringlist.
  *
  * @param sList The StringList to be processed.

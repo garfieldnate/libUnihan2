@@ -37,6 +37,7 @@
 #include <libgen.h>
 #include <glib/gprintf.h>
 #include "allocate.h"
+#include "str_functions.h"
 #include "file_functions.h"
 #include "verboseMsg.h"
 #include "Unihan_builtin.h"
@@ -57,46 +58,12 @@ gboolean testMode=FALSE;
 sqlite3 *mainDb=NULL;
 StringList *dbAliasList=NULL;
 StringList *dbFileNameList=NULL;
+GHashTable *dbAliasHash=NULL;
+GHashTable *dbHash=NULL;
 StringList *createdTableList=NULL;
 
 static void printUsage(char **argv){
     printf(USAGE_MSG,argv[0]);
-}
-
-
-static int create_table(UnihanTable table, sqlite3 *db, const char* databaseName){
-    GString *strBuf=g_string_new("CREATE TABLE ");
-    if (databaseName){
-	g_string_append_printf(strBuf,"%s.",databaseName);
-    }
-    g_string_append_printf(strBuf,"%s (",unihanTable_builtin_to_string(table));
-    UnihanField *fields=unihanTable_get_builtin_fields(table);
-    int i;
-    for(i=0;fields[i]>=0;i++){
-	if (i>0)
-	    g_string_append_c(strBuf,',');
-	g_string_append_printf(strBuf," %s %s NOT NULL",
-		unihanField_builtin_to_string(fields[i]),
-		unihanField_builtin_has_flags(fields[i], UNIHAN_FIELDFLAG_INTEGER) ? "integer" : "text");
-
-    }
-    g_string_append(strBuf,", PRIMARY KEY (");
-    for(i=0;fields[i]>=0;i++){
-	if (unihanField_builtin_has_flags(fields[i], UNIHAN_FIELDFLAG_NO_PRIMARYKEY | UNIHAN_FIELDFLAG_SINGLETON))
-	    continue;
-	if (i>0)
-	    g_string_append_c(strBuf,',');
-	g_string_append_printf(strBuf," %s",unihanField_builtin_to_string(fields[i]));
-
-    }
-    g_string_append(strBuf,") );");
-    verboseMsg_print(VERBOSE_MSG_INFO1,"[I1] %s\n",strBuf->str);
-    int ret=sqlite_exec_handle_error(db, strBuf->str, NULL, NULL, sqlite_error_callback_print_message, 
-	    "create_table(): Error");
-
-    g_string_free(strBuf,TRUE);
-    g_free(fields);
-    return ret;
 }
 
 static int create_index(UnihanTable table, sqlite3 *db, const char* databaseName){
@@ -130,16 +97,57 @@ static int create_index(UnihanTable table, sqlite3 *db, const char* databaseName
     return ret;
 }
 
-static int create_indices(sqlite3 *db){
-    UnihanTable table;
-    int ret;
-    for(table=0;table<UNIHAN_TABLE_3RD_PARTY;table++){
-	ret=create_index(table,db,NULL);
-	if (ret)
-	    break;
+
+static int create_table(UnihanTable table, sqlite3 *db, const char* databaseName){
+    GString *strBuf=g_string_new("CREATE TABLE ");
+    if (databaseName){
+	g_string_append_printf(strBuf,"%s.",databaseName);
+    }
+    g_string_append_printf(strBuf,"%s (",unihanTable_builtin_to_string(table));
+    UnihanField *fields=unihanTable_get_builtin_fields(table);
+    int i;
+    for(i=0;fields[i]>=0;i++){
+	if (i>0)
+	    g_string_append_c(strBuf,',');
+	g_string_append_printf(strBuf," %s %s NOT NULL",
+		unihanField_builtin_to_string(fields[i]),
+		unihanField_builtin_has_flags(fields[i], UNIHAN_FIELDFLAG_INTEGER) ? "integer" : "text");
+
+    }
+    g_string_append(strBuf,", PRIMARY KEY (");
+    for(i=0;fields[i]>=0;i++){
+	if (unihanField_builtin_has_flags(fields[i], UNIHAN_FIELDFLAG_NO_PRIMARYKEY | UNIHAN_FIELDFLAG_SINGLETON))
+	    continue;
+	if (i>0)
+	    g_string_append_c(strBuf,',');
+	g_string_append_printf(strBuf," %s",unihanField_builtin_to_string(fields[i]));
+
+    }
+    g_string_append(strBuf,") );");
+    verboseMsg_print(VERBOSE_MSG_INFO1,"[I1] %s\n",strBuf->str);
+    int ret=sqlite_exec_handle_error(db, strBuf->str, NULL, NULL, sqlite_error_callback_print_message, 
+	    "create_table(): Error");
+
+
+    g_string_free(strBuf,TRUE);
+    g_free(fields);
+
+    if (!ret){
+	create_index(table, db, NULL);
     }
     return ret;
 }
+
+//static int create_indices(sqlite3 *db){
+//    UnihanTable table;
+//    int ret;
+//    for(table=0;table<UNIHAN_TABLE_3RD_PARTY;table++){
+//        ret=create_index(table,db,NULL);
+//        if (ret)
+//            break;
+//    }
+//    return ret;
+//}
 
 
 
@@ -335,6 +343,21 @@ void parse_record(gchar* rec_string){
     }
 }
 
+static void dbHash_foreach_func(gpointer key, gpointer value, gpointer user_data){
+    char sqlBuf[PATH_MAX];
+    char *dbAlias=(char *)key;
+    sqlite3 *db=(sqlite3 *)value;
+    verboseMsg_print(VERBOSE_MSG_INFO2,"[I2 ] dbHash_foreach_func(%s,-,NULL)\n",dbAlias);
+    char *openPath=(char *)g_hash_table_lookup(dbAliasHash,dbAlias);
+    sqlite3_close(db);
+    sqlite3_snprintf(PATH_MAX,sqlBuf,"ATTACH DATABASE %Q AS %q;",openPath,dbAlias);
+    verboseMsg_print(VERBOSE_MSG_INFO2,"[I2 ] sqlBuf=%s\n",sqlBuf);
+    int ret=sqlite_exec_handle_error(mainDb, sqlBuf, NULL, NULL, 
+	    sqlite_error_callback_print_message,  "createDbs(): Error");
+    if (ret)
+	exit(ret);
+
+}
 
 static int createDbs(const char *mainDbFilename){
     int ret;
@@ -345,22 +368,26 @@ static int createDbs(const char *mainDbFilename){
 	exit(ret);
     }
 
-    char sqlBuf[PATH_MAX];
-
     char *pathTmp=g_strdup(mainDbFilename);
     char *dirName=dirname(pathTmp);
     char pathBuf[PATH_MAX];
     createdTableList=stringList_new();
     dbAliasList=stringList_new();
     dbFileNameList=stringList_new();
-    gboolean isAlias=FALSE;
+    gboolean isDbFile=TRUE;
     UnihanTable table;
+    StringList *sList;
 
     if (dbTableFile){
 	char readBuf[BUFFER_SIZE];
 	char *openPath=NULL;
 	sqlite3 *db=NULL;
-	char **strs;
+	const char *dbAlias=NULL;
+	const char *dbFilename=NULL;
+	const char *tableName=NULL;
+	dbAliasHash=g_hash_table_new_full(g_str_hash,g_str_equal,NULL,NULL);
+	dbHash=g_hash_table_new_full(g_str_hash,g_str_equal,NULL,NULL);
+	int dbIndex,aliasIndex;
 
 	while(fgets(readBuf,BUFFER_SIZE,dbTableFile)!=NULL){
 	    g_strstrip(readBuf);
@@ -372,42 +399,50 @@ static int createDbs(const char *mainDbFilename){
 		continue;
 	    }
 	    if (readBuf[0]=='='){
-		isAlias=TRUE;
+		isDbFile=FALSE;
 		continue;
 	    }
-	    strs=g_strsplit_set(readBuf," \t",2);
-	    if (isAlias){
-		if (!stringList_has_string(dbAliasList,strs[0])){
+	    printf("*** readBuf=%s\n",readBuf);
+	    sList=stringList_new_strsplit_set(readBuf," \t",2);
+	    dbAlias=stringList_index(sList,0);
+	    if (isDbFile){
+		dbFilename=stringList_index(sList,1);
+		if (!stringList_has_string(dbAliasList,dbAlias)){
 		    g_strlcpy(pathBuf,dirName,PATH_MAX);
-		    openPath=path_concat(pathBuf,strs[1],PATH_MAX);
-		    stringList_insert(dbAliasList,strs[0]);
-		    stringList_insert(dbFileNameList,openPath);
+		    openPath=path_concat(pathBuf,dbFilename,PATH_MAX);
+		    aliasIndex=stringList_insert(dbAliasList,dbAlias);
+		    dbIndex=stringList_insert(dbFileNameList,openPath);
+		    verboseMsg_print(VERBOSE_MSG_INFO2,"[I2 ] Openpath=%s, db alias=%s\n",openPath,dbAlias);
 		    ret= sqlite_open(openPath,  &db,  SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
 		    if (ret) {
 			fprintf(stderr, "Can't open to database: %s, err msg:%s\n", openPath, sqlite3_errmsg(db));
 			sqlite3_close(db);
 			exit(ret);
 		    }
-		    sqlite3_close(db);
-		    db=NULL;
-		    sqlite3_snprintf(PATH_MAX,sqlBuf,"ATTACH DATABASE %Q AS %q;",openPath,strs[0]);
-		    ret=sqlite_exec_handle_error(mainDb, sqlBuf, NULL, NULL, 
-			    sqlite_error_callback_print_message,  "createDbs(): Error");
-		    if (ret)
-			exit(ret);
+		    g_hash_table_insert(dbAliasHash, (gpointer) stringList_index(dbAliasList,aliasIndex), (gpointer)stringList_index(dbAliasList,dbIndex));
+		    g_hash_table_insert(dbHash, (gpointer)stringList_index(dbAliasList,aliasIndex),db);
 		}
 	    }else{
+		tableName=stringList_index(sList,1);
 		/* Create table */
-		table=unihanTable_builtin_parse(strs[1]);
-		if ((ret=create_table(table,db,strs[0]))==0){
-		    stringList_insert_const(createdTableList,strs[1]);
-		    verboseMsg_print(VERBOSE_MSG_INFO2,"[I2 ] Table %s in Db %s is created\n",strs[1],strs[0]);
+		table=unihanTable_builtin_parse(tableName);
+		db= (sqlite3 *) g_hash_table_lookup(dbHash,dbAlias);
+		if ((ret=create_table(table,db,NULL))==0){
+		    stringList_insert_const(createdTableList,tableName);
+		    verboseMsg_print(VERBOSE_MSG_INFO2,"[I2 ] Table %s in Db %s is created\n",tableName,dbAlias);
 		}else{
 		    return ret;
 		}
 	    }
+	    stringList_free(sList);
 	}
+
+	/* Attach dbs */
+	g_hash_table_foreach(dbHash,dbHash_foreach_func, NULL);
+
 	fclose(dbTableFile);
+	g_hash_table_destroy(dbHash);
+	g_hash_table_destroy(dbAliasHash);
     }
 
     /* Create rest tables in main db */
@@ -507,8 +542,8 @@ int main(int argc,char** argv){
 	parse_record(readBuf);
     }
 
-    /* Create index */
-    create_indices(mainDb);
+//    /* Create index */
+//    create_indices(mainDb);
     sqlite3_close(mainDb);
     fclose(inF);
     if (!testMode){

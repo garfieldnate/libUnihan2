@@ -1,0 +1,147 @@
+# DB - Table file
+# 
+# This files specifies the relationship between database files and db tables.
+# By default a table will go to the core DB, that is, the db given in command argument in unihan_converter)
+# 
+
+############################
+# DB Alias Section
+#
+# Variant:     Tables of variants
+# Format:
+# DB Alias		Filename
+
+# Recommended tables
+Recommended	Unihan_recommended.db
+
+# Tables of variants
+Variant	Unihan_variant.db
+
+# Major Dictionary references, such as KangXi and other dictionaries used in four dictionary sort algorithm
+DictRef_Major	Unihan_dictRef_major.db
+
+# Popular encoding, such as GB2312, BIG5 and others.
+Mapping_Popular	Unihan_mapping_popular.db
+
+# Infrequent used data should store here.
+Misc	Unihan_misc.db
+
+=================================
+############################
+# DB Table Section
+#
+# Format:
+# DB Alias		Table
+
+
+############################
+# Following tables should be in core db.
+# 	codeTable
+#	kFrequencyTable
+#	kGradeLevelTable
+#	kIICoreTable
+#	kIRG_GSourceTable
+#	kIRG_HSourceTable
+#	kIRG_JSourceTable
+#	kIRG_KPSourceTable
+#	kIRG_KSourceTable
+#	kIRG_TSourceTable
+#	kIRG_USourceTable
+#	kIRG_VSourceTable
+
+############################
+# Following tables should be in other db.
+
+Recommended 	kAccountingNumericTable
+Recommended	kCantoneseTable
+Recommended	kDefinitionTable
+Recommended	kHangulTable
+Recommended	kJapaneseKunTable
+Recommended	kJapaneseOnTable
+Recommended	kKoreanTable
+Recommended	kMandarinTable
+Recommended	kOtherNumericTable
+Recommended	kPrimaryNumericTable
+Recommended	kRSUnicodeTable
+Recommended	kTotalStrokesTable
+Recommended	kVietnameseTable
+
+Mapping_Popular	kBigFiveTable
+Mapping_Popular	kGB0Table
+Mapping_Popular	kJis0Table
+Mapping_Popular	kKPS0Table
+Mapping_Popular	kKSC0Table
+
+Variant		kCompatibilityVariantTable
+Variant		kSemanticVariantTable
+Variant		kSimplifiedVariantTable
+Variant		kSpecializedSemanticVariantTable
+Variant		kTraditionalVariantTable
+Variant		kZVariantTable
+
+DictRef_Major	kDaeJaweonTable
+DictRef_Major	kIRGDaeJaweonTable
+DictRef_Major	kIRGDaiKanwaZitenTable
+DictRef_Major	kIRGHanyuDaZidianTable
+DictRef_Major	kIRGKangXiTable
+DictRef_Major	kKangXiTable
+DictRef_Major	kRSKangXiTable
+
+#
+Misc		kCangjieTable
+Misc		kCCCIITable
+Misc		kCheungBauerIndexTable
+Misc		kCheungBauerTable
+Misc		kCihaiTTable
+Misc		kCNS1986Table
+Misc		kCNS1992Table
+Misc		kCowlesTable
+Misc		kEACCTable
+Misc		kFennTable
+Misc		kFennIndexTable
+Misc		kFourCornerCodeTable
+Misc		kGB1Table
+Misc		kGB3Table
+Misc		kGB5Table
+Misc		kGB7Table
+Misc		kGB8Table
+Misc		kGSRTable
+Misc		kHanYuTable
+Misc		kHanyuPinluTable
+Misc		kHDZRadBreakTable
+Misc		kHKGlyphTable
+Misc		kHKSCSTable
+Misc		kIBMJapanTable
+Misc		kIRG_GSourceTableExtra
+Misc		kIRG_HSourceTableExtra
+Misc		kIRG_JSourceTableExtra
+Misc		kIRG_KPSourceTableExtra
+Misc		kIRG_KSourceTableExtra
+Misc		kIRG_TSourceTableExtra
+Misc		kIRG_USourceTableExtra
+Misc		kIRG_VSourceTableExtra
+Misc		kJIS0213Table
+Misc		kJis1Table
+Misc		kKarlgrenTable
+Misc		kKPS1Table
+Misc		kKSC1Table
+Misc		kLauTable
+Misc		kMainlandTelegraphTable
+Misc		kMatthewsTable
+Misc		kMeyerWempeTable
+Misc		kMorohashiTable
+Misc		kNelsonTable
+Misc		kPhoneticTable
+Misc		kPseudoGB1Table
+Misc		kRSAdobe_Japan1_6Table
+Misc		kRSJapaneseTable
+Misc		kRSKanWaTable
+Misc		kRSKoreanTable
+Misc		kSBGYTable
+Misc		kSemanticVariantTableExtra
+Misc		kSpecializedSemanticVariantTableExtra
+Misc		kTaiwanTelegraphTable
+Misc		kTangTable
+Misc		kXeroxTable
+Misc		kXHC1983Table
+Misc		kZVariantTableExtra
