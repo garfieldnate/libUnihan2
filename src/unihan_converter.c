@@ -412,14 +412,14 @@ static int createDbs(const char *mainDbFilename){
 		    openPath=path_concat(pathBuf,dbFilename,PATH_MAX);
 		    aliasIndex=stringList_insert(dbAliasList,dbAlias);
 		    dbIndex=stringList_insert(dbFileNameList,openPath);
-		    verboseMsg_print(VERBOSE_MSG_INFO2,"[I2 ] Openpath=%s, db alias=%s\n",openPath,dbAlias);
+		    verboseMsg_print(VERBOSE_MSG_INFO3,"[I3  ] Openpath=%s, db alias=%s\n",openPath,dbAlias);
 		    ret= sqlite_open(openPath,  &db,  SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
 		    if (ret) {
 			fprintf(stderr, "Can't open to database: %s, err msg:%s\n", openPath, sqlite3_errmsg(db));
 			sqlite3_close(db);
 			exit(ret);
 		    }
-		    g_hash_table_insert(dbAliasHash, (gpointer) stringList_index(dbAliasList,aliasIndex), (gpointer)stringList_index(dbAliasList,dbIndex));
+		    g_hash_table_insert(dbAliasHash, (gpointer) stringList_index(dbAliasList,aliasIndex), (gpointer)stringList_index(dbFileNameList,dbIndex));
 		    g_hash_table_insert(dbHash, (gpointer)stringList_index(dbAliasList,aliasIndex),db);
 		}
 	    }else{

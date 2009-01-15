@@ -154,11 +154,15 @@ int unihanField_builtin_pseudo_import_data_next_index(UnihanField field,int prev
 static void unihan_import_value_append(gchar *sqlClause, UnihanField field, const gchar *value){
     char sqlBuf[MAX_STRING_BUFFER_SIZE];
     char codeBuf[20];
+    long int coding;
     if (unihanField_builtin_has_flags(field, UNIHAN_FIELDFLAG_INTEGER)){
 	if (unihanField_builtin_has_flags(field, UNIHAN_FIELDFLAG_UCS4)){
 	    /* Convert UCS4 to str */
 	    g_snprintf(codeBuf,20,"%lu", (gulong) unihanChar_parse(value));
 	    sqlite3_snprintf(MAX_STRING_BUFFER_SIZE, sqlBuf, ", %s",  codeBuf);
+	}else if (unihanField_builtin_has_flags(field, UNIHAN_FIELDFLAG_HEXADECIMAL_16)){
+	    coding=strtol(value,NULL,16);
+	    sqlite3_snprintf(MAX_STRING_BUFFER_SIZE, sqlBuf, ", %d",  coding);
 	}else{
 	    sqlite3_snprintf(MAX_STRING_BUFFER_SIZE, sqlBuf, ", %s",  value);
 	}
@@ -185,7 +189,7 @@ static void unihan_import_value_append(gchar *sqlClause, UnihanField field, cons
  */
 int unihan_import_builtin_table_single_tagValue(sqlite3 *db, gunichar code, UnihanField field, 
 	const char *tagValue, int *counter_ptr){
-    int j,ret=0,regexRet;
+    int i,j,ret=0,regexRet;
     int counter_post;
     int pseudoNextIndex=unihanField_builtin_pseudo_import_data_next_index(field,-1);
     UnihanTable table;
@@ -268,7 +272,7 @@ int unihan_import_builtin_table_single_tagValue(sqlite3 *db, gunichar code, Unih
 		    g_strlcat(sqlClause,");",MAX_STRING_BUFFER_SIZE);
 		    verboseMsg_print(VERBOSE_MSG_INFO2," Executing: %s\n",sqlClause);
 		    ret=sqlite_exec_handle_error(db, sqlClause, NULL, NULL,
-			    sqlite_error_callback_print_message, "unihan_import_builtin_table_tagValue()" );
+			    sqlite_error_callback_hide_constraint_error, "unihan_import_builtin_table_tagValue()" );
 		    if (ret){
 			break;
 		    }
@@ -303,25 +307,19 @@ int unihan_import_builtin_table_single_tagValue(sqlite3 *db, gunichar code, Unih
 	    }
 	}
     }else{
-	printf("***Realfield field=%d (%s)\n",field,unihanField_builtin_to_string(field));
 	/* Is Real field */
-	for(table=0;REALFIELD_TABLES[table].field!=UNIHAN_INVALID_FIELD;table++){
-	    if (REALFIELD_TABLES[table].field==field){
+	for(i=0;REALFIELD_TABLES[i].field!=UNIHAN_INVALID_FIELD;i++){
+	    if (REALFIELD_TABLES[i].field==field){
 	       sqlite3_snprintf(MAX_STRING_BUFFER_SIZE, sqlClause, "INSERT INTO %s VALUES (%lu",
-		   unihanTable_builtin_to_string(table),code);
+		       unihanTable_builtin_to_string(REALFIELD_TABLES[i].table),code);
 	       unihan_import_value_append(sqlClause,field,tagValue);
 	       g_strlcat(sqlClause,");",MAX_STRING_BUFFER_SIZE);
 	       verboseMsg_print(VERBOSE_MSG_INFO2," Executing: %s\n",sqlClause);
 	       ret=sqlite_exec_handle_error(db, sqlClause, NULL, NULL,
-		       sqlite_error_callback_print_message, "unihan_import_builtin_table_tagValue()" );
+		       sqlite_error_callback_hide_constraint_error, "unihan_import_builtin_table_tagValue()" );
 	       break;
 	    }
 	}
-	if (table>=UNIHAN_TABLE_3RD_PARTY){
-	    printf("No table contain this field %d (%s)!\n",field,unihanField_builtin_to_string(field));
-	    exit(1);
-	}
-	    
     }
 
     g_free(tagValue_normalized);
