@@ -30,6 +30,7 @@
 
 
 - Changed Functions:
+  + Functions that implement sqlite_error_callback now must return int.
   + Pinyin/Zhuyin functions does not handle SQL wildchar now, because it already be done in field matching functions.
   + Pinyin/Zhuyin functions normalize strings as NFD by default, there are flags to change the behavior nevertheless.
   + The behavior of unihanDb_open_default() and unihan_open() has changed:

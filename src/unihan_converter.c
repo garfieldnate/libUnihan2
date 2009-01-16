@@ -335,7 +335,6 @@ void parse_record(gchar* rec_string){
 
     g_strfreev(fields);
     if (ret>0){
-	fprintf(stderr,"parse_record(): Database error!\n");
 	if (logFile){
 	    fclose(logFile);
 	}
@@ -549,7 +548,7 @@ int main(int argc,char** argv){
     if (!testMode){
 	fclose(logFile);
     }
-   
+    verboseMsg_print(VERBOSE_MSG_ERROR,"Done\n.");
     return 0;
 }
 

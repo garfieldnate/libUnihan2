@@ -129,7 +129,7 @@
 /**
  * Prototype of callback function for SQL execution (sqlite3_exec).
  */
-typedef int (*sqlite_exec_callback)(gpointer user_option,gint col_num,gchar **results,gchar **col_names); 
+typedef gint (*sqlite_exec_callback)(gpointer user_option,gint col_num,gchar **results,gchar **col_names); 
 
 /**
  * Prototype of error handling callback function for sqlite_exec_handle_error().
@@ -138,7 +138,9 @@ typedef int (*sqlite_exec_callback)(gpointer user_option,gint col_num,gchar **re
  * handling functions.
  *
  * A implementing function will be called if an error occurs in sqlite_exec_handle_error().
+ * The return value will be the return value of sqlite_exec_handle_error().
  *
+ * Return the argument \a error_code if implementing function does not need to tolerate error.
  *
  * @param db The \a db from from sqlite_exec_handle_error().
  * @param sqlClause The original \a sqlClause from from sqlite_exec_handle_error().
@@ -146,10 +148,9 @@ typedef int (*sqlite_exec_callback)(gpointer user_option,gint col_num,gchar **re
  * @param error_msg Error message from sqlite3_exec().
  * @param error_option Other option that the callback function needs, come
  * from error_option of sqlite_exec_handle_error() .
- *
- *
+ * @return new error code or \a error_code
  */
-typedef void (*sqlite_error_callback)(sqlite3 *db, const gchar *sqlClause, gint error_code, const gchar *error_msg, gpointer error_option); 
+typedef gint (*sqlite_error_callback)(sqlite3 *db, const gchar *sqlClause, gint error_code, const gchar *error_msg, gpointer error_option); 
 
 
 /**
@@ -246,12 +247,13 @@ int sqlite_count_matches(sqlite3 *db,const char * sqlClause,char **errMsg_ptr);
  * @param error_code Return value of sqlite3_exec().
  * @param error_msg Error message from sqlite3_exec().
  * @param prompt  Prompt of error message. From \a error_option of sqlite_exec_handle_error().
+ * @return Argument \a error_code will be returned.
  *
  * @see sqlite_error_callback
  * @see sqlite_exec_handle_error()
  * @see sqlite_error_callback_print_message()
  */
-void sqlite_error_callback_hide_constraint_error(sqlite3 *db, const gchar *sqlClause, gint error_code, 
+gint sqlite_error_callback_hide_constraint_error(sqlite3 *db, const gchar *sqlClause, gint error_code, 
 	const gchar *error_msg, gpointer prompt);
 
 /**
@@ -270,12 +272,13 @@ void sqlite_error_callback_hide_constraint_error(sqlite3 *db, const gchar *sqlCl
  * @param error_code Return value of sqlite3_exec().
  * @param error_msg Error message from sqlite3_exec().
  * @param prompt  Prompt of error message. From \a error_option of sqlite_exec_handle_error().
+ * @return Argument \a error_code will be returned.
  *
  * @see sqlite_error_callback
  * @see sqlite_exec_handle_error()
  * @see sqlite_error_callback_hide_constraint_error()
  */
-void sqlite_error_callback_print_message(sqlite3 *db, const gchar *sqlClause, gint error_code, 
+gint sqlite_error_callback_print_message(sqlite3 *db, const gchar *sqlClause, gint error_code, 
 	const gchar *error_msg, gpointer prompt);
 
 

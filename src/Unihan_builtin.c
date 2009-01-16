@@ -39,13 +39,12 @@
 #define MAX_STRING_BUFFER_SIZE 2000
 #define UNIHAN_FIELD_ARRAY_MAX_LEN 200
 #define UNIHAN_TABLE_ARRAY_MAX_LEN 800
-
+extern FILE *logFile;
 
 
 /*=========================================================
  * Functions
  */
-
 
 UnihanTable unihanField_get_builtin_preferred_table(UnihanField field){
     int i;
@@ -172,9 +171,38 @@ static void unihan_import_value_append(gchar *sqlClause, UnihanField field, cons
     g_strlcat(sqlClause,sqlBuf, MAX_STRING_BUFFER_SIZE);
 }
 
+gint sqlite_error_callback_hide_known_constraint_error(sqlite3 *db, const gchar *sqlClause, gint error_code, 
+	const gchar *error_msg, gpointer prompt){
+    gboolean errorKnown=FALSE;
+    if (error_code== SQLITE_CONSTRAINT){
+	if (strstr(sqlClause,unihanField_builtin_to_string(UNIHAN_FIELD_kCANTONESE))){
+	    errorKnown=TRUE;
+	}else if (strstr(sqlClause,unihanField_builtin_to_string(UNIHAN_FIELD_kJAPANESEKUN))){
+	    errorKnown=TRUE;
+	}
+	if (errorKnown){
+	    verboseMsg_print(VERBOSE_MSG_WARNING,"[WW] Command %s is duplicated!\n"
+		    ,sqlClause);
+	    return SQLITE_OK;
+	}
+
+    }
+    sqlite_error_callback_print_message(db,sqlClause,error_code,error_msg,prompt);
+    return error_code;
+}
+
+
+
+static int writeToDb(sqlite3 *db, const gchar *sqlClause){
+    verboseMsg_print(VERBOSE_MSG_INFO2," Executing: %s\n",sqlClause);
+    return sqlite_exec_handle_error(db, sqlClause, NULL, NULL,
+	    sqlite_error_callback_hide_known_constraint_error, "writeToDb()" );
+}
+
 /**
  * Import a tag value of a character from Unihan.txt to dbfile.
  *
+ * omittable 
  * This function imports a tag value of a character from Unihan.txt to dbfile.
  * Note that this function assumes that \a tagValue is singleton, that is.
  * no need to be further split. 
@@ -270,9 +298,7 @@ int unihan_import_builtin_table_single_tagValue(sqlite3 *db, gunichar code, Unih
 		if (!empty){
 		    g_strlcat(sqlClause,sqlClause_values,MAX_STRING_BUFFER_SIZE);
 		    g_strlcat(sqlClause,");",MAX_STRING_BUFFER_SIZE);
-		    verboseMsg_print(VERBOSE_MSG_INFO2," Executing: %s\n",sqlClause);
-		    ret=sqlite_exec_handle_error(db, sqlClause, NULL, NULL,
-			    sqlite_error_callback_hide_constraint_error, "unihan_import_builtin_table_tagValue()" );
+		    ret=writeToDb(db, sqlClause);
 		    if (ret){
 			break;
 		    }
@@ -312,11 +338,9 @@ int unihan_import_builtin_table_single_tagValue(sqlite3 *db, gunichar code, Unih
 	    if (REALFIELD_TABLES[i].field==field){
 	       sqlite3_snprintf(MAX_STRING_BUFFER_SIZE, sqlClause, "INSERT INTO %s VALUES (%lu",
 		       unihanTable_builtin_to_string(REALFIELD_TABLES[i].table),code);
-	       unihan_import_value_append(sqlClause,field,tagValue);
+	       unihan_import_value_append(sqlClause,field,tagValue_normalized);
 	       g_strlcat(sqlClause,");",MAX_STRING_BUFFER_SIZE);
-	       verboseMsg_print(VERBOSE_MSG_INFO2," Executing: %s\n",sqlClause);
-	       ret=sqlite_exec_handle_error(db, sqlClause, NULL, NULL,
-		       sqlite_error_callback_hide_constraint_error, "unihan_import_builtin_table_tagValue()" );
+	       ret=writeToDb(db, sqlClause);
 	       break;
 	    }
 	}
