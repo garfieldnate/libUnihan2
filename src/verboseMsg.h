@@ -131,4 +131,13 @@ gint verboseMsg_print(gint verboseLevel, const gchar *format, ...);
  */
 void verboseMsg_increase_level(gint difference);
 
+/**
+ * Close the logfile.
+ *
+ * This function close the log file. 
+ * If log file does not open yet, then do nothing.
+ */
+void verboseMsg_close_logFile();
+
+
 #endif /*VERBOSEMSG_H_*/

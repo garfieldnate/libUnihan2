@@ -94,23 +94,38 @@ extern const DatabaseFuncStru DATABASE_FUNCS[];
 
 /**
  * @name Unihan query options.
- */
-/*@{*/
-/**
- * Unihan query options.
- * Unihan query options provides additional control of query processing,
- * such as SQL like query and output format.
  *
+ * Unihan query options.
+ * 
+ * Unihan query option is composed by various option flags which
+ * controls the query processing or output format.
+ *
+ * Since libUnihan 1.0, pinyin accent format definitions are replaced 
+ * by Pinyin_Format_Flag, and zhuyin tone mark format definitions are  
+ * replaced by Zhuyin_Format_Flag. Following table shows the conversion:
+ *
+ * <table border>
+ * <tr><th>&lt;=0.5.X</th><th>&gt;=0.9.9</th></tr>
+ * <tr><td><code>UNIHAN_QUERY_OPTION_PINYIN_TONE_ACCENT, \c UNIHAN_QUERY_OPTION_PINYIN_FORMAT_MASK</code></td>
+ *     <td><code>UNIHAN_QUERY_OPTION_PINYIN_FORMAT_FLAGS_START, UNIHAN_QUERY_OPTION_PINYIN_FORMAT_FLAGS_MASK</code></td>
+ * </tr>   
+ * <tr><td><code>UNIHAN_QUERY_OPTION_ZHUYIN_FORMAT_MASK</code></td>
+ *     <td><code>UNIHAN_QUERY_OPTION_ZHUYIN_FORMAT_FLAGS_START, UNIHAN_QUERY_OPTION_ZHUYIN_FORMAT_FLAGS_MASK</code></td>
+ * </tr>
+ * </table>
+ * @{
  */
-typedef guint UnihanQueryOption;
+typedef guint UnihanQueryOption;		//!< Data structure that holds Unihan query options.
 
 #define UNIHAN_QUERY_OPTION_LIKE		1   	//!< Using SQL LIKE in WHERE expression.
-#define UNIHAN_QUERY_OPTION_SCALAR_STRING	1 << 1	//!< Show code point as string "U+xxxx".
-#define UNIHAN_QUERY_OPTION_SHOW_GIVEN_FIELD    1 << 2  //!< Show the given field in results.
-#define UNIHAN_QUERY_OPTION_PINYIN_TONE_ACCENT  1 << 3  //!< Use accent mark for pinyin tone.
-#define UNIHAN_QUERY_OPTION_PINYIN_FORMAT_MASK  7 << 4  //!< Mask for pinyin format.
-#define UNIHAN_QUERY_OPTION_ZHUYIN_FORCE_DISPLAY  1 << 7  //!< Force Zhuyin display.
-#define UNIHAN_QUERY_OPTION_ZHUYIN_FORMAT_MASK  7 << 8  //!< Mask for zhuyin format.
+#define UNIHAN_QUERY_OPTION_SCALAR_STRING	1 << 1	//!< Show UCS4 code as scalar string -- "U+xxxx".
+#define UNIHAN_QUERY_OPTION_UTF8    		1 << 2  //!< Show UCS4 code as corresponding UTF8 string. @since libUnihan 1.0
+#define UNIHAN_QUERY_OPTION_SHOW_GIVEN_FIELD    1 << 3  //!< Show the given field in results.
+#define UNIHAN_QUERY_OPTION_PINYIN_FORMAT_FLAGS_START  1 << 4  //!< Start of pinyin format flags. @since libUnihan 1.0
+#define UNIHAN_QUERY_OPTION_PINYIN_FORMAT_FLAGS_MASK  31 << 4  //!< Mask for pinyin format flags. @since libUnihan 1.0
+#define UNIHAN_QUERY_OPTION_ZHUYIN_FORCE_DISPLAY  1 << 10 //!< Force Zhuyin display.
+#define UNIHAN_QUERY_OPTION_ZHUYIN_FORMAT_FLAGS_START  1 << 11  //!< Start of zhuyin format flags. @since libUnihan 1.0
+#define UNIHAN_QUERY_OPTION_ZHUYIN_FORMAT_FLAGS_MASK  15 << 11  //!< Mask for zhuyin format flags. @since libUnihan 1.0
 
 #define UNIHAN_QUERY_OPTION_DEFAULT		(PINYIN_ACCENT_UNIHAN << 4) | (ZHUYIN_TONEMARK_ORIGINAL << 8)	
    //!< Default options, Pinyin format is Unihan; and Zhuyin format is Original.
@@ -209,60 +224,6 @@ char* unihan_find_first_matched(UnihanField givenField, const char* givenValue,
  * @return number of matched record. Negative if error.
  */
 int unihan_count_matched_record(UnihanTable table,StringList *valueList);
-
-/**
- * Insert a record to table.
- * 
- * The value to be insert should be in string representation, as if put in plain text SQL command.
- *
- * @param table		The database table to be looked at.
- * @param valueList 	Values in StringList.
- * @return SQLite result code, SQLITE_OK (value 0) if the query executed successfully, 
- *         while non-zero value indicate error. 
- *
- * @see <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite result codes</a>
- * @see unihan_insert_no_duplicate()
- * @see unihan_insert_value()
- */
-int unihan_insert(UnihanTable table,StringList *valueList);
-
-/**
- * Insert a record to table with duplication check.
- *
- * It will check the duplication before insertion, otherwise is same with
- * unihan_insert(). Return negative value if the duplication is found.
- *
- * @param table		the database table to be looked at.
- * @param valueList 	Values in StringList.
- * @return Negative value is duplication is found.  SQLITE_OK (value 0) if inserted successfully, 
- *         while positive value indicate error. 
- */
-int unihan_insert_no_duplicate(UnihanTable table,StringList *valueList);
-
-/**
- * Insert a Unihan textual formated record to corresponding tables.
- * 
- * This function deals with the insertion of Unihan textual formated records (as shown in Unihan.txt),
- * which have 3 fields:
- * <ol>
- *   <li>code scalar value (e.g. U+5231)</li>
- *   <li>Unihan tag (e.g. kSemanticVariant)</li>
- *   <li>The corresponding value  (e.g. U+5275<kHanYu:TZ,kMeyerWempe)</li>
- * </ol>  
- *
- * This function will parse the value and insert the parsed result to corresponding tables.
- *
- * Before using this function,
- * convert first field to UCS4 (gunichar) format (using unihanChar_parse());
- * second to UnihanField (using unihanField_parse()).
- *
- * @param code		character in UCS4 (gunichar)
- * @param field         the UnihanField
- * @param value		the value in as in Unihan.txt.
- * @return Negative value is duplication is found.  SQLITE_OK (value 0) if inserted successfully, 
- *         while positive value indicate error. 
- */
-int unihan_insert_value(gunichar code, UnihanField field, const char *value);
 
 /**
  * Whether the character is associate with the given field.

@@ -112,7 +112,6 @@ int sqlite_count_matches(sqlite3 *db,const char * sqlClause,char **errMsg_ptr){
     return rowCount;
 }
 
-
 int sqlite_error_callback_hide_constraint_error(sqlite3 *db, const gchar *sqlClause, gint error_code, 
 	const gchar *error_msg, gpointer prompt){
     if (error_code!= SQLITE_CONSTRAINT){
@@ -130,13 +129,13 @@ int sqlite_error_callback_print_message(sqlite3 *db, const gchar *sqlClause, gin
     return error_code;
 }
 
-
 int sqlite_exec_handle_error(sqlite3 *db, const gchar *sqlClause, sqlite_exec_callback exec_func, 
 	gpointer exec_option, sqlite_error_callback error_func, gpointer error_option ){
     char *errMsg_ptr=NULL;
     gint ret=sqlite3_exec(db,sqlClause,exec_func, exec_option, &errMsg_ptr);
     if (ret){
 	ret=error_func(db,sqlClause,ret,errMsg_ptr,error_option);
+	sqlite3_free(errMsg_ptr);
     }
     return ret;
 }

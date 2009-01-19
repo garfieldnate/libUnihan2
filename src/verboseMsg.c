@@ -25,7 +25,7 @@
 
 gint _verboseLevel=VERBOSE_MSG_CRITICAL;
 gint _fileVerboseLevel=VERBOSE_MSG_NONE;
-FILE *_outputFile;
+FILE *_outputFile=NULL;
 
 gint verboseMsg_get_level(){
     return _verboseLevel;
@@ -58,7 +58,7 @@ gint verboseMsg_print(gint verboseLevel, const gchar *format, ...){
         va_end(ap);
     }
     
-    if (_fileVerboseLevel>=verboseLevel){
+    if (_outputFile && _fileVerboseLevel>=verboseLevel){
         va_start(ap, format);
         ret = vfprintf(_outputFile, format, ap);
         va_end(ap);
@@ -69,4 +69,11 @@ gint verboseMsg_print(gint verboseLevel, const gchar *format, ...){
 void verboseMsg_increase_level(gint difference){
     _verboseLevel+=difference;
     _fileVerboseLevel+=difference;
+}
+
+void verboseMsg_close_logFile(){
+    if (_outputFile){
+	fclose(_outputFile);
+	_outputFile=NULL;
+    }
 }

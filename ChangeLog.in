@@ -44,6 +44,9 @@
   + No more UNIHAN_DEFAULT_DB
   + UNIHAN_FIELD_VARIANT_TYPE is removed.
   + unihanField_is_case_no_change()
+  + unihan_insert()
+  + unihan_insert_no_duplicate()
+  + unihan_insert_value()
 
 * Tue Oct 21 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.5.3-3
 - Add following make targets: rpm_lint, koji_submit, koji_build,  pkg_remove_old.

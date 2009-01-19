@@ -336,7 +336,8 @@ void parse_record(gchar* rec_string){
     g_strfreev(fields);
     if (ret>0){
 	if (logFile){
-	    fclose(logFile);
+	    fclose(inF);
+	    verboseMsg_close_logFile();
 	}
 	exit(ret);
     }
@@ -346,11 +347,11 @@ static void dbHash_foreach_func(gpointer key, gpointer value, gpointer user_data
     char sqlBuf[PATH_MAX];
     char *dbAlias=(char *)key;
     sqlite3 *db=(sqlite3 *)value;
-    verboseMsg_print(VERBOSE_MSG_INFO2,"[I2 ] dbHash_foreach_func(%s,-,NULL)\n",dbAlias);
+    verboseMsg_print(VERBOSE_MSG_INFO2,"[I2] dbHash_foreach_func(%s,-,NULL)\n",dbAlias);
     char *openPath=(char *)g_hash_table_lookup(dbAliasHash,dbAlias);
     sqlite3_close(db);
     sqlite3_snprintf(PATH_MAX,sqlBuf,"ATTACH DATABASE %Q AS %q;",openPath,dbAlias);
-    verboseMsg_print(VERBOSE_MSG_INFO2,"[I2 ] sqlBuf=%s\n",sqlBuf);
+    verboseMsg_print(VERBOSE_MSG_INFO2,"[I2] sqlBuf=%s\n",sqlBuf);
     int ret=sqlite_exec_handle_error(mainDb, sqlBuf, NULL, NULL, 
 	    sqlite_error_callback_print_message,  "createDbs(): Error");
     if (ret)
@@ -401,7 +402,7 @@ static int createDbs(const char *mainDbFilename){
 		isDbFile=FALSE;
 		continue;
 	    }
-	    printf("*** readBuf=%s\n",readBuf);
+	    verboseMsg_print(VERBOSE_MSG_INFO2,"[I2] readBuf=%s\n",readBuf);
 	    sList=stringList_new_strsplit_set(readBuf," \t",2);
 	    dbAlias=stringList_index(sList,0);
 	    if (isDbFile){
@@ -411,7 +412,7 @@ static int createDbs(const char *mainDbFilename){
 		    openPath=path_concat(pathBuf,dbFilename,PATH_MAX);
 		    aliasIndex=stringList_insert(dbAliasList,dbAlias);
 		    dbIndex=stringList_insert(dbFileNameList,openPath);
-		    verboseMsg_print(VERBOSE_MSG_INFO3,"[I3  ] Openpath=%s, db alias=%s\n",openPath,dbAlias);
+		    verboseMsg_print(VERBOSE_MSG_INFO3,"[I3] Openpath=%s, db alias=%s\n",openPath,dbAlias);
 		    ret= sqlite_open(openPath,  &db,  SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
 		    if (ret) {
 			fprintf(stderr, "Can't open to database: %s, err msg:%s\n", openPath, sqlite3_errmsg(db));
@@ -428,7 +429,7 @@ static int createDbs(const char *mainDbFilename){
 		db= (sqlite3 *) g_hash_table_lookup(dbHash,dbAlias);
 		if ((ret=create_table(table,db,NULL))==0){
 		    stringList_insert_const(createdTableList,tableName);
-		    verboseMsg_print(VERBOSE_MSG_INFO2,"[I2 ] Table %s in Db %s is created\n",tableName,dbAlias);
+		    verboseMsg_print(VERBOSE_MSG_INFO2,"[I2] Table %s in Db %s is created\n",tableName,dbAlias);
 		}else{
 		    return ret;
 		}
@@ -545,10 +546,10 @@ int main(int argc,char** argv){
 //    create_indices(mainDb);
     sqlite3_close(mainDb);
     fclose(inF);
-    if (!testMode){
-	fclose(logFile);
-    }
     verboseMsg_print(VERBOSE_MSG_ERROR,"Done\n.");
+    if (!testMode){
+	verboseMsg_close_logFile();
+    }
     return 0;
 }
 
