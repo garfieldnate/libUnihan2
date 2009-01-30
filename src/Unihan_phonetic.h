@@ -58,6 +58,7 @@
  */
 #define TRANSCRIPTION_MAX_LENGTH 13
 
+
 /**
  * Zhuyin symbol.
  */
@@ -92,6 +93,7 @@ typedef struct{
     char transcription[TRANSCRIPTION_MAX_LENGTH];  //!< A phonemes that represents sounds. Can be Pinyin or Zhuyin.
     guint tone;		  //!< Notation of pitch contour.
 } Syllable;
+
 
 /**
  * @defgroup Pinyin_Regex Regex pattern and output format for Pinyin importing.
@@ -247,6 +249,7 @@ typedef guint PinyinFormatFlags;
 #define PINYIN_FORMAT_FLAG_STRIP_CIRCUMFLEX	0x2  //!< Flag for forcedly removing combining circumflex  '^' (U+0302) from ü.
 #define PINYIN_FORMAT_FLAG_STRIP_DIAERESIS	0x4  //!< Flag for forcedly removing combining diaeresis  '‥' (U+0308) from ü.
 #define PINYIN_FORMAT_FLAG_NFD			0x8  //!< Flag Decompose into Normalized form D (NFD).
+
 /**
  * Flag for forcedly showing in ASCII symbols.
  *
@@ -260,7 +263,7 @@ typedef guint PinyinFormatFlags;
 /**
  * Flag for showing tone as accent.
  *
- * By default the tone is represented as trailing number of 
+ * By default the tone is represented as trailing number. 
  * With this flag, ü is outputted as v, and ê is as E.
  * If @c PINYIN_FORMAT_FLAG_NFD is also set, 
  * diaeresis  '‥' (U+0302) is converted to ':';
@@ -273,6 +276,14 @@ typedef guint PinyinFormatFlags;
  *
  */
 #define PINYIN_FORMAT_FLAG_STRIP_TRIVIAL_TONE		0x40
+
+
+/**
+ * Flags of Pinyin default format.
+ *
+ * The default Pinyin format in libUnihan is #PINYIN_ACCENT_UNIHAN with trailing numerical tone,
+ */
+#define PINYIN_FORMAT_FLAGS_DEFAULT	PINYIN_FORMAT_FLAG_STRIP_TRIVIAL_ACCENT | PINYIN_FORMAT_FLAG_STRIP_CIRCUMFLEX
 
 /**
  * @}
@@ -323,6 +334,8 @@ typedef enum{
     PINYIN_ACCENT_INTERNAL  //!< ü is represented as v, ê is represented as E.
 } PinyinAccentFormat;
 
+
+
 /**
  * Convert Pinyin accent format to Pinyin format flags.
  *
@@ -370,6 +383,13 @@ typedef guint ZhuyinFormatFlags;
  * Flag for showing tone as number.
  */
 #define ZHUYIN_FORMAT_FLAG_NUMERICAL_TONE	0x4
+
+/**
+ * Flags of Zhuyin default format.
+ *
+ * The default Zhuyin format n libUnihan is #ZHUYIN_TONEMARK_ORIGINAL.
+ */
+#define ZHUYIN_FORMAT_FLAGS_DEFAULT	ZHUYIN_FORMAT_FLAG_STRIP_1ST_TONE | ZHUYIN_FORMAT_FLAG_FRONT_5TH_TONE
 
 /**
  * @}

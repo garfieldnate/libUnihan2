@@ -336,7 +336,6 @@ void parse_record(gchar* rec_string){
     g_strfreev(fields);
     if (ret>0){
 	if (logFile){
-	    fclose(inF);
 	    verboseMsg_close_logFile();
 	}
 	exit(ret);

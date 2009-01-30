@@ -2,7 +2,9 @@
  * @file Unihan.h
  * @brief API for libUnihan.
  *
- *
+ * 
+ * It is included in Unihan.h, so no need to include it directly.
+
  */
 
 /*
@@ -28,6 +30,7 @@
  */ 
 #ifndef UNIHAN_H_
 #define UNIHAN_H_
+#include "Unihan_types.h"
 #include "Unihan_enum.h"
 #include "Unihan_phonetic.h"
 #include "sqlite_functions.h"
@@ -39,141 +42,20 @@
  */
 #define FIELD_CACHE_DB "field.cache"
 
-/**
- * IRG source data.
- *
- * This struct contains a short source name and the corresponding description.
- *
- * @see unihanIRG_SourceData_get()
- */
-typedef struct {
-    const char *name; //!< short source name in string. (e.g. "G0").
-    const char *description; //!< full description of the IRG source. (e.g. "GB2310-80").
-} UnihanIRG_SourceData;
 
 /**
- * Structure for field-table pair.
+ * Find all results where given field match the given value. 
  *
- * This struct stores a pair of UnihanField and UnihanTable.
- */
-typedef struct {
-    UnihanField field; //!< DB Field.
-    UnihanTable table; //!< DB Table.
-} UnihanFieldTablePair;
-
-/**
- * IRG source rec.
+ * This function returns all the results in \a queryField,
+ * where the values of \a givenField match the \a givenValue.
+ * For integer field searching, convert the integer value as string.
  *
- * This struct stores an IRG source ID for a character and 
- * the mapping/inner code/index
+ * Use qQption to specify the match type (e.g. '=' or 'LIKE' ) and output format.
  *
- */
-typedef struct {
-    UnihanIRG_SourceId sourceId; //!< a IRG source ID.
-    const char *sourceMapping;   //!< the mapping of the character in the source.
-} UnihanIRG_SourceRec;
-
-
-/**
- * Data structure of database supporting functions.
+ * Free the result with  sql_result_free().
  *
- */
-typedef struct {
-    const char* funcName;                //!< Name to be referred in SQL.
-    int argc;				 //!< Number of arguments.
-    void (*func)(sqlite3_context *context, int argc, sqlite3_value **argv); //!< Scalar function. Can be NULL.
-    void (*stepFunc)(sqlite3_context *context, int argc, sqlite3_value **argv);  //!< Aggregation step function. Can be NULL.
-    void (*finalizeFunc)(sqlite3_context *context); //!< Aggregation finalize function. Can be NULL.
-} DatabaseFuncStru;
-
-/**
- * List of database supporting functions.
- *
- */
-extern const DatabaseFuncStru DATABASE_FUNCS[];
-
-/**
- * @name Unihan query options.
- *
- * Unihan query options.
- * 
- * Unihan query option is composed by various option flags which
- * controls the query processing or output format.
- *
- * Since libUnihan 1.0, pinyin accent format definitions are replaced 
- * by Pinyin_Format_Flag, and zhuyin tone mark format definitions are  
- * replaced by Zhuyin_Format_Flag. Following table shows the conversion:
- *
- * <table border>
- * <tr><th>&lt;=0.5.X</th><th>&gt;=0.9.9</th></tr>
- * <tr><td><code>UNIHAN_QUERY_OPTION_PINYIN_TONE_ACCENT, \c UNIHAN_QUERY_OPTION_PINYIN_FORMAT_MASK</code></td>
- *     <td><code>UNIHAN_QUERY_OPTION_PINYIN_FORMAT_FLAGS_START, UNIHAN_QUERY_OPTION_PINYIN_FORMAT_FLAGS_MASK</code></td>
- * </tr>   
- * <tr><td><code>UNIHAN_QUERY_OPTION_ZHUYIN_FORMAT_MASK</code></td>
- *     <td><code>UNIHAN_QUERY_OPTION_ZHUYIN_FORMAT_FLAGS_START, UNIHAN_QUERY_OPTION_ZHUYIN_FORMAT_FLAGS_MASK</code></td>
- * </tr>
- * </table>
- * @{
- */
-typedef guint UnihanQueryOption;		//!< Data structure that holds Unihan query options.
-
-#define UNIHAN_QUERY_OPTION_LIKE		1   	//!< Using SQL LIKE in WHERE expression.
-#define UNIHAN_QUERY_OPTION_SCALAR_STRING	1 << 1	//!< Show UCS4 code as scalar string -- "U+xxxx".
-#define UNIHAN_QUERY_OPTION_UTF8    		1 << 2  //!< Show UCS4 code as corresponding UTF8 string. @since libUnihan 1.0
-#define UNIHAN_QUERY_OPTION_SHOW_GIVEN_FIELD    1 << 3  //!< Show the given field in results.
-#define UNIHAN_QUERY_OPTION_PINYIN_FORMAT_FLAGS_START  1 << 4  //!< Start of pinyin format flags. @since libUnihan 1.0
-#define UNIHAN_QUERY_OPTION_PINYIN_FORMAT_FLAGS_MASK  31 << 4  //!< Mask for pinyin format flags. @since libUnihan 1.0
-#define UNIHAN_QUERY_OPTION_ZHUYIN_FORCE_DISPLAY  1 << 10 //!< Force Zhuyin display.
-#define UNIHAN_QUERY_OPTION_ZHUYIN_FORMAT_FLAGS_START  1 << 11  //!< Start of zhuyin format flags. @since libUnihan 1.0
-#define UNIHAN_QUERY_OPTION_ZHUYIN_FORMAT_FLAGS_MASK  15 << 11  //!< Mask for zhuyin format flags. @since libUnihan 1.0
-
-#define UNIHAN_QUERY_OPTION_DEFAULT		(PINYIN_ACCENT_UNIHAN << 4) | (ZHUYIN_TONEMARK_ORIGINAL << 8)	
-   //!< Default options, Pinyin format is Unihan; and Zhuyin format is Original.
-
-/**
- * Get Pinyin format from UnihanQueryOption.
- *
- * @param options A UnihanQueryOption.
- * @return PinyinAccentFormat
- */
-#define UNIHAN_QUERY_OPTION_GET_PINYIN_FORMAT(options) (options & UNIHAN_QUERY_OPTION_PINYIN_FORMAT_MASK) >> 4
-
-/**
- * Set Pinyin format to UnihanQueryOption.
- *
- * @param options A UnihanQueryOption.
- * @param format PinyinAccentFormat.
- */
-#define UNIHAN_QUERY_OPTION_SET_PINYIN_FORMAT(options,format) options |= format << 4
-
-/**
- * Get Zhuyin format from UnihanQueryOption.
- *
- * @param options A UnihanQueryOption.
- * @return ZhuyinToneMarkFormat
- */
-#define UNIHAN_QUERY_OPTION_GET_ZHUYIN_FORMAT(options) (options & UNIHAN_QUERY_OPTION_ZHUYIN_FORMAT_MASK) >> 8
-
-/**
- * Set Zhuyin format to UnihanQueryOption.
- *
- * @param options A UnihanQueryOption.
- * @param format Zhuyin_Accent_Format.
- */
-#define UNIHAN_QUERY_OPTION_SET_ZHUYIN_FORMAT(options,format) options |= format << 8
-
-/*@}*/
-
-
-/**
- * Find all matched results, given a field and its value.
- *
- * This function is a convenient wrapper of unihanSql_get_sql_result().
- *
- * Put the known field as <code>givenFiled</code> and its value as <code>givenValue</code>.
- * The values of field specified in <code>queryField</code> will be put in the result table.
- * 
- * Use sql_result_free() to free the pResults after the finish using result table.
+ * \note The space and time consumption is proportional to the number of the return
+ * results. So use unihan_foreach_matched() for large chunk of result.
  *
  * @param givenField the given (input) field.
  * @param givenValue the given value of the field.
@@ -185,10 +67,34 @@ typedef guint UnihanQueryOption;		//!< Data structure that holds Unihan query op
  * @see unihan_find_firstMatched()
  * @see unihanSql_get_sql_result()
  * @see ::UnihanQueryOption
- * @see <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite result codes</a>
  */
 SQL_Result *unihan_find_all_matched(UnihanField givenField, const char *givenValue, 
 	UnihanField queryField, UnihanQueryOption qOption);
+
+
+/**
+ * Call the given function for each matched result. 
+ *
+ * This function calls the given callback function \a exec_func 
+ * whenever it found a result where the values of \a givenField match the \a givenValue.
+ *
+ *
+ * @param givenField the given (input) field.
+ * @param givenValue the given value of the field.
+ * @param queryField the result field.
+ * @param qOption    the ::UnihanQueryOption.
+ * @param exec_func Callback function for sqlite3_exec().
+ * @param exec_option Option for \a exec_func.
+ * @return a SQL_Result instance that stores the field names and result records.
+ *
+ * @see unihan_find_firstMatched()
+ * @see unihanSql_get_sql_result()
+ * @see ::UnihanQueryOption
+ * @see <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite result codes</a>
+ */
+int unihan_foreach_matched(UnihanField givenField, const char *givenValue, 
+	UnihanField queryField, UnihanQueryOption qOption, sqlite_exec_callback exec_func, 
+	gpointer exec_option);
 
 /**
  * Find the first matched result, given a field and its value.

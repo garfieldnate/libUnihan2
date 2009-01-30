@@ -31,7 +31,6 @@
 #ifndef UNIHAN_ENUM_H_
 #define UNIHAN_ENUM_H_
 #include <glib.h>
-#include <sqlite3.h>
 
 /**
  * Enumeration of Unihan fields.
@@ -297,7 +296,9 @@ typedef enum{
 
 
     UNIHAN_FIELD_3RD_PARTY		//!< 3RD party fields.
-} UnihanField;
+} UnihanField_Builtin;
+
+
 
 /**
  * Number of recognized Unihan fields.
@@ -341,19 +342,6 @@ typedef enum{
  * @}
  * @}
  */
-
-/**
- * Struct of Field Properties.
- *
- * This struct defines the properties of a field, include the field name, and 
- * field flags which are described in @ref Unihan_Field_Flags.
- */
-typedef struct {
-    const gchar *fieldName;	//!< Field Name.
-    guint flags;		//!< Combined Unihan field flags.
-} FieldProperties;
-
-
 
 
 /**
@@ -656,6 +644,7 @@ typedef enum{
     UNIHAN_RANGE_CJK_UNIFIED_IDEOGRAPHS_EXT_B, //!< U+20000..U+2A6D6 : CJK Unified Ideographs Extension B.
     UNIHAN_RANGE_CJK_COMPATIBILITY_SUPPLEMENT  //!< U+2F800..U+2FA1D : CJK Compatibility Supplement.
 } UnihanRange;
+
 /**
  * Number of Unihan range.
  */

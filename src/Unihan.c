@@ -48,6 +48,73 @@ static sqlite3 *unihanDb=NULL;
 
 
 /*=================================
+ * Unihan field query functions.
+ */
+SQL_Result *unihan_find_all_matched(UnihanField givenField, const char *givenValue, 
+	UnihanField queryField, UnihanQueryOption qOption){
+    char *selectStr=NULL;
+    char *fromStr=NULL;
+    char *whereStr=NULL;
+    int i;
+    GString *strBuf=g_string_new(NULL);
+
+    UnihanTable table;
+    UnihanTable *tableArray=(givenField!=UNIHAN_FIELD_CODE) ? 
+	unihanField_get_all_tables(givenField): unihanField_get_all_tables(queryField);
+    for(i=0;tableArray[i]>=0;i++){
+	if (i>0){
+	    g_string_append(strBuf," UNION ");
+	}
+	selectStr=unihan_generate_select_clause(givenField,queryField,qOption);
+	fromStr=unihan_generate_from_clause(givenField,queryField);
+	whereStr=unihan_generate_where_clause(givenField,givenValue,tableArray[i],queryField,qOption);
+
+	g_string_append_printf(strBuf,"SELECT %s FROM %s WHERE %s",selectStr,fromStr, whereStr);
+
+	/* Group by */
+	switch(queryField){
+	    case UNIHAN_FIELD_kSEMANTICVARIANT:
+	    case UNIHAN_FIELD_kSPECIALIZEDSEMANTICVARIANT:
+		table=unihanField_get_table(queryField);
+		g_string_append_printf(strBuf," GROUP BY %s.%s",
+			UNIHAN_TABLE_NAMES[table],
+			UNIHAN_FIELD_NAMES[UNIHAN_FIELD_VARIANT_CODE]);
+		break;
+	    default:
+		break;
+
+	}
+    }
+
+    g_string_append(strBuf,";");
+    verboseMsg_print(VERBOSE_MSG_INFO1,"%s\n",strBuf->str);
+
+    SQL_Result *sResult=unihanSql_get_sql_result(strBuf->str);
+    verboseMsg_print(VERBOSE_MSG_INFO4," 2 sResult->colCount=%d \n",sResult->colCount);
+    g_free(selectStr);
+    g_free(fromStr);
+    g_free(whereStr);
+    g_string_free(strBuf,TRUE);
+    g_free(tableArray);
+    return sResult;
+}
+
+char* unihan_find_first_matched(UnihanField givenField, const char* givenValue, 
+	UnihanField queryField, UnihanQueryOption qOption){
+
+    SQL_Result *sResult=unihan_find_all_matched(givenField, givenValue,  queryField, qOption);
+    if (sResult->execResult){
+	verboseMsg_print(VERBOSE_MSG_ERROR,"Database error: %s\n", sResult->errMsg);
+	sql_result_free(sResult, TRUE);
+	return NULL;
+    }
+    char *result=g_strdup(stringList_index(sResult->resultList,0));
+    sql_result_free(sResult,TRUE);
+    return result;
+}
+
+
+/*=================================
  * Unihan character functions.
  */
 
