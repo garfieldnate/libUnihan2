@@ -296,7 +296,7 @@ typedef enum{
 
 
     UNIHAN_FIELD_3RD_PARTY		//!< 3RD party fields.
-} UnihanField_Builtin;
+} UnihanField_BuiltIn;
 
 
 
@@ -504,7 +504,7 @@ typedef enum{
 
     UNIHAN_TABLE_CODE,			//!< Table for UTF-8.
     UNIHAN_TABLE_3RD_PARTY		//!< Third party table.
-} UnihanTable;
+} UnihanTable_BuiltIn;
 
 /**
  * Number of tables in database.

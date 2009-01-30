@@ -31,6 +31,7 @@
 #include <glib.h>
 #include "sqlite_functions.h"
 #include "str_functions.h"
+#include "Unihan_enum.h"
 
 /**
  * @defgroup UnihanTable Unihan Table

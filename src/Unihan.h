@@ -31,7 +31,6 @@
 #ifndef UNIHAN_H_
 #define UNIHAN_H_
 #include "Unihan_types.h"
-#include "Unihan_enum.h"
 #include "Unihan_phonetic.h"
 #include "sqlite_functions.h"
 #include "str_functions.h"

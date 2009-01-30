@@ -943,7 +943,7 @@ ZhuyinSymbol zhuyinSymbol_from_toneMark_id(guint toneMark_id){
 
 
 /*========================================
- * Zhuyin database conversion functions.
+ * Database functions.
  */
 
 void pinyin_convert_accent_format_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv){
@@ -957,6 +957,16 @@ void pinyin_convert_accent_format_scalar_func(sqlite3_context *context, int argc
     sqlite3_result_text(context,pStr,-1,g_free);
 }
 
+
+void pinyin_convert_formatFlags_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv){
+    g_assert(argc==3);
+    char pinyinTmp[PINYIN_MAX_LENGTH];
+    const char *pinyin=sqlite_value_signed_text_buffer(pinyinTmp,argv[0]);
+    guint formatFlags= (sqlite3_value_type(argv[1])==SQLITE_INTEGER) ? sqlite3_value_int64(argv[1]): 0;
+    char *pStr=pinyin_convert_formatFlags(pinyin,formatFlags);
+    sqlite3_result_text(context,pStr,-1,g_free);
+}
+
 void pinyin_to_zhuyin_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv){
     g_assert(argc==2);
     char pinyinTmp[PINYIN_MAX_LENGTH];
@@ -966,12 +976,31 @@ void pinyin_to_zhuyin_scalar_func(sqlite3_context *context, int argc, sqlite3_va
     sqlite3_result_text(context,pStr,-1,g_free);
 }
 
+void pinyin_to_zhuyin_formatFlags_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv){
+    g_assert(argc==2);
+    char pinyinTmp[PINYIN_MAX_LENGTH];
+    const char *pinyin=sqlite_value_signed_text_buffer(pinyinTmp,argv[0]);
+    guint formatFlags= (sqlite3_value_type(argv[1])==SQLITE_INTEGER) ? sqlite3_value_int64(argv[1]): 0;
+    char *pStr=pinyin_to_zhuyin_formatFlags(pinyin,formatFlags);
+    sqlite3_result_text(context,pStr,-1,g_free);
+}
+
+
 void zhuyin_convert_toneMark_format_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv){
     g_assert(argc==2);
     char zhuyinTmp[ZHUYIN_MAX_LENGTH];
     const char *zhuyin=sqlite_value_signed_text_buffer(zhuyinTmp,argv[0]);
     int toFormat= (sqlite3_value_type(argv[1])==SQLITE_INTEGER) ? sqlite3_value_int64(argv[1]): 0;
     char *pStr=zhuyin_convert_toneMark_format(zhuyin,toFormat);
+    sqlite3_result_text(context,pStr,-1,g_free);
+}
+
+void zhuyin_convert_formatFlags_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv){
+    g_assert(argc==2);
+    char zhuyinTmp[ZHUYIN_MAX_LENGTH];
+    const char *zhuyin=sqlite_value_signed_text_buffer(zhuyinTmp,argv[0]);
+    guint formatFlags= (sqlite3_value_type(argv[1])==SQLITE_INTEGER) ? sqlite3_value_int64(argv[1]): 0;
+    char *pStr=zhuyin_convert_formatFlags(zhuyin,formatFlags);
     sqlite3_result_text(context,pStr,-1,g_free);
 }
 
@@ -986,6 +1015,13 @@ void zhuyin_to_pinyin_scalar_func(sqlite3_context *context, int argc, sqlite3_va
     sqlite3_result_text(context,pStr,-1,g_free);
 }
 
-
+void zhuyin_to_pinyin_formatFlags_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv){
+    g_assert(argc==3);
+    char zhuyinTmp[ZHUYIN_MAX_LENGTH];
+    const char *zhuyin=sqlite_value_signed_text_buffer(zhuyinTmp,argv[0]);
+    guint formatFlags= (sqlite3_value_type(argv[1])==SQLITE_INTEGER) ? sqlite3_value_int64(argv[1]): 0;
+    char *pStr=zhuyin_to_pinyin_formatFlags(zhuyin,formatFlags);
+    sqlite3_result_text(context,pStr,-1,g_free);
+}
 
 

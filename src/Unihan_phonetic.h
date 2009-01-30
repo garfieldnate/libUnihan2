@@ -934,8 +934,13 @@ guint zhuyinSymbol_to_toneMark_id(ZhuyinSymbol zSym);
  */
 ZhuyinSymbol zhuyinSymbol_from_toneMark_id(guint toneMark_id);
 
+
+/*----------------------------------------------------------
+ * Database functions.
+ */
+
 /**
- * Pinyin convert accent format scalar function for SQL command call.
+ * Pinyin accent format converting scalar function for SQL command call.
  *
  * This function is meant to be called by sqlite3_create_function()
  * and used in SQL command. Do not use it directly.
@@ -945,6 +950,19 @@ ZhuyinSymbol zhuyinSymbol_from_toneMark_id(guint toneMark_id);
  * @param argv Arguments for this scalar function .
  */
 void pinyin_convert_accent_format_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv);
+
+/**
+ * Pinyin format converting scalar function for SQL command call.
+ *
+ * This function is meant to be called by sqlite3_create_function()
+ * and used in SQL command. Do not use it directly.
+ *
+ * @param context The sqlite3_context.
+ * @param argc Number of argument expected.
+ * @param argv Arguments for this scalar function .
+ */
+void pinyin_convert_formatFlags_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv);
+
 
 /**
  * Pinyin to Zhuyin converting scalar function for SQL command call.
@@ -959,7 +977,19 @@ void pinyin_convert_accent_format_scalar_func(sqlite3_context *context, int argc
 void pinyin_to_zhuyin_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv);
 
 /**
- * Zhuyin convert accent format scalar function for SQL command call.
+ * Pinyin to Zhuyin converting scalar function for SQL command call, regarding format flags.
+ *
+ * This function is meant to be called by sqlite3_create_function()
+ * and used in SQL command. Do not use it directly.
+ *
+ * @param context The sqlite3_context.
+ * @param argc Number of argument expected.
+ * @param argv Arguments for this scalar function .
+ */
+void pinyin_to_zhuyin_formatFlags_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv);
+
+/**
+ * Zhuyin tone mark format converting scalar function for SQL command call.
  *
  * This function is meant to be called by sqlite3_create_function()
  * and used in SQL command. Do not use it directly.
@@ -970,6 +1000,17 @@ void pinyin_to_zhuyin_scalar_func(sqlite3_context *context, int argc, sqlite3_va
  */
 void zhuyin_convert_toneMark_format_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv);
 
+/**
+ * Zhuyin format converting scalar function for SQL command call.
+ *
+ * This function is meant to be called by sqlite3_create_function()
+ * and used in SQL command. Do not use it directly.
+ *
+ * @param context The sqlite3_context.
+ * @param argc Number of argument expected.
+ * @param argv Arguments for this scalar function .
+ */
+void zhuyin_convert_formatFlags_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv);
 
 /**
  * Zhuyin to Pinyin converting scalar function for SQL command call.
@@ -983,4 +1024,15 @@ void zhuyin_convert_toneMark_format_scalar_func(sqlite3_context *context, int ar
  */
 void zhuyin_to_pinyin_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv);
 
+/**
+ * Zhuyin to Pinyin converting scalar function for SQL command call, regarding format flags.
+ *
+ * This function is meant to be called by sqlite3_create_function()
+ * and used in SQL command. Do not use it directly.
+ *
+ * @param context The sqlite3_context.
+ * @param argc Number of argument expected.
+ * @param argv Arguments for this scalar function .
+ */
+void zhuyin_to_pinyin_formatFlags_scalar_func(sqlite3_context *context, int argc, sqlite3_value **argv);
 #endif /* UNIHAN_PHONETIC_H_ */

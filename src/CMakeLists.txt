@@ -37,7 +37,7 @@ SET(supporting_SRCS allocate.c allocate.h
     str_functions.c str_functions.h
     verboseMsg.c verboseMsg.h)
 
-SET(DOCUMENTED_HEADERS Unihan.h Unihan_enum.h Unihan_phonetic.h 
+SET(DOCUMENTED_HEADERS Unihan.h Unihan_enum.h Unihan_phonetic.h Unihan_types.h
     allocate.h collection.h file_functions.h sqlite_functions.h str_functions.h verboseMsg.h)
 
 
