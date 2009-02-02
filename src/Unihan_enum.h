@@ -333,9 +333,9 @@ typedef enum{
 #define UNIHAN_FIELDFLAG_UPPERCASE     	0x20	//!< The field should be displayed as upper case.
 #define UNIHAN_FIELDFLAG_LOWERCASE     	0x40	//!< The field should be displayed as lower case.
 #define UNIHAN_FIELDFLAG_MULTIROWS		0x80	//!< The field is combined by multiple rows, such as kSemanticVariant.
-#define UNIHAN_FIELDFLAG_NO_INDEX		0x100	//!< The field do not need to be indexed. 
+#define UNIHAN_FIELDFLAG_NO_INDEX		0x100	//!< The field is not indexed. 
 #define UNIHAN_FIELDFLAG_NO_PRIMARYKEY		0x200	//!< The field do not need to be in primary key. Normally fields without flag UNIHAN_FIELDFLAG_SINGLETON are in the primary key. However, this flags explicitly specify the field do not need to be in primary key.
-#define UNIHAN_FIELDFLAG_SINGLETON		0x400	//!< The field is functional dependent on code. (i.e. No other values)
+#define UNIHAN_FIELDFLAG_SINGLETON		0x400	//!< The field is functional dependent on code. (i.e. No other values), should be with UNIHAN_FIELDFLAG_NO_PRIMARYKEY
 #define UNIHAN_FIELDFLAG_MANDARIN		0x800	//!< The field stores a mandarin pronunciation. 
 
 /**

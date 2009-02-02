@@ -148,7 +148,7 @@ gboolean examRecFunc(Param *param, DataRec *dataRec){
 
     gchar *actualResult=NULL;
     static int counter=0;
-    gchar buf[MAX_STRING_BUFFER_SIZE];
+    gchar buf[STRING_BUFFER_SIZE_DEFAULT];
     int j,ret;
 
 
@@ -167,7 +167,7 @@ gboolean examRecFunc(Param *param, DataRec *dataRec){
 	printf("\n");
     }
 
-    g_snprintf(buf,MAX_STRING_BUFFER_SIZE,"string_regex_formatted_combine(%s,%s,%s,%X,%X,&(%d))\n",
+    g_snprintf(buf,STRING_BUFFER_SIZE_DEFAULT,"string_regex_formatted_combine(%s,%s,%s,%X,%X,&(%d))\n",
 	    str_normalized, pattern, format, REG_EXTENDED, 0, counter);
     if (rRec->options & RESET_COUNTER){
 	counter=0;

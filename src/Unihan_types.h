@@ -152,7 +152,7 @@ typedef struct{
 typedef struct {
     const UnihanFieldName *fieldName;	//!< Field Name.
     guint flags;		//!< Combined Unihan field flags.
-} FieldProperties;
+} UnihanFieldProperties;
 
 /**
  * IRG source data.
@@ -236,6 +236,17 @@ typedef struct {
  *
  */
 extern const DatabaseFuncStru DATABASE_FUNCS[];
+
+/**
+ * Exporting format for pseudo fields.
+ *
+ */
+typedef struct{
+    UnihanField pseudoField;			//!< Pseudo field to be exported.
+    UnihanFieldTablePair tableFields[10];	//!< Required tables and fields.
+    gchar resultSqlPattern[100];		//!< SQL command pattern for pseudo field export.
+    gchar *fromSqlPattern;			//!< SQL command that come after 'FROM' keyword (excluding 'FROM').
+} UnihanPseudoFieldExportingFormat;
 
 
 

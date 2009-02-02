@@ -629,9 +629,11 @@ gchar *string_regex_replace(const gchar *str, const gchar *pattern, const gchar 
 /**
  * Initialize the string by setting the first char to 0x0.
  *
- * If str is NULL, then an char array with  MAX_STRING_BUFFER_SIZE will be assined.
- * @param str String to be initialize, NULL for allocate a new string..
- * @return The initialized string.
+ * The first byte of \a str will be set as '\0'.
+ * Return NULL if \a str is NULL.
+ *
+ * @param str String to be initialize.
+ * @return The initialized string, or NULL if str is NULL.
  */
 gchar*
 initString(gchar *str);

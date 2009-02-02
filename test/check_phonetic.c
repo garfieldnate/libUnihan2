@@ -82,7 +82,7 @@ gboolean examRecFunc(Param *param, DataRec *dataRec){
     int toIndex=((char *)param)[0]-'0';
     int fromIndex=strRec->fromIndex;
     char *actualStr=NULL;
-    char buf[MAX_STRING_BUFFER_SIZE];
+    char buf[STRING_BUFFER_SIZE_DEFAULT];
 
     verboseMsg_print(VERBOSE_MSG_INFO2,"[Info2]: inStr=%s\tfrom %s to %s\n",strRec->inStr,TEST_COLLECTION[fromIndex].prompt,TEST_COLLECTION[toIndex].prompt);
     if (fromIndex<ZHUYIN_START){
@@ -130,7 +130,7 @@ gboolean examRecFunc(Param *param, DataRec *dataRec){
 	}
 
     }
-    g_snprintf(buf,MAX_STRING_BUFFER_SIZE,"inStr=%s from %s to %s",strRec->inStr,TEST_COLLECTION[fromIndex].prompt,TEST_COLLECTION[toIndex].prompt);
+    g_snprintf(buf,STRING_BUFFER_SIZE_DEFAULT,"inStr=%s from %s to %s",strRec->inStr,TEST_COLLECTION[fromIndex].prompt,TEST_COLLECTION[toIndex].prompt);
     return (compare_strings(buf, strRec->expectedStr, actualStr))? FALSE: TRUE;
 }
 

@@ -27,7 +27,7 @@
 #include "collection.h"
 #include "str_functions.h"
 #include "verboseMsg.h"
-#define MAX_STRING_BUFFER_SIZE 1000
+#define STRING_BUFFER_SIZE_DEFAULT 1000
 
 /*=======================================
  * StringList functions
@@ -265,8 +265,8 @@ void stringList_free(StringList *sList){
 //    int ret;
 //    if ((ret=regcomp(preg, pattern, cflags))!=0){
 //        /* Invalid pattern */
-//        char buf[MAX_STRING_BUFFER_SIZE];
-//        regerror(ret,preg,buf,MAX_STRING_BUFFER_SIZE);
+//        char buf[STRING_BUFFER_SIZE_DEFAULT];
+//        regerror(ret,preg,buf,STRING_BUFFER_SIZE_DEFAULT);
 //        verboseMsg_print(VERBOSE_MSG_ERROR, "regex_multiple_match():Invalid pattern %s\n"
 //                ,buf);
 //        return NULL;
@@ -636,7 +636,7 @@ static int  string_formatted_combine_expand_directive(
 
     const gchar *str=NULL;
     int beginIndex,length;
-    gchar buf[MAX_STRING_BUFFER_SIZE];
+    gchar buf[STRING_BUFFER_SIZE_DEFAULT];
     gunichar ucs4_code;
 
 
@@ -720,7 +720,7 @@ static int  string_formatted_combine_expand_directive(
 		verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_combine_expand_directive():index %d:  should have an integer number instead of %s\n",directive->index,str);
 		return 1;
 	    }
-	    g_snprintf(buf,MAX_STRING_BUFFER_SIZE,"%X",ucs4_code);
+	    g_snprintf(buf,STRING_BUFFER_SIZE_DEFAULT,"%X",ucs4_code);
 	    if (directive->option1){
 		length=(int) strtol(directive->option1,&strtolEnd_ptr,10);
 		if (strtolEnd_ptr==directive->option1){
@@ -895,8 +895,8 @@ gchar *string_regex_formatted_combine(const gchar *str, const gchar *pattern, co
 
     if ((ret=regcomp(&preg, pattern, cflags))!=0){
 	/* Invalid pattern */
-	char buf[MAX_STRING_BUFFER_SIZE];
-	regerror(ret,&preg,buf,MAX_STRING_BUFFER_SIZE);
+	char buf[STRING_BUFFER_SIZE_DEFAULT];
+	regerror(ret,&preg,buf,STRING_BUFFER_SIZE_DEFAULT);
 	verboseMsg_print(VERBOSE_MSG_ERROR, "string_formatted_combine():Invalid pattern %s\n"
 		,buf);
 	return NULL;
@@ -952,8 +952,8 @@ gchar *string_regex_replace(const gchar *str, const gchar *pattern, const gchar 
     int ret;
     if ((ret=regcomp(&preg, pattern, cflags))!=0){
 	/* Invalid pattern */
-	char buf[MAX_STRING_BUFFER_SIZE];
-	regerror(ret,&preg,buf,MAX_STRING_BUFFER_SIZE);
+	char buf[STRING_BUFFER_SIZE_DEFAULT];
+	regerror(ret,&preg,buf,STRING_BUFFER_SIZE_DEFAULT);
 	verboseMsg_print(VERBOSE_MSG_ERROR, "string_regex_replace():Invalid pattern %s\n"
 		,buf);
 	return NULL;
@@ -968,7 +968,7 @@ gchar *string_regex_replace(const gchar *str, const gchar *pattern, const gchar 
 gchar*
 initString(gchar *str){
     if (str==NULL){
-        str=(gchar *) NEW_ARRAY_INSTANCE(MAX_STRING_BUFFER_SIZE,gchar);
+	return NULL;
     }
     str[0]='\0';
     return str;

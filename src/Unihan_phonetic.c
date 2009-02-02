@@ -30,7 +30,7 @@
 #include "sqlite_functions.h"
 #include "Unihan_phonetic.h"
 #include "verboseMsg.h"
-#define MAX_STRING_BUFFER_SIZE	2000
+#define STRING_BUFFER_SIZE_DEFAULT	2000
 
 const ZhuyinSymbol ZHUYIN_SYMBOL_LIST[ZHUYIN_SYMBOL_COUNT]={
     0x3105,   // "ㄅ"
@@ -448,11 +448,11 @@ gboolean syllable_regex_t_initialized=FALSE;
 
 int syllabel_regex_t_init(){
     int ret=0;
-    gchar buf[MAX_STRING_BUFFER_SIZE];
+    gchar buf[STRING_BUFFER_SIZE_DEFAULT];
     if (!syllable_regex_t_initialized){
 	ret=regcomp(&pinyin_import_regex_t, PINYIN_REGEX_IMPORT, REG_EXTENDED);
 	if (ret){
-	    regerror(ret, &pinyin_import_regex_t, buf, MAX_STRING_BUFFER_SIZE);
+	    regerror(ret, &pinyin_import_regex_t, buf, STRING_BUFFER_SIZE_DEFAULT);
 	    verboseMsg_print(VERBOSE_MSG_ERROR,"[Error] syllable_regex_init(): ");
 	    verboseMsg_print(VERBOSE_MSG_ERROR,"cannot compile pinyin_import_regex_t:  %s\n",buf);
 	    return ret;
@@ -460,7 +460,7 @@ int syllabel_regex_t_init(){
 
 	ret=regcomp(&pinyin_regex_t, PINYIN_REGEX, REG_EXTENDED);
 	if (ret){
-	    regerror(ret, &pinyin_regex_t, buf, MAX_STRING_BUFFER_SIZE);
+	    regerror(ret, &pinyin_regex_t, buf, STRING_BUFFER_SIZE_DEFAULT);
 	    verboseMsg_print(VERBOSE_MSG_ERROR,"[Error] syllable_regex_init(): ");
 	    verboseMsg_print(VERBOSE_MSG_ERROR,"cannot compile pinyin_regex_t:  %s\n",buf);
 	    return ret;
@@ -468,7 +468,7 @@ int syllabel_regex_t_init(){
 
 	ret=regcomp(&zhuyin_regex_t, ZHUYIN_REGEX, REG_EXTENDED);
 	if (ret){
-	    regerror(ret, &zhuyin_regex_t, buf, MAX_STRING_BUFFER_SIZE);
+	    regerror(ret, &zhuyin_regex_t, buf, STRING_BUFFER_SIZE_DEFAULT);
 	    verboseMsg_print(VERBOSE_MSG_ERROR,"[Error] syllable_regex_init(): ");
 	    verboseMsg_print(VERBOSE_MSG_ERROR,"cannot compile zhuyin_regex_t:  %s\n",buf);
 	    return ret;

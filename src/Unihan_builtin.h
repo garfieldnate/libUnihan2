@@ -31,7 +31,10 @@
  * Boston, MA  02111-1307  USA
  */
 
+#ifndef UNIHAN_BUILTIN_H_
+#define UNIHAN_BUILTIN_H_
 #include "Unihan.h"
+
 
 /**
  * Return the preferred table of field (Builtin).
@@ -122,6 +125,48 @@ const char *unihanField_builtin_to_string(UnihanField field);
 UnihanField* unihanTable_get_builtin_fields(UnihanTable table);
 
 /**
+ * Initialize an unihanFieldProperties enumerate handle.
+ *
+ * An unihanFieldProperties enumerate list all the 
+ * field properties for libUnihan. 
+ *
+ * Example code:
+ * <pre>
+ * Enumerate e;
+ * unihanFieldProperties_enumerate_init(&e);
+ * while(unihanFieldProperties_has_next(&e)){
+ *      UnihanFieldProperties *format=unihanFieldProperties_next(&e);
+ *      ...do something with format...
+ * }
+ * </pre>
+ *
+ * @param e enumerate handle to be initialized.
+ * @see unihanFieldProperties_has_next()
+ * @see unihanFieldProperties_next()
+ */
+void unihanFieldProperties_builtin_enumerate_init(Enumerate *e);
+
+/**
+ * Returns TRUE if the enumeration has more elements.
+ *
+ * @param e enumerate handle.
+ * @return TRUE if there is more elements; FALSE otherwise.
+ * @see unihanFieldProperties_enumerate_init()
+ * @see unihanFieldProperties_next()
+ */
+gboolean unihanFieldProperties_builtin_has_next(Enumerate *e);
+
+/**
+ * Returns the next element in the enumeration.
+ *
+ * @param e enumerate handle.
+ * @return The next element; NULL if no such element.
+ * @see unihanFieldProperties_enumerate_init()
+ * @see unihanFieldProperties_next()
+ */
+UnihanField* unihanTable_get_builtin_fields(UnihanTable table);
+
+/**
  * Parses the string argument as a UnihanTable.
  *
  * Parses the string argument as a UnihanTable.
@@ -170,3 +215,55 @@ const char *unihanTable_builtin_to_string(UnihanTable table);
  * @see unihan_import_builtin_table_tagValue_original.
  */
 int unihan_import_builtin_table_tagValue(sqlite3 *db, gunichar code, UnihanField field, const char *tagValue);
+
+/**
+ * Initialize an unihanPseudoFieldExportingFormat enumerate handle.
+ *
+ * An unihanPseudoFieldExportingFormat enumerate list all the 
+ * pseudo field exporting formats for libUnihan. 
+ *
+ * Example code:
+ * <pre>
+ * Enumerate e;
+ * unihanPseudoFieldExportingFormat_builtin_enumerate_init(&e);
+ * while(unihanPseudoFieldExportingFormat_builtin_has_next(&e)){
+ *      UnihanPseudoFieldExportingFormat *format=unihanPseudoFieldExportingFormat_builtin_next(&e);
+ *      ...do something with format...
+ * }
+ * </pre>
+ *
+ * @param e enumerate handle to be initialized.
+ * @see unihanPseudoFieldExportingFormat_builtin_has_next()
+ * @see unihanPseudoFieldExportingFormat_builtin_next()
+ */
+void unihanPseudoFieldExportingFormat_builtin_enumerate_init(Enumerate *e);
+
+/**
+ * Returns TRUE if the enumeration has more elements.
+ *
+ * @param e enumerate handle.
+ * @return TRUE if there is more elements; FALSE otherwise.
+ * @see unihanPseudoFieldExportingFormat_builtin_enumerate_init()
+ * @see unihanPseudoFieldExportingFormat_builtin_next()
+ */
+gboolean unihanPseudoFieldExportingFormat_builtin_has_next(Enumerate *e);
+
+/**
+ * Returns the next element in the enumeration.
+ *
+ * @param e enumerate handle.
+ * @return The next element; NULL if no such element.
+ * @see unihanPseudoFieldExportingFormat_builtin_enumerate_init()
+ * @see unihanPseudoFieldExportingFormat_builtin_next()
+ */
+UnihanPseudoFieldExportingFormat *unihanPseudoFieldExportingFormat_builtin_next(Enumerate *e);
+
+/**
+ * Returns the exporting format regarding the pseudo field.
+ *
+ * @param field The pseudo field.
+ * @return The e exporting format regarding the \a field; NULL if no such format.
+ */
+UnihanPseudoFieldExportingFormat *unihanPseudoFieldExportingFormat_builtin_get_by_pseudoField(UnihanField field);
+
+#endif /* UNIHAN_BUILTIN_H_ */

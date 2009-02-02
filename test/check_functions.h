@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include <glib.h>
 
-#define MAX_STRING_BUFFER_SIZE 2000
+#define STRING_BUFFER_SIZE_DEFAULT 2000
 
 typedef void DataSet;
 typedef void Param;

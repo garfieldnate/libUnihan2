@@ -32,6 +32,21 @@
 #include <glib.h>
 
 /**
+ * Enumerate Type.
+ *
+ * Type that handles various enumerate. 
+ * Since this type is essentially a long integer, it can store index and status code.
+ *
+ * Example:
+ * <code>Enumerate *someCollection_enumerate()</code>
+ *
+ * <code>gboolean  someCollection_hasNext(Enumerate *e)</code>
+ *
+ * <code>void *someCollection_next(Enumerate *e)</code>
+ */
+typedef long Enumerate;
+
+/**
  * Enumeration of element types which the collection stores. 
  * 
  * Specifying the element types of for collection has following benefits:

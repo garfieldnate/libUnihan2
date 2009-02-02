@@ -51,7 +51,7 @@
  Unihan.txt: Unihan.txt from Unicode Unihan\n\
  mainUnihan.db: Main unihan.db holds every tables that are not defined in dbTableFile\n"
 
-#define BUFFER_SIZE 2000
+#define STRING_BUFFER_SIZE_DEFAULT 2000
 FILE *logFile=NULL;
 FILE *dbTableFile=NULL;
 gboolean testMode=FALSE;
@@ -61,9 +61,330 @@ StringList *dbFileNameList=NULL;
 GHashTable *dbAliasHash=NULL;
 GHashTable *dbHash=NULL;
 StringList *createdTableList=NULL;
+sqlite3 *metaDb=NULL;
 
 static void printUsage(char **argv){
     printf(USAGE_MSG,argv[0]);
+}
+
+/*
+ * Field_Property_Table:
+ *      Stores field names and corresponding field properties (as bitwise flags).
+ * DB_Alias_Table:
+ * 	Stores db file names and their aliases.
+ * DB_Alias_Content_Table:
+ *      Stores db aliases and containing tables.
+ * Exporting_Fields_Table: 
+ * 	Stores real fields that form pseudo fields.
+ * Exporting_Pattern_Table:
+ * 	Stores the SQL command patterns that form pseudo fields.
+ * 
+ */
+const gchar *meta_SQL_create_table_cmds[]={
+    "CREATE TABLE Field_Property_Table"
+	" (fieldName text NOT NULL, fieldProperties integer NOT NULL, "
+	" PRIMARY KEY (FieldName));",
+    "CREATE TABLE DB_Alias_Table"
+        " (dbAlias text NOT NULL, dbFileName text NOT NULL, "
+	" PRIMARY KEY (dbAlias));",
+    "CREATE TABLE DB_Alias_Content_Table"
+	" (dbAlias text NOT NULL, tableName text NOT NULL, "
+	" PRIMARY KEY (dbAlias));",
+    "CREATE TABLE Exporting_Fields_Table"
+	" (pseudoFieldName text NOT NULL, fieldName text NOT NULL, tableName text NOT NULL,"
+	" PRIMARY KEY (pseudoFieldName, fieldName, tableName));",
+    "CREATE TABLE Exporting_Pattern_Table
+	" (pseudoFieldName text NOT NULL, resultSql text NOT NULL, fromSql text NOT NULL"
+	" PRIMARY KEY (pseudoFieldName));",
+    NULL
+};
+
+
+static int create_meta_db(const char *builDdir){
+    gchar buf[PATH_MAX];
+    g_strlcpy(buf,buildDir,PATH_MAX);
+    path_concat(buf,"_meta.db",PATH_MAX);
+    int  ret= sqlite_open(buf,  &metaDb,  SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
+    if (ret) {
+	fprintf(stderr, "Can't open to database: %s, err msg:%s\n", buf,sqlite3_errmsg(metaDb));
+	sqlite3_close(metaDb);
+	exit(ret);
+    }
+    int i;
+    for(i=0; meta_SQL_create_table_cmds[i]!=NULL; i++){
+	verboseMsg_print(VERBOSE_MSG_INFO1,"[I1] %s\n",meta_SQL_create_table_cmds[i]);
+	ret=sqlite_exec_handle_error(db, meta_SQL_create_table_cmds[i], NULL, NULL,
+	       	sqlite_error_callback_print_message, 
+		"create_meta_db(): Error");
+	if (ret) {
+	    sqlite3_close(metaDb);
+	    exit(ret);
+	}
+    }
+    return ret;
+}
+
+/* status: enable table name */
+#define TABLE_E 2
+/* status: enable field name  */
+#define FIELD_E 1
+
+#define STATUS_D  TABLE_E | FIELD_E;
+
+static void resolve_directive(gchar *buf, UnihanFieldTablePair *tableFields, int index,int status){
+    if (status & TABLE_E){
+	g_strlcat(buf,unihanTable_builtin_to_string(tableFields[index]->table),
+		STRING_BUFFER_SIZE_DEFAULT);
+    }
+    if (status==STATUS_D){
+	g_strlcat(buf,".",
+		STRING_BUFFER_SIZE_DEFAULT);
+    }
+    if (status & FIELD_E){
+	g_strlcat(buf,unihanField_builtin_to_string(tableFields[index]->field),
+		STRING_BUFFER_SIZE_DEFAULT);
+    }
+}
+
+static void resolve_pattern(gchar *buf,const gchar *pattern, UnihanFieldTablePair *tableFields){
+    int j,jLen=strlen(pattern);
+    int b_ptr=0;
+    /* index ==-2: init/fail value */
+    /* index ==-1: * value */
+    /* index >=0: valid index */
+    int index=-2;
+
+    int status= STATUS_D;
+
+    gboolean isDirective==FALSE;
+
+    initString[buf];
+    for(j=0;j<jLen;j++){
+	if (!isDirective){
+	    if (pattern[j]=='#'){
+		index=-2;
+		isDirective=TRUE;
+		status= STATUS_D;
+	    }else{
+		g_assert(b_ptr<STRING_BUFFER_SIZE_DEFAULT-2);
+		buf[b_ptr]=pattern[j];
+		++b_ptr;
+		buf[b_ptr]='\0';
+	    }
+	    continue;
+	}
+	/* is directive  */
+	switch (pattern[j]){
+	    case '*':
+		index=-1;
+		for(i=0;i<10;i++){
+		    if (tableFields[i]->field==UNIHAN_INVAILD_FIELD){
+			break;
+		    }
+		    if (i>0){
+			g_strlcat(buf,", ",STRING_BUFFER_SIZE_DEFAULT);
+		    }
+		    resolve_directive(buf,tableFields,i, status);
+		}
+		status=STATUS_D;
+		b_ptr=strlen(buf);
+		break;
+	    case 'T':
+		status=TABLE_E;
+		break;
+	    case 'F':
+		status=FIELD_E;
+		break;
+	    default:
+		if (!isdigit(pattern[j])){
+		    buf[b_ptr]=pattern[j];
+		    ++b_ptr;
+		    buf[b_ptr]='\0';
+		    break;
+		}
+		while(isdigit(pattern[j])){
+		    if (index<0)
+			index=0;
+		    index+=index*10+pattern[j]-'0';
+		    j++;
+		}
+		j--;
+		if (index<0){
+		    g_error("Invalid SQL directive at char %d in %s",j,pattern);
+		}
+		resolve_directive(buf,tableFields,index, status);
+		status=STATUS_D;
+		b_ptr=strlen(buf);
+	}
+    }
+}
+
+static int insert_meta_db_exportingFormat(sqlite3 *db){
+    int i,j,jLen, b_ptr;
+    char buf[STRING_BUFFER_SIZE_DEFAULT];
+    char buf2[STRING_BUFFER_SIZE_DEFAULT];
+    char sqlBuf[STRING_BUFFER_SIZE_DEFAULT*2];
+    unihanPseudoFieldExportingFormat_builtin_enumerate_init(&e);
+    while(unihanPseudoFieldExportingFormat_builtin_has_next(&e)){
+	UnihanPseudoFieldExportingFormat *format=unihanPseudoFieldExportingFormat_builtin_next(&e);
+	for(i=0;i<10;i++){
+	    if (format->tableFields[i]->field==UNIHAN_INVAILD_FIELD){
+		break;
+	    }
+	    sqlite3_snprintf(STRING_BUFFER_SIZE_DEFAULT,sqlBuf,
+		    "INSERT INTO Exporting_Fields_Table VALUES (%Q, %Q, %Q)",
+		    unihanField_builtin_to_string(format->pseudoField),
+		    unihanField_builtin_to_string(format->tableFields[i]->field),
+		    unihanTable_builtin_to_string(format->tableFields[i]->table));
+	    verboseMsg_print(VERBOSE_MSG_INFO1,"[I2] %s\n",sqlBuf);
+	    ret=sqlite_exec_handle_error(db, sqlBuf, NULL, NULL,
+		    sqlite_error_callback_print_message, 
+		    "insert_meta_db(): Exporting_Fields_Table Error");
+	    if (ret) {
+		sqlite3_close(db);
+		exit(ret);
+	    }
+	}
+
+
+	resolve_pattern(buf, format->resultSqlPattern, tableFields);
+	verboseMsg_print(VERBOSE_MSG_INFO1,"[I3] resolved resultSqlPattern:%s\n",buf);
+	resolve_pattern(buf2, format->fromSqlPattern, tableFields);
+	verboseMsg_print(VERBOSE_MSG_INFO1,"[I3] resolved fromSqlPattern:%s\n",buf2);
+
+	sqlite3_snprintf(STRING_BUFFER_SIZE_DEFAULT *2,sqlBuf,
+		"INSERT INTO Exporting_ResultPattern_Table VALUES (%Q,%Q, %Q)",
+		unihanField_builtin_to_string(format->pseudoField),buf,buf2);
+	verboseMsg_print(VERBOSE_MSG_INFO1,"[I2] %s\n",sqlBuf);
+	ret=sqlite_exec_handle_error(db, sqlBuf, NULL, NULL,
+		sqlite_error_callback_print_message, 
+		"insert_meta_db_exportingFormat(): Exporting_Pattern_Table Error");
+	if (ret) {
+	    sqlite3_close(db);
+	    exit(ret);
+	}
+
+    }
+    return ret;
+}
+
+
+static int insert_meta_db_dbAlias(sqlite3 *db,const char* dirName){
+    char readBuf[STRING_BUFFER_SIZE_DEFAULT];
+    char sqlBuf[STRING_BUFFER_SIZE_DEFAULT];
+    char pathBuf[PATH_MAX];
+    char *openPath=NULL;
+    sqlite3 *db=NULL;
+    const char *dbAlias=NULL;
+    const char *dbFilename=NULL;
+    const char *tableName=NULL;
+    gboolean isDbFile=TRUE;
+    int ret;
+    dbAliasHash=g_hash_table_new_full(g_str_hash,g_str_equal,NULL,NULL);
+    dbHash=g_hash_table_new_full(g_str_hash,g_str_equal,NULL,NULL);
+    int dbIndex,aliasIndex;
+
+    while(fgets(readBuf,STRING_BUFFER_SIZE_DEFAULT,dbTableFile)!=NULL){
+	g_strstrip(readBuf);
+	if (isEmptyString(readBuf)){
+	    continue;
+	}
+	if (readBuf[0]=='#'){
+	    // Comment line, skip
+	    continue;
+	}
+	if (readBuf[0]=='='){
+	    isDbFile=FALSE;
+	    continue;
+	}
+	verboseMsg_print(VERBOSE_MSG_INFO2,"[I2] readBuf=%s\n",readBuf);
+	sList=stringList_new_strsplit_set(readBuf," \t",2);
+	dbAlias=stringList_index(sList,0);
+	if (isDbFile){
+	    sqlite3_snprintf(STRING_BUFFER_SIZE_DEFAULT,"SELECT dbAlias FROM DB_Alias_Table WHERE dbAlias=%Q;",
+		    dbAlias);
+	    ret=sqlite_exec_handle_error(db, sqlBuf, NULL, NULL,
+		    sqlite_error_callback_print_message, 
+		    "insert_meta_db_dbAlias():  Error");
+	    if (ret) {
+		sqlite3_close(db);
+		exit(ret);
+	    }
+
+
+	    dbFilename=stringList_index(sList,1);
+	    
+
+	    if (!stringList_has_string(dbAliasList,dbAlias)){
+		g_strlcpy(pathBuf,dirName,PATH_MAX);
+		openPath=path_concat(pathBuf,dbFilename,PATH_MAX);
+		aliasIndex=stringList_insert(dbAliasList,dbAlias);
+		dbIndex=stringList_insert(dbFileNameList,openPath);
+		verboseMsg_print(VERBOSE_MSG_INFO3,"[I3] Openpath=%s, db alias=%s\n",openPath,dbAlias);
+		ret= sqlite_open(openPath,  &db,  SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
+		if (ret) {
+		    fprintf(stderr, "Can't open to database: %s, err msg:%s\n", openPath, sqlite3_errmsg(db));
+		    sqlite3_close(db);
+		    exit(ret);
+		}
+		g_hash_table_insert(dbAliasHash, (gpointer) stringList_index(dbAliasList,aliasIndex), (gpointer)stringList_index(dbFileNameList,dbIndex));
+		g_hash_table_insert(dbHash, (gpointer)stringList_index(dbAliasList,aliasIndex),db);
+	    }
+	}else{
+	    tableName=stringList_index(sList,1);
+	    /* Create table */
+	    table=unihanTable_builtin_parse(tableName);
+	    db= (sqlite3 *) g_hash_table_lookup(dbHash,dbAlias);
+	    if ((ret=create_table(table,db,NULL))==0){
+		stringList_insert_const(createdTableList,tableName);
+		verboseMsg_print(VERBOSE_MSG_INFO2,"[I2] Table %s in Db %s is created\n",tableName,dbAlias);
+	    }else{
+		return ret;
+	    }
+	}
+	stringList_free(sList);
+    }
+
+    /* Attach dbs */
+    g_hash_table_foreach(dbHash,dbHash_foreach_func, NULL);
+
+    fclose(dbTableFile);
+    g_hash_table_destroy(dbHash);
+    g_hash_table_destroy(dbAliasHash);
+}
+
+static int insert_meta_db(const char *builDdir){
+    Enumerate e;
+    int i;
+    char buf[PATH_MAX];
+
+    unihanFieldProperties_builtin_enumerate_init(&e);
+    while(unihanFieldProperties_builtin_has_next(&e)){
+	UnihanFieldProperties *fieldProperties=unihanFieldProperties_builtin_next(&e);
+	sqlite3_snprintf(PATH_MAX,buf,
+		"INSERT INTO Field_Property_Table VALUES (%Q, %u)",
+		fieldProperties->fieldName,fieldProperties->flags);
+	verboseMsg_print(VERBOSE_MSG_INFO1,"[I2] %s\n",buf);
+	ret=sqlite_exec_handle_error(db, buf, NULL, NULL,
+		sqlite_error_callback_print_message, 
+		"insert_meta_db(): Field_Property_Table Error");
+	if (ret) {
+	    sqlite3_close(metaDb);
+	    exit(ret);
+	}
+    }
+
+    ret=insert_meta_db_exportingFormat(metaDb);
+    if (ret) {
+	sqlite3_close(metaDb);
+	exit(ret);
+    }
+
+    if (dbTableFile){
+
+    }
+
+    return ret;
 }
 
 static int create_index(UnihanTable table, sqlite3 *db, const char* databaseName){
@@ -369,11 +690,9 @@ static int createDbs(const char *mainDbFilename){
 
     char *pathTmp=g_strdup(mainDbFilename);
     char *dirName=dirname(pathTmp);
-    char pathBuf[PATH_MAX];
     createdTableList=stringList_new();
     dbAliasList=stringList_new();
     dbFileNameList=stringList_new();
-    gboolean isDbFile=TRUE;
     UnihanTable table;
     StringList *sList;
 
