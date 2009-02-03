@@ -231,7 +231,6 @@ StringList *sql_result_free(SQL_Result *sResult, gboolean freeResult);
  */
 int sqlite_count_matches(sqlite3 *db,const char * sqlClause,char **errMsg_ptr);
 
-
 /**
  * An sqlite error callback function that print all error message except
  * constraint error.

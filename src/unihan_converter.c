@@ -278,7 +278,9 @@ static int insert_meta_db_dbAlias(sqlite3 *db,const char* dirName){
     const char *dbAlias=NULL;
     const char *dbFilename=NULL;
     const char *tableName=NULL;
+    char *errMsg=NULL;
     gboolean isDbFile=TRUE;
+    int count;
     int ret;
     dbAliasHash=g_hash_table_new_full(g_str_hash,g_str_equal,NULL,NULL);
     dbHash=g_hash_table_new_full(g_str_hash,g_str_equal,NULL,NULL);
@@ -301,16 +303,29 @@ static int insert_meta_db_dbAlias(sqlite3 *db,const char* dirName){
 	sList=stringList_new_strsplit_set(readBuf," \t",2);
 	dbAlias=stringList_index(sList,0);
 	if (isDbFile){
-	    sqlite3_snprintf(STRING_BUFFER_SIZE_DEFAULT,"SELECT dbAlias FROM DB_Alias_Table WHERE dbAlias=%Q;",
+	    sqlite3_snprintf(STRING_BUFFER_SIZE_DEFAULT,
+		    "SELECT dbAlias FROM DB_Alias_Table WHERE dbAlias=%Q;",
 		    dbAlias);
-	    ret=sqlite_exec_handle_error(db, sqlBuf, NULL, NULL,
-		    sqlite_error_callback_print_message, 
-		    "insert_meta_db_dbAlias():  Error");
-	    if (ret) {
-		sqlite3_close(db);
-		exit(ret);
+	    count=sqlite_count_matches(db, sqlBuf, &errMsg);
+	    if (count<0){
+		verboseMsg_print(VERBOSE_MSG_ERROR,"insert_meta_db_dbAlias() Error. Msg %s\n",errMsg);
+		sqlite3_free(errMsg);
+		/* Revirt to original SQLite result code */
+		return -count;
 	    }
+	    if (!count){
+		sqlite3_snprintf(STRING_BUFFER_SIZE_DEFAULT,
+			"INSERT INTO VALUES DB_Alias_Table WHERE dbAlias=%Q;",
+			dbAlias);
+		ret=sqlite_exec_handle_error(db, sqlBuf, NULL, NULL,
+			sqlite_error_callback_print_message, 
+			"insert_meta_db_dbAlias():  Error");
+		if (ret) {
+		    sqlite3_close(db);
+		    exit(ret);
+		}
 
+	    }
 
 	    dbFilename=stringList_index(sList,1);
 	    
