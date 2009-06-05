@@ -1,7 +1,7 @@
-/** 
+/**
  * @file Unihan_phonetic.h
  * @brief Phonetic symbols (Pinyin and Zhuyin) processing functions.
- * 
+ *
  * This header file lists the functions for Pinyin and Zhuyin processing,
  * such as conversion between HanYu pinyin conversion C functions, and
  * corresponding SQL scalar functions.
@@ -11,7 +11,7 @@
  * Though field UNIHAN_FIELD_kMANDARIN still outputs uppercase to make it compatible with the original Unihan.txt.
  *
  *
- * Note that this header is included in Unihan.h, 
+ * Note that this header is included in Unihan.h,
  * thus no need to explicitly include it if Unihan.h is already included.
  */
 
@@ -35,7 +35,7 @@
  * License along with this program; if not, write to the
  * Free Software Foundation, Inc., 59 Temple Place, Suite 330,
  * Boston, MA  02111-1307  USA
- */ 
+ */
 
 #ifndef UNIHAN_PHONETIC_H_
 #define UNIHAN_PHONETIC_H_
@@ -77,7 +77,7 @@ typedef char Pinyin;
 /**
  * Syllable holds transcription and tone.
  *
- * Syllable contains a unit of organization for a sequence of speech sounds. 
+ * Syllable contains a unit of organization for a sequence of speech sounds.
  * In libUnihan, it contains a toneless-transcription and a tone.
  *
  * A transcription is a sequence of phonemes that represents sounds.
@@ -135,7 +135,7 @@ typedef struct{
  *
  * Similar to \c PINYIN_IMPORT_SUBSTITUTE_TONE_ACCENT, but for kXHC1983 only.
  */
-#define PINYIN_IMPORT_SUBSTITUTE_TONE_ACCENT_XHC PINYIN_IMPORT_SUBSTITUTE_TONE_ACCENT_XHC_PRIVATE 
+#define PINYIN_IMPORT_SUBSTITUTE_TONE_ACCENT_XHC PINYIN_IMPORT_SUBSTITUTE_TONE_ACCENT_XHC_PRIVATE
 
 /**
  * Pinyin tone number pattern substitute (store format) for Xiandai Hanyu Cidian (XHC1983).
@@ -164,7 +164,7 @@ typedef struct{
  */
 typedef enum {
     ZHUYIN_INVALID_SYMBOL= -1, //!< Invalid Zhuyin Symbol.
-    ZHUYIN_SYMBOL_B,         //!< Zhuyin symbol 'ㄅ' 
+    ZHUYIN_SYMBOL_B,         //!< Zhuyin symbol 'ㄅ'
     ZHUYIN_SYMBOL_P,         //!< Zhuyin symbol 'ㄆ'
     ZHUYIN_SYMBOL_M,         //!< Zhuyin symbol 'ㄇ'
     ZHUYIN_SYMBOL_F,         //!< Zhuyin symbol 'ㄈ'
@@ -211,7 +211,7 @@ typedef enum {
 /**
  * Total number of support Zhuyin symbols.
  */
-#define ZHUYIN_SYMBOL_COUNT ZHUYIN_SYMBOL_NEUTRAL + 1 
+#define ZHUYIN_SYMBOL_COUNT ZHUYIN_SYMBOL_NEUTRAL + 1
 
 /**
  * An array of Zhuyin symbols.
@@ -225,8 +225,8 @@ extern const ZhuyinSymbol ZHUYIN_SYMBOL_LIST[];
  * @name Pinyin format flags.
  *
  * These bitwise flags specify the pinyin string output format.
- * There are various way to represent Hanyu pinyin, 
- * some employ combining accent mark to represent certain phonemes and tones, 
+ * There are various way to represent Hanyu pinyin,
+ * some employ combining accent mark to represent certain phonemes and tones,
  * some use alternate symbols for those phonemes and tones for easier input.
  * See #PinyinAccentFormat for widely adopted format.
  *
@@ -242,10 +242,10 @@ typedef guint PinyinFormatFlags;
 /**
  * Flag for removing trivial accents.
  *
- * This flag indicate that trivial accents, that is, combining circumflex '^' (U+0302) 
+ * This flag indicate that trivial accents, that is, combining circumflex '^' (U+0302)
  * or diaeresis accent '‥' (U+0302) which are omissible, should be stripped.
  */
-#define PINYIN_FORMAT_FLAG_STRIP_TRIVIAL_ACCENT 0x1 
+#define PINYIN_FORMAT_FLAG_STRIP_TRIVIAL_ACCENT 0x1
 #define PINYIN_FORMAT_FLAG_STRIP_CIRCUMFLEX	0x2  //!< Flag for forcedly removing combining circumflex  '^' (U+0302) from ü.
 #define PINYIN_FORMAT_FLAG_STRIP_DIAERESIS	0x4  //!< Flag for forcedly removing combining diaeresis  '‥' (U+0308) from ü.
 #define PINYIN_FORMAT_FLAG_NFD			0x8  //!< Flag Decompose into Normalized form D (NFD).
@@ -254,18 +254,18 @@ typedef guint PinyinFormatFlags;
  * Flag for forcedly showing in ASCII symbols.
  *
  * With this flag, ü is outputted as v, and ê is as E.
- * If @c PINYIN_FORMAT_FLAG_NFD is also set, 
+ * If @c PINYIN_FORMAT_FLAG_NFD is also set,
  * diaeresis  '‥' (U+0302) is converted to ':';
  * while circumflex '^' (U+0302) is converted.
  */
 #define PINYIN_FORMAT_FLAG_ASCII_ONLY		0x10  //!< Show only ASCII symbol, ü is outputted as v, and ê is as E,
-                                         
+
 /**
  * Flag for showing tone as accent.
  *
- * By default the tone is represented as trailing number. 
+ * By default the tone is represented as trailing number.
  * With this flag, ü is outputted as v, and ê is as E.
- * If @c PINYIN_FORMAT_FLAG_NFD is also set, 
+ * If @c PINYIN_FORMAT_FLAG_NFD is also set,
  * diaeresis  '‥' (U+0302) is converted to ':';
  * while circumflex '^' (U+0302) is converted.
  */
@@ -307,15 +307,15 @@ typedef guint PinyinFormatFlags;
  * For example, CEDICT use u: (PINYIN_ACCENT_TRAILING); while most of Chinese
  * input method use v as substitute (PINYIN_ACCENT_INPUT_METHOD).
  *
- * In English documents such as passport, the accent are usually stripped, use 
- * PINYIN_ACCENT_NONE for this purpose. 
+ * In English documents such as passport, the accent are usually stripped, use
+ * PINYIN_ACCENT_NONE for this purpose.
  *
  * libUnihan itself uses #PINYIN_ACCENT_INTERNAL to store pinyin.
  * It converts ü to v, and ê to E. By doing so, the pinyin strings can be easily processed by
  * legacy string functions as the strings are all in ASCII, yet carry over all phonetic information
  * for Pinyin and Zhuyin manipulation.
  *
- * Preserving accents unconditionally makes conversion and education easier, 
+ * Preserving accents unconditionally makes conversion and education easier,
  * use PINYIN_ACCENT_ALWAYS for this purpose.
  *
  * Note that this enumeration is not for the pinyin tone mark.
@@ -325,7 +325,7 @@ typedef guint PinyinFormatFlags;
  * @{
  */
 typedef enum{
-    PINYIN_ACCENT_ALWAYS,   //!< ü is always represented as ü, ê is always represented as ê. 
+    PINYIN_ACCENT_ALWAYS,   //!< ü is always represented as ü, ê is always represented as ê.
     PINYIN_ACCENT_ORIGINAL, //!< MOE CN standard ISO 7098:1991. Trivial accent mark is omitted.
     PINYIN_ACCENT_UNIHAN,   //!< ü is represented as ü, ê is represented as e.
     PINYIN_ACCENT_TRAILING, //!< ü is represented as u:, ê is represented as e.
@@ -347,8 +347,8 @@ typedef enum{
 PinyinFormatFlags pinyinAccentFormat_to_pinyinFormatFlags(
 	PinyinAccentFormat toFormat, gboolean useTrailNumber);
 /**
- * @} 
- * @} 
+ * @}
+ * @}
  */
 
 
@@ -358,7 +358,7 @@ PinyinFormatFlags pinyinAccentFormat_to_pinyinFormatFlags(
  * @name Zhuyin format flags.
  *
  * These bitwise flags specify the zhuyin string output format.
- * There are various way to represent Zhuyin, 
+ * There are various way to represent Zhuyin,
  * some put the neutral (5th) tone in the front, some omits the first tone.
  * See #ZhuyinToneMarkFormat for widely adopted format.
  *
@@ -405,7 +405,7 @@ typedef guint ZhuyinFormatFlags;
  * However, for Zhuyin based input method, the neutral is put in the back.
  * Use ZHUYIN_TONEMARK_INPUT_METHOD for this.
  *
- * If preserving tonemark is desireable, then 
+ * If preserving tonemark is desireable, then
  * use ZHUYIN_TONEMARK_ALWAYS, in which the first tone is not omitted,
  * otherwise is same with ZHUYIN_TONEMARK_INPUT_METHOD.
  *
@@ -461,10 +461,10 @@ Syllable *syllable_new();
  * The pinyin can be in any format from #PinyinAccentFormat.
  * And can be toned or toneless.
  *
- * \note Tone of toneless syllable is zero (i.e. syl->tone==0). 
+ * \note Tone of toneless syllable is zero (i.e. syl->tone==0).
  * It does not try to guess what it is.
  *
- * @param pinyin_str pinyin string 
+ * @param pinyin_str pinyin string
  * @return a newly allocated syllable instance.
  */
 Syllable *syllable_new_pinyin(const Pinyin *pinyin_str);
@@ -476,7 +476,7 @@ Syllable *syllable_new_pinyin(const Pinyin *pinyin_str);
  * The zinyin string can be in any format from #ZhuyinToneMarkFormat .
  * And can be toned or toneless.
  *
- * @param zhuyin_str pinyin string 
+ * @param zhuyin_str pinyin string
  * @return a newly allocated syllable instance.
  */
 Syllable *syllable_new_zhuyin(const Zhuyin *zhuyin_str);
@@ -492,11 +492,11 @@ Syllable *syllable_clone(Syllable *syl);
 
 /**
  * Output syllable as pinyin.
- * 
+ *
  * This function returns a newly allocated \c Pinyin instance as result.
  * Note that if \c PINYIN_FORMAT_FLAG_STRIP_TRIVIAL_TONE is not set in \a formatFlags,
  * this function will "guess" the tone if it is not previously given.
- * 
+ *
  * @param syl The syllable to be outputted.
  * @param formatFlags The format of the outputted pinyin.
  * @return A newly allocated Pinyin instance as result.
@@ -505,11 +505,11 @@ Pinyin *syllable_to_pinyin(Syllable *syl,PinyinFormatFlags formatFlags);
 
 /**
  * Output syllable as zhuyin.
- * 
+ *
  * This function returns a newly allocated \c Zhunyin instance as result.
  * Note that if \c ZHUYIN_FORMAT_FLAG_STRIP_1ST_TONE is not set in \a formatFlags,
  * this function will "guess" the tone if it is not previously given.
- * 
+ *
  * @param syl The syllable to be outputted.
  * @param formatFlags The format of the outputted pinyin.
  * @return A newly allocated Zhuyin instance as result.
@@ -520,7 +520,7 @@ Zhuyin *syllable_to_zhuyin(Syllable *syl,ZhuyinFormatFlags formatFlags);
  * Whether the transcription of syllable is Zhuyin.
  *
  * @param syl The syllable to be processed.
- * @return TRUE if every characters in syl->transcription are either ZhuyinSymbol or numbers; 
+ * @return TRUE if every characters in syl->transcription are either ZhuyinSymbol or numbers;
  *         FALSE otherwise.
  */
 gboolean syllable_is_zhuyin(Syllable *syl);
@@ -562,7 +562,7 @@ int syllabel_regex_t_init();
  *
  * This function allocates a new Pinyin instance.
  * If \c pinyin_str is given, it will be copied to the newly allocated Pinyin instance.
- * Note that the Pinyin instance only hold #PINYIN_MAX_LENGTH bytes, 
+ * Note that the Pinyin instance only hold #PINYIN_MAX_LENGTH bytes,
  * including the EOL ('\0') character. Longer pinyin will be truncated.
  *
  * \note From libUnihan 1.0, pinyin_new() no longer convert \c pinyin_str to upper case.
@@ -580,12 +580,12 @@ Pinyin *pinyin_new(const char *pinyin_str);
  *
  * This function finds and returns the explicit-specified tone of pinyin.
  * Thus 0 will be returned if pinyin does not have any explicit-specified tone.
- * 
- * This function acts this way in order to accommodate 
+ *
+ * This function acts this way in order to accommodate
  * the SQL LIKE query such as <code>... WHERE kMandarin LIKE 'KE%'</code>.
  *
  * Sometimes, 5th tone mark is omitted, please convert the value 0 to 5
- * if this is the case. 
+ * if this is the case.
  *
  * @param pinyin the pinyin instance to be stripped.
  * @return the tone id from 1 to 5 if the tone is explicit-specified, 0
@@ -627,8 +627,8 @@ guint pinyin_strip_tone_normalized(Pinyin* pinyin);
 /**
  * Add the tone mark to pinyin.
  *
- * This function add \a tone to \a pinyin, as trailing number if \a useTrailNumber=TRUE 
- * or as tone accent mark if \a useTrailNumber=FALSE. 
+ * This function add \a tone to \a pinyin, as trailing number if \a useTrailNumber=TRUE
+ * or as tone accent mark if \a useTrailNumber=FALSE.
  * Otherwise it is similar to pinyin_add_tone_formatFlags()
  *
  * @param pinyin the pinyin instance to be processed.
@@ -644,7 +644,7 @@ void pinyin_add_tone(Pinyin* pinyin, guint tone, gboolean useTrailNumber);
  * This function add tone mark to pinyin according to PinyinFormatFlags,
  * existing tone will be removed before adding new tone.
  * If tone is 0, then existing tone will be removed, but no new tone will be added.
- * 
+ *
  * The result will be stored in pinyin, so backup it with strdup() or g_strdup() to keep the original.
  *
  * @param pinyin the pinyin instance to be processed.
@@ -654,7 +654,6 @@ void pinyin_add_tone(Pinyin* pinyin, guint tone, gboolean useTrailNumber);
  */
 void pinyin_add_tone_formatFlags(Pinyin* pinyin, guint tone, PinyinFormatFlags formatFlags);
 
-
 /**
  * Convert pinyin to new format.
  *
@@ -662,7 +661,7 @@ void pinyin_add_tone_formatFlags(Pinyin* pinyin, guint tone, PinyinFormatFlags f
  * which is specified in \a formatFlags.
  *
  * Note that this function does not try to convert toneless pinyin to 5th tone.
- * Use \c syl=syllabel_new(pinyin); \c syllable_to_pinyin(syl,formatFlags) for 
+ * Use \c syl=syllabel_new(pinyin); \c syllable_to_pinyin(syl,formatFlags) for
  * that.
  *
  * Use free() or g_free() to free the newly allocated instance.
@@ -675,7 +674,6 @@ void pinyin_add_tone_formatFlags(Pinyin* pinyin, guint tone, PinyinFormatFlags f
  * @see pinyin_convert_accent_format()
  */
 Pinyin *pinyin_convert_formatFlags(const Pinyin *pinyin, PinyinFormatFlags formatFlags);
-
 
 /**
  * Convert pinyin to new accent format.
@@ -697,8 +695,6 @@ Pinyin *pinyin_convert_formatFlags(const Pinyin *pinyin, PinyinFormatFlags forma
  * @see pinyin_convert_formatFlags()
  */
 Pinyin *pinyin_convert_accent_format(const Pinyin *pinyin, PinyinAccentFormat toFormat, gboolean useTrailNumber);
-
-
 
 /**
  * Pinyin to Zhuyin.
@@ -730,9 +726,9 @@ Zhuyin *pinyin_to_zhuyin_formatFlags(const Pinyin* pinyin, ZhuyinFormatFlags for
  * New a Zhuyin instance.
  *
  * This function allocate a new Zhuyin instance.
- * Non-NULL zhuyin_str will be copied to the new Zhuyin instance and 
+ * Non-NULL zhuyin_str will be copied to the new Zhuyin instance and
  * converted to uppercase.
- * Note that the Zhuyin instance only holds #ZHUYIN_MAX_LENGTH bytes, 
+ * Note that the Zhuyin instance only holds #ZHUYIN_MAX_LENGTH bytes,
  * including the EOL ('\0') character. Longer zhuyin will be truncated.
  *
  * Note: use g_free to free the newly allocated instance.
@@ -748,12 +744,12 @@ Zhuyin *zhuyin_new(const char *zhuyin_str);
  *
  * This function finds and returns the explicit-specified tone of zhuyin.
  * Thus 0 will be returned if zhuyin does not have any explicit-specified tone.
- * 
- * This function acts this way in order to accommodate 
+ *
+ * This function acts this way in order to accommodate
  * the SQL LIKE query such as <code>... WHERE zhuyin LIKE 'ㄊㄧㄢ%'</code>.
  *
  * Sometimes, 1th tone mark is omitted, please convert the value 0 to 1
- * if this is the case. 
+ * if this is the case.
  *
  * @param zhuyin the zhuyin instance to be stripped.
  * @return the tone id from 1 to 5 if the tone is explicit-specified, 0
@@ -795,7 +791,7 @@ void zhuyin_add_tone(Zhuyin* zhuyin, guint tone, ZhuyinToneMarkFormat toFormat);
  * existing tone will be removed before adding new tone.
  *
  * If tone is 0, then existing tone will be removed, but no new tone will be added.
- * 
+ *
  * The result will be stored in zhuyin, so backup it with strdup() or g_strdup() to keep the original.
  *
  * @param zhuyin the zhuyin instance to be processed.
@@ -817,7 +813,7 @@ void zhuyin_add_tone_formatFlags(Zhuyin* zhuyin, guint tone, ZhuyinFormatFlags f
  *
  * @param zhuyin the Zhuyin to be converted.
  * @param toFormat the Zhuyin tone mark mode to be converted to.
- * @return the newly allocated Zhuyin instance that 
+ * @return the newly allocated Zhuyin instance that
  * @see pinyin_to_zhuyin()
  */
 Zhuyin *zhuyin_convert_toneMark_format(const Zhuyin* zhuyin, ZhuyinToneMarkFormat toFormat);
@@ -829,14 +825,14 @@ Zhuyin *zhuyin_convert_toneMark_format(const Zhuyin* zhuyin, ZhuyinToneMarkForma
  * which is specified in \a formatFlags.
  *
  * Note that this function does not try to convert toneless zhuyin to 5th tone.
- * Use \c syl=syllabel_new(zhuyin); \c syllable_to_zhuyin(syl,formatFlags) for 
+ * Use \c syl=syllabel_new(zhuyin); \c syllable_to_zhuyin(syl,formatFlags) for
  * that.
  *
  * Use free() or g_free() to free the newly allocated instance.
  *
  * @param zhuyin the Zhuyin to be converted.
  * @param formatFlags Zhuyin format flags.
- * @return the newly allocated Zhuyin instance that 
+ * @return the newly allocated Zhuyin instance that
  * @see pinyin_to_zhuyin_formatFlags()
  */
 Zhuyin *zhuyin_convert_formatFlags(const Zhuyin *zhuyin, ZhuyinFormatFlags formatFlags);
@@ -870,17 +866,16 @@ Pinyin *zhuyin_to_pinyin_formatFlags(const Zhuyin* zhuyin, PinyinFormatFlags for
 
 /**
  * Return the Zhuyin symbol by its Id.
- * 
+ *
  *
  * @param id Zhuyin symbol Id.
  * @return the corresponding symbol, or 0 if the id is negative.
  */
 ZhuyinSymbol zhuyinSymbol_from_id(ZhuyinSymbolId id);
 
-
 /**
  * Return the Id of a Zhuyin symbol
- * 
+ *
  * @param zSym  Zhuyin symbol.
  * @return the corresponding Id.
  */

@@ -1,8 +1,8 @@
 # DB - Table file
-# 
+#
 # This files specifies the relationship between database files and db tables.
 # By default a table will go to the core DB, that is, the db given in command argument in unihan_converter)
-# 
+#
 
 ############################
 # DB Alias Section
@@ -11,20 +11,23 @@
 # Format:
 # DB Alias		Filename
 
+# Core tables are tables which are required in libUnihan.
+Core		Unihan_core.sqlite
+
 # Recommended tables
-Recommended	Unihan_recommended.db
+Recommended	Unihan_recommended.sqlite
 
 # Tables of variants
 Variant	Unihan_variant.db
 
 # Major Dictionary references, such as KangXi and other dictionaries used in four dictionary sort algorithm
-DictRef_Major	Unihan_dictRef_major.db
+DictRef_Major	Unihan_dictRef_major.sqlite
 
 # Popular encoding, such as GB2312, BIG5 and others.
-Mapping_Popular	Unihan_mapping_popular.db
+Mapping_Popular	Unihan_mapping_popular.sqlite
 
 # Infrequent used data should store here.
-Misc	Unihan_misc.db
+Misc	Unihan_misc.sqlite
 
 =================================
 ############################
@@ -36,18 +39,18 @@ Misc	Unihan_misc.db
 
 ############################
 # Following tables should be in core db.
-# 	codeTable
-#	kFrequencyTable
-#	kGradeLevelTable
-#	kIICoreTable
-#	kIRG_GSourceTable
-#	kIRG_HSourceTable
-#	kIRG_JSourceTable
-#	kIRG_KPSourceTable
-#	kIRG_KSourceTable
-#	kIRG_TSourceTable
-#	kIRG_USourceTable
-#	kIRG_VSourceTable
+Core	 	codeTable
+Core		kFrequencyTable
+Core		kGradeLevelTable
+Core		kIICoreTable
+Core		kIRG_GSourceTable
+Core		kIRG_HSourceTable
+Core		kIRG_JSourceTable
+Core		kIRG_KPSourceTable
+Core		kIRG_KSourceTable
+Core		kIRG_TSourceTable
+Core		kIRG_USourceTable
+Core		kIRG_VSourceTable
 
 ############################
 # Following tables should be in other db.
@@ -145,3 +148,4 @@ Misc		kTangTable
 Misc		kXeroxTable
 Misc		kXHC1983Table
 Misc		kZVariantTableExtra
+

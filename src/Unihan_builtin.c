@@ -1,8 +1,8 @@
-/** 
+/**
  * @file Unihan_builtin.c
  * @brief Functions for builtin tables and fields only.
- * 
- * This file contains the functions 
+ *
+ * This file contains the functions
  *  which only deal for builtin tables and fields.
  */
 
@@ -33,7 +33,7 @@
 #include "allocate.h"
 #include "str_functions.h"
 #include "verboseMsg.h"
-#include "Unihan.h"
+#include "Unihan_builtin.h"
 
 #include "Unihan_builtin_def.c"
 #define STRING_BUFFER_SIZE_DEFAULT 2000
@@ -46,7 +46,29 @@ extern FILE *logFile;
  * Functions
  */
 
-UnihanTable unihanField_get_builtin_preferred_table(UnihanField field){
+gint sqlite_error_callback_hide_known_constraint_error(sqlite3 *db, const gchar *sqlClause, gint error_code,
+	const gchar *error_msg, gpointer prompt){
+    gboolean errorKnown=FALSE;
+    if (error_code== SQLITE_CONSTRAINT){
+	if (strstr(sqlClause,unihanField_to_string_builtin(UNIHAN_FIELD_kCANTONESE))){
+	    errorKnown=TRUE;
+	}else if (strstr(sqlClause,unihanField_to_string_builtin(UNIHAN_FIELD_kJAPANESEKUN))){
+	    errorKnown=TRUE;
+	}
+	if (errorKnown){
+	    verboseMsg_print(VERBOSE_MSG_WARNING,"[WW] Command %s is duplicated!\n"
+		    ,sqlClause);
+	    return SQLITE_OK;
+	}
+    }
+    sqlite_error_callback_print_message(db,sqlClause,error_code,error_msg,prompt);
+    return error_code;
+}
+
+/*==============================================================
+ * Basic built field and table functions.
+ */
+UnihanTable unihanField_get_preferred_table_builtin(UnihanField field){
     int i;
     for(i=0;FIELD_PREFERRED_TABLES[i].field!=UNIHAN_INVALID_FIELD;i++){
 	if (FIELD_PREFERRED_TABLES[i].field==field){
@@ -56,30 +78,30 @@ UnihanTable unihanField_get_builtin_preferred_table(UnihanField field){
     return UNIHAN_INVALID_TABLE;
 }
 
-UnihanTable *unihanField_get_builtin_required_tables(UnihanField field){
+UnihanTable *unihanField_get_required_tables_builtin(UnihanField field){
     int i,counter=0;
     UnihanTable *tables=NEW_ARRAY_INSTANCE(UNIHAN_TABLE_ARRAY_MAX_LEN, UnihanTable);
-    for(i=0;PSEUDOFIELD_IMPORTING_FORMATING[i].pseudoField!=UNIHAN_INVALID_FIELD;i++){
-	if (PSEUDOFIELD_IMPORTING_FORMATING[i].pseudoField==field){
-	    tables[counter++]=PSEUDOFIELD_IMPORTING_FORMATING[i].table;
+    for(i=0;PSEUDOFIELD_IMPORT_FORMAT[i].pseudoField!=UNIHAN_INVALID_FIELD;i++){
+	if (PSEUDOFIELD_IMPORT_FORMAT[i].pseudoField==field){
+	    tables[counter++]=PSEUDOFIELD_IMPORT_FORMAT[i].table;
 	}
     }
     if (counter==0){
 	/* Maybe a real field */
-	tables[counter++]=unihanField_get_builtin_preferred_table(field);
+	tables[counter++]=unihanField_get_preferred_table_builtin(field);
     }
     tables[counter]=UNIHAN_INVALID_TABLE;
     return tables;
 }
 
-gboolean unihanField_builtin_has_flags(UnihanField field, guint flags){
+gboolean unihanField_has_flags_builtin(UnihanField field, guint flags){
     if (field<0 || field>UNIHAN_FIELD_3RD_PARTY){
 	return FALSE;
     }
     return UNIHAN_FIELD_PROPERTIES[field].flags & flags;
 }
 
-UnihanField unihanField_builtin_parse(const char *str){
+UnihanField unihanField_parse_builtin(const char *str){
     UnihanField field;
     for(field=0;field<UNIHAN_FIELD_3RD_PARTY;field++){
 	if (strcmp(UNIHAN_FIELD_PROPERTIES[field].fieldName,str)==0){
@@ -89,34 +111,35 @@ UnihanField unihanField_builtin_parse(const char *str){
     return UNIHAN_INVALID_FIELD;
 }
 
-const char *unihanField_builtin_to_string(UnihanField field){
+const char *unihanField_to_string_builtin(UnihanField field){
     if (field<0 || field>=UNIHAN_FIELD_3RD_PARTY){
 	return NULL;
     }
     return UNIHAN_FIELD_PROPERTIES[field].fieldName;
 }
 
-void unihanFieldProperties_builtin_enumerate_init(Enumerate *e){
-    *e=0;
+void unihanFieldProperties_enumerate_init_builtin(Enumerate *e){
+    e->index=0;
+    e->userData=NULL;
 }
 
-gboolean unihanFieldProperties_builtin_has_next(Enumerate *e){
-    if (UNIHAN_FIELD_PROPERTIES[*e].field!=NULL){
+gboolean unihanFieldProperties_has_next_builtin(Enumerate *e){
+    if (UNIHAN_FIELD_PROPERTIES[e->index].fieldName!=NULL){
 	return TRUE;
     }
     return FALSE;
 }
 
-UnihanFieldProperties *unihanFieldProperties_builtin_next(Enumerate *e){
-    if (unihanField_Properties_builtin_has_next(e)){
-	*e++;
-	return &UNIHAN_FIELD_PROPERTIES[*e-1];
+const UnihanFieldProperties *unihanFieldProperties_next_builtin(Enumerate *e){
+    if (unihanFieldProperties_has_next_builtin(e)){
+	e->index++;
+	return &UNIHAN_FIELD_PROPERTIES[e->index-1];
     }
     return NULL;
 }
 
 
-UnihanField* unihanTable_get_builtin_fields(UnihanTable table){
+UnihanField* unihanTable_get_fields_builtin(UnihanTable table){
     UnihanField *fields=NEW_ARRAY_INSTANCE(UNIHAN_FIELD_ARRAY_MAX_LEN,UnihanField);
     int i=0,j;
     if (table<0){
@@ -133,7 +156,7 @@ UnihanField* unihanTable_get_builtin_fields(UnihanTable table){
     return fields;
 }
 
-UnihanTable unihanTable_builtin_parse(const char *str){
+UnihanTable unihanTable_parse_builtin(const char *str){
     UnihanTable table;
     for(table=0;table<UNIHAN_TABLE_3RD_PARTY;table++){
 	if (strcmp(UNIHAN_TABLE_NAMES[table],str)==0){
@@ -143,282 +166,85 @@ UnihanTable unihanTable_builtin_parse(const char *str){
     return UNIHAN_INVALID_TABLE;
 }
 
-const char *unihanTable_builtin_to_string(UnihanTable table){
+const char *unihanTable_to_string_builtin(UnihanTable table){
     if (table<0 || table>=UNIHAN_TABLE_3RD_PARTY){
 	return NULL;
     }
     return UNIHAN_TABLE_NAMES[table];
 }
 
-static UnihanPseudoFieldImportingFormat_Post *unihanField_get_builtin_importData_post(UnihanField field,UnihanTable table){
-    int i;
-    for(i=0; PSEUDOFIELD_IMPORTING_FORMATING_POST[i].field!=UNIHAN_INVALID_FIELD; i++){
-	if (field==PSEUDOFIELD_IMPORTING_FORMATING_POST[i].field && table==PSEUDOFIELD_IMPORTING_FORMATING_POST[i].table){
-	    return &(PSEUDOFIELD_IMPORTING_FORMATING_POST[i]);
+/*==============================================================
+ * Importing Format
+ */
+
+void unihanPseudoFieldImportFormat_enumerate_init_builtin(Enumerate *e, UnihanField *field){
+    e->index=-1;
+    e->userData=field;
+    unihanPseudoFieldImportFormat_enumerate_next_builtin(e);
+}
+
+gboolean unihanPseudoFieldImportFormat_enumerate_has_next_builtin(Enumerate *e){
+    if (e->index>=0)
+	return TRUE;
+    return FALSE;
+}
+
+const UnihanPseudoFieldImportFormat *unihanPseudoFieldImportFormat_enumerate_next_builtin(Enumerate *e){
+    glong i,prevIndex=e->index;
+    e->index=-1;
+    for(i=prevIndex+1;PSEUDOFIELD_IMPORT_FORMAT[i].pseudoField!=UNIHAN_INVALID_FIELD;i++){
+	if (PSEUDOFIELD_IMPORT_FORMAT[i].pseudoField==*(UnihanField *)e->userData){
+	    e->index=i;
+	    break;
 	}
     }
+    if (prevIndex>=0)
+	return &PSEUDOFIELD_IMPORT_FORMAT[prevIndex];
     return NULL;
 }
 
-int unihanField_builtin_pseudo_import_data_next_index(UnihanField field,int previousIndex){
+const UnihanPseudoFieldImportFormatPost *unihanPseudoFieldImportFormatPost_find_builtin(UnihanField field,UnihanTable table){
     int i;
-    for(i=previousIndex+1;PSEUDOFIELD_IMPORTING_FORMATING[i].pseudoField!=UNIHAN_INVALID_FIELD;i++){
-	if (PSEUDOFIELD_IMPORTING_FORMATING[i].pseudoField==field){
-	    return i;
+    for(i=0; PSEUDOFIELD_IMPORT_FORMAT_POST[i].field!=UNIHAN_INVALID_FIELD; i++){
+	if (field==PSEUDOFIELD_IMPORT_FORMAT_POST[i].field && table==PSEUDOFIELD_IMPORT_FORMAT_POST[i].table){
+	    return &(PSEUDOFIELD_IMPORT_FORMAT_POST[i]);
 	}
     }
-    return -1;
-}
-
-static void unihan_import_value_append(gchar *sqlClause, UnihanField field, const gchar *value){
-    char sqlBuf[STRING_BUFFER_SIZE_DEFAULT];
-    char codeBuf[20];
-    long int coding;
-    if (unihanField_builtin_has_flags(field, UNIHAN_FIELDFLAG_INTEGER)){
-	if (unihanField_builtin_has_flags(field, UNIHAN_FIELDFLAG_UCS4)){
-	    /* Convert UCS4 to str */
-	    g_snprintf(codeBuf,20,"%lu", (gulong) unihanChar_parse(value));
-	    sqlite3_snprintf(STRING_BUFFER_SIZE_DEFAULT, sqlBuf, ", %s",  codeBuf);
-	}else if (unihanField_builtin_has_flags(field, UNIHAN_FIELDFLAG_HEXADECIMAL_16)){
-	    coding=strtol(value,NULL,16);
-	    sqlite3_snprintf(STRING_BUFFER_SIZE_DEFAULT, sqlBuf, ", %d",  coding);
-	}else{
-	    sqlite3_snprintf(STRING_BUFFER_SIZE_DEFAULT, sqlBuf, ", %s",  value);
-	}
-    }else{
-	sqlite3_snprintf(STRING_BUFFER_SIZE_DEFAULT, sqlBuf, ", %Q",  value);
-    }
-    g_strlcat(sqlClause,sqlBuf, STRING_BUFFER_SIZE_DEFAULT);
-}
-
-gint sqlite_error_callback_hide_known_constraint_error(sqlite3 *db, const gchar *sqlClause, gint error_code, 
-	const gchar *error_msg, gpointer prompt){
-    gboolean errorKnown=FALSE;
-    if (error_code== SQLITE_CONSTRAINT){
-	if (strstr(sqlClause,unihanField_builtin_to_string(UNIHAN_FIELD_kCANTONESE))){
-	    errorKnown=TRUE;
-	}else if (strstr(sqlClause,unihanField_builtin_to_string(UNIHAN_FIELD_kJAPANESEKUN))){
-	    errorKnown=TRUE;
-	}
-	if (errorKnown){
-	    verboseMsg_print(VERBOSE_MSG_WARNING,"[WW] Command %s is duplicated!\n"
-		    ,sqlClause);
-	    return SQLITE_OK;
-	}
-
-    }
-    sqlite_error_callback_print_message(db,sqlClause,error_code,error_msg,prompt);
-    return error_code;
-}
-
-
-
-static int writeToDb(sqlite3 *db, const gchar *sqlClause){
-    verboseMsg_print(VERBOSE_MSG_INFO2," Executing: %s\n",sqlClause);
-    return sqlite_exec_handle_error(db, sqlClause, NULL, NULL,
-	    sqlite_error_callback_hide_known_constraint_error, "writeToDb()" );
-}
-
-/**
- * Import a tag value of a character from Unihan.txt to dbfile.
- *
- * omittable 
- * This function imports a tag value of a character from Unihan.txt to dbfile.
- * Note that this function assumes that \a tagValue is singleton, that is.
- * no need to be further split. 
- * 
- * @param db Db handle
- * @param code the UCS4 representation of the character.
- * @param field The UnihanField to be import.
- * @param tagValue The value of the field.
- * @param counter_ptr Pointer to an integer counter. Can be NULL if $+ or $- flags are not used.
- * @return 0 if success, otherwise return nonzero value.
- * @see unihan_import_builtin_table_tagValue().
- */
-int unihan_import_builtin_table_single_tagValue(sqlite3 *db, gunichar code, UnihanField field, 
-	const char *tagValue, int *counter_ptr){
-    int i,j,ret=0,regexRet;
-    int counter_post;
-    int pseudoNextIndex=unihanField_builtin_pseudo_import_data_next_index(field,-1);
-    UnihanTable table;
-    const gchar *importPattern=NULL;
-    const gchar **storeFormats=NULL;
-    const gchar *storeFormat=NULL;
-    gchar *value;
-    gboolean empty;
-    const UnihanField *fields;
-    UnihanPseudoFieldImportingFormat_Post *importData_post_ptr=NULL;
-
-    char *tagValuePtr=NULL,*tagValuePtr_tmp=NULL;
-    char sqlClause[STRING_BUFFER_SIZE_DEFAULT];
-    char sqlClause_values[STRING_BUFFER_SIZE_DEFAULT];
-    char buf[STRING_BUFFER_SIZE_DEFAULT];
-    regex_t preg, preg_post;
-    char *tagValue_normalized=g_utf8_normalize(tagValue,-1,G_NORMALIZE_NFD);
-    
-
-    if (pseudoNextIndex>=0){
-	/* Is Pseudo field */
-	while(pseudoNextIndex>=0){
-	    table=PSEUDOFIELD_IMPORTING_FORMATING[pseudoNextIndex].table;
-	    fields=PSEUDOFIELD_IMPORTING_FORMATING[pseudoNextIndex].fields;
-	    importPattern=PSEUDOFIELD_IMPORTING_FORMATING[pseudoNextIndex].importPattern;
-	    
-	    storeFormats= (const gchar **) PSEUDOFIELD_IMPORTING_FORMATING[pseudoNextIndex].storeFormats;
-	    importData_post_ptr=unihanField_get_builtin_importData_post(field,table);
-	    if (importData_post_ptr){
-		if ((regexRet=regcomp(&preg_post, importData_post_ptr->regex_pattern, REG_EXTENDED))!=0){
-		    /* Invalid pattern */
-		    regerror(ret,&preg_post,buf,STRING_BUFFER_SIZE_DEFAULT);
-		    verboseMsg_print(VERBOSE_MSG_ERROR, 
-			    "unihan_import_builtin_table_tagValue():Invalid import post pattern %s\n" ,buf);
-		    exit(regexRet);
-		}
-	    }
-	    
-	    if ((regexRet=regcomp(&preg, importPattern, REG_EXTENDED))!=0){
-		/* Invalid pattern */
-		regerror(ret,&preg,buf,STRING_BUFFER_SIZE_DEFAULT);
-		verboseMsg_print(VERBOSE_MSG_ERROR, 
-			"unihan_import_builtin_table_tagValue():Invalid pattern %s\n"	,buf);
-		exit(regexRet);
-	    }
-
-	    tagValuePtr=tagValue_normalized;
-	    counter_post=0;
-	    do{
-		for(j=0;fields[j]!=UNIHAN_INVALID_FIELD;j++){
-		    storeFormat= storeFormats[j];
-		    value=string_regex_formatted_combine_regex_t(tagValuePtr, &preg, storeFormat, 0, counter_ptr);
-		    if (j==0){
-			if (value){
-			    empty=FALSE;
-			    sqlite3_snprintf(STRING_BUFFER_SIZE_DEFAULT, sqlClause, "INSERT INTO %s (code",
-				    unihanTable_builtin_to_string(table));
-			    sqlite3_snprintf(STRING_BUFFER_SIZE_DEFAULT, sqlClause_values, ") VALUES (%lu",
-				    code);
-			}else{
-			    
-			    empty=TRUE;
-			    break;
-			}
-		    }
-		    g_strlcat(sqlClause,", ",STRING_BUFFER_SIZE_DEFAULT);
-		    g_strlcat(sqlClause, unihanField_builtin_to_string(fields[j]),STRING_BUFFER_SIZE_DEFAULT);
-		    if (value){
-			unihan_import_value_append(sqlClause_values,fields[j],value);
-			g_free(value);
-		    }else{
-			verboseMsg_print(VERBOSE_MSG_CRITICAL,
-				"unihan_import_builtin_table_tagValue():2nd value should not zero!: str=%s, pattern=%s, substitute=%s\n",
-				tagValue,importPattern,storeFormat);
-			exit(1);
-		    }
-		}
-		if (!empty){
-		    g_strlcat(sqlClause,sqlClause_values,STRING_BUFFER_SIZE_DEFAULT);
-		    g_strlcat(sqlClause,");",STRING_BUFFER_SIZE_DEFAULT);
-		    ret=writeToDb(db, sqlClause);
-		    if (ret){
-			break;
-		    }
-		}
-
-		
-		if (importData_post_ptr){
-                    /* Generate new tagValue */
-		    tagValuePtr_tmp=string_regex_formatted_combine_regex_t(tagValuePtr, &preg_post, 
-			    importData_post_ptr->eval_str, 0, &counter_post);
-		    if (tagValuePtr!=tagValue_normalized){
-			/* Free the old tagValuePtr */
-			g_free(tagValuePtr);
-		    }
-		    if (tagValuePtr_tmp){
-			tagValuePtr=tagValuePtr_tmp;
-		    }else{
-			tagValuePtr=NULL;
-		    }
-		}else{
-		    tagValuePtr=NULL;
-		}
-		if (ret)
-		    break;
-		
-	    }while(tagValuePtr);
-	    
-	    pseudoNextIndex=unihanField_builtin_pseudo_import_data_next_index(field,pseudoNextIndex);
-	    regfree(&preg);
-	    if (importData_post_ptr){
-		regfree(&preg_post);
-	    }
-	}
-    }else{
-	/* Is Real field */
-	for(i=0;REALFIELD_TABLES[i].field!=UNIHAN_INVALID_FIELD;i++){
-	    if (REALFIELD_TABLES[i].field==field){
-	       sqlite3_snprintf(STRING_BUFFER_SIZE_DEFAULT, sqlClause, "INSERT INTO %s VALUES (%lu",
-		       unihanTable_builtin_to_string(REALFIELD_TABLES[i].table),code);
-	       unihan_import_value_append(sqlClause,field,tagValue_normalized);
-	       g_strlcat(sqlClause,");",STRING_BUFFER_SIZE_DEFAULT);
-	       ret=writeToDb(db, sqlClause);
-	       break;
-	    }
-	}
-    }
-
-    g_free(tagValue_normalized);
-    return ret;
-}
-
-int unihan_import_builtin_table_tagValue(sqlite3 *db, gunichar code, UnihanField field, const char *tagValue){
-    int counter=0;
-    if (UNIHAN_FIELD_PROPERTIES[field].flags & UNIHAN_FIELDFLAG_SINGLETON){
-	return unihan_import_builtin_table_single_tagValue(db,code,field,tagValue,&counter);
-    }
-    int ret,i;
-    gchar **values=g_strsplit_set(tagValue," ",-1);
-    for(i=0;values[i]!=NULL;i++){
-	ret=unihan_import_builtin_table_single_tagValue(db,code,field,values[i],&counter);
-	if (ret!=SQLITE_OK){
-	    return ret;
-	}
-    }
-    g_strfreev(values);
-    return ret;
+    return NULL;
 }
 
 /*==============================================================
  * Exporting Format
  */
-
-void unihanPseudoFieldExportingFormat_builtin_enumerate_init(Enumerate *e){
-    *e=0;
+void unihanPseudoFieldExportFormat_enumerate_init_builtin(Enumerate *e){
+    e->index=0;
+    e->userData=NULL;
 }
 
-gboolean unihanPseudoFieldExportingFormat_builtin_has_next(Enumerate *e){
-    if (UNIHAN_PSEUDOFIELD_EXPORTING_FORMAT[*e].pseudoField!= UNIHAN_INVALID_FIELD)
+gboolean unihanPseudoFieldExportFormat_has_next_builtin(Enumerate *e){
+    if (UNIHAN_PSEUDOFIELD_EXPORT_FORMAT[e->index].pseudoField!= UNIHAN_INVALID_FIELD)
 	return TRUE;
     return FALSE;
 }
 
-UnihanPseudoFieldExportingFormat *unihanPseudoFieldExportingFormat_builtin_next(Enumerate *e){
-    if (unihanPseudoFieldExportingFormat_builtin_has_next(e)){
-	*e++;
-	return &UNIHAN_PSEUDOFIELD_EXPORTING_FORMAT[*e-1];
+UnihanPseudoFieldExportFormat *unihanPseudoFieldExportFormat_next_builtin(Enumerate *e){
+    if (unihanPseudoFieldExportFormat_has_next_builtin(e)){
+	e->index++;
+	return &UNIHAN_PSEUDOFIELD_EXPORT_FORMAT[e->index-1];
     }
     return NULL;
 }
 
-UnihanPseudoFieldExportingFormat *unihanPseudoFieldExportingFormat_builtin_get_by_pseudoField(UnihanField field){
+UnihanPseudoFieldExportFormat *unihanPseudoFieldExportFormat_get_by_pseudoField_builtin(UnihanField field){
     int i;
-    for (i=0; UNIHAN_PSEUDOFIELD_EXPORTING_FORMAT[i].pseudoField!= UNIHAN_INVALID_FIELD;i++){
-	if (UNIHAN_PSEUDOFIELD_EXPORTING_FORMAT[i].pseudoField==field){
-	    return &UNIHAN_PSEUDOFIELD_EXPORTING_FORMAT[i];
+    for (i=0; UNIHAN_PSEUDOFIELD_EXPORT_FORMAT[i].pseudoField!= UNIHAN_INVALID_FIELD;i++){
+	if (UNIHAN_PSEUDOFIELD_EXPORT_FORMAT[i].pseudoField==field){
+	    return &UNIHAN_PSEUDOFIELD_EXPORT_FORMAT[i];
 	}
     }
     return NULL;
 }
-    
+
 gunichar unihanChar_parse(const char *str){
     char codeBuf[15];
     subString_buffer(codeBuf,str,2,strlen(str)-2);

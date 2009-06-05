@@ -1,7 +1,7 @@
-/** 
+/**
  * @file sqlite_functions.h
  * @brief SQLite suppporting data structures and functions.
- * 
+ *
  * This header file lists supporting data structures and functions of SQLite.
  */
 
@@ -25,7 +25,7 @@
  * License along with this program; if not, write to the
  * Free Software Foundation, Inc., 59 Temple Place, Suite 330,
  * Boston, MA  02111-1307  USA
- */ 
+ */
 
 
 
@@ -43,7 +43,7 @@
  * These flags are for SQLite 3.3.X and earlier, as those versions do not have following definitions.
  * @{
  */
- 
+
 #ifndef SQLITE_OPEN_READONLY
 /**
  * The database is opened for reading only.
@@ -60,7 +60,7 @@
 
 #ifndef SQLITE_OPEN_CREATE
 /**
- * The database is created if it does not already exist. 
+ * The database is created if it does not already exist.
  *
  * This flag indicates that the database should be created if it does not
  * already exist. Usually use with \c SQLITE_OPEN_READWRITE.
@@ -90,14 +90,14 @@
  * Chunk size for  field names.
  */
 #   define SQL_RESULT_FIELD_CHUNK_SIZE 2048
-#endif 
+#endif
 
 #ifndef SQL_RESULT_FIELD_ELEMENT_COUNT
 /**
  * Number of fields.
  */
 #   define SQL_RESULT_FIELD_ELEMENT_COUNT 128
-#endif 
+#endif
 
 #ifndef SQL_RESULT_FIELD_CONST_COUNT
 /**
@@ -105,21 +105,21 @@
  * Normally you don't need to change this.
  */
 #   define SQL_RESULT_FIELD_CONST_COUNT 0
-#endif 
+#endif
 
 #ifndef SQL_RESULT_RESULT_CHUNK_SIZE
 /**
  * Chunk size for result names.
  */
 #   define SQL_RESULT_RESULT_CHUNK_SIZE 65536
-#endif 
+#endif
 
 #ifndef SQL_RESULT_RESULT_ELEMENT_COUNT
 /**
  * Number of results. It should be rol_count * col_count.
  */
 #   define SQL_RESULT_RESULT_ELEMENT_COUNT 512
-#endif 
+#endif
 
 /**
  * @}
@@ -127,12 +127,12 @@
  */
 
 /**
- * Prototype of callback function for SQL execution (sqlite3_exec).
+ * Callback function prototype of  SQL execution (sqlite3_exec).
  */
-typedef gint (*sqlite_exec_callback)(gpointer user_option,gint col_num,gchar **results,gchar **col_names); 
+typedef gint (*sqlite_exec_callback)(gpointer user_option,gint col_num,gchar **results,gchar **col_names);
 
 /**
- * Prototype of error handling callback function for sqlite_exec_handle_error().
+ * Callback function prototype of error handling for sqlite_exec_handle_error().
  *
  * This function prototype abstracts the sqlite_exec_handle_error() error
  * handling functions.
@@ -150,7 +150,7 @@ typedef gint (*sqlite_exec_callback)(gpointer user_option,gint col_num,gchar **r
  * from error_option of sqlite_exec_handle_error() .
  * @return new error code or \a error_code
  */
-typedef gint (*sqlite_error_callback)(sqlite3 *db, const gchar *sqlClause, gint error_code, const gchar *error_msg, gpointer error_option); 
+typedef gint (*sqlite_error_callback)(sqlite3 *db, const gchar *sqlClause, gint error_code, const gchar *error_msg, gpointer error_option);
 
 
 /**
@@ -163,7 +163,7 @@ typedef gint (*sqlite_error_callback)(sqlite3 *db, const gchar *sqlClause, gint 
  * @param filename The SQLite database to be opened.
  * @param ppDb Returned pointer to database connection handle.
  * @param flags SQL file access flags, see SQL_fileAccessFlags.
- * @return SQLITE_OK if success; otherwise returns corresponding 
+ * @return SQLITE_OK if success; otherwise returns corresponding
  * <a href="http://www.sqlite.org/c3ref/c_abort.html">SQLite error code</a>.
  *
  * @see sqlite3_open()
@@ -221,10 +221,10 @@ StringList *sql_result_free(SQL_Result *sResult, gboolean freeResult);
  * Count the matches returned by SQL clause.
  *
  * The error message passed back through the \a errMsg is held in memory obtained from sqlite3_malloc().
- * To avoid a memory leak, the calling application should call sqlite3_free() on any error message returned 
+ * To avoid a memory leak, the calling application should call sqlite3_free() on any error message returned
  * through the \a errMsg parameter when it has finished using the error message.
  *
- * @param db The database. 
+ * @param db The database.
  * @param sqlClause SQL clause.
  * @param errMsg_ptr The error message will be written here. Free it with sqlite3_free().
  * @return 0 if no matches found. Positive number is number of  matched founded. Negative number is  sqlite3_exec result code multiplied by -1.
@@ -240,7 +240,6 @@ int sqlite_count_matches(sqlite3 *db,const char * sqlClause,char **errMsg_ptr);
  * when the invalid records (which do not meet the constraint) are expected
  * and skipped.
  *
-*
  * @param db The \a db from from sqlite_exec_handle_error().
  * @param sqlClause The original \a sqlClause from from sqlite_exec_handle_error().
  * @param error_code Return value of sqlite3_exec().
@@ -252,17 +251,38 @@ int sqlite_count_matches(sqlite3 *db,const char * sqlClause,char **errMsg_ptr);
  * @see sqlite_exec_handle_error()
  * @see sqlite_error_callback_print_message()
  */
-gint sqlite_error_callback_hide_constraint_error(sqlite3 *db, const gchar *sqlClause, gint error_code, 
+gint sqlite_error_callback_hide_constraint_error(sqlite3 *db, const gchar *sqlClause, gint error_code,
+	const gchar *error_msg, gpointer prompt);
+
+/**
+ * An sqlite error callback function that print all error message except
+ * print constraint error as warning.
+ *
+ * This function is just like sqlite_error_callback_hide_constraint_error(),
+ * except the constraint error messages are printed as warning.
+ *
+ * @param db The \a db from from sqlite_exec_handle_error().
+ * @param sqlClause The original \a sqlClause from from sqlite_exec_handle_error().
+ * @param error_code Return value of sqlite3_exec().
+ * @param error_msg Error message from sqlite3_exec().
+ * @param prompt  Prompt of error message. From \a error_option of sqlite_exec_handle_error().
+ * @return Argument \a error_code will be returned.
+ *
+ * @see sqlite_error_callback
+ * @see sqlite_exec_handle_error()
+ * @see sqlite_error_callback_print_message()
+ */
+gint sqlite_error_callback_show_constraint_warning(sqlite3 *db, const gchar *sqlClause, gint error_code,
 	const gchar *error_msg, gpointer prompt);
 
 /**
  * An sqlite error callback function that print error messages.
  *
- * This function is an implementation of sqlite_error_callback, 
+ * This function is an implementation of sqlite_error_callback,
  * which can be called by sqlite_exec_handle_error().
  *
  * It outputs error message in following format:
- * 
+ *
  * \a prompt: Error on SQL statement: \a sqlClause.
  * Error code: \a error_code message: \a error_msg.
  *
@@ -277,16 +297,16 @@ gint sqlite_error_callback_hide_constraint_error(sqlite3 *db, const gchar *sqlCl
  * @see sqlite_exec_handle_error()
  * @see sqlite_error_callback_hide_constraint_error()
  */
-gint sqlite_error_callback_print_message(sqlite3 *db, const gchar *sqlClause, gint error_code, 
+gint sqlite_error_callback_print_message(sqlite3 *db, const gchar *sqlClause, gint error_code,
 	const gchar *error_msg, gpointer prompt);
 
 
 /**
  * Sqlite exec function with error handling.
- * 
+ *
  * This function adds error handle to sqlite3_exec().
  *
- * It calls sqlite3_exec() for DB operations. 
+ * It calls sqlite3_exec() for DB operations.
  * When encounter error, \a error_func will be called for error handling.
  * See sqlite_error_callback for the function prototype.
  *
@@ -304,13 +324,13 @@ gint sqlite_error_callback_print_message(sqlite3 *db, const gchar *sqlClause, gi
  * @see sqlite_error_callback_print_message()
  * @see sqlite_error_callback_hide_constraint_error()
  */
-int sqlite_exec_handle_error(sqlite3 *db, const gchar *sqlClause, sqlite_exec_callback exec_func, 
+int sqlite_exec_handle_error(sqlite3 *db, const gchar *sqlClause, sqlite_exec_callback exec_func,
 	gpointer exec_option, sqlite_error_callback error_func, gpointer error_option);
 
 /**
  * Get the results of SQL clause.
  *
- * @param db The database. 
+ * @param db The database.
  * @param sqlClause SQL clause.
  * @return SQL_Result that stores the results.
  */
@@ -319,7 +339,7 @@ SQL_Result *sqlite_get_sql_result(sqlite3 *db, const char *sqlClause);
 /**
  * Get the list of table names in the database.
  *
- * @param db The database. 
+ * @param db The database.
  * @return SQL_Result that stores the results. Specifically, in \c resultList.
  */
 SQL_Result *sqlite_get_tableNames(sqlite3 *db);
@@ -327,14 +347,14 @@ SQL_Result *sqlite_get_tableNames(sqlite3 *db);
 /**
  * Get the fields of result table of a SQL clause.
  *
- * The result code is store in execResult_ptr, calling application should provide a int-type variable 
+ * The result code is store in execResult_ptr, calling application should provide a int-type variable
  * to store the result code.
  *
  * The error message passed back through the \a errMsg is held in memory obtained from sqlite3_malloc().
- * To avoid a memory leak, the calling application should call sqlite3_free() on any error message returned 
- * through the \a errMsg parameter when it has finished using the error message. 
+ * To avoid a memory leak, the calling application should call sqlite3_free() on any error message returned
+ * through the \a errMsg parameter when it has finished using the error message.
  *
- * @param db The database. 
+ * @param db The database.
  * @param sqlClause SQL clause.
  * @param execResult_ptr The result code will be written here.
  * @param errMsg_ptr The error message will be written here.
@@ -360,12 +380,12 @@ char *sqlite_value_signed_text(sqlite3_value *value);
  * Store the value as signed string to provided buffer.
  *
  * It is similar with sqlite3_value_text(), except developers can provide their own buffer space to s
- * \note This function does not check the buffer overflow, it is developers' responsibility 
+ * \note This function does not check the buffer overflow, it is developers' responsibility
  * to ensure the provided buffer has enough space.
  *
  * @param buf the provided buffer.
  * @param value the value from SQLite.
- * @return same as \a buf. 
+ * @return same as \a buf.
  * @see sqlite_value_signed_text()
  */
 char *sqlite_value_signed_text_buffer(char *buf,sqlite3_value *value);

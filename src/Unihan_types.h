@@ -246,7 +246,7 @@ typedef struct{
     UnihanFieldTablePair tableFields[10];	//!< Required tables and fields.
     gchar resultSqlPattern[100];		//!< SQL command pattern for pseudo field export.
     gchar *fromSqlPattern;			//!< SQL command that come after 'FROM' keyword (excluding 'FROM').
-} UnihanPseudoFieldExportingFormat;
+} UnihanPseudoFieldExportFormat;
 
 
 

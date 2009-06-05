@@ -120,12 +120,23 @@ int sqlite_error_callback_hide_constraint_error(sqlite3 *db, const gchar *sqlCla
     return error_code;
 }
 
+int sqlite_error_callback_show_constraint_warning(sqlite3 *db, const gchar *sqlClause, gint error_code, 
+	const gchar *error_msg, gpointer prompt){
+    gchar *prompt_str=(gchar *) prompt;
+    if (error_code!= SQLITE_CONSTRAINT){
+	sqlite_error_callback_print_message(db,sqlClause,error_code,error_msg,prompt);
+    }else{
+	verboseMsg_print(VERBOSE_MSG_WARNING,"%s: [constraint warning]: %s\n",prompt_str,error_msg);
+	verboseMsg_print(VERBOSE_MSG_WARNING,"%s: Caused by following SQL statement: %s\n",prompt_str,sqlClause);
+    }
+    return error_code;
+}
+
 int sqlite_error_callback_print_message(sqlite3 *db, const gchar *sqlClause, gint error_code, 
 	const gchar *error_msg, gpointer prompt){
     gchar *prompt_str=(gchar *) prompt;
-    verboseMsg_print(VERBOSE_MSG_ERROR,"%s: Error on SQL statement: %s\n",prompt_str,sqlClause);
-    verboseMsg_print(VERBOSE_MSG_ERROR,"Error code:%d ",error_code);
-    verboseMsg_print(VERBOSE_MSG_ERROR,"Message: %s.\n",error_msg);
+    verboseMsg_print(VERBOSE_MSG_WARNING,"%s: [Error] code: %d, message: %s\n",prompt_str,error_code,error_msg);
+    verboseMsg_print(VERBOSE_MSG_WARNING,"%s: Caused by following SQL statement: %s\n",prompt_str,sqlClause);
     return error_code;
 }
 
