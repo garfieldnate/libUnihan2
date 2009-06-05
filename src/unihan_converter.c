@@ -73,9 +73,9 @@ static FILE *unihanTxtFile=NULL;
 
 static sqlite3 *defaultDb=NULL;
 static GStringChunk *dbAliasChunk=NULL; // Store db aliases
-static GHashTable *dbAliasHash=NULL; // Store db alias/db pair
+GHashTable *dbAliasHash=NULL; // Store db alias/db pair
 static gint tableIdArray[UNIHAN_TABLE_3RD_PARTY];
-static GHashTable *tableHash=NULL; //Store table/db pair
+GHashTable *tableHash=NULL; //Store table/db pair
 static sqlite3 *metaDb=NULL;
 static gchar outputDir[PATH_MAX];
 
@@ -84,7 +84,7 @@ static gchar outputDir[PATH_MAX];
 static guint flags=0;
 
 static void printUsage(char **argv){
-    if (!(flags & FLAG_TEST_MODE)){
+    if (flags & FLAG_TEST_MODE){
 	printf(USAGE_MSG_VALIDATER,argv[0]);
     }else{
 	printf(USAGE_MSG_CONVERTER,argv[0]);
@@ -453,10 +453,10 @@ static sqlite3* unihanTable_get_db(UnihanTable table){
     return (sqlite3 *) g_hash_table_lookup(tableHash,&table);
 }
 
-static int writeToDb(sqlite3 *db, const gchar *sqlClause){
-    verboseMsg_print(VERBOSE_MSG_INFO2,"[I2] writeToDb() Executing: %s\n",sqlClause);
+static int dB_write(sqlite3 *db, const gchar *sqlClause){
+    verboseMsg_print(VERBOSE_MSG_INFO2,"[I2] dB_write() Executing: %s\n",sqlClause);
     return sqlite_exec_handle_error(db, sqlClause, NULL, NULL,
-	    sqlite_error_callback_hide_known_constraint_error, "writeToDb()" );
+	    sqlite_error_callback_hide_known_constraint_error, "dB_write()" );
 }
 
 static int unihan_import_realField(gunichar code, UnihanField field,
@@ -469,7 +469,7 @@ static int unihan_import_realField(gunichar code, UnihanField field,
     unihan_import_value_append(sqlClause,field,tagValue_normalized);
     g_strlcat(sqlClause,");",STRING_BUFFER_SIZE_DEFAULT);
 
-    return writeToDb(unihanTable_get_db(table), sqlClause);
+    return dB_write(unihanTable_get_db(table), sqlClause);
 }
 
 static int unihan_import_pseudoField(gunichar code, UnihanField field,
@@ -546,7 +546,7 @@ static int unihan_import_pseudoField(gunichar code, UnihanField field,
 	if (!empty){
 	    g_strlcat(sqlClause,sqlClause_values,STRING_BUFFER_SIZE_DEFAULT);
 	    g_strlcat(sqlClause,");",STRING_BUFFER_SIZE_DEFAULT);
-	    ret=writeToDb(unihanTable_get_db(importFormat->table), sqlClause);
+	    ret=dB_write(unihanTable_get_db(importFormat->table), sqlClause);
 	    if (ret){
 		break;
 	    }
@@ -614,10 +614,12 @@ static int unihan_import_table_single_tagValue_builtin(gunichar code, UnihanFiel
 	ret=unihan_import_realField(code, field, tagValue_normalized, counter_ptr);
     }
     g_free(tagValue_normalized);
+    verboseMsg_print(VERBOSE_MSG_INFO4,"[I4] [Done] unihan_import_table_single_tagValue_builtin() ret=%d\n",ret);
     return ret;
 }
 
 static int unihan_import_table_tagValue_builtin(gunichar code, UnihanField field, const char *tagValue){
+    verboseMsg_print(VERBOSE_MSG_INFO3,"[I3] unihan_import_table_tagValue_builtin(%u,%d,%s)\n",code,field,tagValue);
     int counter=0;
     if (unihanField_has_flags_builtin(field, UNIHAN_FIELDFLAG_SINGLETON)){
 	return unihan_import_table_single_tagValue_builtin(code,field,tagValue,&counter);
@@ -627,10 +629,12 @@ static int unihan_import_table_tagValue_builtin(gunichar code, UnihanField field
     for(i=0;values[i]!=NULL;i++){
 	ret=unihan_import_table_single_tagValue_builtin(code,field,values[i],&counter);
 	if (ret!=SQLITE_OK){
+	    verboseMsg_print(VERBOSE_MSG_INFO4,"[I4] [Err] unihan_import_table_tagValue_builtin() ret=%d\n",ret);
 	    return ret;
 	}
     }
     g_strfreev(values);
+    verboseMsg_print(VERBOSE_MSG_INFO4,"[I4] [Done] unihan_import_table_tagValue_builtin() ret=%d\n",ret);
     return ret;
 }
 
@@ -705,17 +709,17 @@ static int create_index(UnihanTable table, sqlite3 *db, const char* databaseName
 }
 
 static void index_create_callback(gpointer key, gpointer value, gpointer userData){
-    UnihanTable table=*(UnihanTable *) key;
+    UnihanTable table=* (UnihanTable *) key;
     sqlite3 *db=(sqlite3 *) value;
     create_index(table,db,NULL);
 }
 
 static int create_indices(){
+    verboseMsg_print(VERBOSE_MSG_INFO4,"[I4] create_indices(), size=%u\n",g_hash_table_size(tableHash));
     int ret=0;
     g_hash_table_foreach(tableHash,index_create_callback,NULL);
     return ret;
 }
-
 
 /*
  * create db callback
@@ -748,7 +752,7 @@ static gint table_create_callback(gpointer user_option,gint col_num,gchar **resu
     sqlite3 *db=(sqlite3 *) g_hash_table_lookup(dbAliasHash,results[0]);
     UnihanTable table=unihanTable_parse_builtin(results[1]);
     create_table(table,db,NULL);
-    g_hash_table_insert(tableHash,(gpointer) &tableIdArray[table], (gpointer) db);
+    g_hash_table_insert(tableHash,&(tableIdArray[table]), (gpointer) db);
     return 0;
 }
 
@@ -1116,13 +1120,13 @@ int main(int argc,char** argv){
 
     process_unihan_txt();
     fclose(unihanTxtFile);
-    g_hash_table_destroy(dbAliasHash);
-    g_hash_table_destroy(tableHash);
-    g_string_chunk_free(dbAliasChunk);
     if (!(flags & FLAG_TEST_MODE)){
 	create_indices();
 	verboseMsg_close_logFile();
     }
+    g_hash_table_destroy(dbAliasHash);
+    g_hash_table_destroy(tableHash);
+    g_string_chunk_free(dbAliasChunk);
     return 0;
 }
 

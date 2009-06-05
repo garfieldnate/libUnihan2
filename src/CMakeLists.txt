@@ -17,16 +17,16 @@ CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/confi
 # Unihan_SQL_gen.c is already included in Unihan.c,
 # no need to be in libUnihan_SRCS
 
-#SET(libUnihan_SRCS Unihan.c Unihan.h Unihan_enum.h 
+#SET(libUnihan_SRCS Unihan.c Unihan.h Unihan_enum.h
 #    Unihan_phonetic.c Unihan_phonetic.h
 #)
 
 
-SET(libUnihan_SRCS 
+SET(libUnihan_SRCS
     Unihan_phonetic.c Unihan_phonetic.h Unihan.h
 )
 
-SET(libUnihan_builder_SRCS 
+SET(libUnihan_builder_SRCS
     Unihan_builtin.c Unihan_builtin.h
 )
 
@@ -44,13 +44,13 @@ SET(DOCUMENTED_HEADERS Unihan.h Unihan_enum.h Unihan_phonetic.h Unihan_types.h
 ADD_LIBRARY(Unihan_supporting SHARED ${supporting_SRCS})
 ADD_LIBRARY(Unihan SHARED ${libUnihan_SRCS} )
 ADD_LIBRARY(Unihan_builder SHARED ${libUnihan_builder_SRCS} )
-SET_TARGET_PROPERTIES(Unihan Unihan_supporting Unihan_builder PROPERTIES 
+SET_TARGET_PROPERTIES(Unihan Unihan_supporting Unihan_builder PROPERTIES
     VERSION "${SO_VER_MAJOR}.${SO_VER_MINOR}"
     SOVERSION "${SO_VER_MAJOR}")
 
 
 # executable built from some source
-ADD_EXECUTABLE(unihan_converter  unihan_converter.c ) 
+ADD_EXECUTABLE(unihan_converter  unihan_converter.c )
 #ADD_EXECUTABLE(unihan_query	 unihan_query.c)
 #ADD_EXECUTABLE(unihan_rebuild_cache unihan_rebuild_cache.c)
 
