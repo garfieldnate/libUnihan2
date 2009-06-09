@@ -8,7 +8,7 @@ Version:        %{libUnihan_ver_major}.%{libUnihan_ver_minor}.@PRJ_VER_PATCH@
 Release:        @PRJ_VER_RELEASE@%{?dist}
 Group:          System Environment/Libraries
 License:        LGPLv2+
-Summary:        C library for Unihan character database in fifth normal form 
+Summary:        C library for Unihan character database in fifth normal form
 Summary(zh_CN): 用于符合第五正规化之统汉字(Unihan)数据库的 C 库文件
 Summary(zh_TW): 用於符合第五正規化之統漢字(Unihan)資料庫的 C 函式庫
 
@@ -89,3 +89,5 @@ rm -rf $RPM_BUILD_ROOT
 %doc doc/html
 
 %changelog
+@RPM_CHANGELOG@
+

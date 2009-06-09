@@ -3,8 +3,7 @@
 ####################################################################
 
 SET(AUTHORS "Ding-Yi Chen")
-SET(MAINTAINER_EMAIL "dchen at redhat dot com")
-
+SET(MAINTAINER "Ding-Yi Chen <dchen at redhat.com>")
 
 SET(DB_DIR ${datadir}/UnihanDb)
 #
@@ -17,7 +16,7 @@ ENDIF()
 
 #
 # DB files in UNIHAN_DB_SEARCH_PATH will be searched and set by unihan_search_db.
-# Use path separator (';' for Windows, while ':' for Unix and others) to 
+# Use path separator (';' for Windows, while ':' for Unix and others) to
 # separate multiple directories.
 #
 IF(NOT DEFINED UNIHAN_DB_DB_SEARCH_PATH)

@@ -1,0 +1,80 @@
+* Tue Oct 21 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.5.3
+- Add following make targets: rpm_lint, koji_submit, koji_build,  pkg_remove_old.
+- New Features:
+  collection.h, file_function.h and verboseMsg.h is in API.
+- Fixed:
+  Missing documents in 0.5.2
+- Changed:
+  + collection.h:
+    - G_ARRAY_COPY is renamed as G_ARRAY_CONCAT to reflect its real functionality.
+    - hashSet_new_full() now only takes 4 parameters because value value_destroy_func is not required,
+      as in hashSet, key == value.
+  + file_functions.h:
+  - search_file_given_paths() is replaced by filename_search_paths()
+  - replace file_determine() with file_choose()
+
+* Tue Oct 06 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.5.2
+- New Features:
+  + New pseudo field 'ZhuYin'.
+  + allocate.h is in API.
+  + New unihan_query options: -O -P -T -Z -z
+  + Scalar String (U+XXXXX) is now be able to use in the input of Field query.
+  + New functions: unihanField_is_case_no_change() and unihanField_is_lowercase()
+- Fixed:
+  + Behavior of unihan_query -U is now corrected.
+  + Descriptions about pseudo field are corrected.
+  + Handle NULL of str in stringList_insert(StringList *sList, const char *str).
+- Changed:
+  + In document, "simply query" is replaced by "field query".
+  + unihanField_is_scalar_value() is renamed as unihanField_is_ucs4().
+  + pinyin_strip_tone() and zhuYin_strip_tone()  now return 0 if tone of
+    pinyin/zhuyin is not specified.
+  + Doxyfile is renamed as Doxygen.in, so no need to manually modified the
+  version number.
+
+* Tue Sep 23 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.5.1
+- New Features:
+  + PinYin accent format conversion functions (C and SQL scalar).
+  + ZhuYin tone mark format conversion functions (C and SQL scalar).
+  + PinYin <-->  ZhuYin conversion functions (C and SQL scalar).
+  + Display as ZhuYin.
+- Fixed:
+  + Correct counting in FreqRank field of kMandarin table.
+  + The query functions such as unihan_find_all_matched() returns SQL_Results type, to avoid the memory leaking problems.
+- Changed:
+  + unihanDb_open() now supports the R/W control.
+  + Changed CMakefile.txt to reflects the version scheme change of UnihanDb
+  + StringList type for storing const string arrays.
+  + Add test suite.
+  + Where-clause-generator is now able to escape the quote character(').
+  + unihan_field_validation is moved to test/, therefore it will not be in binary package.
+  + New make targets: rpm, srpm, rpm_db and srpm_db to generate rpm and srpm for libUnihan and UnihanDb.
+- Removed:
+  + unihanSql_get_result_table(). As it uses sqlite3_get_table() which might cause memory leak.
+
+* Fri Aug 08 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.4.1
+- Shows support fields and tables for unihan_query
+- Header files have moved to {include}/libUnihan
+- Completed the description of UnihanTable enumeration.
+- Completed the description of str_functions.h
+- In str_functions.h: unsignedStr_to_signedStr and signedStr_to_unsignedStr
+clones the inputs now, while _buffer postfix for the circumstances that the buffer is given.
+- Addressing C#6 [Bug 453520] Review Request: libUnihan
+- rpmlint undefined-non-weak-symbol problems solved.
+- Moved the include statement of private header files to Unihan_SQL_gen.c files.
+- Move the doc/{name} files  to doc/{name}-{version}.
+- Uhihan_enum.h and str_functions.h are now in API.
+
+* Mon Aug 04 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.4.0
+- unihan_test now became unihan_field_vaildation
+- Split the enumeration definition of Unihan.h to Unihan_enum.h
+- Add unihanDb_get_tableNames() and  unihanTable_get_db_fields()
+- Parameter arraySize in unihanField_array_index() is discarded.
+
+
+* Fri Jul 03 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.3.1
+- Add kMandarin frequency rank support.
+
+* Tue Jul 01 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.3
+- Initial public release.
+

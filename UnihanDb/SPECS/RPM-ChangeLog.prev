@@ -1,0 +1,12 @@
+* Tue Sep 23 2008 Ding-Yi Chen <dchen at redhat dot com> - 5.1.0-7
+- Correct the FreqRank field of kMandarinTable.
+
+* Mon Aug 11 2008 Ding-Yi Chen <dchen at redhat dot com> - 5.1.0-3
+- Sync with upstream version.
+- UnihanDb-doc version has changed from {version}-{rel} to {version}.
+
+* Fri Aug 01 2008 Ding-Yi Chen <dchen at redhat dot com> - 5.1-2
+- Field kIRGKangXi and kKangXi are split into kangXi_page, kangXi_charNum, and
+kangXi_virtrul
+- Field kHanyuPinlu are split into pinyin and pinyin_freq
+

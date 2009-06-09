@@ -22,7 +22,7 @@ Source1:        http://downloads.sourceforge.net/libunihan/%{name}-doc-%{version
 
 %description
 UnihanDb provides a Unihan character database in fifth normal form.
-The original Unihan textual data is not normalized, and further parsing 
+The original Unihan textual data is not normalized, and further parsing
 effort is needed to obtain data from compound values of Unihan "tags".
 This database splits those tag value into atom fields, thus in most case
 further parsing is not required.
@@ -51,3 +51,5 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}
 
 %changelog
+@RPM_CHANGELOG@
+

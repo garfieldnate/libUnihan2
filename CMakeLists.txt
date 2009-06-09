@@ -1,116 +1,154 @@
 cmake_minimum_required(VERSION 2.4)
+####################################################################
+# Init Definition
+####################################################################
+INCLUDE(init.CMakeLists.txt)
+INCLUDE(libUnihan-common.CMakeLists.txt)
 
 ####################################################################
 # Project basic information
 ####################################################################
 PROJECT(libUnihan)
+SET(PROJECT_DESCRIPTION "C library for Unihan character database in fifth normal form")
 SET(CMAKE_C_FLAGS "-Wall -g")
-SET(PRJ_VER_MAJOR "0")
-SET(PRJ_VER_MINOR "9")
-SET(PRJ_VER_PATCH "9")
-SET(PRJ_VER_RELEASE "0")
+
+SET(RELEASE_FILE ${CMAKE_SOURCE_DIR}/RELEASE-NOTES.txt)
+SET(RPM_RELEASE_FILE ${CMAKE_SOURCE_DIR}/SPECS/RPM-RELEASE-NOTES.txt)
+SETTING_FILE_GET_ATTRIBUTE(PRJ_VER_PATTERN "PRJ_VER" ${RELEASE_FILE})
+#MESSAGE("PRJ_VER_PATTERN=${PRJ_VER_PATTERN}")
+SETTING_FILE_GET_ATTRIBUTE(PRJ_VER_RELEASE "RPM_RELEASE" ${RPM_RELEASE_FILE})
+
 SET(SO_VER_MAJOR "1")
 SET(SO_VER_MINOR "0")
 
-# For CVS changelog
-SET(CHANGE_SUMMARY "This release fixes the no API documents, also corrects some functions in  collection.[ch], file_functions.[ch]")
+# For CVS/SVN/GIT change message
+SETTING_FILE_GET_ATTRIBUTE(CHANGE_SUMMARY "SUMMARY" ${RELEASE_FILE})
+#MESSAGE("### CHANGE_SUMMARY=${CHANGE_SUMMARY}")
 
-SET(SUPPORTED_DIST_TAGS F-9 F-10 EL-5)
-SET(BODHI_DIST_TAGS fc9 fc10)
+# Changelog items
+COMMAND_OUTPUT_TO_VARIABLE(CHANGELOG_ITEMS tail -n +5 ${RELEASE_FILE})
+#MESSAGE("### CHANGELOG_ITEMS=${CHANGELOG_ITEMS}|")
 
+STRING(COMPARE GREATER "${PRJ_VER_RELEASE}" "1" NEED_RPM_RELEASE_INFO)
+IF(${NEED_RPM_RELEASE_INFO})
+    SETTING_FILE_GET_ATTRIBUTE(RPM_RELEASE_SUMMARY "RPM_RELEASE_SUMMARY" ${RPM_RELEASE_FILE})
+    COMMAND_OUTPUT_TO_VARIABLE(RPM_CHANGELOG_ITEMS tail -n +5 ${RPM_RELEASE_FILE})
+ELSE(${NEED_RPM_RELEASE_INFO})
+    SET(RPM_RELEASE_SUMMARY ${CHANGE_SUMMARY})
+    SET(RPM_CHANGELOG_ITEMS ${CHANGELOG_ITEMS})
+ENDIF(${NEED_RPM_RELEASE_INFO})
+#MESSAGE("### RPM_RELEASE_SUMMARY=${RPM_RELEASE_SUMMARY}")
+#MESSAGE("### RPM_CHANGELOG_ITEMS=|${RPM_CHANGELOG_ITEMS}|")
 
+#==================================================================
+# Developer setting.
+#
+SET(CVS_DIST_TAGS F-10 F-11 EL-5)
+SET(HOSTING_SERVICE_PROVIDER "Source Forge")
+SET(DEVELOPER_SETTING_FILE "DEVELOPER_SETTING_NO_PACK")
+SET(DEVELOPER_DEPENDS UploadPkg.batch.in)
+IF(EXISTS ${DEVELOPER_SETTING_FILE})
+    INCLUDE(Developer)
+    CONFIGURE_FILE(UploadPkg.batch.in UploadPkg.batch)
+    ADD_CUSTOM_TARGET(commit
+	COMMAND svn commit -m "${CHANGE_SUMMARY}"
+	COMMENT "Commit the changes"
+	)
+
+    SETTING_FILE_GET_ATTRIBUTE(SSH_USER "SSH_USER" ${DEVELOPER_SETTING_FILE})
+    SETTING_FILE_GET_ATTRIBUTE(SSH_ARGS "SSH_ARGS" ${DEVELOPER_SETTING_FILE})
+
+    DEVELOPER_UPLOAD(SERVERTYPE sftp
+	USER ${SSH_USER}
+	BATCH "UploadPkg.batch"
+	SITE "frs.sourceforge.net"
+	OPTIONS ${SSH_ARGS}
+	)
+ENDIF(EXISTS ${DEVELOPER_SETTING_FILE})
 
 ####################################################################
 # Includes
 ####################################################################
+#INCLUDE(Gettext)
 
 #==================================================================
 # Include common.CMakeLists.txt
 #
-
-SET(GENERATE_DOXYFILE TRUE )
-SET(GENERATE_UPLOADPKG_BATCH TRUE)
-SET(GENERATE_SPEC TRUE)
 INCLUDE(common.CMakeLists.txt)
-# MESSAGE("PRJ_VER_FULL=${PRJ_VER_FULL}")
 
-#==================================================================
-# Include libUnihan-common.CMakeLists.txt
-#
-INCLUDE(libUnihan-common.CMakeLists.txt)
+####################################################################
+# Post Include setting
+####################################################################
 
+####################################################################
+# RPM configuration
+####################################################################
+FILE(READ ${CMAKE_SOURCE_DIR}/SPECS/RPM-ChangeLog RPM_CHANGELOG)
+GENERATE_SPEC(SPECS/${PROJECT_NAME}.spec.in)
 
 ####################################################################
 # Definitions
 ####################################################################
-ADD_DEFINITIONS(-DPRJ_VERSION='"${PRJ_VER_MAJOR}.${PRJ_VER_MINOR}.${PRJ_VER_PATCH}-${PRJ_VER_RELEASE}"')
+ADD_DEFINITIONS(-DPRJ_VERSION='"${PRJ_VER_FULL}"')
+ADD_DEFINITIONS(-DPKGDATADIR='"${PROJECT_DATADIR}"')
+ADD_DEFINITIONS(-DSYSTEMDIR='"${PROJECT_DATADIR}"')
 ADD_DEFINITIONS(-DSQLITE_MAX_ATTACHED=30)
 
-#==================================================================
-# Required packages
-#
+####################################################################
+# Package Dependencies
+####################################################################
 FIND_PACKAGE(PkgConfig)
-PKG_CHECK_MODULES(GLIB2 glib-2.0)
+PKG_CHECK_MODULES(GLIB2 REQUIRED glib-2.0)
 PKG_CHECK_MODULES(SQLITE3 sqlite3)
 
-#==================================================================
-# Source code subdirectories
-#
+####################################################################
+# Sub directories
+####################################################################
+#SET(TRANSLATED zh_CN zh_TW)
+#ADD_SUBDIRECTORY(po)
 ADD_SUBDIRECTORY(src bin)
 ADD_SUBDIRECTORY(test)
 
-#ADD_CUSTOM_TARGET(${DB_NAME}
-#    COMMAND /bin/ln -sf ${DB_NAME}.${DB_VER}-${DB_RELEASE} ${DB_NAME}
-#    DEPENDS ${DB_NAME}.${DB_VER}-${DB_RELEASE})
+####################################################################
+# Packing
+####################################################################
 
-
-SET(MAIN_DOCS AUTHORS README ChangeLog NEWS COPYING COPYING.LESSER )
+#====================================================================
+# Files to be install.
+#
+SET(MAIN_DOCS AUTHORS README ChangeLog NEWS COPYING COPYING.LESSER)
 
 INSTALL(FILES ${MAIN_DOCS}
-    DESTINATION "${docdir}/${PROJECT_NAME}-${PRJ_VER}")
+    DESTINATION "${PROJECT_DOCDIR}")
 
-
+#INSTALL(DIRECTORY icons
+#    DESTINATION  ${PROJECT_DATADIR})
 
 #====================================================================
 # CPack configuration
 #
 
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "libUnihan: A C library for Unihan Database")
-SET(CPACK_PACKAGE_VENDOR "Red Hat, APAC, Inc.")
-SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README")
 SET(CPACK_RESOURCE_FILE_LICENSE
     ${CMAKE_CURRENT_SOURCE_DIR}/COPYING)
-SET(CPACK_RESOURCE_FILE_LICENSE
-    ${CMAKE_CURRENT_SOURCE_DIR}/COPYING.LESSER)
-SET(PRJ_COMMON_IGNORE_FILES ${COMMON_IGNORE_FILES} ${RPM_IGNORE_FILES}
+SET(PRJ_COMMON_IGNORE_FILES
+    "/docs/"
+    "\\\\.cache$"  "\\\\.spec$"
+    "ibus-chewing-engine.*\\\\.[ch]$" "maker-dialog.*\\\\.[ch]$"
+    "messages.po$"
+    )
+
+SET(CPACK_SOURCE_IGNORE_FILES ${CPACK_SOURCE_IGNORE_FILES} ${PRJ_COMMON_IGNORE_FILES} "/bin/"
     "/doc/"  "/www/" ".vis$"
-    ".db$" "test/check_phonetic$" "test/check_toneMark$"
+    ".sqlite$" "test/check_phonetic$" "test/check_toneMark$"
     "test/unihan_field_validation$" "Doxyfile$" "UploadPkg.batch$"
     "/UnihanDb/"
     "libUnihan.spec$")
 
-SET(CPACK_SOURCE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/bin/"
-    "-db$" ".cache$")
-SET(CPACK_PACKAGE_IGNORE_FILES ${PRJ_COMMON_IGNORE_FILES} "/src/" "/test/"
-    ".spec$" ".in$" )
+SET(CPACK_PACKAGE_IGNORE_FILES ${CPACK_BINARY_IGNORE_FILES} ${PRJ_COMMON_IGNORE_FILES} "/src/"
+    "/test/"
+    "\\\\.spec$" "\\\\.in$" "\\\\.pot$")
 
 INCLUDE(CPack)
-
-
-#====================================================================
-# Upload the package releases to hosting service provider (Source forge).
-#
-
-ADD_CUSTOM_TARGET(ChangeLog
-    COMMAND echo "* ${DATE} - ${AUTHORS} <${MAINTAINER_EMAIL}> - ${PRJ_VER_FULL}" > ChangeLog
-    COMMAND cat ChangeLog.in >> ChangeLog
-    DEPENDS ChangeLog.in
-    COMMENT "Making ChangeLog"
-    VERBATIM
-    )
-
-ADD_DEPENDENCIES(pack_src ChangeLog)
-
 
 ####################################################################
 # Test Suites.

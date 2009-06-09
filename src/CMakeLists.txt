@@ -13,14 +13,12 @@ CHECK_LIBRARY_EXISTS(glib-2.0 g_string_chunk_clear "" HAVE_G_STRING_CHUNK_CLEAR)
 CHECK_LIBRARY_EXISTS(sqlite3 sqlite3_open_v2 "" HAVE_SQLITE3_OPEN_V2)
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/config.h)
 
-
 # Unihan_SQL_gen.c is already included in Unihan.c,
 # no need to be in libUnihan_SRCS
 
 #SET(libUnihan_SRCS Unihan.c Unihan.h Unihan_enum.h
 #    Unihan_phonetic.c Unihan_phonetic.h
 #)
-
 
 SET(libUnihan_SRCS
     Unihan_phonetic.c Unihan_phonetic.h Unihan.h
@@ -64,9 +62,6 @@ TARGET_LINK_LIBRARIES(Unihan_builder ${SQLITE3_LIBRARIES} ${GLIB2_LIBRARIES}
 TARGET_LINK_LIBRARIES(unihan_converter Unihan_supporting Unihan Unihan_builder)
 #TARGET_LINK_LIBRARIES(unihan_query Unihan_supporting Unihan)
 #TARGET_LINK_LIBRARIES(unihan_rebuild_cache Unihan_supporting Unihan)
-
-
-
 
 IF(NOT DEFINED LIB_INSTALL_DIR)
     IF( $ENV{MACHTYPE} MATCHES "64")

@@ -1,0 +1,135 @@
+- New Features:
+  Option -v (version) is available for all programs.
+- New Fields:
+  + UNIHAN_FIELD_RADICAL_IS_SIMPLIFIED "radical_is_simplified" .
+  + UNIHAN_FIELD_PINYIN_BASE "pinYin_base".
+  + UNIHAN_FIELD_PINYIN_TONE "pinYin_tone".
+
+- New data structures:
+  Syllable: store normalized phonetic transcription and tone.
+
+- New functions:
+  file_functions.h: lsDir().
+  unihan.h: unihanDb_get_all_fields().
+  unihan.h: unihanDb_get_all_pseudo_fields().
+  unihan.h: unihanDb_get_all_real_fields().
+  unihan.h: unihanDb_get_all_tables().
+  unihan.h: unihanField_is_uppercase()
+
+- Fixed:
+  + unihan_find_firstMatched() is corrected as unihan_find_first_matched()
+  + The field index kCheungBauer and kCheungBauerIndex are corrected.
+
+- Changed Features:
+  + All programs now use [-V number] instead of multiple V.
+
+- Changed Fields:
+  + UNIHAN_FIELD_KANGXI_PAGE "kangXi_page" is renamed as UNIHAN_FIELD_DICT_PAGE "dict_page"
+  + UNIHAN_FIELD_KANGXI_CHARNUM "kangXi_charNum" is renamed as UNIHAN_FIELD_DICT_POSITION "dict_position"
+  + UNIHAN_FIELD_KANGXI_VIRTUAL "kangXi_virtual" is renamed as UNIHAN_FIELD_DICT_POSITION "dict_virtual"
+
+
+- Changed Functions:
+  + Functions that implement sqlite_error_callback now must return int.
+  + Pinyin/Zhuyin functions does not handle SQL wildchar now, because it already be done in field matching functions.
+  + Pinyin/Zhuyin functions normalize strings as NFD by default, there are flags to change the behavior nevertheless.
+  + The behavior of unihanDb_open_default() and unihan_open() has changed:
+    now unihanDb_open() opens the user-defined cache and the db it mentions;
+    while unihanDb_open_default() opens the system cache and the db it mentions.
+  + unihanChar_has_property() is renamed as unihanChar_has_field()
+  + unihanField_get_table() is renamed as unihanField_get_preferred_table()
+  + Argument const_count in stringList_sized_new() is removed.
+
+- Removed:
+  + No more UNIHAN_DEFAULT_DB
+  + UNIHAN_FIELD_VARIANT_TYPE is removed.
+  + unihanField_is_case_no_change()
+  + unihan_insert()
+  + unihan_insert_no_duplicate()
+  + unihan_insert_value()
+  + UNIHAN_QUERY_OPTION_GET_PINYIN_FORMAT()
+  + UNIHAN_QUERY_OPTION_SET_PINYIN_FORMAT()
+  + UNIHAN_QUERY_OPTION_GET_ZHUYIN_FORMAT()
+  + UNIHAN_QUERY_OPTION_SET_ZHUYIN_FORMAT()
+
+* Tue Oct 21 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.5.3-3
+- Add following make targets: rpm_lint, koji_submit, koji_build,  pkg_remove_old.
+
+* Mon Oct 20 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.5.3-0
+- New Features:
+  collection.h, file_function.h and verboseMsg.h is in API.
+- Fixed:
+  Missing documents in 0.5.2
+- Changed:
+  + collection.h:
+    - G_ARRAY_COPY is renamed as G_ARRAY_CONCAT to reflect its real functionality.
+    - hashSet_new_full() now only takes 4 parameters because value value_destroy_func is not required,
+      as in hashSet, key == value.
+  + file_functions.h:
+  - search_file_given_paths() is replaced by filename_search_paths()
+  - replace file_determine() with file_choose()
+
+* Tue Oct 06 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.5.2-0
+- New Features:
+  + New pseudo field 'ZhuYin'.
+  + allocate.h is in API.
+  + New unihan_query options: -O -P -T -Z -z
+  + Scalar String (U+XXXXX) is now be able to use in the input of Field query.
+  + New functions: unihanField_is_case_no_change() and unihanField_is_lowercase()
+- Fixed:
+  + Behavior of unihan_query -U is now corrected.
+  + Descriptions about pseudo field are corrected.
+  + Handle NULL of str in stringList_insert(StringList *sList, const char *str).
+- Changed:
+  + In document, "simply query" is replaced by "field query".
+  + unihanField_is_scalar_value() is renamed as unihanField_is_ucs4().
+  + pinyin_strip_tone() and zhuYin_strip_tone()  now return 0 if tone of
+    pinyin/zhuyin is not specified.
+  + Doxyfile is renamed as Doxygen.in, so no need to manually modified the
+  version number.
+
+* Tue Sep 23 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.5.1-0
+- New Features:
+  + PinYin accent format conversion functions (C and SQL scalar).
+  + ZhuYin tone mark format conversion functions (C and SQL scalar).
+  + PinYin <-->  ZhuYin conversion functions (C and SQL scalar).
+  + Display as ZhuYin.
+- Fixed:
+  + Correct counting in FreqRank field of kMandarin table.
+  + The query functions such as unihan_find_all_matched() returns SQL_Results type, to avoid the memory leaking problems.
+- Changed:
+  + unihanDb_open() now supports the R/W control.
+  + Changed CMakefile.txt to reflects the version scheme change of UnihanDb
+  + StringList type for storing const string arrays.
+  + Add test suite.
+  + Where-clause-generator is now able to escape the quote character(').
+  + unihan_field_validation is moved to test/, therefore it will not be in binary package.
+  + New make targets: rpm, srpm, rpm_db and srpm_db to generate rpm and srpm for libUnihan and UnihanDb.
+- Removed:
+  + unihanSql_get_result_table(). As it uses sqlite3_get_table() which might cause memory leak.
+
+* Fri Aug 08 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.4.1-0
+- Shows support fields and tables for unihan_query
+- Header files have moved to {include}/libUnihan
+- Completed the description of UnihanTable enumeration.
+- Completed the description of str_functions.h
+- In str_functions.h: unsignedStr_to_signedStr and signedStr_to_unsignedStr
+clones the inputs now, while _buffer postfix for the circumstances that the buffer is given.
+- Addressing C#6 [Bug 453520] Review Request: libUnihan
+- rpmlint undefined-non-weak-symbol problems solved.
+- Moved the include statement of private header files to Unihan_SQL_gen.c files.
+- Move the doc/{name} files  to doc/{name}-{version}.
+- Uhihan_enum.h and str_functions.h are now in API.
+
+* Mon Aug 04 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.4.0-0
+- unihan_test now became unihan_field_vaildation
+- Split the enumeration definition of Unihan.h to Unihan_enum.h
+- Add unihanDb_get_tableNames() and  unihanTable_get_db_fields()
+- Parameter arraySize in unihanField_array_index() is discarded.
+
+* Fri Jul 03 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.3.1-0
+- Add kMandarin frequency rank support.
+
+* Tue Jul 01 2008 Ding-Yi Chen <dchen at redhat dot com> - 0.3
+- Initial public release.
+

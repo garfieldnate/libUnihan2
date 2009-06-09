@@ -1,0 +1,56 @@
+PRJ_VER=0.9.9
+SUMMARY=Preview of libUnihan 1.0, almost rewritten.
+# Changes
+- New Features:
+  Option -v (version) is available for all programs.
+- New Fields:
+  + UNIHAN_FIELD_RADICAL_IS_SIMPLIFIED "radical_is_simplified" .
+  + UNIHAN_FIELD_PINYIN_BASE "pinYin_base".
+  + UNIHAN_FIELD_PINYIN_TONE "pinYin_tone".
+
+- New data structures:
+  Syllable: store normalized phonetic transcription and tone.
+
+- New functions:
+ file_functions.h: lsDir().
+ unihan.h: unihanDb_get_all_fields().
+ unihan.h: unihanDb_get_all_pseudo_fields().
+ unihan.h: unihanDb_get_all_real_fields().
+ unihan.h: unihanDb_get_all_tables().
+ unihan.h: unihanField_is_uppercase()
+
+- Fixed:
+  + unihan_find_firstMatched() is corrected as unihan_find_first_matched()
+    + The field index kCheungBauer and kCheungBauerIndex are corrected.
+
+- Changed Features:
+  + All programs now use [-V number] instead of multiple V.
+
+- Changed Fields:
+  + UNIHAN_FIELD_KANGXI_PAGE "kangXi_page" is renamed as UNIHAN_FIELD_DICT_PAGE "dict_page"
+  + UNIHAN_FIELD_KANGXI_CHARNUM "kangXi_charNum" is renamed as UNIHAN_FIELD_DICT_POSITION "dict_position"
+  + UNIHAN_FIELD_KANGXI_VIRTUAL "kangXi_virtual" is renamed as UNIHAN_FIELD_DICT_POSITION "dict_virtual"
+
+- Changed Functions:
+  + Functions that implement sqlite_error_callback now must return int.
+  + Pinyin/Zhuyin functions does not handle SQL wildchar now, because it already be done in field matching functions.
+  + Pinyin/Zhuyin functions normalize strings as NFD by default, there are flags to change the behavior nevertheless.
+  + The behavior of unihanDb_open_default() and unihan_open() has changed:
+    now unihanDb_open() opens the user-defined cache and the db it mentions;
+    while unihanDb_open_default() opens the system cache and the db it mentions.
+  + unihanChar_has_property() is renamed as unihanChar_has_field()
+  + unihanField_get_table() is renamed as unihanField_get_preferred_table()
+  + Argument const_count in stringList_sized_new() is removed.
+
+- Removed:
+  + No more UNIHAN_DEFAULT_DB
+  + UNIHAN_FIELD_VARIANT_TYPE is removed.
+  + unihanField_is_case_no_change()
+  + unihan_insert()
+  + unihan_insert_no_duplicate()
+  + unihan_insert_value()
+  + UNIHAN_QUERY_OPTION_GET_PINYIN_FORMAT()
+  + UNIHAN_QUERY_OPTION_SET_PINYIN_FORMAT()
+  + UNIHAN_QUERY_OPTION_GET_ZHUYIN_FORMAT()
+  + UNIHAN_QUERY_OPTION_SET_ZHUYIN_FORMAT()
+

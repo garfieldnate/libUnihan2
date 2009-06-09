@@ -1,3 +1,0 @@
-include: /usr/lib/rpm/redhat/rpmrc
-
-macrofiles:     /usr/lib/rpm/macros:/usr/lib/rpm/%{_target}/macros:/usr/lib/rpm/redhat/macros:/etc/rpm/macros.*:/etc/rpm/macros:/etc/rpm/%{_target}/macros:rpmmacros
