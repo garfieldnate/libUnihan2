@@ -10,7 +10,7 @@ INCLUDE(libUnihan-common.CMakeLists.txt)
 ####################################################################
 PROJECT(libUnihan)
 SET(PROJECT_DESCRIPTION "C library for Unihan character database in fifth normal form")
-SET(CMAKE_C_FLAGS "-Wall -g")
+SET(CMAKE_C_FLAGS "-Wall -pg -g")
 
 SET(RELEASE_FILE ${CMAKE_SOURCE_DIR}/RELEASE-NOTES.txt)
 SET(RPM_RELEASE_FILE ${CMAKE_SOURCE_DIR}/SPECS/RPM-RELEASE-NOTES.txt)

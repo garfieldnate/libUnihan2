@@ -1075,7 +1075,7 @@ static gboolean is_valid_arguments(int argc, char **argv) {
     gchar logFile_name[PATH_MAX];
     g_strlcpy(logFile_name,outputDir,PATH_MAX);
     path_concat(logFile_name,"Unihan.log",PATH_MAX);
-    if ((logFile=fopen("logFile_name","w"))==NULL){
+    if ((logFile=fopen(logFile_name,"w"))==NULL){
 	fprintf(stderr, "Unable to open log file %s\n",logFile_name);
 	return -2;
     }

@@ -18,7 +18,7 @@ Core		Unihan_core.sqlite
 Recommended	Unihan_recommended.sqlite
 
 # Tables of variants
-Variant	Unihan_variant.db
+Variant	Unihan_variant.sqlite
 
 # Major Dictionary references, such as KangXi and other dictionaries used in four dictionary sort algorithm
 DictRef_Major	Unihan_dictRef_major.sqlite
