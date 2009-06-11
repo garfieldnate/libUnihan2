@@ -47,7 +47,7 @@
 #define STRING_BUFFER_SIZE_DEFAULT	2000
 #define COREDB_ALIAS			"Core"
 #define DEFAULTDB_ALIAS_DEFAULT		"default"
-#define DEFAULTDB_FILENAME_DEFAULT	"Unihan_" DEFAULTDB_ALIAS_DEFAULT
+#define DEFAULTDB_FILENAME_DEFAULT	"Unihan_" DEFAULTDB_ALIAS_DEFAULT UNIHAN_DB_POSTFIX
 #define METADB_FILENAME			"_meta.sqlite"
 
 #define USAGE_MSG_CONVERTER_HEAD "Usage: %s [-h] [-V num] [-v] [-f] [-o outputDir] [-t dbTableFile] <Unihan.txt>\n"
@@ -453,10 +453,10 @@ static sqlite3* unihanTable_get_db(UnihanTable table){
     return (sqlite3 *) g_hash_table_lookup(tableHash,&table);
 }
 
-static int dB_write(sqlite3 *db, const gchar *sqlClause){
-    verboseMsg_print(VERBOSE_MSG_INFO2,"[I2] dB_write() Executing: %s\n",sqlClause);
+static int db_write(sqlite3 *db, const gchar *sqlClause){
+    verboseMsg_print(VERBOSE_MSG_INFO2,"[I2] db_write() Executing: %s\n",sqlClause);
     return sqlite_exec_handle_error(db, sqlClause, NULL, NULL,
-	    sqlite_error_callback_hide_known_constraint_error, "dB_write()" );
+	    sqlite_error_callback_hide_known_constraint_error, "db_write()" );
 }
 
 static int unihan_import_realField(gunichar code, UnihanField field,
@@ -469,7 +469,7 @@ static int unihan_import_realField(gunichar code, UnihanField field,
     unihan_import_value_append(sqlClause,field,tagValue_normalized);
     g_strlcat(sqlClause,");",STRING_BUFFER_SIZE_DEFAULT);
 
-    return dB_write(unihanTable_get_db(table), sqlClause);
+    return db_write(unihanTable_get_db(table), sqlClause);
 }
 
 static int unihan_import_pseudoField(gunichar code, UnihanField field,
@@ -546,7 +546,7 @@ static int unihan_import_pseudoField(gunichar code, UnihanField field,
 	if (!empty){
 	    g_strlcat(sqlClause,sqlClause_values,STRING_BUFFER_SIZE_DEFAULT);
 	    g_strlcat(sqlClause,");",STRING_BUFFER_SIZE_DEFAULT);
-	    ret=dB_write(unihanTable_get_db(importFormat->table), sqlClause);
+	    ret=db_write(unihanTable_get_db(importFormat->table), sqlClause);
 	    if (ret){
 		break;
 	    }

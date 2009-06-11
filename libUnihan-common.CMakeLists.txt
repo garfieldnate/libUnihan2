@@ -6,6 +6,13 @@ SET(AUTHORS "Ding-Yi Chen")
 SET(MAINTAINER "Ding-Yi Chen <dchen at redhat.com>")
 
 SET(DB_DIR ${datadir}/UnihanDb)
+
+IF(NOT DEFINED DB_POSTFIX)
+    SET(DB_POSTFIX ".sqlite")
+    ADD_DEFINITIONS(-DUNIHAN_DB_POSTFIX='"${DB_POSTFIX}"')
+ENDIF()
+
+
 #
 # UNIHAN_DB_DEFAULT_PATH stores the system-wide setting DB files.
 #

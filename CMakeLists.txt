@@ -40,6 +40,7 @@ ENDIF(${NEED_RPM_RELEASE_INFO})
 #MESSAGE("### RPM_RELEASE_SUMMARY=${RPM_RELEASE_SUMMARY}")
 #MESSAGE("### RPM_CHANGELOG_ITEMS=|${RPM_CHANGELOG_ITEMS}|")
 
+CONFIGURE_FILE(UnihanDb/dbTable-default.in UnihanDb/dbTable-default)
 #==================================================================
 # Developer setting.
 #

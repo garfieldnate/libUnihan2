@@ -12,22 +12,22 @@
 # DB Alias		Filename
 
 # Core tables are tables which are required in libUnihan.
-Core		Unihan_core.sqlite
+Core		Unihan_core@DB_POSTFIX@
 
 # Recommended tables
-Recommended	Unihan_recommended.sqlite
+Recommended	Unihan_recommended@DB_POSTFIX@
 
 # Tables of variants
 Variant	Unihan_variant.sqlite
 
 # Major Dictionary references, such as KangXi and other dictionaries used in four dictionary sort algorithm
-DictRef_Major	Unihan_dictRef_major.sqlite
+DictRef_Major	Unihan_dictRef_major@DB_POSTFIX@
 
 # Popular encoding, such as GB2312, BIG5 and others.
-Mapping_Popular	Unihan_mapping_popular.sqlite
+Mapping_Popular	Unihan_mapping_popular@DB_POSTFIX@
 
 # Infrequent used data should store here.
-Misc	Unihan_misc.sqlite
+Misc	Unihan_misc@DB_POSTFIX@
 
 =================================
 ############################
