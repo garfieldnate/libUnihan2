@@ -18,7 +18,7 @@
  * License along with this program; if not, write to the
  * Free Software Foundation, Inc., 59 Temple Place, Suite 330,
  * Boston, MA  02111-1307  USA
- */ 
+ */
 #include <stdio.h>
 #include <stdarg.h>
 #include <limits.h>
@@ -106,7 +106,7 @@ void stringList_clear(StringList *sList){
 #else
     g_string_chunk_free(sList->chunk);
     sList->chunk=g_string_chunk_new(sList->chunk_size_inital);
-#endif    
+#endif
 }
 
 int stringList_find_string(StringList *sList,const gchar* str){
@@ -133,30 +133,23 @@ const gchar *stringList_index(StringList *sList,guint index){
     return g_ptr_array_index(sList->ptrArray,index);
 }
 
-
 guint stringList_insert(StringList *sList, const gchar *str){
-    g_ptr_array_remove_index_fast (sList->ptrArray,sList->len);
-    if (str){
-	gchar *ptr=g_string_chunk_insert (sList->chunk,str);
-	g_ptr_array_add(sList->ptrArray,ptr);
-    }else{
-	g_ptr_array_add(sList->ptrArray,NULL);
+    gchar *strPtr=NULL;
+    if (strPtr){
+	strPtr=g_string_chunk_insert (sList->chunk,str);
     }
+    sList->ptrArray->pdata[sList->ptrArray->len] = (gpointer) strPtr;
     g_ptr_array_add(sList->ptrArray,NULL);
     sList->len++;
     return sList->len-1;
-
-
 }
 
 guint stringList_insert_const(StringList *sList, const gchar *str){
-    g_ptr_array_remove_index_fast (sList->ptrArray,sList->len);
     gchar *strPtr=(gchar *) g_hash_table_lookup(sList->hTable,str);
-
     if (!strPtr){
 	strPtr=g_string_chunk_insert_const (sList->chunk,str);
     }
-    g_ptr_array_add(sList->ptrArray,strPtr);
+    sList->ptrArray->pdata[sList->ptrArray->len] = (gpointer) strPtr;
     g_ptr_array_add(sList->ptrArray,NULL);
     sList->len++;
     return sList->len-1;
@@ -169,7 +162,6 @@ void stringList_free(StringList *sList){
     g_string_chunk_free(sList->chunk);
     g_free(sList);
 }
-
 
 // typedef gpointer (* Regex_Result_Callback) (gpointer option, const gchar* str, Regex_Result *result);
 
@@ -186,7 +178,7 @@ void stringList_free(StringList *sList){
 //    g_free(rResult);
 //}
 
-//RegexResult *regexResult_match_once_regex_t(regex_t *preg, const gchar* str, 
+//RegexResult *regexResult_match_once_regex_t(regex_t *preg, const gchar* str,
 //        int eflags){
 //    int i;
 //    int nmatch=preg->re_nsub+1;
@@ -208,7 +200,7 @@ void stringList_free(StringList *sList){
 //    return rResult;
 //}
 
-//RegexResult *regexResult_match_regex_t(regex_t *preg,const gchar* str, int eflags, 
+//RegexResult *regexResult_match_regex_t(regex_t *preg,const gchar* str, int eflags,
 //        guint regexResultFlags){
 //    gchar *currPtr=(gchar *)str;
 //    int len=strlen(str);
@@ -216,7 +208,7 @@ void stringList_free(StringList *sList){
 //    int counter=0;
 //    gchar *newStr;
 //    RegexResult *currResult=NULL:
-//    RegexResult *rResult=regexResult_new();  
+//    RegexResult *rResult=regexResult_new();
 //    gchar *resultStr;
 //    int resultStr_so,resultStr_eo;
 //    int maxEo;
@@ -259,7 +251,7 @@ void stringList_free(StringList *sList){
 //    return rResult;
 //}
 
-//RegexResult *regexResult_match(const gchar *pattern,const gchar *str, 
+//RegexResult *regexResult_match(const gchar *pattern,const gchar *str,
 //        int cflags, int eflags, guint regexResultFlags){
 //    regex_t *preg=NULL;
 //    int ret;
@@ -328,13 +320,13 @@ static void formattedOutputDirective_free(FormattedCombineDirective* directive){
 static int  string_formatted_combine_expand_directive(
 	GString *strBuf, StringList *sList, int *counter_ptr, FormattedCombineDirective* directive);
 
-/* 
+/*
  * errno 0: index of subpattern
  *       >0: error
  */
 static FormattedCombineDirective* string_formatted_combine_get_directive(
 	const gchar *format, StringList *sList,guint *currPos_ptr,int *counter_ptr){
-    
+
     gchar c;
     RegexReplaceStage stage=REGEX_EVAL_STAGE_INIT;
     GString *option1Str=NULL;
@@ -846,7 +838,7 @@ gchar *string_formatted_combine(const gchar *format,StringList *sList,int *count
 	}
     }
     return g_string_free(strBuf,FALSE);
-    
+
 }
 
 static gchar *string_get_matched_substring(const gchar *str, regmatch_t *pmatch, guint index){
@@ -864,7 +856,7 @@ static gchar *string_get_matched_substring(const gchar *str, regmatch_t *pmatch,
     return result;
 }
 
-gchar *string_regex_formatted_combine_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
+gchar *string_regex_formatted_combine_regex_t(const gchar *str, const regex_t *preg, const gchar *format,
 	int eflags, int *counter_ptr){
     guint nmatch=preg->re_nsub+1;
     regmatch_t *pmatch=NEW_ARRAY_INSTANCE(nmatch,regmatch_t);
@@ -888,7 +880,7 @@ gchar *string_regex_formatted_combine_regex_t(const gchar *str, const regex_t *p
     return result;
 }
 
-gchar *string_regex_formatted_combine(const gchar *str, const gchar *pattern, const gchar *format, 
+gchar *string_regex_formatted_combine(const gchar *str, const gchar *pattern, const gchar *format,
 	int cflags, int eflags, int *counter_ptr){
     regex_t preg;
     int ret;
@@ -907,7 +899,7 @@ gchar *string_regex_formatted_combine(const gchar *str, const gchar *pattern, co
 }
 
 
-gchar *string_regex_replace_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
+gchar *string_regex_replace_regex_t(const gchar *str, const regex_t *preg, const gchar *format,
 	int eflags, int *counter_ptr){
 
     guint i;
@@ -927,7 +919,7 @@ gchar *string_regex_replace_regex_t(const gchar *str, const regex_t *preg, const
     }
 
     gchar *evalStr=string_regex_formatted_combine_regex_t(str, preg, format, eflags, counter_ptr);
-    
+
     if (evalStr){
 	g_string_append(strBuf,evalStr);
 	g_free(evalStr);
@@ -945,7 +937,7 @@ gchar *string_regex_replace_regex_t(const gchar *str, const regex_t *preg, const
     return g_string_free(strBuf,FALSE);
 }
 
-gchar *string_regex_replace(const gchar *str, const gchar *pattern, const gchar *format, 
+gchar *string_regex_replace(const gchar *str, const gchar *pattern, const gchar *format,
 	int cflags, int eflags, int *counter_ptr){
 
     regex_t preg;

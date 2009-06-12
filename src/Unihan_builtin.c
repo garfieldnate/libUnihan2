@@ -177,10 +177,25 @@ const char *unihanTable_to_string_builtin(UnihanTable table){
  * Importing Format
  */
 
+static gint field_ImportFormat_index_table[UNIHAN_FIELD_3RD_PARTY];
+
 void unihanPseudoFieldImportFormat_enumerate_init_builtin(Enumerate *e, UnihanField *field){
-    e->index=-1;
+    static gboolean initialized=FALSE;
+    if (!initialized){
+	/* Filling the field_ImportFormat_index_table */
+	gint i,lastField=UNIHAN_INVALID_FIELD;
+	for(i=0;i<UNIHAN_FIELD_3RD_PARTY;i++){
+	    field_ImportFormat_index_table[i]=-1;
+	}
+	for(i=0;PSEUDOFIELD_IMPORT_FORMAT[i].pseudoField!=UNIHAN_INVALID_FIELD;i++){
+	    if (PSEUDOFIELD_IMPORT_FORMAT[i].pseudoField!=lastField){
+		field_ImportFormat_index_table[PSEUDOFIELD_IMPORT_FORMAT[i].pseudoField]=i;
+		lastField=PSEUDOFIELD_IMPORT_FORMAT[i].pseudoField;
+	    }
+	}
+    }
+    e->index=field_ImportFormat_index_table[*field];
     e->userData=field;
-    unihanPseudoFieldImportFormat_enumerate_next_builtin(e);
 }
 
 gboolean unihanPseudoFieldImportFormat_enumerate_has_next_builtin(Enumerate *e){

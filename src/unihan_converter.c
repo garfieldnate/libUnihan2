@@ -50,13 +50,14 @@
 #define DEFAULTDB_FILENAME_DEFAULT	"Unihan_" DEFAULTDB_ALIAS_DEFAULT UNIHAN_DB_POSTFIX
 #define METADB_FILENAME			"_meta.sqlite"
 
-#define USAGE_MSG_CONVERTER_HEAD "Usage: %s [-h] [-V num] [-v] [-f] [-o outputDir] [-t dbTableFile] <Unihan.txt>\n"
-#define USAGE_MSG_VALIDATER_HEAD "Usage: %s [-h] [-V num] [-v] <Unihan.txt>\n"
+#define USAGE_MSG_CONVERTER_HEAD "Usage: %s [-h] [-V num] [-v] [-l logfile] [-f] [-o outputDir] [-t dbTableFile] <Unihan.txt>\n"
+#define USAGE_MSG_VALIDATER_HEAD "Usage: %s [-h] [-V num] [-v] [-l logfile] <Unihan.txt>\n"
 #define USAGE_MSG_OPTION "Options:\n\
   -h: Show this help\n\
   -V num: Set verbose level\n\
   -v: Show version\n\
-  Unihan.txt: Unihan.txt from Unicode Unihan\n"
+  -l logfile: Specify log file\n\
+Unihan.txt: Unihan.txt from Unicode Unihan\n"
 
 #define USAGE_MSG_CONVERTER_OPTION "Options for converter only:\n\
   -f: Force overwrite the old databases.\n\
@@ -67,6 +68,7 @@
 #define USAGE_MSG_CONVERTER USAGE_MSG_CONVERTER_HEAD USAGE_MSG_OPTION USAGE_MSG_CONVERTER_OPTION
 #define USAGE_MSG_VALIDATER USAGE_MSG_VALIDATER_HEAD USAGE_MSG_OPTION
 
+static gchar logFile_name[PATH_MAX];
 static FILE *logFile=NULL;
 static FILE *dbTableFile=NULL;
 static FILE *unihanTxtFile=NULL;
@@ -481,7 +483,7 @@ static int unihan_import_pseudoField(gunichar code, UnihanField field,
     gchar *value;
     gboolean empty;
 
-    char *tagValuePtr=NULL,*tagValuePtr_tmp=NULL;
+    gchar *tagValuePtr=NULL,*tagValuePtr_tmp=NULL;
     char sqlClause[STRING_BUFFER_SIZE_DEFAULT];
     char sqlClause_values[STRING_BUFFER_SIZE_DEFAULT];
     char buf[STRING_BUFFER_SIZE_DEFAULT];
@@ -508,7 +510,7 @@ static int unihan_import_pseudoField(gunichar code, UnihanField field,
 	exit(regexRet);
     }
 
-    tagValuePtr= (char *)tagValue_normalized;
+    tagValuePtr= (gchar *) tagValue_normalized;
     counter_post=0;
 
     /* If importFormatPost!=NULL, then do until no more match in ImportFormatPost */
@@ -1030,8 +1032,9 @@ static gboolean is_valid_arguments(int argc, char **argv) {
 	printUsage(argv);
 	exit(0);
     }
+    logFile_name[0]='\0';
     outputDir[0]='\0';
-    while ((opt = getopt(argc, argv, "hfV:vo:t:")) != -1) {
+    while ((opt = getopt(argc, argv, "hfV:vl:o:t:")) != -1) {
 	switch (opt) {
 	    case 'h':
 		printUsage(argv);
@@ -1044,6 +1047,9 @@ static gboolean is_valid_arguments(int argc, char **argv) {
 		exit(0);
 	    case 'V':
 		verboseLevel=atoi(optarg);
+		break;
+	    case 'l':
+		g_strlcpy(logFile_name,optarg,PATH_MAX);
 		break;
 	    case 'o':
 		g_strlcpy(outputDir,optarg,PATH_MAX);
@@ -1072,18 +1078,19 @@ static gboolean is_valid_arguments(int argc, char **argv) {
     if (outputDir[0]=='\0'){
 	g_strlcpy(outputDir,".",PATH_MAX);
     }
-    gchar logFile_name[PATH_MAX];
-    g_strlcpy(logFile_name,outputDir,PATH_MAX);
-    path_concat(logFile_name,"Unihan.log",PATH_MAX);
-    if ((logFile=fopen(logFile_name,"w"))==NULL){
-	fprintf(stderr, "Unable to open log file %s\n",logFile_name);
-	return -2;
-    }
 
     verboseMsg_set_level(verboseLevel);
-    verboseMsg_set_logFile(logFile);
-    verboseMsg_set_fileLevel(verboseMsg_get_level());
 
+    if (logFile_name[0]=='\0'){
+	verboseMsg_set_fileLevel(-1);
+    }else{
+	if ((logFile=fopen(logFile_name,"w"))==NULL){
+	    fprintf(stderr, "Unable to open log file %s\n",logFile_name);
+	    return FALSE;
+	}
+	verboseMsg_set_fileLevel(verboseLevel);
+	verboseMsg_set_logFile(logFile);
+    }
     return TRUE;
 }
 

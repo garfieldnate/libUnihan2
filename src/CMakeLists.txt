@@ -1,3 +1,6 @@
+#SET(LINK_TYPE SHARED)
+SET(LINK_TYPE STATIC)
+
 # Location of library include files
 INCLUDE_DIRECTORIES(${GLIB2_INCLUDE_DIRS} ${SQLITE3_INCLUDE_DIRS})
 
@@ -39,9 +42,9 @@ SET(DOCUMENTED_HEADERS Unihan.h Unihan_enum.h Unihan_phonetic.h Unihan_types.h
     allocate.h collection.h file_functions.h sqlite_functions.h str_functions.h verboseMsg.h)
 
 
-ADD_LIBRARY(Unihan_supporting SHARED ${supporting_SRCS})
-ADD_LIBRARY(Unihan SHARED ${libUnihan_SRCS} )
-ADD_LIBRARY(Unihan_builder SHARED ${libUnihan_builder_SRCS} )
+ADD_LIBRARY(Unihan_supporting ${LINK_TYPE} ${supporting_SRCS})
+ADD_LIBRARY(Unihan ${LINK_TYPE} ${libUnihan_SRCS} )
+ADD_LIBRARY(Unihan_builder ${LINK_TYPE} ${libUnihan_builder_SRCS} )
 SET_TARGET_PROPERTIES(Unihan Unihan_supporting Unihan_builder PROPERTIES
     VERSION "${SO_VER_MAJOR}.${SO_VER_MINOR}"
     SOVERSION "${SO_VER_MAJOR}")
@@ -75,10 +78,17 @@ ENDIF(NOT DEFINED LIB_INSTALL_DIR)
 
 
 #INSTALL(TARGETS unihan_converter unihan_query unihan_rebuild_cache Unihan Unihan_supporting
-INSTALL(TARGETS Unihan_supporting
-     RUNTIME DESTINATION bin
-     LIBRARY DESTINATION ${LIB_INSTALL_DIR}
-)
+IF ("${LINK_TYPE}" STREQUAL "SHARED")
+    INSTALL(TARGETS Unihan_supporting
+	RUNTIME DESTINATION bin
+	LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+	)
+ELSE()
+    INSTALL(TARGETS Unihan_supporting
+	RUNTIME DESTINATION bin
+	ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
+	)
+ENDIF()
 
 INSTALL(FILES ${DOCUMENTED_HEADERS}
     DESTINATION include/${PROJECT_NAME}

@@ -18,10 +18,10 @@
  * License along with this program; if not, write to the
  * Free Software Foundation, Inc., 59 Temple Place, Suite 330,
  * Boston, MA  02111-1307  USA
- */ 
+ */
 
 #include <stdarg.h>
-#include "verboseMsg.h" 
+#include "verboseMsg.h"
 
 gint _verboseLevel=VERBOSE_MSG_CRITICAL;
 gint _fileVerboseLevel=VERBOSE_MSG_NONE;
@@ -47,8 +47,6 @@ void verboseMsg_set_logFile(FILE *outputFile){
     _outputFile=outputFile;
 }
 
-
-
 gint verboseMsg_print(gint verboseLevel, const gchar *format, ...){
     int ret=0;
     va_list ap;
@@ -57,7 +55,7 @@ gint verboseMsg_print(gint verboseLevel, const gchar *format, ...){
         ret = vfprintf(stdout, format, ap);
         va_end(ap);
     }
-    
+
     if (_outputFile && _fileVerboseLevel>=verboseLevel){
         va_start(ap, format);
         ret = vfprintf(_outputFile, format, ap);
@@ -77,3 +75,4 @@ void verboseMsg_close_logFile(){
 	_outputFile=NULL;
     }
 }
+
