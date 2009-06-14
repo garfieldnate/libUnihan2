@@ -193,6 +193,7 @@ void unihanPseudoFieldImportFormat_enumerate_init_builtin(Enumerate *e, UnihanFi
 		lastField=PSEUDOFIELD_IMPORT_FORMAT[i].pseudoField;
 	    }
 	}
+	initialized=TRUE;
     }
     e->index=field_ImportFormat_index_table[*field];
     e->userData=field;

@@ -133,15 +133,19 @@ const gchar *stringList_index(StringList *sList,guint index){
     return g_ptr_array_index(sList->ptrArray,index);
 }
 
-guint stringList_insert(StringList *sList, const gchar *str){
-    gchar *strPtr=NULL;
-    if (strPtr){
-	strPtr=g_string_chunk_insert (sList->chunk,str);
-    }
-    sList->ptrArray->pdata[sList->ptrArray->len] = (gpointer) strPtr;
+static guint stringList_insert_private(StringList *sList, gchar *strPtr){
+    sList->ptrArray->pdata[sList->len] = (gpointer) strPtr;
     g_ptr_array_add(sList->ptrArray,NULL);
     sList->len++;
     return sList->len-1;
+}
+
+guint stringList_insert(StringList *sList, const gchar *str){
+    gchar *strPtr=NULL;
+    if (str){
+	strPtr=g_string_chunk_insert (sList->chunk,str);
+    }
+    return stringList_insert_private(sList, strPtr);
 }
 
 guint stringList_insert_const(StringList *sList, const gchar *str){
@@ -149,10 +153,7 @@ guint stringList_insert_const(StringList *sList, const gchar *str){
     if (!strPtr){
 	strPtr=g_string_chunk_insert_const (sList->chunk,str);
     }
-    sList->ptrArray->pdata[sList->ptrArray->len] = (gpointer) strPtr;
-    g_ptr_array_add(sList->ptrArray,NULL);
-    sList->len++;
-    return sList->len-1;
+    return stringList_insert_private(sList, strPtr);
 }
 
 void stringList_free(StringList *sList){
@@ -301,7 +302,7 @@ typedef struct {
     gchar *option3;
 } FormattedCombineDirective;
 
-static FormattedCombineDirective *formattedOutputDirective_new(){
+static FormattedCombineDirective *formattedCombineDirective_new(){
     FormattedCombineDirective *directive=NEW_INSTANCE(FormattedCombineDirective);
     directive->errno=0;
     directive->index=0;
@@ -310,7 +311,7 @@ static FormattedCombineDirective *formattedOutputDirective_new(){
     return directive;
 };
 
-static void formattedOutputDirective_free(FormattedCombineDirective* directive){
+static void formattedCombineDirective_free(FormattedCombineDirective* directive){
     g_free(directive->option1);
     g_free(directive->option2);
     g_free(directive->option3);
@@ -326,14 +327,13 @@ static int  string_formatted_combine_expand_directive(
  */
 static FormattedCombineDirective* string_formatted_combine_get_directive(
 	const gchar *format, StringList *sList,guint *currPos_ptr,int *counter_ptr){
-
     gchar c;
     RegexReplaceStage stage=REGEX_EVAL_STAGE_INIT;
     GString *option1Str=NULL;
     GString *option2Str=NULL;
     GString *option3Str=NULL;
     verboseMsg_print(VERBOSE_MSG_INFO5,"*** string_formatted_combine_get_directive() start\n");
-    FormattedCombineDirective *directive=formattedOutputDirective_new();
+    FormattedCombineDirective *directive=formattedCombineDirective_new();
     FormattedCombineDirective *subDirective=NULL;
     int ret;
 
@@ -468,12 +468,12 @@ static FormattedCombineDirective* string_formatted_combine_get_directive(
 			verboseMsg_print(VERBOSE_MSG_INFO6,"\n");
 		    }
 		    if (subDirective->errno>0){
-			formattedOutputDirective_free(subDirective);
+			formattedCombineDirective_free(subDirective);
 			directive->errno=6;
 			break;
 		    }
 		    ret=string_formatted_combine_expand_directive(option1Str, sList, counter_ptr, subDirective);
-		    formattedOutputDirective_free(subDirective);
+		    formattedCombineDirective_free(subDirective);
 		    if (ret){
 			directive->errno=6;
 			break;
@@ -517,12 +517,12 @@ static FormattedCombineDirective* string_formatted_combine_get_directive(
 			verboseMsg_print(VERBOSE_MSG_INFO6,"\n");
 		    }
 		    if (subDirective->errno>0){
-			formattedOutputDirective_free(subDirective);
+			formattedCombineDirective_free(subDirective);
 			directive->errno=6;
 			break;
 		    }
 		    ret=string_formatted_combine_expand_directive(option2Str, sList, counter_ptr,  subDirective);
-		    formattedOutputDirective_free(subDirective);
+		    formattedCombineDirective_free(subDirective);
 		    if (ret){
 			directive->errno=6;
 			break;
@@ -562,14 +562,14 @@ static FormattedCombineDirective* string_formatted_combine_get_directive(
 			verboseMsg_print(VERBOSE_MSG_INFO6,"\n");
 		    }
 		    if (subDirective->errno>0){
-			formattedOutputDirective_free(subDirective);
+			formattedCombineDirective_free(subDirective);
 			directive->errno=6;
 			break;
 		    }
 		    ret=string_formatted_combine_expand_directive(option3Str, sList, counter_ptr,  subDirective);
-		    formattedOutputDirective_free(subDirective);
+		    formattedCombineDirective_free(subDirective);
 		    if (ret){
-			formattedOutputDirective_free(subDirective);
+			formattedCombineDirective_free(subDirective);
 			directive->errno=6;
 			break;
 		    }
@@ -618,6 +618,7 @@ static FormattedCombineDirective* string_formatted_combine_get_directive(
 }
 
 /*
+ * Expend the directive.
  * Return 0 for success.
  */
 static int  string_formatted_combine_expand_directive(
@@ -821,12 +822,12 @@ gchar *string_formatted_combine(const gchar *format,StringList *sList,int *count
 		verboseMsg_print(VERBOSE_MSG_INFO6,"\n");
 	    }
 	    if (directive->errno>0){
-		formattedOutputDirective_free(directive);
+		formattedCombineDirective_free(directive);
 		g_string_free(strBuf,TRUE);
 		return NULL;
 	    }
 	    ret=string_formatted_combine_expand_directive(strBuf, sList, counter_ptr,  directive);
-	    formattedOutputDirective_free(directive);
+	    formattedCombineDirective_free(directive);
 	    if (ret){
 		g_string_free(strBuf,TRUE);
 		return NULL;
