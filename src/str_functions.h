@@ -1,7 +1,7 @@
-/** 
+/**
  * @file str_functions.h
  * @brief String processing functions.
- * 
+ *
  * This header file lists the some string processing functions.
  * Such as subString, and StringList, which provides a memory efficient
  * methods to store a list of constrant strings.
@@ -27,8 +27,8 @@
  * License along with this program; if not, write to the
  * Free Software Foundation, Inc., 59 Temple Place, Suite 330,
  * Boston, MA  02111-1307  USA
- */ 
- 
+ */
+
 #ifndef STR_FUNCTIONS_H_
 #define STR_FUNCTIONS_H_
 #include <string.h>
@@ -53,18 +53,133 @@
 #define CHAR_TO_UNSIGNEDCHAR(c) (unsigned char) ((int) c >=0)? c : c+256
 
 /**
+ * StringPtrList is a structure that stores a list of string pointers.
+ *
+ * StringPtrList provides convenient access of a list of strings by wrapping
+ * <a href="http://library.gnome.org/devel/glib/stable/glib-Pointer-Arrays.html">GPtrArray</a>.
+ *
+ * Note the length of the GPtrArray is always the number of strings plus one,
+ * as the last element of the GPtrArray is always NULL,
+ * to make the pointer of char pointers (char **) conversion easier.
+ * Keep this in mind when using GPtrArray functions to manipulate StringPtrArray.
+ *
+ * @see ::StringList if you want to copy the content as well.
+ */
+typedef GPtrArray StringPtrList;
+
+/**
+ * Create a new StringPtrList instance.
+ *
+ * @return The pointer to the allocated space.
+ */
+StringPtrList *stringPtrList_new();
+
+/**
+ * Create a new StringPtrList instance with given sizes.
+ *
+ * This function allocate space for a StringList with given size, thus avoid
+ * frequent reallocation.
+ *
+ * @param chunk_size Size in bytes required for string storage.
+ * @param element_count Number of strings.
+ * @return the pointer to the allocated space.
+ */
+StringPtrList *stringPtrList_sized_new(size_t element_count);
+
+/**
+ * Clear all content of StringPtrlist.
+ *
+ * @param sPtrList A StringList.
+ */
+void stringPtrList_clear(StringPtrList *sPtrList);
+
+/**
+ * Return index of the first match string in StringPtrList.
+ *
+ * This function returns index of the first match string in StringPtrList,
+ * if no such string, then return -1.
+ *
+ * @param sPtrList A StringPtrList.
+ * @param str The string to be found.
+ * @return The index of the string from 0 if found; -1 otherwise.
+ */
+gint stringPtrList_find_string(StringPtrList *sPtrList,const gchar* str);
+
+/**
+ * Free a StringPtrlist and its content.
+ *
+ * @param sPtrList A StringPtrList.
+ */
+void stringPtrList_free_deep(StringPtrList *sPtrList);
+
+/**
+ * Whether a string is in StringPtrList.
+ *
+ * Return TRUE if at least one string in \a sPtrList is identical with \a str;
+ *  otherwise return FALSE.
+ *
+ * @param sPtrList A StringPtrList.
+ * @param str The string to be found.
+ * @return TRUE if at least one string in \a sPtrList is identical with \a str;
+ *         FALSE otherwise.
+ */
+gboolean stringPtrList_has_string(StringPtrList *sPtrList,const gchar* str);
+
+/**
+ * Return the string at the given index.
+ *
+ * @param sPtrList A StringPtrList.
+ * @param index The given index.
+ * @return The string at the given index.
+ */
+const gchar *stringPtrList_index(StringPtrList *sPtrList,guint index);
+
+/**
+ * Adds a string to the StringPtrList.
+ *
+ * This function inserts \a str by copy its pointer.
+ *
+ * Note that there is no stringList_insert_const() equivalent function,
+ * because StringPtrList does not manage the memory.
+ * StringList on the other hand, looks for identical strings in constant pool and use them
+ * if available.
+ *
+ * @param sPtrList A StringPtrList.
+ * @param str String to be inserted, can be NULL.
+ * @return the index of the newly inserted string.
+ * @see stringPtrList_insert_const()
+ */
+gint stringPtrList_insert(StringPtrList *sPtrList, const gchar *str);
+
+/**
+ * Return a char pointer pointer (char **) which points to the list of strings.
+ *
+ * This function returns a char** which points to the places that strings are
+ * stored. The pointer directly points to content in StringPtrList instance, so the
+ * returned pointer should not be free.
+ *
+ * @param sPtrList A StringPtrList.
+ * @return The index of the string from 0 if found; -1 otherwise.
+ */
+gchar **stringPtrList_to_gcharPointerPointer(StringPtrList *sPtrList);
+
+/**
  * StringList is a structure that stores a list of constant strings.
  *
- * StringList provides convenient index access and length information for a 
+ * StringList provides convenient index access and length information for a
  * <a href="http://library.gnome.org/devel/glib/stable/glib-String-Chunks.html#GStringChunk">GStringChunk</a>.
- *
  * However, instead of returning char pointers, StringList functions return the
  * indexes of the strings, which can be used later on to located inserted
  * strings.
+ *
+ * StringList inserts string by copies the string content, so developers do not need to worry about
+ * the memory allocation.
+ *
+ * @see ::StringPtrList if you want to allocate the string on your own.
  */
 typedef struct {
     GStringChunk *chunk; //!< GStringChunk that actually stores the strings.
-    GPtrArray *ptrArray; //!< A array of char* that points to the strings.
+    StringPtrList *ptrArray; //!< A StringPtrList that holds all the string pointers.
     GHashTable *hTable;  //!< Hash table for constant insert. String is key , and pointer of the string is the value.
     guint len;		 //!< Number of strings in the StringList.
     size_t chunk_size_inital;  //!< Size of the GStringChunk.
@@ -73,7 +188,7 @@ typedef struct {
 /**
  * Create a new StringList instance.
  *
- * @return the pointer to the allocated space.
+ * @return The pointer to the allocated space.
  */
 StringList *stringList_new();
 
@@ -85,14 +200,14 @@ StringList *stringList_new();
  *
  * @param chunk_size Size in bytes required for string storage.
  * @param element_count Number of strings.
- * @return the pointer to the allocated space.
+ * @return The pointer to the allocated space.
  */
 StringList *stringList_sized_new(size_t chunk_size, size_t element_count);
 
 /**
- * Create a new StringList instance from splitting string into a number of tokens not containing any of the characters in delimiter. 
+ * Create a new StringList instance from splitting string into a number of tokens not containing any of the characters in delimiter.
  *
- * A token is the non-empty longest string that does not contain any of the characters in delimiters. 
+ * A token is the non-empty longest string that does not contain any of the characters in delimiters.
  * If max_tokens is reached, the remainder is appended to the last token. Unlike g_strsplit_set(),
  * this function does not insert empty string in StringList.
  *
@@ -101,8 +216,8 @@ StringList *stringList_sized_new(size_t chunk_size, size_t element_count);
  *
  * Note that this function works on bytes not characters, so it can't be used to delimit UTF-8 strings for anything but ASCII characters.
  *
- * @param string	The string to be tokenized. 
- * @param delimiters	A nul-terminated string containing bytes that are used to split the string. 
+ * @param string	The string to be tokenized.
+ * @param delimiters	A nul-terminated string containing bytes that are used to split the string.
  * @param max_tokens The maximum number of tokens to split string into. If this is less than 1, the string is split completely
  * @return A newly allocated StringList instance that holds the split string.
  */
@@ -111,7 +226,7 @@ StringList *stringList_new_strsplit_set(const gchar *string, const gchar *delimi
 /**
  * Clear all content of Stringlist.
  *
- * @param sList The StringList to be processed.
+ * @param sList A StringList.
  */
 void stringList_clear(StringList *sList);
 
@@ -121,7 +236,7 @@ void stringList_clear(StringList *sList);
  * This function returns index of the first match string in StringList,
  * if no such string, then return -1.
  *
- * @param sList The StringList to be processed.
+ * @param sList A StringList.
  * @param str The string to be found.
  * @return The index of the string from 0 if found; -1 otherwise.
  */
@@ -134,7 +249,7 @@ int stringList_find_string(StringList *sList,const char* str);
  * Return TRUE if at least one string in \a sList is identical with \a str;
  *  otherwise return FALSE.
  *
- * @param sList The StringList to be processed.
+ * @param sList A StringList.
  * @param str The string to be found.
  * @return TRUE if at least one string in \a sList is identical with \a str;
  *         FALSE otherwise.
@@ -142,16 +257,14 @@ int stringList_find_string(StringList *sList,const char* str);
 gboolean stringList_has_string(StringList *sList,const gchar* str);
 
 /**
- * Return a char pointer pointer (char **) which points to the list of strings. 
+ * Return a char pointer pointer (char **) which points to the list of strings.
  *
  * This function returns a char** which points to the places that strings are
- * stored. 
+ * stored.
  * The pointer directly points to content in StringList instance, so the
  * returned pointer should not be free.
  *
- * Use the stringList_free to free instead.
- *
- * @param sList The StringList to be processed.
+ * @param sList A StringList.
  * @return The index of the string from 0 if found; -1 otherwise.
  */
 gchar **stringList_to_charPointerPointer(StringList *sList);
@@ -159,9 +272,9 @@ gchar **stringList_to_charPointerPointer(StringList *sList);
 /**
  * Return the string at the given index.
  *
- * @param sList The StringList to be processed.
+ * @param sList A StringList.
  * @param index The given index.
- * @return The string at the given index. 
+ * @return The string at the given index.
  */
 const gchar *stringList_index(StringList *sList,guint index);
 
@@ -179,7 +292,7 @@ const gchar *stringList_index(StringList *sList,guint index);
  * The difference between this function and stringList_insert_const() is that
  * each inserted identical string will have it own spaces.
  *
- * @param sList The StringList to be processed.
+ * @param sList A StringList.
  * @param str String to be inserted, can be NULL.
  * @return the index of the newly inserted string.
  * @see stringList_insert_const()
@@ -187,27 +300,27 @@ const gchar *stringList_index(StringList *sList,guint index);
 guint stringList_insert(StringList *sList, const gchar *str);
 
 /**
- * Adds a copy of string to the StringList, unless the identical string has already 
+ * Adds a copy of string to the StringList, unless the identical string has already
  * been added to the StringList with stringList_insert_const().
  *
- * This function inserts a copy \a str to the string list, 
- * unless the identical string has already been previous inserted 
+ * This function inserts a copy \a str to the string list,
+ * unless the identical string has already been previous inserted
  * by this function. Useful if you do not want to spend extra space to store
  * identical strings.
  *
  * If identical string is previous inserted by this function,
- * which means the string is in the const hash table, 
+ * which means the string is in the const hash table,
  * the pointer to the previous inserted string is append to the pointer array;
  * if no identical string is inserted, then a copy of \a str will be inserted,
- * to the string list by g_string_chunk_insert_const(), 
+ * to the string list by g_string_chunk_insert_const(),
  * then the returned pointer is inserted to the pointer array.
  * After that, this function return the index of the appended string pointer.
  *
- * \note It will not check the duplicate strings inserted by 
+ * \note It will not check the duplicate strings inserted by
  *  stringList_insert().
  *
- * @param sList The StringList to be processed.
- * @param str String to be inserted. 
+ * @param sList A StringList.
+ * @param str String to be inserted.
  * @return the index of the newly inserted string.
  * @see stringList_insert()
  */
@@ -219,222 +332,25 @@ guint stringList_insert_const(StringList *sList, const gchar *str);
  * Note that this function assumes the sList is not NULL.
  * Use <code> if (sList) stringList_free(sList);</code> to tolerate the NULL
  * parameter.
- * 
- * @param sList The StringList to be processed.
+ *
+ * @param sList A StringList.
  */
 void stringList_free(StringList *sList);
 
-///*
-// * @defgroup RegexResult_Match_Flags Regex substring match flags.
-// * @{
-// * @name Regex substring match flags.
-// *
-// * Bitwise regex substring match flags. Use bit operators to combine the flags.
-// *
-// * If none of the flags are given, by default, the output will be like:
-// * <ol start="0">
-// *   <li>ab,cd</li>
-// *   <li>ab</li>
-// *   <li>cd</li>
-// *   <li>ef,gh</li>
-// *   <li>ef</li>
-// *   <li>gh</li>
-// * </ol>
-// *
-// * If <code>REGEX_RESULT_ALLOW_OVERLAP</code> is given:
-// * <ol start="0">
-// *   <li>ab,cd</li>
-// *   <li>ab</li>
-// *   <li>cd</li>
-// *   <li>cd,ef</li>
-// *   <li>cd</li>
-// *   <li>ef</li>
-// *   <li>ef,gh</li>
-// *   <li>ef</li>
-// *   <li>gh</li>
-// * </ol>
-// *
-// * If <code>REGEX_RESULT_EXCLUDE_MAJOR_MATCH</code> is given:
-// * <ol start="0">
-// *   <li>ab</li>
-// *   <li>cd</li>
-// *   <li>ef</li>
-// *   <li>gh</li>
-// * </ol>
-// *
-// * If <code>REGEX_RESULT_EXCLUDE_SUB_MATCH</code> is given:
-// * <ol start="0">
-// *   <li>ab,cd</li>
-// *   <li>ef,gh</li>
-// * </ol>
-
-// * @{ 
-// */
-
-///*
-// * Flag to indicate that only the first result is needed.
-// *
-// * With this flag, results for \c aaa match \c a* will be \c aaa only.
-// * Which is the original behavior of regexec()
-// *
-// * \note This flag overrides REGEX_RESULT_ALLOW_OVERLAP.
-// */
-//#define REGEX_RESULT_MATCH_ONCE 1
-///**
-// * Flag to indicate that result substrings can be overlapped.
-// *
-// * With this flag, results for \c aaa match \c a* will be \c aaa, \c aa, \c a, but not empty string.
-// * \note This flag has no effect if REGEX_RESULT_MATCH_ONCE is also set.
-// */
-//#define REGEX_RESULT_ALLOW_OVERLAP 2
-///*
-// * Flag to indicate that major matches should be excluded.
-// *
-// * Major match means the matches of whole regex pattern.
-// *
-// * With this flag, results for \c abab matches \c a(b) will be \c b and  \c b, 
-// * but not major match \c ab.
-// */
-//#define REGEX_RESULT_EXCLUDE_MAJOR_MATCH 4
-///*
-// * Flag to indicate that sub matches should be excluded.
-// *
-// * Sub match means the matches of the parenthesized sub regex pattern.
-// * With this flag, results for \c abab matches \c a(b) will be \c ab and  \c ab, but not \c b.
-// */
-//#define REGEX_RESULT_EXCLUDE_SUB_MATCH 8
-
-///*
-// * @}
-// * @}
-// */
-
-///*
-// * @defgroup RegexResult_Match_Functions Regex substring match functions.
-// * @{
-// * @name Regex substring match functions.
-// *
-// * These functions return a newly allocated StringList that holds a list of regex-matched substrings.
-// * They add substring match functionality to regexec() from \c regex.h.
-// *
-// * Contract to the intuition, regexec() only matches once even if REG_NOSUB is not set in regcomp().
-// * The so-called \i sub-match actually means the sub expressions enclosed by '()' in POSIX extended,
-// * or '\(\)' in POSIX basic. 
-// * For example, matches <code>ab,cd,ef,gh</code> with <code>([a-z]*),([a-z]*)</code> producing following output:
-// * <ol start="0">
-// *   <li>ab,cd</li>
-// *   <li>ab</li>
-// *   <li>cd</li>
-// * </ol>
-// * But not 
-// * <ol start="3">
-// *   <li>ef,gh</li>
-// *   <li>ef</li>
-// *   <li>gh</li>
-// * </ol>
-// * and so on.
-// *
-// * With regexResult_match_regex_t(), subsequence substrings are reachable.
-// * The output can be filtered by using regex substring match flags.
-// * @{
-// */
-
-
-///*
-// * The data structure that holds result of regex match.
-// *
-// */
-//typedef struct{
-//    StringList *resultList;  //!< List of string that actually match the pattern.
-//    GArray *startOffsets;    //!< Start offset of the actual matched substrings.
-//} RegexResult;
-
-///*
-// * New a RegexResult instance.
-// *
-// * @return A newly allocated RegexResult instance.
-// */
-//RegexResult *regexResult_new();
-
-///*
-// * Free a RegexResult instance.
-// *
-// * @param rResult RegexResult to be freed.
-// */
-//void regexResult_free(RegexResult *rResult);
-
-///*
-// * Return regex-matched substrings.
-// *
-// * This function is a convenient wrap of regcomp() and 
-// * regexResult_match_regex_t().
-// * It compiles the regex_t from \a pattern using regcomp(), 
-// * then call the regexResult_match_regex_t() for matched result.
-// *
-// * Use regexResult_free() to free the result.
-// *
-// * If the compilation fails, NULL will be returned.
-// *
-// * \note REG_NOSUB cannot be used in cflags, because regexec does not 
-// * fill the data to array of \c regmatch_t.
-// *
-// * @param pattern Regex pattern.
-// * @param str  String to be matched.
-// * @param cflags flags to be passed to regcomp().
-// * @param eflags eflag to be passed to regexec().
-// * @param regexResultFlags RegexResult_Match_Flags
-// * @return a newly allocated RegexResult, 
-// * number of matches is indicated by RegexResult->resultList->len. len=0 if no matches;
-// * NULL if \c pattern does not pass the compilation.
-// *
-// * @see RegexResult_Match_Functions 
-// * @see RegexResult_Match_Flags
-// * @see regexResult_match_regex_t()
-// */
-//RegexResult *regexResult_match(const gchar *pattern,const gchar *str, 
-//        int cflags, int eflags, guint regexResultFlags);
-
-///*
-// * Return regex-matched substrings, given an instance of regex_t.
-// *
-// * This function adds subsequence substring handling routine to regexec(), and 
-// * returns a newly allocated StringList that holds a list of regex-matched substrings in \a str.
-// * See RegexResult_Match for further explanation, and RegexResult_Match_Flags for output control.
-// * 
-// * @param preg Regex instance generate by regcomp().
-// * @param str  String to be matched.
-// * @param eflags eflag to be passed to regexec().
-// * @param regexResultFlags RegexResult_Match_Flags
-// * @return a newly allocated RegexResult, 
-// * number of matches is indicated by RegexResult->resultList->len. len=0 if no matches;
-// *
-// * @see RegexResult_Match_Functions 
-// * @see RegexResult_Match_Flags
-// * @see regexResult_match()
-// */
-//RegexResult *regexResult_match_regex_t(
-//        regex_t *preg,
-//        const gchar *str, int eflags, guint regexResultFlags);
-
-///*
-// * @}
-// * @}
-// */
-//
 
 /**
  * Combine a list of strings into a specified format.
  *
  * This function combines a list of strings (\a sList) into a newly allocated string,
- * according to the format string \c format. 
+ * according to the format string \c format.
  *
- * The format string a character string, which is composed of zero or more directives: 
+ * The format string a character string, which is composed of zero or more directives:
  * ordinary characters (not $),
  * which are copied unchanged to the output string;  and  format directives,  each  of
- * which  results in fetching zero or more subsequent arguments.  
- * Each format directives is introduced by the character $, followed by optional flags, 
+ * which  results in fetching zero or more subsequent arguments.
+ * Each format directives is introduced by the character $, followed by optional flags,
  * mandatory argument id, and optional options like substitute strings or padding instruction.
- * In  between  there may be (in this order) zero or more flags, one to three optional 
+ * In  between  there may be (in this order) zero or more flags, one to three optional
  * options. Note that at most one flag can be used in format directives.
  *
  * The format of a format directive is:
@@ -444,26 +360,26 @@ void stringList_free(StringList *sList);
  * The argument id starts from 0, but should not exceed the number of arguments.
  *
  * Following flags provide additional output control:
- * - N&lt;id&gt;{str1 [,str2]}: 
- *   if argument \c id is nonempty, then \c str1 is outputted for this format directives; 
+ * - N&lt;id&gt;{str1 [,str2]}:
+ *   if argument \c id is nonempty, then \c str1 is outputted for this format directives;
  *   otherwise outputs str2, or empty string if str2 is omitted.
- * - E&lt;id&gt;{str1 [,str2]}: 
+ * - E&lt;id&gt;{str1 [,str2]}:
  *   similar with -N, but output str1 if argument \c id is empty, i.e, is NULL or has 0 length.
- * - U&lt;id&gt;: 
+ * - U&lt;id&gt;:
  *   argument \c id should be outputted as uppercase. This directive is backed by g_utf8_strup(),
  *   so it will convert non-ascii unicode character as well.
- * - L&lt;id&gt;: 
+ * - L&lt;id&gt;:
  *   argument \c id should be outputted as lowercase. This directive is backed by g_utf8_strdown(),
  *   so it will convert non-ascii unicode character as well.
- * - P&lt;id&gt;{length[,pad_char]}: 
+ * - P&lt;id&gt;{length[,pad_char]}:
  *   argument \c id should be padded with \c pad_char on the left till it reaches the \c length.
  *   Space (' ') is used as pad_char if it is not given.
- * - p&lt;id&gt;{length[,pad_char]}: 
+ * - p&lt;id&gt;{length[,pad_char]}:
  *   argument \c id should be padded with \c pad_char on the right till it reaches the \c length.
  *   Space (' ') is used as pad_char if it is not given.
  * - X&lt;id&gt;[{length}]:
  *   output argument \c id as hexadecimal if it contains a literal integer.
- *   If length is given, 0  will be padded on the left of the argument. 
+ *   If length is given, 0  will be padded on the left of the argument.
  *   Note that NULL is returned if argument \c id cannot be converted by strtol().
  * - T&lt;id&gt;:
  *   output argument \c id as UTF-8 string if it contains a literal integer.
@@ -474,14 +390,14 @@ void stringList_free(StringList *sList);
  * - I&lt;id&gt;{compare_str,true_substitute[,false_substitute]}:
  *   output \c true_substitute if \c compare_str is identical to argument \c id;
  *   otherwise output \c false_substitute if given.
- * - +&lt;id&gt;: 
+ * - +&lt;id&gt;:
  *   if argument \c id is nonempty, then adds 1 to provided counter and output the number.
  *   if argument \c id is empty, then outputs a empty string.
- * - -&lt;id&gt;: 
+ * - -&lt;id&gt;:
  *   if argument \c id is nonempty, then minuses 1 to provided counter and output the number.
  *   if argument \c id is empty, then outputs a empty string.
- * - $: 
- *   Outputs a '$' character. 
+ * - $:
+ *   Outputs a '$' character.
  *
  * Character '$' is also an escape character. For example,
  *  '$N1{${}' outputs  '{' if argument 1 is nonempty.
@@ -495,11 +411,11 @@ void stringList_free(StringList *sList);
  * - Format directives can be nested in this function.
  *
  * @param format the format for evaluate output.
- * @param sList the StringList that hold arguments.
+ * @param sPtrList The StringPtrList that hold arguments.
  * @param counter_ptr a pointer to an integer counter. Can be NULL if + or - flags are not required.
  * @return a newly allocated result string; or NULL if error occurs.
  */
-gchar *string_formatted_combine(const gchar *format,StringList *sList,int *counter_ptr);
+gchar *string_formatted_combine(const gchar *format,StringPtrList *sPtrList,int *counter_ptr);
 
 /**
  * @defgroup Regex_Manipulating_Funcs Regex manipulating functions.
@@ -507,7 +423,7 @@ gchar *string_formatted_combine(const gchar *format,StringList *sList,int *count
  * @name Regex manipulating functions.
  *
  * These functions provide evaluation and search-replace functions for regex matches.
- * They are based with \c regex.h, thus format of search pattern and 
+ * They are based with \c regex.h, thus format of search pattern and
  * option flags are same as used in regcomp() and regexec().
  *
  * These functions are capable of dealing with parenthesized sub patterns,
@@ -515,17 +431,17 @@ gchar *string_formatted_combine(const gchar *format,StringList *sList,int *count
  * Id 0 refers the whole matched pattern, 1 refers the first sub pattern,
  * and 2 for second sub pattern, and so on.
  *
- * The matched sub-patterns are extracted and stored in a StringList, then processed
+ * The matched sub-patterns are extracted and stored in a StringPtrList, then processed
  * by string_formatted_combine().
  * @{
  */
 
 /**
  * Combine sub-matches of a regex search into a specified format, if the regex expression is complied as a regex_t.
- * 
+ *
  * This function combines sub-matches of a regex search into a specified format.
  * Use this function if the regex expression is already complied as a \c regex_t.
- * 
+ *
  * Use free() or g_free() to free the result, also regfree() \c preg if no longer used.
  *
  * @param str String to be matched.
@@ -539,14 +455,14 @@ gchar *string_formatted_combine(const gchar *format,StringList *sList,int *count
  * @see string_regex_replace_regex_t()
  * @see string_regex_replace()
  */
-gchar *string_regex_formatted_combine_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
+gchar *string_regex_formatted_combine_regex_t(const gchar *str, const regex_t *preg, const gchar *format,
 	int eflags, int *counter_ptr);
 
 /**
  * Combine sub-matches of a regex search into a specified format.
  *
  * This function combines sub-matches of a regex search into a specified format.
- * 
+ *
  * It also generates \c regex_t and frees it before the returning.
  * Consider use regcomp() and string_regex_formatted_combine_regex_t() if same \c pattern
  * will be use many times.
@@ -564,17 +480,17 @@ gchar *string_regex_formatted_combine_regex_t(const gchar *str, const regex_t *p
  * @see string_regex_replace_regex_t()
  * @see string_regex_replace()
  */
-gchar *string_regex_formatted_combine(const gchar *str, const gchar *pattern, const gchar *format, 
+gchar *string_regex_formatted_combine(const gchar *str, const gchar *pattern, const gchar *format,
 	int cflags, int eflags, int *counter_ptr);
 
 
 /**
- * Replace a new text for the substring matching a regular expression. 
+ * Replace a new text for the substring matching a regular expression.
  *
- * This function replaces the regex matched sub-string to the string specified in \c format, 
+ * This function replaces the regex matched sub-string to the string specified in \c format,
  * and returns a newly allocated string that holds the result.
  *
- * This function differs with string_regex_formatted_combine_regex_t(), 
+ * This function differs with string_regex_formatted_combine_regex_t(),
  * as string_regex_formatted_combine_regex_t() substitutes and returns only the matched substring,
  * while this function keeps the parts that does not match the pattern.
  *
@@ -591,16 +507,16 @@ gchar *string_regex_formatted_combine(const gchar *str, const gchar *pattern, co
  * @see string_regex_formatted_combine()
  * @see string_regex_replace()
  */
-gchar *string_regex_replace_regex_t(const gchar *str, const regex_t *preg, const gchar *format, 
+gchar *string_regex_replace_regex_t(const gchar *str, const regex_t *preg, const gchar *format,
 	int eflags, int *counter_ptr);
 
 /**
- * Replace a new text for the substring matching a regular expression. 
+ * Replace a new text for the substring matching a regular expression.
  *
- * This function replaces the regex matched sub-string to the string specified in \c format, 
+ * This function replaces the regex matched sub-string to the string specified in \c format,
  * and returns a newly allocated string that holds the result.
  *
- * This function differs with string_regex_eval_regex_t(), 
+ * This function differs with string_regex_eval_regex_t(),
  * as string_regex_formatted_combine_regex_t() substitutes and returns only the matched substring,
  * while this function keeps the parts that does not match the pattern.
  *
@@ -618,7 +534,7 @@ gchar *string_regex_replace_regex_t(const gchar *str, const regex_t *preg, const
  * @see string_regex_formatted_combine()
  * @see string_regex_replace_regex_t()
  */
-gchar *string_regex_replace(const gchar *str, const gchar *pattern, const gchar *format, 
+gchar *string_regex_replace(const gchar *str, const gchar *pattern, const gchar *format,
 	int cflags, int eflags, int *counter_ptr);
 
 /**
@@ -651,7 +567,7 @@ isEmptyString(const gchar *str);
 /**
  * Trim the leading and trailing whitespace of the string.
  *
- * Note the content of <code>str</code> might be changed. 
+ * Note the content of <code>str</code> might be changed.
  * Use strdup() or  g_strdup() to backup.
  *
  * @param str String to be trim.
@@ -661,12 +577,12 @@ void string_trim(gchar *str);
 
 /**
  * Return a substring of the given string.
- * 
+ *
  * The substring begins at the specified beginIndex and end after <code>length</code> bytes.
- * The index starts from zero. 
+ * The index starts from zero.
  * If length is given a negative value, then a substring starting from \c beginIndex to the
  * end of \c str is returned.
- * 
+ *
  * @param str String to be process
  * @param beginIndex the beginning index, inclusive.
  * @param length total bytes to copy, excluding the trailing '\0'
@@ -680,12 +596,12 @@ subString(const gchar *str,int beginIndex, int length);
  * Return a substring of the given string in given buffer.
  *
  * This function is similar with subString(), except it stores the result in
- * the developer-provided buffer. 
+ * the developer-provided buffer.
  *
  * Make sure to provide at least length+1 (including the trailing '\0');
- * or strlen(str)-beginIndex+1 if length is negative. 
- * 
- * 
+ * or strlen(str)-beginIndex+1 if length is negative.
+ *
+ *
  * @param buf buffer that stores the result.
  * @param str String to be process
  * @param beginIndex the beginning index, inclusive.
@@ -699,7 +615,7 @@ subString_buffer(gchar *buf,const gchar *str,int beginIndex, int length);
 /**
  * Append a character to a string.
  *
- * This function appends a character \a ch to the end of \a str, 
+ * This function appends a character \a ch to the end of \a str,
  * if the length of the string including the trailing '\0' is less than the given \a length.
  * It returns \c NULL if \a ch cannot be appended because the length limit.
  *
@@ -719,7 +635,7 @@ gchar* string_append_c(gchar *str, const char ch,size_t length);
  * However, it only compares lengths before and after the normalization, and nothing beyond.
  * Use this function with care.
  *
- * 
+ *
  * @param str The string to be checked.
  * @return TRUE if the string is decomposed, FALSE otherwise.
  */

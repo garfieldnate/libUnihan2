@@ -29,6 +29,70 @@
 #include "verboseMsg.h"
 #define STRING_BUFFER_SIZE_DEFAULT 1000
 
+
+/*=======================================
+ * StringPtrList functions
+ */
+StringPtrList *stringPtrList_new(){
+    StringPtrList *sPtrList=g_ptr_array_new();
+    g_ptr_array_add(sPtrList,NULL);
+    return sPtrList;
+}
+
+StringPtrList *stringPtrList_sized_new(size_t element_count){
+    StringPtrList *sPtrList=g_ptr_array_sized_new(element_count);
+    g_ptr_array_add(sPtrList,NULL);
+    return sPtrList;
+}
+
+void stringPtrList_clear(StringPtrList *sPtrList){
+    gint i,len=sPtrList->len-1;
+    for(i=0;i<len;i++){
+	gchar *str=g_ptr_array_index(sPtrList,i);
+	g_free(str);
+    }
+    g_ptr_array_remove_range(sPtrList,0,len);
+}
+
+gint stringPtrList_find_string(StringPtrList *sPtrList,const gchar* str){
+    gint i,len=sPtrList->len-1;
+    for(i=0;i<len;i++){
+	if (strcmp(g_ptr_array_index(sPtrList,i),str)==0){
+	    return i;
+	}
+    }
+    return -1;
+}
+
+void stringPtrList_free_deep(StringPtrList *sPtrList){
+    stringPtrList_clear(sPtrList);
+    g_ptr_array_free(sPtrList,TRUE);
+}
+
+gboolean stringPtrList_has_string(StringPtrList *sPtrList,const gchar* str){
+    if (stringPtrList_find_string(sPtrList,str)<0)
+	return FALSE;
+    return TRUE;
+}
+
+const gchar *stringPtrList_index(StringPtrList *sPtrList,guint index){
+    return g_ptr_array_index(sPtrList,index);
+}
+
+static guint stringPtrList_insert_private(StringPtrList *sPtrList, const gchar *strPtr){
+    sPtrList->pdata[sPtrList->len-1] = (gpointer) strPtr;
+    g_ptr_array_add(sPtrList,NULL);
+    return sPtrList->len-1;
+}
+
+gint stringPtrList_insert(StringPtrList *sPtrList, const gchar *str){
+    return stringPtrList_insert_private(sPtrList, str);
+}
+
+gchar **stringPtrList_to_gcharPointerPointer(StringPtrList *sPtrList){
+    return (gchar**) sPtrList->pdata;
+}
+
 /*=======================================
  * StringList functions
  */
@@ -41,57 +105,62 @@ StringList *stringList_new(){
     StringList *sList=NEW_INSTANCE(StringList);
     sList->chunk=g_string_chunk_new(DEFAULT_G_STRING_CHUNK_SIZE);
     sList->hTable=g_hash_table_new(g_str_hash,g_str_equal);
-    sList->ptrArray=g_ptr_array_new();
+    sList->ptrArray=stringPtrList_new();
     sList->chunk_size_inital=DEFAULT_G_STRING_CHUNK_SIZE;
     sList->len=0;
-    g_ptr_array_add(sList->ptrArray,NULL);
     return sList;
 }
 
 StringList *stringList_sized_new(size_t chunk_size, size_t element_count){
     StringList *sList=NEW_INSTANCE(StringList);
     sList->chunk=g_string_chunk_new(chunk_size);
-    sList->ptrArray=g_ptr_array_sized_new(element_count);
+    sList->ptrArray=stringPtrList_sized_new(element_count);
     sList->hTable=g_hash_table_new(g_str_hash,g_str_equal);
-    sList->len=0;
     sList->chunk_size_inital= chunk_size;
-    g_ptr_array_add(sList->ptrArray,NULL);
+    sList->len=0;
     return sList;
 }
 
 StringList *stringList_new_strsplit_set(const gchar *string, const gchar *delimiters, gint max_tokens){
     StringList *sList=stringList_new();
-    GString *strBuf=g_string_new(NULL);
-    int counter=0,i=-1;
-    int j,jLen=strlen(delimiters);
-    gboolean isDelimiter;
-    while(string[++i]!='\0'){
-	if (max_tokens>0 && counter>=max_tokens){
-	    g_string_free(strBuf, TRUE);
-	    return sList;
-	}
-	isDelimiter=FALSE;
-	for(j=0;j<jLen;j++){
-	    if (string[i]==delimiters[j]){
-		isDelimiter=TRUE;
-		break;
-	    }
-	}
-	if (isDelimiter){
-	    if (strBuf->len>0){
-		stringList_insert(sList,strBuf->str);
-		g_string_set_size(strBuf,0);
-		counter++;
-	    }
-	    continue;
-	}
-	g_string_append_c(strBuf,string[i]);
+    gchar **string_set=g_strsplit_set(string,delimiters,max_tokens);
+    int i;
+    for(i=0;string_set[i]!=NULL;i++){
+	stringList_insert(sList,string_set[i]);
     }
-    if (strBuf->len>0){
-	stringList_insert(sList,strBuf->str);
-    }
-    g_string_free(strBuf, TRUE);
+    g_strfreev(string_set);
     return sList;
+//    GString *strBuf=g_string_new(NULL);
+//    int counter=0,i=-1;
+//    int j,jLen=strlen(delimiters);
+//    gboolean isDelimiter;
+//    while(string[++i]!='\0'){
+//        if (max_tokens>0 && counter>=max_tokens){
+//            g_string_free(strBuf, TRUE);
+//            return sList;
+//        }
+//        isDelimiter=FALSE;
+//        for(j=0;j<jLen;j++){
+//            if (string[i]==delimiters[j]){
+//                isDelimiter=TRUE;
+//                break;
+//            }
+//        }
+//        if (isDelimiter){
+//            if (strBuf->len>0){
+//                stringList_insert(sList,strBuf->str);
+//                g_string_set_size(strBuf,0);
+//                counter++;
+//            }
+//            continue;
+//        }
+//        g_string_append_c(strBuf,string[i]);
+//    }
+//    if (strBuf->len>0){
+//        stringList_insert(sList,strBuf->str);
+//    }
+//    g_string_free(strBuf, TRUE);
+//    return sList;
 }
 
 void stringList_clear(StringList *sList){
@@ -109,14 +178,8 @@ void stringList_clear(StringList *sList){
 #endif
 }
 
-int stringList_find_string(StringList *sList,const gchar* str){
-    guint i;
-    for(i=0;i<sList->len;i++){
-	if (strcmp(stringList_index(sList,i),str)==0){
-	    return (int) i;
-	}
-    }
-    return -1;
+gint stringList_find_string(StringList *sList,const gchar* str){
+    return stringPtrList_find_string(sList->ptrArray,str);
 }
 
 gboolean stringList_has_string(StringList *sList,const gchar* str){
@@ -126,18 +189,11 @@ gboolean stringList_has_string(StringList *sList,const gchar* str){
 }
 
 gchar **stringList_to_gcharPointerPointer(StringList *sList){
-    return (gchar**) sList->ptrArray->pdata;
+    return stringPtrList_to_gcharPointerPointer(sList->ptrArray);
 }
 
 const gchar *stringList_index(StringList *sList,guint index){
     return g_ptr_array_index(sList->ptrArray,index);
-}
-
-static guint stringList_insert_private(StringList *sList, gchar *strPtr){
-    sList->ptrArray->pdata[sList->len] = (gpointer) strPtr;
-    g_ptr_array_add(sList->ptrArray,NULL);
-    sList->len++;
-    return sList->len-1;
 }
 
 guint stringList_insert(StringList *sList, const gchar *str){
@@ -145,7 +201,8 @@ guint stringList_insert(StringList *sList, const gchar *str){
     if (str){
 	strPtr=g_string_chunk_insert (sList->chunk,str);
     }
-    return stringList_insert_private(sList, strPtr);
+    sList->len++;
+    return stringPtrList_insert_private(sList->ptrArray, strPtr);
 }
 
 guint stringList_insert_const(StringList *sList, const gchar *str){
@@ -153,7 +210,8 @@ guint stringList_insert_const(StringList *sList, const gchar *str){
     if (!strPtr){
 	strPtr=g_string_chunk_insert_const (sList->chunk,str);
     }
-    return stringList_insert_private(sList, strPtr);
+    sList->len++;
+    return stringPtrList_insert_private(sList->ptrArray, strPtr);
 }
 
 void stringList_free(StringList *sList){
@@ -319,14 +377,14 @@ static void formattedCombineDirective_free(FormattedCombineDirective* directive)
 };
 
 static int  string_formatted_combine_expand_directive(
-	GString *strBuf, StringList *sList, int *counter_ptr, FormattedCombineDirective* directive);
+	GString *strBuf, StringPtrList *sPtrList, int *counter_ptr, FormattedCombineDirective* directive);
 
 /*
  * errno 0: index of subpattern
  *       >0: error
  */
 static FormattedCombineDirective* string_formatted_combine_get_directive(
-	const gchar *format, StringList *sList,guint *currPos_ptr,int *counter_ptr){
+	const gchar *format, StringPtrList *sPtrList,guint *currPos_ptr,int *counter_ptr){
     gchar c;
     RegexReplaceStage stage=REGEX_EVAL_STAGE_INIT;
     GString *option1Str=NULL;
@@ -454,7 +512,7 @@ static FormattedCombineDirective* string_formatted_combine_get_directive(
 		}
 		if (c=='$'){
 		    (*currPos_ptr)++;
-		    subDirective=string_formatted_combine_get_directive(format, sList, currPos_ptr, counter_ptr);
+		    subDirective=string_formatted_combine_get_directive(format, sPtrList, currPos_ptr, counter_ptr);
 		    if (verboseMsg_get_level()>=VERBOSE_MSG_INFO6){
 			if (subDirective->option1){
 			    verboseMsg_print(VERBOSE_MSG_INFO6," option1=%s",subDirective->option1);
@@ -472,7 +530,7 @@ static FormattedCombineDirective* string_formatted_combine_get_directive(
 			directive->errno=6;
 			break;
 		    }
-		    ret=string_formatted_combine_expand_directive(option1Str, sList, counter_ptr, subDirective);
+		    ret=string_formatted_combine_expand_directive(option1Str, sPtrList, counter_ptr, subDirective);
 		    formattedCombineDirective_free(subDirective);
 		    if (ret){
 			directive->errno=6;
@@ -498,7 +556,7 @@ static FormattedCombineDirective* string_formatted_combine_get_directive(
 		}
 		if (c=='$'){
 		    (*currPos_ptr)++;
-		    subDirective=string_formatted_combine_get_directive(format, sList, currPos_ptr, counter_ptr);
+		    subDirective=string_formatted_combine_get_directive(format, sPtrList, currPos_ptr, counter_ptr);
 		    if (verboseMsg_get_level()>=VERBOSE_MSG_INFO6){
 			verboseMsg_print(VERBOSE_MSG_INFO6,
 				"**** string_formatted_combine_get_directive(): subDirective: ");
@@ -521,7 +579,7 @@ static FormattedCombineDirective* string_formatted_combine_get_directive(
 			directive->errno=6;
 			break;
 		    }
-		    ret=string_formatted_combine_expand_directive(option2Str, sList, counter_ptr,  subDirective);
+		    ret=string_formatted_combine_expand_directive(option2Str, sPtrList, counter_ptr,  subDirective);
 		    formattedCombineDirective_free(subDirective);
 		    if (ret){
 			directive->errno=6;
@@ -543,7 +601,7 @@ static FormattedCombineDirective* string_formatted_combine_get_directive(
 		}
 		if (c=='$'){
 		    (*currPos_ptr)++;
-		    subDirective=string_formatted_combine_get_directive(format, sList, currPos_ptr, counter_ptr);
+		    subDirective=string_formatted_combine_get_directive(format, sPtrList, currPos_ptr, counter_ptr);
 		    if (verboseMsg_get_level()>=VERBOSE_MSG_INFO6){
 			verboseMsg_print(VERBOSE_MSG_INFO6,
 				"**** string_formatted_combine_get_directive(): subDirective: ");
@@ -566,7 +624,7 @@ static FormattedCombineDirective* string_formatted_combine_get_directive(
 			directive->errno=6;
 			break;
 		    }
-		    ret=string_formatted_combine_expand_directive(option3Str, sList, counter_ptr,  subDirective);
+		    ret=string_formatted_combine_expand_directive(option3Str, sPtrList, counter_ptr,  subDirective);
 		    formattedCombineDirective_free(subDirective);
 		    if (ret){
 			formattedCombineDirective_free(subDirective);
@@ -608,11 +666,11 @@ static FormattedCombineDirective* string_formatted_combine_get_directive(
 	    g_string_free(option3Str,TRUE);
     }
 
-    if (directive->index >=sList->len ){
+    if (directive->index >=sPtrList->len-1 ){
 	directive->errno=5;
 	verboseMsg_print(VERBOSE_MSG_ERROR,"string_formatted_combine_get_directive():");
-	verboseMsg_print(VERBOSE_MSG_ERROR,"index %d should be less than the number of string in stringList %d\n",
-		directive->index,sList->len);
+	verboseMsg_print(VERBOSE_MSG_ERROR,"index %d should be less than the number of string in stringPtrList %d\n",
+		directive->index,sPtrList->len-1);
     }
     return directive;
 }
@@ -622,7 +680,7 @@ static FormattedCombineDirective* string_formatted_combine_get_directive(
  * Return 0 for success.
  */
 static int  string_formatted_combine_expand_directive(
-	GString *strBuf, StringList *sList, int *counter_ptr, FormattedCombineDirective* directive){
+	GString *strBuf, StringPtrList *sPtrList, int *counter_ptr, FormattedCombineDirective* directive){
     gchar *strtolEnd_ptr=NULL;
     gchar *strTmp=NULL;
     gchar *paddedStr=NULL;
@@ -640,7 +698,7 @@ static int  string_formatted_combine_expand_directive(
 	g_string_append(strBuf,directive->option1);
 	return 0;
     }
-    str=stringList_index(sList,directive->index);
+    str=stringPtrList_index(sPtrList,directive->index);
     if (isEmptyString(str)){
 	/* This substring is not empty */
 	if (directive->statusFlags & SUBPATTERN_FLAG_IS_EMPTY && directive->option1){
@@ -794,7 +852,7 @@ static int  string_formatted_combine_expand_directive(
 }
 
 
-gchar *string_formatted_combine(const gchar *format,StringList *sList,int *counter_ptr){
+gchar *string_formatted_combine(const gchar *format,StringPtrList *sPtrList,int *counter_ptr){
     GString *strBuf=g_string_new(NULL);
 
     int ret;
@@ -805,7 +863,7 @@ gchar *string_formatted_combine(const gchar *format,StringList *sList,int *count
 	verboseMsg_print(VERBOSE_MSG_INFO6,"*** string_formatted_combine():Current strBuf=%s|\n",strBuf->str);
 	if (format[j]=='$'){
 	    j++;
-	    directive=string_formatted_combine_get_directive(format, sList, &j, counter_ptr);
+	    directive=string_formatted_combine_get_directive(format, sPtrList, &j, counter_ptr);
 	    if (verboseMsg_get_level()>=VERBOSE_MSG_INFO6){
 		verboseMsg_print(VERBOSE_MSG_INFO6,"**** string_formatted_combine(): directive:");
 		verboseMsg_print(VERBOSE_MSG_INFO6,"j=%d index=%d errno=%d\n",
@@ -826,7 +884,7 @@ gchar *string_formatted_combine(const gchar *format,StringList *sList,int *count
 		g_string_free(strBuf,TRUE);
 		return NULL;
 	    }
-	    ret=string_formatted_combine_expand_directive(strBuf, sList, counter_ptr,  directive);
+	    ret=string_formatted_combine_expand_directive(strBuf, sPtrList, counter_ptr,  directive);
 	    formattedCombineDirective_free(directive);
 	    if (ret){
 		g_string_free(strBuf,TRUE);
@@ -869,14 +927,13 @@ gchar *string_regex_formatted_combine_regex_t(const gchar *str, const regex_t *p
     guint i;
     gchar *strTmp=NULL;
 
-    StringList *sList=stringList_new();
+    StringPtrList *sPtrList=stringPtrList_new();
     for(i=0;i<nmatch;i++){
         strTmp=string_get_matched_substring(str,pmatch,i);
-        stringList_insert(sList,strTmp);
-        g_free(strTmp);
+        stringPtrList_insert(sPtrList,strTmp);
     }
-    gchar *result=string_formatted_combine(format,sList,counter_ptr);
-    stringList_free(sList);
+    gchar *result=string_formatted_combine(format,sPtrList,counter_ptr);
+    stringPtrList_free_deep(sPtrList);
     g_free(pmatch);
     return result;
 }
@@ -1025,8 +1082,6 @@ gchar* string_padding_left(const gchar *str, const gchar *padding_str, size_t le
 gchar* string_padding_right(const gchar *str, const gchar *padding_str, size_t length){
     return string_padding(str, padding_str, length, FALSE);
 }
-
-
 
 void string_trim(gchar *str){
     int i,j,k,len=strlen(str);

@@ -27,13 +27,10 @@
  * Boston, MA  02111-1307  USA
  */
 
-
-
 #ifndef SQLITE_FUNCTIONS_H_
 #define SQLITE_FUNCTIONS_H_
 #include <sqlite3.h>
 #include "str_functions.h"
-
 
 /**
  * @defgroup SQL_fileAccessFlags SQL file access flags.
@@ -170,7 +167,7 @@ typedef gint (*sqlite_error_callback)(sqlite3 *db, const gchar *sqlClause, gint 
  * @see sqlite3_open_v2()
  * @see SQL_fileAccessFlags.
  */
-int sqlite_open(const char *filename,  sqlite3 **ppDb,  int flags);
+int sqlite_open(const gchar *filename,  sqlite3 **ppDb,  int flags);
 
 /**
  * Data structure that holds the result of SQL functions and command.
@@ -198,7 +195,7 @@ typedef struct {
     StringList *resultList;     //!< StringList that holds returned results.
     int colCount;		//!< Column count. Value 0 usually implied that no matched results.
     int execResult;		//!< sqlite3_exec result code. Initial value is -1, which means the result is not ready.
-    char *errMsg;		//!< Eroor messages from sqlite3_exec().
+    gchar *errMsg;		//!< Eroor messages from sqlite3_exec().
 } SQL_Result;
 
 /**
@@ -229,7 +226,7 @@ StringList *sql_result_free(SQL_Result *sResult, gboolean freeResult);
  * @param errMsg_ptr The error message will be written here. Free it with sqlite3_free().
  * @return 0 if no matches found. Positive number is number of  matched founded. Negative number is  sqlite3_exec result code multiplied by -1.
  */
-int sqlite_count_matches(sqlite3 *db,const char * sqlClause,char **errMsg_ptr);
+int sqlite_count_matches(sqlite3 *db,const gchar * sqlClause,gchar **errMsg_ptr);
 
 /**
  * An sqlite error callback function that print all error message except
@@ -334,7 +331,7 @@ int sqlite_exec_handle_error(sqlite3 *db, const gchar *sqlClause, sqlite_exec_ca
  * @param sqlClause SQL clause.
  * @return SQL_Result that stores the results.
  */
-SQL_Result *sqlite_get_sql_result(sqlite3 *db, const char *sqlClause);
+SQL_Result *sqlite_get_sql_result(sqlite3 *db, const gchar *sqlClause);
 
 /**
  * Get the list of table names in the database.
@@ -360,12 +357,12 @@ SQL_Result *sqlite_get_tableNames(sqlite3 *db);
  * @param errMsg_ptr The error message will be written here.
  * @return SQL_Result that stores the results.
  */
-StringList *sqlite_get_fieldNames(sqlite3 *db,const char * sqlClause, int *execResult_ptr, char **errMsg_ptr);
+StringList *sqlite_get_fieldNames(sqlite3 *db,const gchar * sqlClause, int *execResult_ptr, gchar **errMsg_ptr);
 
 /**
  * Return the value as signed string.
  *
- * sqlite3_value_text() returns unsigned char array, unfortunately,
+ * sqlite3_value_text() returns unsigned gchar array, unfortunately,
  * this is not expected for most of string functions.
  * This function return the value as a signed string.
  *
@@ -374,7 +371,7 @@ StringList *sqlite_get_fieldNames(sqlite3 *db,const char * sqlClause, int *execR
  * @see sqlite_value_signed_text_buffer()
  */
 
-char *sqlite_value_signed_text(sqlite3_value *value);
+gchar *sqlite_value_signed_text(sqlite3_value *value);
 
 /**
  * Store the value as signed string to provided buffer.
@@ -388,7 +385,7 @@ char *sqlite_value_signed_text(sqlite3_value *value);
  * @return same as \a buf.
  * @see sqlite_value_signed_text()
  */
-char *sqlite_value_signed_text_buffer(char *buf,sqlite3_value *value);
+gchar *sqlite_value_signed_text_buffer(gchar *buf,sqlite3_value *value);
 
 #endif /* SQLITE_FUNCTIONS_H_ */
 
