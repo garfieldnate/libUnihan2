@@ -19,14 +19,14 @@ isReadable(const gchar *filename){
     return (access(filename, R_OK) == 0)? TRUE: FALSE;
 }
 
-gboolean 
+gboolean
 isWritable(const gchar *filename){
     gchar parentDirBuf[PATH_MAX];
     gchar *parentDir;
     gboolean result=TRUE;
-    
+
     if (access(filename,W_OK)!=0){
-	// Can't write the file , test whether the parent director can write 
+	// Can't write the file , test whether the parent director can write
 	g_strlcpy(parentDirBuf,filename,PATH_MAX);
 	parentDir=dirname(parentDirBuf);
 	if (access(filename,F_OK)==0 || access(parentDir,W_OK)!=0){
@@ -143,7 +143,7 @@ gchar *filename_choose(const gchar *filename_default, guint filename_len, String
     }
     int ret;
     while(TRUE){
-	ret=callback(resultName, filename_len, extensions, 
+	ret=callback(resultName, filename_len, extensions,
 		access_mode_mask, prompt, option);
 	if (ret==TASK_COMPLETED){
 	    return resultName;

@@ -62,8 +62,8 @@ Unihan.txt: Unihan.txt from Unicode Unihan\n"
 #define USAGE_MSG_CONVERTER_OPTION "Options for converter only:\n\
   -f: Force overwrite the old databases.\n\
   -o outputDir: directory for the outputted databases.\n\
-  -t dbTableFile: DB-Table file which specifies what tables the db files contains.\n\
-  defaultUnihan.sqlite: The default database that holds the tables that are not defined in dbTableFile.\n"
+  -t dbTableFile: DB-Table file which specifies what tables the db files contains.\n"\
+"   " DEFAULTDB_FILENAME_DEFAULT ": The default database that holds the tables that are not defined in dbTableFile.\n"
 
 #define USAGE_MSG_CONVERTER USAGE_MSG_CONVERTER_HEAD USAGE_MSG_OPTION USAGE_MSG_CONVERTER_OPTION
 #define USAGE_MSG_VALIDATER USAGE_MSG_VALIDATER_HEAD USAGE_MSG_OPTION

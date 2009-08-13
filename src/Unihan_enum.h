@@ -1,7 +1,7 @@
-/** 
+/**
  * @file Unihan_enum.h
  * @brief Enumeration and defintion used in libUnihan.
- * 
+ *
  * This header file consists enumeration and definite used in libUnihan.
  * It is included in Unihan.h, so no need to include it directly.
  */
@@ -26,7 +26,7 @@
  * License along with this program; if not, write to the
  * Free Software Foundation, Inc., 59 Temple Place, Suite 330,
  * Boston, MA  02111-1307  USA
- */ 
+ */
 
 #ifndef UNIHAN_ENUM_H_
 #define UNIHAN_ENUM_H_
@@ -35,7 +35,7 @@
 /**
  * Enumeration of Unihan fields.
  *
- * This enumeration lists all fields of libUnihan. 
+ * This enumeration lists all fields of libUnihan.
  * Fields are vital cores of libUnihan. Field are needed to perform queries and other operation.
  * For example, to get the pronunciation of "說",
  * fields \c utf8 and \c kMandarin should be specified in \c unihan_query.
@@ -47,17 +47,17 @@
  *
  * In terms of the origin, there are <b>original fields</b> and <b>supporting fields</b>.
  * Original fields directly come from Unicode's original data -- Unihan.txt;
- * while supporting fields do not exist in Unihan.txt, 
- * they either hold parts of the value from original Unihan tags, or provide convenient 
+ * while supporting fields do not exist in Unihan.txt,
+ * they either hold parts of the value from original Unihan tags, or provide convenient
  * aliases for complex statements.
  *
  * Frequently used fields:
- * 
+ *
  *    -# \c UNIHAN_FIELD_CODE: Unicode point of this character in integer.
  *    -# \c UNIHAN_FIELD_UTF8: UTF8 representation of the character. Useful for showing the character.
  *    -# \c UNIHAN_FIELD_kDEFINITION: An English definition of the character, convenient for dictionaries.
  *    -# De facto standards:
- *    
+ *
  *       -# \c UNIHAN_FIELD_kBIGFIVE: Big5
  *       -# \c UNIHAN_FIELD_kGB0: GB 2312-80
  *       -# \c UNIHAN_FIELD_kJIS0: GB 0208-1990
@@ -72,10 +72,10 @@
  *    -# \c UNIHAN_FIELD_NOT_INSTALLED: The field name is recognized, but not installed in this system.
  *    -# \c UNIHAN_INVALID_FIELD: For error output of end of Unihan field array.
  *    .
- *   
- *  From 0.6, a new value  \c UNIHAN_FIELD_3RD_PARTY is used for third-party fields (fields which are 
+ *
+ *  From 0.6, a new value  \c UNIHAN_FIELD_3RD_PARTY is used for third-party fields (fields which are
  *  from third party database) handling.
- *  A UnihanField is greater than or equal to \c UNIHAN_FIELD_3RD_PARTY if and only if 
+ *  A UnihanField is greater than or equal to \c UNIHAN_FIELD_3RD_PARTY if and only if
  *  it is a third party field.
  */
 typedef enum{
@@ -99,7 +99,7 @@ typedef enum{
     UNIHAN_FIELD_kEACC,			//!< EACC mapping for this character in hex.
     UNIHAN_FIELD_kFENN,			//!< from Fenn's Chinese-English Pocket Dictionary.
     UNIHAN_FIELD_kFENNINDEX,		//!< The position in Fenn's Chinese-English Pocket Dictionary by Courtenay.
-    UNIHAN_FIELD_kFOURCORNERCODE,	//!< The four-corner code(s) for the character.  
+    UNIHAN_FIELD_kFOURCORNERCODE,	//!< The four-corner code(s) for the character.
     UNIHAN_FIELD_kFREQUENCY,		//!< A rough frequency measurement for the character based on analysis of traditional Chinese USENET postings.
     UNIHAN_FIELD_kGB0,			//!< GB 2312-80
     UNIHAN_FIELD_kGB1,			//!< GB 12345-90
@@ -119,7 +119,7 @@ typedef enum{
     UNIHAN_FIELD_kIBMJAPAN,		//!< IBM Japanese mapping for this character in hexadecimal.
     UNIHAN_FIELD_kIICORE,		//!< IICore, the IRG-produced minimal set of required ideographs for East Asian use.
     UNIHAN_FIELD_kIRGDAEJAWEON,		//!< in Dae Jaweon (Korean) dictionary  used in the four-dictionary sorting algorithm.
-    UNIHAN_FIELD_kIRGDAIKANWAZITEN,	//!< in Dai Kanwa Ziten, aka Morohashi dictionary (Japanese)  used in the four-dictionary sorting algorithm.   
+    UNIHAN_FIELD_kIRGDAIKANWAZITEN,	//!< in Dai Kanwa Ziten, aka Morohashi dictionary (Japanese)  used in the four-dictionary sorting algorithm.
     UNIHAN_FIELD_kIRGHANYUDAZIDIAN,	//!< in Hanyu Da Zidian (PRC) used in the four-dictionary sorting algorithm.
     UNIHAN_FIELD_kIRGKANGXI,		//!< in KangXi dictionary.
     UNIHAN_FIELD_kIRG_GSOURCE, 		//!< PRC/Singapore sources, including mapping information.
@@ -152,7 +152,7 @@ typedef enum{
     UNIHAN_FIELD_kOTHERNUMERIC,		//!< The numeric value for the character in certain unusual, specialized contexts.
     UNIHAN_FIELD_kPHONETIC,		//!< The phonetic index for the character from Ten Thousand Characters: An Analytic Dictionary.
     UNIHAN_FIELD_kPRIMARYNUMERIC,	//!< The value of the character when used in the writing of numbers in the standard fashion.
-    UNIHAN_FIELD_kPSEUDOGB1, 		//!< A "GB 12345-90" code point assigned this character for the purposes of including it within Unihan. 
+    UNIHAN_FIELD_kPSEUDOGB1, 		//!< A "GB 12345-90" code point assigned this character for the purposes of including it within Unihan.
     UNIHAN_FIELD_kRSADOBE_JAPAN1_6,	//!< Information on the glyphs in Adobe-Japan1-6 as contributed by Adobe.
     UNIHAN_FIELD_kRSJAPANESE,		//!< A Japanese radical/stroke count.
     UNIHAN_FIELD_kRSKANGXI,		//!< The KangXi radical/stroke count.
@@ -172,25 +172,6 @@ typedef enum{
     UNIHAN_FIELD_kXHC1983,		//!< One or more Hanyu pinyin reading as given in Xiandai Hanyu Ciden.
     UNIHAN_FIELD_kZVARIANT,		//!< Z-variants of this character, including the source that refers it.
 
-    /**
-     * @defgroup Dict_Ref_Fields Supporting fields for dictionary refering tables.
-     * @{
-     * @name Supporting fields for dictionary refering tables.
-     *
-     *
-     * @{
-     */
-    UNIHAN_FIELD_DICT_VOLUME,		//!< Volume number in dictionary.
-    UNIHAN_FIELD_DICT_PAGE,		//!< Page number in dictionary.
-    UNIHAN_FIELD_DICT_POSITION,	//!< The character number in the page.
-    UNIHAN_FIELD_DICT_VIRTUAL,	//!< Virtual position of the character in dictionary. 0 if the character is in the dictionary, greater than 0 for a character assigned a "virtual" position in the dictionary. 
-    UNIHAN_FIELD_DICT_VARIANT_SERIAL,	//!< Serial number of variant. 0 for a main entry and greater than 0 for a parenthesized variant.
-    UNIHAN_FIELD_DICT_UNENCODED,	//!< Unencoded character in the dictionary which is replaced by one or more encoded variants. Currently used only by kXHC1983.
-
-    /**
-     * @}
-     * @}
-     */
 
     /**
      * @defgroup IRG_Source_Fields Supporting fields for IRG source tables.
@@ -261,14 +242,12 @@ typedef enum{
      */
     UNIHAN_FIELD_SEMANTICVARIANT,   	//!< Semantic Variant in UCS4, without dictionary information.
     UNIHAN_FIELD_SPECIALIZEDSEMANTICVARIANT,   	//!< Specialized Semantic Variant in UCS4, without dictionary information.
-    UNIHAN_FIELD_FROM_DICT,		//!< The dictionary that define the semantic relation.
     UNIHAN_FIELD_SEMANTIC_T,		//!< "Tong" (同,synonym). The character and variant one are interchangeable.
     UNIHAN_FIELD_SEMANTIC_B,		//!< "Bu" (不,incompatible). The character and variant one  are not interchangeable.
-    UNIHAN_FIELD_SEMANTIC_Z,		//!< "Zheng" (正,preferred). The variant character is preferred. 
+    UNIHAN_FIELD_SEMANTIC_Z,		//!< "Zheng" (正,preferred). The variant character is preferred.
 
 
     UNIHAN_FIELD_ZVARIANT, 		//!< Z Variant in UCS4, without source information.
-    UNIHAN_FIELD_ZVARIANT_SOURCE, 	//!< The "Source" of Z variants, such as "kHKGlyph" 
     /**
      * @}
      * @}
@@ -283,10 +262,7 @@ typedef enum{
      */
     UNIHAN_FIELD_FREQ_RANK,		//!< The rank of the frequency, 1 stands for most frequent, 2 for less frequent and so on.
 
-    UNIHAN_FIELD_SCALAR_VALUE,		//!< Scalar representation (U+XXXXX) of the character 
-
-    UNIHAN_FIELD_SERIAL,		//!< Hold an artificial sequence number for sorting.
-    UNIHAN_FIELD_SERIAL_NO_JOIN,	//!< Similar with \c UNIHAN_FIELD_SERIAL, but this field will not be used in automatic join.
+    UNIHAN_FIELD_SCALAR_VALUE,		//!< Scalar representation (U+XXXXX) of the character
 
     UNIHAN_FIELD_UTF8,			//!< UTF8 representation of the character.
     /**
@@ -303,7 +279,7 @@ typedef enum{
 /**
  * Number of recognized Unihan fields.
  */
-#define UNIHAN_FIELDS_COUNT	UNIHAN_FIELD_3RD_PARTY 
+#define UNIHAN_FIELDS_COUNT	UNIHAN_FIELD_3RD_PARTY
 
 /**
  * @defgroup Unihan_Field_Flags Bitwise flags for UnihanField.
@@ -311,11 +287,11 @@ typedef enum{
  * @name Bitwise flags for UnihanField.
  *
  * Bitwise flags for UnihanField provides additional control over storing and displaying field values.
- * By default (Flag 0), field values are stored and displayed as string without changing case. 
+ * By default (Flag 0), field values are stored and displayed as string without changing case.
  * However, this behavior can be chaaged by setting these flags.
  *
  * Most of the flags are self-explaining. But note that:
- * -# Set also the \c  UNIHAN_FIELDFLAG_INTEGER for UCS4 fields, 
+ * -# Set also the \c  UNIHAN_FIELDFLAG_INTEGER for UCS4 fields,
  *   hexdecimal fields and 4-digits padded fields.
  *   But \c UNIHAN_FIELDFLAG_UCS4, \c UNIHAN_FIELDFLAG_HEXADECIMAL and \c UNIHAN_FIELDFLAG_0_PADDED_4
  *   are mutually exclusive and should not be set in same field.
@@ -324,19 +300,19 @@ typedef enum{
  * -# \c UNIHAN_FIELDFLAG_NO_INDEX only works for real fields. Pseudo fields are not indexed.
  * @{
  */
-// #define UNIHAN_FIELDFLAG_PSEUDO		0x1	//!< The field is a pseudo field.
-#define UNIHAN_FIELDFLAG_INTEGER		0x2	//!< The field stores an integer. 
-#define UNIHAN_FIELDFLAG_UCS4			0x4	//!< The field stores an UCS4 code. Should also set UNIHAN_FIELDFLAG_INTEGER.
-#define UNIHAN_FIELDFLAG_HEXADECIMAL_16		0x8	//!< The field should be displayed as 16 bits hexdecimal. Should also set UNIHAN_FIELDFLAG_INTEGER.
-#define UNIHAN_FIELDFLAG_0_PADDED_2		0x10	//!< The field should be displayed as zero-padded 2 digits integer. Should also set UNIHAN_FIELDFLAG_INTEGER.
+#define UNIHAN_FIELDFLAG_INTEGER		0x1	//!< The field stores an integer.
+#define UNIHAN_FIELDFLAG_UCS4			0x2	//!< The field stores an UCS4 code. Should also set UNIHAN_FIELDFLAG_INTEGER.
+#define UNIHAN_FIELDFLAG_HEXADECIMAL_16		0x4	//!< The field should be displayed as 16 bits hexdecimal. Should also set UNIHAN_FIELDFLAG_INTEGER.
+#define UNIHAN_FIELDFLAG_0_PADDED_2		0x8	//!< The field should be displayed as zero-padded 2 digits integer. Should also set UNIHAN_FIELDFLAG_INTEGER.
 #define UNIHAN_FIELDFLAG_0_PADDED_4		0x10	//!< The field should be displayed as zero-padded 4 digits integer. Should also set UNIHAN_FIELDFLAG_INTEGER.
-#define UNIHAN_FIELDFLAG_UPPERCASE     	0x20	//!< The field should be displayed as upper case.
-#define UNIHAN_FIELDFLAG_LOWERCASE     	0x40	//!< The field should be displayed as lower case.
+#define UNIHAN_FIELDFLAG_UPPERCASE     		0x20	//!< The field should be displayed as upper case.
+#define UNIHAN_FIELDFLAG_LOWERCASE     		0x40	//!< The field should be displayed as lower case.
 #define UNIHAN_FIELDFLAG_MULTIROWS		0x80	//!< The field is combined by multiple rows, such as kSemanticVariant.
-#define UNIHAN_FIELDFLAG_NO_INDEX		0x100	//!< The field is not indexed. 
+#define UNIHAN_FIELDFLAG_NO_INDEX		0x100	//!< The field is not indexed.
 #define UNIHAN_FIELDFLAG_NO_PRIMARYKEY		0x200	//!< The field do not need to be in primary key. Normally fields without flag UNIHAN_FIELDFLAG_SINGLETON are in the primary key. However, this flags explicitly specify the field do not need to be in primary key.
 #define UNIHAN_FIELDFLAG_SINGLETON		0x400	//!< The field is functional dependent on code. (i.e. No other values), should be with UNIHAN_FIELDFLAG_NO_PRIMARYKEY
-#define UNIHAN_FIELDFLAG_MANDARIN		0x800	//!< The field stores a mandarin pronunciation. 
+#define UNIHAN_FIELDFLAG_MANDARIN		0x800	//!< The field stores a mandarin pronunciation.
+#define UNIHAN_FIELDFLAG_AUTOUNION		0x1000	//!< Union operator is used with this field.
 
 /**
  * @}
@@ -355,43 +331,43 @@ typedef enum{
  *   <li><code>UNIHAN_AMBIGUOUS_TABLE</code>: Indicate the field appears in multiple tables.</li>
  * </ol>
  *
- * Every tables in libUnihan have 2 or more fields, 
+ * Every tables in libUnihan have 2 or more fields,
  * one is always UNIHAN_FIELD_CODE ("code") field for the code points of characters,
  * the other fields stores parts of Unihan tag value.
  *
- * Normally, each Unihan tag has a corresponding table, for example, 
+ * Normally, each Unihan tag has a corresponding table, for example,
  * UNIHAN_TABLE_kDEFINITION ("kDefinitionTable") has UNIHAN_FIELD_CODE and
  * UNIHAN_FIELD_kDEFITION which stores the value of the kDefinition tag.
  *
- * If a tag value is splittable and the parts are often utilized, 
+ * If a tag value is splittable and the parts are often utilized,
  * the value is store in multiple fields.
  * For example, tag kHanyuPinlu has 2 parts, pinyin and its Pinlu (frequency).
  * Thus table UNIHAN_TABLE_kHANYU_PINLU ("kHanyuPinluTable")  has three fields:
  * UNIHAN_FIELD_CODE, UNIHAN_FIELD_PINYIN, and UNIHAN_FIELD_PINYIN_FREQ,
- * where UNIHAN_FIELD_PINYIN and UNIHAN_FIELD_PINYIN_FREQ store pinyin and 
+ * where UNIHAN_FIELD_PINYIN and UNIHAN_FIELD_PINYIN_FREQ store pinyin and
  * its frequency respectively.
- * 
+ *
  * Some Unihan tag values consist optional fields, that is,
  * the fields that do not always have values.
  * Putting all these fields in one table violate the 1st normal form (no null fields).
  * To keep tables normalized, two types of tables are employed:
  * "main" tables  hold compulsory fields;
- * while "extra" tables  hold primary key fields 
+ * while "extra" tables  hold primary key fields
  * and optional field.
  *
- * For example, value of tag kIRG_GSource can splits to 
- * compulsory field UNIHAN_FIELD_IRG_SOURCE_SHORT_NAME and 
+ * For example, value of tag kIRG_GSource can splits to
+ * compulsory field UNIHAN_FIELD_IRG_SOURCE_SHORT_NAME and
  * optional field UNIHAN_FIELD_IRG_SOURCE_MAPPING.
  * Tag values are stored in two tables:
  * the "main" table UNIHAN_TABLE_IRG_SOURCE stores UNIHAN_FIELD_CODE and UNIHAN_FIELD_IRG_SOURCE_SHORT_NAME;
- * while the "extra" table UNIHAN_TABLE_IRG_SOURCE_EXTRA stores 
+ * while the "extra" table UNIHAN_TABLE_IRG_SOURCE_EXTRA stores
  * primary key fields (UNIHAN_FIELD_CODE, UNIHAN_FIELD_IRG_SOURCE_SHORT_NAME), and the optional field
  * UNIHAN_FIELD_IRG_SOURCE_MAPPING.
- * 
- * Some Unihan tag values are combined in to one table. 
  *
- * \note \c UNIHAN_TABLE_NOT_INSTALLED returns because the tables are recognized by 
- *        libUnihan but not yet installed in this system; on the other hand, 
+ * Some Unihan tag values are combined in to one table.
+ *
+ * \note \c UNIHAN_TABLE_NOT_INSTALLED returns because the tables are recognized by
+ *        libUnihan but not yet installed in this system; on the other hand,
  *        \c UNIHAN_INVALID_TABLE returns if the table cannot be recognized,
  *        or other error occurs.
  *
@@ -418,7 +394,7 @@ typedef enum{
     UNIHAN_TABLE_kEACC,			//!< Table for EACC mapping for characters in hex.
     UNIHAN_TABLE_kFENN,			//!< Table for Fenn's Chinese-English Pocket Dictionary by Courtenay.
     UNIHAN_TABLE_kFENNINDEX,		//!< Table for the position in Fenn's Chinese-English Pocket Dictionary by Courtenay.
-    UNIHAN_TABLE_kFOURCORNERCODE,	//!< Table for the four-corner codes.  
+    UNIHAN_TABLE_kFOURCORNERCODE,	//!< Table for the four-corner codes.
     UNIHAN_TABLE_kFREQUENCY,		//!< Table for a rough frequency measurement for characters based on analysis of traditional Chinese USENET postings.
     UNIHAN_TABLE_kGB0,			//!< Table for GB 2312-80
     UNIHAN_TABLE_kGB1,			//!< Table for GB 12345-90
@@ -454,7 +430,7 @@ typedef enum{
     UNIHAN_TABLE_kIRG_VSOURCE_EXTRA,	//!< Table for IRG V (Vietnam) source and its mapping/code.
 
     UNIHAN_TABLE_kIRGDAEJAWEON,	        //!< Table for Dae Jaweon (Korean) dictionary  used in the four-dictionary sorting algorithm.
-    UNIHAN_TABLE_kIRGDAIKANWAZITEN,	//!< Table for Dai Kanwa Ziten, aka Morohashi dictionary (Japanese)  used in the four-dictionary sorting algorithm.   
+    UNIHAN_TABLE_kIRGDAIKANWAZITEN,	//!< Table for Dai Kanwa Ziten, aka Morohashi dictionary (Japanese)  used in the four-dictionary sorting algorithm.
     UNIHAN_TABLE_kIRGHANYUDAZIDIAN,	//!< Table for Hanyu Da Zidian (PRC) used in the four-dictionary sorting algorithm.
     UNIHAN_TABLE_kIRGKANGXI,		//!< Table for KangXi dictionary.
     UNIHAN_TABLE_kJAPANESEKUN,		//!< Table for Japanese pronunciation(s).
@@ -479,7 +455,7 @@ typedef enum{
     UNIHAN_TABLE_kOTHERNUMERIC,		//!< Table for numeric values for characters in certain unusual, specialized contexts.
     UNIHAN_TABLE_kPHONETIC,		//!< Table for the phonetic index of characters from Ten Thousand Characters: An Analytic Dictionary.
     UNIHAN_TABLE_kPRIMARYNUMERIC,	//!< Table for values of characters when used in the writing of numbers in the standard fashion.
-    UNIHAN_TABLE_kPSEUDOGB1, 		//!< Table for "GB 12345-90" code points  for the purposes of including it within Unihan. 
+    UNIHAN_TABLE_kPSEUDOGB1, 		//!< Table for "GB 12345-90" code points  for the purposes of including it within Unihan.
     UNIHAN_TABLE_kRSADOBE_JAPAN1_6,	//!< Table for Information on the glyphs in Adobe-Japan1-6 as contributed by Adobe.
     UNIHAN_TABLE_kRSJAPANESE,		//!< Table for Japanese radical/stroke count.
     UNIHAN_TABLE_kRSKANGXI,		//!< Table for KangXi radical/stroke count.

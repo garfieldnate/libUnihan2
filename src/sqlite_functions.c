@@ -27,8 +27,8 @@
 #include "file_functions.h"
 #include "verboseMsg.h"
 
-int sqlite_open(const gchar *filename,  sqlite3 **ppDb,  int flags){
-    int ret;
+gint sqlite_open(const gchar *filename,  sqlite3 **ppDb,  gint flags){
+    gint ret;
 #ifdef HAVE_SQLITE3_OPEN_V2
     ret = sqlite3_open_v2(filename, ppDb, flags, NULL);
 #else
@@ -90,18 +90,18 @@ StringList *sql_result_free(SQL_Result *sResult, gboolean freeResult){
     return resultList;
 }
 
-static int sqlite_count_matches_callback(void *data,int colCount,gchar** value_array,gchar **fieldName_array){
+static gint sqlite_count_matches_callback(void *data,gint colCount,gchar** value_array,gchar **fieldName_array){
     if (data==NULL){
 	return SQLITE_ABORT;
     }
-    int *count=(int *) data;
+    gint *count=(gint *) data;
     (*count)++;
     return SQLITE_OK;
 }
 
-int sqlite_count_matches(sqlite3 *db,const gchar * sqlClause,gchar **errMsg_ptr){
+gint sqlite_count_matches(sqlite3 *db,const gchar * sqlClause,gchar **errMsg_ptr){
     g_assert(db);
-    int rowCount=0,execResult;
+    gint rowCount=0,execResult;
     execResult=sqlite3_exec(db,sqlClause,sqlite_count_matches_callback,&rowCount,errMsg_ptr);
     if (execResult) {
 	return -1 * execResult;
@@ -109,7 +109,7 @@ int sqlite_count_matches(sqlite3 *db,const gchar * sqlClause,gchar **errMsg_ptr)
     return rowCount;
 }
 
-int sqlite_error_callback_hide_constraint_error(sqlite3 *db, const gchar *sqlClause, gint error_code,
+gint sqlite_error_callback_hide_constraint_error(sqlite3 *db, const gchar *sqlClause, gint error_code,
 	const gchar *error_msg, gpointer prompt){
     if (error_code!= SQLITE_CONSTRAINT){
 	sqlite_error_callback_print_message(db,sqlClause,error_code,error_msg,prompt);
@@ -117,19 +117,19 @@ int sqlite_error_callback_hide_constraint_error(sqlite3 *db, const gchar *sqlCla
     return error_code;
 }
 
-int sqlite_error_callback_show_constraint_warning(sqlite3 *db, const gchar *sqlClause, gint error_code,
+gint sqlite_error_callback_show_constraint_warning(sqlite3 *db, const gchar *sqlClause, gint error_code,
 	const gchar *error_msg, gpointer prompt){
     gchar *prompt_str=(gchar *) prompt;
     if (error_code!= SQLITE_CONSTRAINT){
 	sqlite_error_callback_print_message(db,sqlClause,error_code,error_msg,prompt);
     }else{
-	verboseMsg_print(VERBOSE_MSG_WARNING,"%s: [constraint warning]: %s\n",prompt_str,error_msg);
+	verboseMsg_print(VERBOSE_MSG_WARNING,"%s: [constragint warning]: %s\n",prompt_str,error_msg);
 	verboseMsg_print(VERBOSE_MSG_WARNING,"%s: Caused by following SQL statement: %s\n",prompt_str,sqlClause);
     }
     return error_code;
 }
 
-int sqlite_error_callback_print_message(sqlite3 *db, const gchar *sqlClause, gint error_code,
+gint sqlite_error_callback_print_message(sqlite3 *db, const gchar *sqlClause, gint error_code,
 	const gchar *error_msg, gpointer prompt){
     gchar *prompt_str=(gchar *) prompt;
     verboseMsg_print(VERBOSE_MSG_WARNING,"%s: [Error] code: %d, message: %s\n",prompt_str,error_code,error_msg);
@@ -137,7 +137,7 @@ int sqlite_error_callback_print_message(sqlite3 *db, const gchar *sqlClause, gin
     return error_code;
 }
 
-int sqlite_exec_handle_error(sqlite3 *db, const gchar *sqlClause, sqlite_exec_callback exec_func,
+gint sqlite_exec_handle_error(sqlite3 *db, const gchar *sqlClause, sqlite_exec_callback exec_func,
 	gpointer exec_option, sqlite_error_callback error_func, gpointer error_option ){
     gchar *errMsg_ptr=NULL;
     gint ret=sqlite3_exec(db,sqlClause,exec_func, exec_option, &errMsg_ptr);
@@ -148,12 +148,12 @@ int sqlite_exec_handle_error(sqlite3 *db, const gchar *sqlClause, sqlite_exec_ca
     return ret;
 }
 
-static int sqlite_get_sql_result_callback(void *data,int colCount,gchar** value_array,gchar **fieldName_array){
+static gint sqlite_get_sql_result_callback(void *data,gint colCount,gchar** value_array,gchar **fieldName_array){
     if (data==NULL){
 	return SQLITE_ABORT;
     }
     SQL_Result *sResult=(SQL_Result *) data;
-    int i;
+    gint i;
     verboseMsg_print(VERBOSE_MSG_INFO4," sqlite_get_sql_result_callback(,%d,,): \n",colCount);
     if (!(sResult->colCount)){
 	for(i=0;i<colCount;i++){
@@ -184,9 +184,9 @@ SQL_Result *sqlite_get_tableNames(sqlite3 *db){
     return sqlite_get_sql_result(db, "SELECT name FROM sqlite_master WHERE type='table'");
 }
 
-static int sqlite_get_fieldNames_callback(void *data,int colCount,gchar** value_array,gchar **fieldName_array){
+static gint sqlite_get_fieldNames_callback(void *data,gint colCount,gchar** value_array,gchar **fieldName_array){
     StringList *sList=(StringList *) data;
-    int i;
+    gint i;
     for(i=0;i<colCount;i++){
 	stringList_insert(sList,fieldName_array[i]);
     }
@@ -194,7 +194,7 @@ static int sqlite_get_fieldNames_callback(void *data,int colCount,gchar** value_
     return SQLITE_ABORT;
 }
 
-StringList *sqlite_get_fieldNames(sqlite3 *db,const gchar * sqlClause, int *execResult_ptr, gchar **errMsg_ptr){
+StringList *sqlite_get_fieldNames(sqlite3 *db,const gchar * sqlClause, gint *execResult_ptr, gchar **errMsg_ptr){
     g_assert(db);
     StringList *sList=stringList_new();
     *execResult_ptr=sqlite3_exec(db,sqlClause,sqlite_get_fieldNames_callback,sList,errMsg_ptr);
@@ -212,9 +212,9 @@ StringList *sqlite_get_fieldNames(sqlite3 *db,const gchar * sqlClause, int *exec
     return sList;
 }
 
-//void sqlite_eval_output_db_Func(sqlite3_context *context, int argc, sqlite3_value **argv){
+//void sqlite_eval_output_db_Func(sqlite3_context *context, gint argc, sqlite3_value **argv){
 //    g_assert(argc>=1);
-//    int i,counter=1;
+//    gint i,counter=1;
 //    const gchar *format=sqlite_value_signed_text(argv[0]);
 //    GString *strBuf=g_string_new(NULL);
 
@@ -232,23 +232,48 @@ StringList *sqlite_get_fieldNames(sqlite3 *db,const gchar * sqlClause, int *exec
 
 //}
 /*==============================================================
+ * signed<->unsigned conversion.
+ */
+gchar *sqlite_value_signed_text_buffer(gchar *buf,sqlite3_value *value){
+    return unsignedStr_to_signedStr_buffer(buf, sqlite3_value_text(value));
+}
+
+gchar *sqlite_value_signed_text(sqlite3_value *value){
+    const guchar *str=sqlite3_value_text(value);
+    gchar *buf=NEW_ARRAY_INSTANCE(strlen((const gchar *) str)+1, gchar);
+    return unsignedStr_to_signedStr_buffer(buf, str);
+}
+
+/*==============================================================
  * SQL scalar functions.
  */
-void sqlite_format_combine_scalar_function(sqlite3_context *context, int argc, sqlite3_value **argv){
+static void sqlite_string_formatted_combine_scalar_function(sqlite3_context *context, gint argc, sqlite3_value **argv){
     g_assert(argc>2);
+    StringPtrList *sPtrList=stringPtrList_new();
+    gint i,counter=0;
     gchar *format=sqlite_value_signed_text(argv[0]);
-//    sqlite3_result_text(context,buf,-1,g_free);
+    for(i=1;i<argc;i++){
+	stringPtrList_insert(sPtrList,sqlite_value_signed_text(argv[i]));
+    }
+    gchar *buf=string_formatted_combine(format, sPtrList, &counter);
+    stringPtrList_free_deep(sPtrList);
+    sqlite3_result_text(context,buf,-1,g_free);
+}
+
+gint sqlite_create_string_formatted_combine_scalar_function(sqlite3 *db, const gchar *function_name){
+    return sqlite3_create_function(db, function_name, 2,SQLITE_UTF8,NULL,
+	    sqlite_string_formatted_combine_scalar_function,NULL,NULL);
 }
 
 /*==============================================================
  * SQL aggregation functions.
  */
 typedef struct {
-    int rowCount;
+    gint rowCount;
     GString *strBuf;
 } SqliteConcatStru;
 
-void sqlite_concat_aggregation_step_Func(sqlite3_context *context, int argc, sqlite3_value **argv){
+static void sqlite_concat_aggregation_step_Func(sqlite3_context *context, gint argc, sqlite3_value **argv){
     g_assert(argc==2);
     SqliteConcatStru *cStru = (SqliteConcatStru *) sqlite3_aggregate_context(context, sizeof(*cStru));
     if (cStru->rowCount==0){
@@ -282,7 +307,7 @@ void sqlite_concat_aggregation_step_Func(sqlite3_context *context, int argc, sql
     cStru->rowCount++;
 }
 
-void sqlite_concat_aggregation_finalized_Func(sqlite3_context *context){
+static void sqlite_concat_aggregation_finalized_Func(sqlite3_context *context){
     SqliteConcatStru *cStru = (SqliteConcatStru *) sqlite3_aggregate_context(context, sizeof(*cStru));
 
     if (cStru->rowCount>0){
@@ -291,22 +316,8 @@ void sqlite_concat_aggregation_finalized_Func(sqlite3_context *context){
     }
 }
 
-int sqlite_create_concat_aggregation_function(sqlite3 *db, const gchar *function_name){
+gint sqlite_create_concat_aggregation_function(sqlite3 *db, const gchar *function_name){
     return sqlite3_create_function(db, function_name, 2,SQLITE_UTF8,NULL,
 	    NULL,sqlite_concat_aggregation_step_Func,sqlite_concat_aggregation_finalized_Func);
 }
-
-/*==============================================================
- * signed<->unsigned conversion.
- */
-gchar *sqlite_value_signed_text_buffer(gchar *buf,sqlite3_value *value){
-    return unsignedStr_to_signedStr_buffer(buf, sqlite3_value_text(value));
-}
-
-gchar *sqlite_value_signed_text(sqlite3_value *value){
-    const guchar *str=sqlite3_value_text(value);
-    gchar *buf=NEW_ARRAY_INSTANCE(strlen((const gchar *) str)+1, gchar);
-    return unsignedStr_to_signedStr_buffer(buf, str);
-}
-
 

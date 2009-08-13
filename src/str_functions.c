@@ -124,15 +124,15 @@ StringList *stringList_sized_new(size_t chunk_size, size_t element_count){
 StringList *stringList_new_strsplit_set(const gchar *string, const gchar *delimiters, gint max_tokens){
     StringList *sList=stringList_new();
     gchar **string_set=g_strsplit_set(string,delimiters,max_tokens);
-    int i;
+    gint i;
     for(i=0;string_set[i]!=NULL;i++){
 	stringList_insert(sList,string_set[i]);
     }
     g_strfreev(string_set);
     return sList;
 //    GString *strBuf=g_string_new(NULL);
-//    int counter=0,i=-1;
-//    int j,jLen=strlen(delimiters);
+//    gint counter=0,i=-1;
+//    gint j,jLen=strlen(delimiters);
 //    gboolean isDelimiter;
 //    while(string[++i]!='\0'){
 //        if (max_tokens>0 && counter>=max_tokens){
@@ -238,9 +238,9 @@ void stringList_free(StringList *sList){
 //}
 
 //RegexResult *regexResult_match_once_regex_t(regex_t *preg, const gchar* str,
-//        int eflags){
-//    int i;
-//    int nmatch=preg->re_nsub+1;
+//        gint eflags){
+//    gint i;
+//    gint nmatch=preg->re_nsub+1;
 //    regmatch_t *pmatch=NEW_ARRAY_INSTANCE(nmatch,regmatch_t);
 //    RegexResult *rResult=regexResult_new();
 
@@ -259,18 +259,18 @@ void stringList_free(StringList *sList){
 //    return rResult;
 //}
 
-//RegexResult *regexResult_match_regex_t(regex_t *preg,const gchar* str, int eflags,
+//RegexResult *regexResult_match_regex_t(regex_t *preg,const gchar* str, gint eflags,
 //        guint regexResultFlags){
 //    gchar *currPtr=(gchar *)str;
-//    int len=strlen(str);
-//    int i;
-//    int counter=0;
+//    gint len=strlen(str);
+//    gint i;
+//    gint counter=0;
 //    gchar *newStr;
 //    RegexResult *currResult=NULL:
 //    RegexResult *rResult=regexResult_new();
 //    gchar *resultStr;
-//    int resultStr_so,resultStr_eo;
-//    int maxEo;
+//    gint resultStr_so,resultStr_eo;
+//    gint maxEo;
 //    while(currPtr<str+len){
 //        maxEo=-1;
 //        currResult=regexResult_match_once_regex_t(preg, currPtr, eflags);
@@ -311,9 +311,9 @@ void stringList_free(StringList *sList){
 //}
 
 //RegexResult *regexResult_match(const gchar *pattern,const gchar *str,
-//        int cflags, int eflags, guint regexResultFlags){
+//        gint cflags, gint eflags, guint regexResultFlags){
 //    regex_t *preg=NULL;
-//    int ret;
+//    gint ret;
 //    if ((ret=regcomp(preg, pattern, cflags))!=0){
 //        /* Invalid pattern */
 //        char buf[STRING_BUFFER_SIZE_DEFAULT];
@@ -352,8 +352,8 @@ typedef enum{
 } RegexReplaceStage;
 
 typedef struct {
-    int errno;
-    int index;
+    gint errno;
+    gint index;
     guint statusFlags;
     gchar *option1;
     gchar *option2;
@@ -376,15 +376,15 @@ static void formattedCombineDirective_free(FormattedCombineDirective* directive)
     g_free(directive);
 };
 
-static int  string_formatted_combine_expand_directive(
-	GString *strBuf, StringPtrList *sPtrList, int *counter_ptr, FormattedCombineDirective* directive);
+static gint  string_formatted_combine_expand_directive(
+	GString *strBuf, StringPtrList *sPtrList, gint *counter_ptr, FormattedCombineDirective* directive);
 
 /*
  * errno 0: index of subpattern
  *       >0: error
  */
 static FormattedCombineDirective* string_formatted_combine_get_directive(
-	const gchar *format, StringPtrList *sPtrList,guint *currPos_ptr,int *counter_ptr){
+	const gchar *format, StringPtrList *sPtrList,guint *currPos_ptr,gint *counter_ptr){
     gchar c;
     RegexReplaceStage stage=REGEX_EVAL_STAGE_INIT;
     GString *option1Str=NULL;
@@ -393,7 +393,7 @@ static FormattedCombineDirective* string_formatted_combine_get_directive(
     verboseMsg_print(VERBOSE_MSG_INFO5,"*** string_formatted_combine_get_directive() start\n");
     FormattedCombineDirective *directive=formattedCombineDirective_new();
     FormattedCombineDirective *subDirective=NULL;
-    int ret;
+    gint ret;
 
     do{
 	c=format[*currPos_ptr];
@@ -679,14 +679,14 @@ static FormattedCombineDirective* string_formatted_combine_get_directive(
  * Expend the directive.
  * Return 0 for success.
  */
-static int  string_formatted_combine_expand_directive(
-	GString *strBuf, StringPtrList *sPtrList, int *counter_ptr, FormattedCombineDirective* directive){
+static gint  string_formatted_combine_expand_directive(
+	GString *strBuf, StringPtrList *sPtrList, gint *counter_ptr, FormattedCombineDirective* directive){
     gchar *strtolEnd_ptr=NULL;
     gchar *strTmp=NULL;
     gchar *paddedStr=NULL;
 
     const gchar *str=NULL;
-    int beginIndex,length;
+    gint beginIndex,length;
     gchar buf[STRING_BUFFER_SIZE_DEFAULT];
     gunichar ucs4_code;
 
@@ -852,10 +852,10 @@ static int  string_formatted_combine_expand_directive(
 }
 
 
-gchar *string_formatted_combine(const gchar *format,StringPtrList *sPtrList,int *counter_ptr){
+gchar *string_formatted_combine(const gchar *format,StringPtrList *sPtrList,gint *counter_ptr){
     GString *strBuf=g_string_new(NULL);
 
-    int ret;
+    gint ret;
     guint j,formatLen=strlen(format);
     FormattedCombineDirective* directive=NULL;
 
@@ -906,7 +906,7 @@ static gchar *string_get_matched_substring(const gchar *str, regmatch_t *pmatch,
 	return NULL;
     }
     /* This subpattern is not empty */
-    int i;
+    gint i;
     gchar *result=NEW_ARRAY_INSTANCE(pmatch[index].rm_eo-pmatch[index].rm_so+1,gchar);
     for(i=0;i<pmatch[index].rm_eo-pmatch[index].rm_so;i++){
 	result[i]=str[pmatch[index].rm_so+i];
@@ -916,7 +916,7 @@ static gchar *string_get_matched_substring(const gchar *str, regmatch_t *pmatch,
 }
 
 gchar *string_regex_formatted_combine_regex_t(const gchar *str, const regex_t *preg, const gchar *format,
-	int eflags, int *counter_ptr){
+	gint eflags, gint *counter_ptr){
     guint nmatch=preg->re_nsub+1;
     regmatch_t *pmatch=NEW_ARRAY_INSTANCE(nmatch,regmatch_t);
     if (regexec(preg,str,nmatch,pmatch,eflags)!=0){
@@ -939,9 +939,9 @@ gchar *string_regex_formatted_combine_regex_t(const gchar *str, const regex_t *p
 }
 
 gchar *string_regex_formatted_combine(const gchar *str, const gchar *pattern, const gchar *format,
-	int cflags, int eflags, int *counter_ptr){
+	gint cflags, gint eflags, gint *counter_ptr){
     regex_t preg;
-    int ret;
+    gint ret;
 
     if ((ret=regcomp(&preg, pattern, cflags))!=0){
 	/* Invalid pattern */
@@ -958,7 +958,7 @@ gchar *string_regex_formatted_combine(const gchar *str, const gchar *pattern, co
 
 
 gchar *string_regex_replace_regex_t(const gchar *str, const regex_t *preg, const gchar *format,
-	int eflags, int *counter_ptr){
+	gint eflags, gint *counter_ptr){
 
     guint i;
     guint len=strlen(str);
@@ -996,10 +996,10 @@ gchar *string_regex_replace_regex_t(const gchar *str, const regex_t *preg, const
 }
 
 gchar *string_regex_replace(const gchar *str, const gchar *pattern, const gchar *format,
-	int cflags, int eflags, int *counter_ptr){
+	gint cflags, gint eflags, gint *counter_ptr){
 
     regex_t preg;
-    int ret;
+    gint ret;
     if ((ret=regcomp(&preg, pattern, cflags))!=0){
 	/* Invalid pattern */
 	char buf[STRING_BUFFER_SIZE_DEFAULT];
@@ -1034,7 +1034,7 @@ isEmptyString(const gchar *str){
 }
 
 gchar* string_append_c(gchar *str, const char ch,size_t length){
-    int len=strlen(str);
+    gint len=strlen(str);
     if (len>=length-1){
 	return NULL;
     }
@@ -1055,11 +1055,11 @@ gboolean string_is_decomposed_fast(const gchar *str){
 
 
 static gchar* string_padding(const gchar *str, const gchar *padding_str, size_t length, gboolean left){
-    int len=strlen(str);
-    int len_padding=strlen(padding_str);
-    int i=0;
+    gint len=strlen(str);
+    gint len_padding=strlen(padding_str);
+    gint i=0;
     /* length need to be convert as signed */
-    int len_fill=(int) (length-len-len_padding+1);
+    gint len_fill=(int) (length-len-len_padding+1);
     GString *strBuf=g_string_new(NULL);
     if (left){
 	for(i=0; i<len_fill ;i+=len_padding){
@@ -1084,7 +1084,7 @@ gchar* string_padding_right(const gchar *str, const gchar *padding_str, size_t l
 }
 
 void string_trim(gchar *str){
-    int i,j,k,len=strlen(str);
+    gint i,j,k,len=strlen(str);
     gboolean whiteSpaces=TRUE;
     for(i=len-1;i>=0;i--){
 	switch(str[i]){
@@ -1131,7 +1131,7 @@ void string_trim(gchar *str){
 }
 
 gchar*
-subString(const gchar *str,int beginIndex,int length){
+subString(const gchar *str,gint beginIndex,gint length){
     size_t actualLength= (length >=0)? length: strlen(str)-beginIndex;
     gchar *buf=NEW_ARRAY_INSTANCE(actualLength+1,gchar);
     return subString_buffer(buf, str, beginIndex, length);
@@ -1139,8 +1139,8 @@ subString(const gchar *str,int beginIndex,int length){
 
 
 gchar*
-subString_buffer(gchar *buf, const gchar *str,int beginIndex, int length){
-    int i;
+subString_buffer(gchar *buf, const gchar *str,gint beginIndex, gint length){
+    gint i;
     for(i=0;str[i+beginIndex]!='\0';i++){
 	if (length>=0 && i>=length){
 	    break;
@@ -1182,8 +1182,8 @@ gchar* utf8_concat_ucs4(gchar* utf8_str,gunichar ucs4_code){
     return utf8_str;
 }
 
-int strcmp_unsigned_signed(const unsigned char *str1, const gchar *str2){
-    int c1, c2,i=0;
+gint strcmp_unsigned_signed(const guchar *str1, const gchar *str2){
+    gint c1, c2,i=0;
     do{
 	c1=(int) str1[i];
 	c2=(int) str2[i];
@@ -1197,26 +1197,26 @@ int strcmp_unsigned_signed(const unsigned char *str1, const gchar *str2){
     return 0;
 }
 
-unsigned char *signedStr_to_unsignedStr(const gchar *str){
-    unsigned char *cloneStr=NEW_ARRAY_INSTANCE(strlen(str)+1,unsigned char);
-    unsigned char *result=signedStr_to_unsignedStr_buffer(cloneStr,str);
+guchar *signedStr_to_unsignedStr(const gchar *str){
+    guchar *cloneStr=NEW_ARRAY_INSTANCE(strlen(str)+1,guchar);
+    guchar *result=signedStr_to_unsignedStr_buffer(cloneStr,str);
     if (!result)
 	g_free(cloneStr);
     return result;
 }
 
-unsigned char *signedStr_to_unsignedStr_buffer(unsigned char *resultBuf, const gchar *str){
-    unsigned char c;
-    int i=0;
+guchar *signedStr_to_unsignedStr_buffer(guchar *resultBuf, const gchar *str){
+    guchar c;
+    gint i=0;
     do{
-	c=(unsigned char) str[i];
+	c=(guchar) str[i];
 	resultBuf[i]=c;
 	i++;
     }while(c!=0 );
     return resultBuf;
 }
 
-gchar *unsignedStr_to_signedStr(const unsigned char *str){
+gchar *unsignedStr_to_signedStr(const guchar *str){
     gchar* cloneStr=NEW_ARRAY_INSTANCE(strlen((const gchar *)str)+1,gchar);
     gchar *result=unsignedStr_to_signedStr_buffer(cloneStr,str);
     if (!result)
@@ -1224,9 +1224,9 @@ gchar *unsignedStr_to_signedStr(const unsigned char *str){
     return result;
 }
 
-gchar *unsignedStr_to_signedStr_buffer(gchar* resultBuf, const unsigned char *str){
+gchar *unsignedStr_to_signedStr_buffer(gchar* resultBuf, const guchar *str){
     gchar c;
-    int i=0;
+    gint i=0;
     do{
 	c=(gchar) str[i];
 	resultBuf[i]=c;
@@ -1235,12 +1235,12 @@ gchar *unsignedStr_to_signedStr_buffer(gchar* resultBuf, const unsigned char *st
     return resultBuf;
 }
 
-int longestCommonSubsequence_get_length(const gchar *s1, const gchar *s2, int ***lcsTablePtr){
-    int n1=strlen(s1);
-    int n2=strlen(s2);
-    int **table= NEW_ARRAY2D_INSTANCE(n2,n1,int);
-    int i1,i2;
-    int prev;
+gint longestCommonSubsequence_get_length(const gchar *s1, const gchar *s2, gint ***lcsTablePtr){
+    gint n1=strlen(s1);
+    gint n2=strlen(s2);
+    gint **table= NEW_ARRAY2D_INSTANCE(n2,n1,int);
+    gint i1,i2;
+    gint prev;
     for(i2=n2-1;i2>=0;i2--){
 	for(i1=n1-1;i1>=0;i1--){
 	    if (i2==n2-1){
@@ -1269,16 +1269,16 @@ int longestCommonSubsequence_get_length(const gchar *s1, const gchar *s2, int **
 }
 
 
-gchar* longestCommonSubsequence_get_subsequence(const gchar *s1, const gchar *s2, int **lcsTable){
-    int n1=strlen(s1);
-    int n2=strlen(s2);
-    int len=lcsTable[0][0];
+gchar* longestCommonSubsequence_get_subsequence(const gchar *s1, const gchar *s2, gint **lcsTable){
+    gint n1=strlen(s1);
+    gint n2=strlen(s2);
+    gint len=lcsTable[0][0];
     if (len==0){
 	return NULL;
     }
     gchar *subsequence= (gchar *) calloc(len+1,sizeof(gchar));
-    int i1=0,i2=0;
-    int counter=0;
+    gint i1=0,i2=0;
+    gint counter=0;
     subsequence[len]='\0';
     while(counter<len){
 	if (s1[i1]==s2[i2]){
@@ -1307,9 +1307,9 @@ gchar* longestCommonSubsequence_get_subsequence(const gchar *s1, const gchar *s2
 }
 
 
-//int main(int argc, gchar** argv){
-//    int **table=NULL;
-//    int len=longestCommonSubsequence_get_length(argv[1],argv[2], &table);
+//gint main(gint argc, gchar** argv){
+//    gint **table=NULL;
+//    gint len=longestCommonSubsequence_get_length(argv[1],argv[2], &table);
 //    gchar* str=longestCommonSubsequence_get_subsequence(argv[1],argv[2], table);
 //    if (str==NULL)
 //        str="NULL";

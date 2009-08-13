@@ -37,6 +37,41 @@
 #include "Unihan.h"
 
 #define MAX_FIELDS_OF_TABLE 10
+
+
+/**
+ * Enumeration of Unihan private fields.
+ */
+
+/**
+ * @defgroup Dict_Ref_Fields Supporting fields for dictionary refering tables.
+ * @{
+ * @name Supporting fields for dictionary refering tables.
+ *
+ *
+ * @{
+ */
+typedef enum{
+    UNIHAN_FIELD_DICT_VOLUME=UNIHAN_FIELD_3RD_PARTY,		//!< Volume number in dictionary.
+    UNIHAN_FIELD_DICT_PAGE,		//!< Page number in dictionary.
+    UNIHAN_FIELD_DICT_POSITION,		//!< The character number in the page.
+    UNIHAN_FIELD_DICT_VIRTUAL,		//!< Virtual position of the character in dictionary. 0 if the character is in the dictionary, greater than 0 for a character assigned a "virtual" position in the dictionary.
+    UNIHAN_FIELD_DICT_VARIANT_SERIAL,	//!< Serial number of variant. 0 for a main entry and greater than 0 for a parenthesized variant.
+    UNIHAN_FIELD_DICT_UNENCODED,	//!< Unencoded character in the dictionary which is replaced by one or more encoded variants. Currently used only by kXHC1983.
+
+    UNIHAN_FIELD_FROM_DICT,		//!< The dictionary that define the semantic relation.
+    UNIHAN_FIELD_ZVARIANT_SOURCE, 	//!< The "Source" of Z variants, such as "kHKGlyph"
+
+    UNIHAN_FIELD_SERIAL,		//!< Hold an artificial sequence number for sorting.
+    UNIHAN_FIELD_SERIAL_NO_JOIN,	//!< Similar with \c UNIHAN_FIELD_SERIAL, but this field will not be used in automatic join.
+
+    UNIHAN_FIELD_PRIVATE_END
+} UnihanField_BuiltIn_Private;
+/**
+ * @}
+ * @}
+ */
+
 /**
  * UnihanPseudoFieldImportFormat describes how the pseudo field is imported.
  */

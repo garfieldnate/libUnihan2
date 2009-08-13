@@ -41,7 +41,6 @@
 #define UNIHAN_TABLE_ARRAY_MAX_LEN 800
 extern FILE *logFile;
 
-
 /*=========================================================
  * Functions
  */
@@ -95,7 +94,7 @@ UnihanTable *unihanField_get_required_tables_builtin(UnihanField field){
 }
 
 gboolean unihanField_has_flags_builtin(UnihanField field, guint flags){
-    if (field<0 || field>UNIHAN_FIELD_3RD_PARTY){
+    if (field<0 || field>UNIHAN_FIELD_PRIVATE_END){
 	return FALSE;
     }
     return UNIHAN_FIELD_PROPERTIES[field].flags & flags;
@@ -103,7 +102,7 @@ gboolean unihanField_has_flags_builtin(UnihanField field, guint flags){
 
 UnihanField unihanField_parse_builtin(const char *str){
     UnihanField field;
-    for(field=0;field<UNIHAN_FIELD_3RD_PARTY;field++){
+    for(field=0;field<UNIHAN_FIELD_PRIVATE_END;field++){
 	if (strcmp(UNIHAN_FIELD_PROPERTIES[field].fieldName,str)==0){
 	    return field;
 	}
@@ -112,7 +111,7 @@ UnihanField unihanField_parse_builtin(const char *str){
 }
 
 const char *unihanField_to_string_builtin(UnihanField field){
-    if (field<0 || field>=UNIHAN_FIELD_3RD_PARTY){
+    if (field<0 || field>=UNIHAN_FIELD_PRIVATE_END){
 	return NULL;
     }
     return UNIHAN_FIELD_PROPERTIES[field].fieldName;
@@ -177,14 +176,14 @@ const char *unihanTable_to_string_builtin(UnihanTable table){
  * Importing Format
  */
 
-static gint field_ImportFormat_index_table[UNIHAN_FIELD_3RD_PARTY];
+static gint field_ImportFormat_index_table[UNIHAN_FIELD_PRIVATE_END];
 
 void unihanPseudoFieldImportFormat_enumerate_init_builtin(Enumerate *e, UnihanField *field){
     static gboolean initialized=FALSE;
     if (!initialized){
 	/* Filling the field_ImportFormat_index_table */
 	gint i,lastField=UNIHAN_INVALID_FIELD;
-	for(i=0;i<UNIHAN_FIELD_3RD_PARTY;i++){
+	for(i=0;i<UNIHAN_FIELD_PRIVATE_END;i++){
 	    field_ImportFormat_index_table[i]=-1;
 	}
 	for(i=0;PSEUDOFIELD_IMPORT_FORMAT[i].pseudoField!=UNIHAN_INVALID_FIELD;i++){

@@ -167,7 +167,7 @@ typedef gint (*sqlite_error_callback)(sqlite3 *db, const gchar *sqlClause, gint 
  * @see sqlite3_open_v2()
  * @see SQL_fileAccessFlags.
  */
-int sqlite_open(const gchar *filename,  sqlite3 **ppDb,  int flags);
+gint sqlite_open(const gchar *filename,  sqlite3 **ppDb,  gint flags);
 
 /**
  * Data structure that holds the result of SQL functions and command.
@@ -193,8 +193,8 @@ int sqlite_open(const gchar *filename,  sqlite3 **ppDb,  int flags);
 typedef struct {
     StringList *fieldList;      //!< StringList that holds returned fields.
     StringList *resultList;     //!< StringList that holds returned results.
-    int colCount;		//!< Column count. Value 0 usually implied that no matched results.
-    int execResult;		//!< sqlite3_exec result code. Initial value is -1, which means the result is not ready.
+    gint colCount;		//!< Column count. Value 0 usually implied that no matched results.
+    gint execResult;		//!< sqlite3_exec result code. Initial value is -1, which means the result is not ready.
     gchar *errMsg;		//!< Eroor messages from sqlite3_exec().
 } SQL_Result;
 
@@ -226,14 +226,14 @@ StringList *sql_result_free(SQL_Result *sResult, gboolean freeResult);
  * @param errMsg_ptr The error message will be written here. Free it with sqlite3_free().
  * @return 0 if no matches found. Positive number is number of  matched founded. Negative number is  sqlite3_exec result code multiplied by -1.
  */
-int sqlite_count_matches(sqlite3 *db,const gchar * sqlClause,gchar **errMsg_ptr);
+gint sqlite_count_matches(sqlite3 *db,const gchar * sqlClause,gchar **errMsg_ptr);
 
 /**
- * An sqlite error callback function that print all error message except
- * constraint error.
+ * An sqlite error callback function that prgint all error message except
+ * constragint error.
  *
  * This function is just like sqlite_error_callback_print_message(),
- * except the constraint error messages are hidden. This is useful
+ * except the constragint error messages are hidden. This is useful
  * when the invalid records (which do not meet the constraint) are expected
  * and skipped.
  *
@@ -252,11 +252,11 @@ gint sqlite_error_callback_hide_constraint_error(sqlite3 *db, const gchar *sqlCl
 	const gchar *error_msg, gpointer prompt);
 
 /**
- * An sqlite error callback function that print all error message except
- * print constraint error as warning.
+ * An sqlite error callback function that prgint all error message except
+ * prgint constragint error as warning.
  *
  * This function is just like sqlite_error_callback_hide_constraint_error(),
- * except the constraint error messages are printed as warning.
+ * except the constragint error messages are printed as warning.
  *
  * @param db The \a db from from sqlite_exec_handle_error().
  * @param sqlClause The original \a sqlClause from from sqlite_exec_handle_error().
@@ -273,7 +273,7 @@ gint sqlite_error_callback_show_constraint_warning(sqlite3 *db, const gchar *sql
 	const gchar *error_msg, gpointer prompt);
 
 /**
- * An sqlite error callback function that print error messages.
+ * An sqlite error callback function that prgint error messages.
  *
  * This function is an implementation of sqlite_error_callback,
  * which can be called by sqlite_exec_handle_error().
@@ -321,7 +321,7 @@ gint sqlite_error_callback_print_message(sqlite3 *db, const gchar *sqlClause, gi
  * @see sqlite_error_callback_print_message()
  * @see sqlite_error_callback_hide_constraint_error()
  */
-int sqlite_exec_handle_error(sqlite3 *db, const gchar *sqlClause, sqlite_exec_callback exec_func,
+gint sqlite_exec_handle_error(sqlite3 *db, const gchar *sqlClause, sqlite_exec_callback exec_func,
 	gpointer exec_option, sqlite_error_callback error_func, gpointer error_option);
 
 /**
@@ -357,7 +357,11 @@ SQL_Result *sqlite_get_tableNames(sqlite3 *db);
  * @param errMsg_ptr The error message will be written here.
  * @return SQL_Result that stores the results.
  */
-StringList *sqlite_get_fieldNames(sqlite3 *db,const gchar * sqlClause, int *execResult_ptr, gchar **errMsg_ptr);
+StringList *sqlite_get_fieldNames(sqlite3 *db,const gchar * sqlClause, gint *execResult_ptr, gchar **errMsg_ptr);
+
+/*==============================================================
+ * signed<->unsigned conversion.
+ */
 
 /**
  * Return the value as signed string.
@@ -386,6 +390,38 @@ gchar *sqlite_value_signed_text(sqlite3_value *value);
  * @see sqlite_value_signed_text()
  */
 gchar *sqlite_value_signed_text_buffer(gchar *buf,sqlite3_value *value);
+
+/*==============================================================
+ * SQL scalar functions.
+ */
+
+/**
+ * Create a SQL scalar function that combines columns into a specified format.
+ *
+ * This function creates a SQL scalar function that combines columns into a specified format.
+ * The first argument of that scalar function is \c format, the rest arguments are columns to be combined.
+ *
+ * @param db The Db connection which the scalar function be added on.
+ * @param function_name Name for the SQL scalar function.
+ * @return  SQLITE_OK if success; SQLITE_ERROR if the function name is longer than 255 bytes.
+ * @see string_formatted_combine().
+ */
+gint sqlite_create_string_formatted_combine_scalar_function(sqlite3 *db, const gchar *function_name);
+
+/*==============================================================
+ * SQL aggregation functions.
+ */
+
+/**
+ * Create a SQL aggregation function that concatenates string values of a column.
+ *
+ * This function creates a SQL aggregation function that concatenates string values of a column.
+ *
+ * @param db The Db connection which the aggregation function be added on.
+ * @param function_name Name for the SQL aggregation function.
+ * @return  SQLITE_OK if success; SQLITE_ERROR if the function name is longer than 255 bytes.
+ */
+gint sqlite_create_concat_aggregation_function(sqlite3 *db, const gchar *function_name);
 
 #endif /* SQLITE_FUNCTIONS_H_ */
 

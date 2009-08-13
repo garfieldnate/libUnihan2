@@ -1,12 +1,12 @@
-/** 
- * @file unihan_search_db.c
+/**
+ * @file unihan_rebuild_cache.c
  * @brief Search and collect the fields and tables in Unihan database files from given paths.
  *
- * This program searches and collects the fields and tables in Unihan database files 
- * from given paths. If no path is given from the command line option, then use the 
+ * This program searches and collects the fields and tables in Unihan database files
+ * from given paths. If no path is given from the command line option, then use the
  * path defined in \c UNIHAN_DEFAULT_DB_PATH.
  *
- * @since {libUnihan 0.6.0}
+ * @since {libUnihan 0.9.0}
  */
 
 
@@ -30,7 +30,7 @@
  * License along with this program; if not, write to the
  * Free Software Foundation, Inc., 59 Temple Place, Suite 330,
  * Boston, MA  02111-1307  USA
- */ 
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,7 +54,7 @@ Usage: %s [-h] [-l] [-O outputPath] [-V num] [-v] [searchPath]\n\
 Options:\
    -h: Show this help message.\n\
    -l: Search symbolic linked db as well.\n\
-   -O outputPath: specify the directory to put the cache datbases.\n\
+   -O outputPath: specify the directory to put the cache databases.\n\
    -V [num]: Specify verbose level, the higher the num, the more detail is shown. \n\
       Default is 2 (show warning). \n\
    -v: Show libUnihan version number.\n"
@@ -71,7 +71,7 @@ gchar *searchPath=NULL;
 
 gchar *outputDir=NULL;
 
-guint fileMode= FILE_MODE_READ | FILE_MODE_NO_SYMLINK; 
+guint fileMode= FILE_MODE_READ | FILE_MODE_NO_SYMLINK;
 
 UnihanTable installedBuiltInTables[UNIHAN_TABLES_COUNT];
 guint installedBuiltInTableIndex=0;
@@ -197,7 +197,7 @@ static int create_fieldCacheDb_tables(sqlite3 *field_cache_db){
 	    "(FieldId integer NOT NULL, TableId integer NOT NULL, "
 	    " DBName text NOT NULL, Preferred integer NOT NULL,"
 	    "PRIMARY KEY(FieldId, TableId, DBName));",NULL,NULL,
-	    sqlite_error_callback_hide_constraint_error,"Error on creating RealFieldTable")){	    
+	    sqlite_error_callback_hide_constraint_error,"Error on creating RealFieldTable")){
 	return 5;
     }
 
@@ -205,7 +205,7 @@ static int create_fieldCacheDb_tables(sqlite3 *field_cache_db){
     if (sqlite_exec_handle_error(field_cache_db,"CREATE TABLE PseudoFieldRequireTable "
 		"(FieldId integer NOT NULL, TableId integer NOT NULL, "
 		"PRIMARY KEY(FieldId, TableId));",NULL,NULL,
-		sqlite_error_callback_hide_constraint_error,"Error on creating PseudoFieldRequireTable")){	    
+		sqlite_error_callback_hide_constraint_error,"Error on creating PseudoFieldRequireTable")){
 	return 5;
     }
 
@@ -241,7 +241,7 @@ static int create_fieldCacheDb_indexes(sqlite3 *field_cache_db){
     if (sqlite_exec_handle_error(field_cache_db,
 		"CREATE INDEX PseudoFieldRequireTableIndex ON PseudoFieldRequireTable (FieldId, TableId);"
 		,NULL,NULL,
-		sqlite_error_callback_hide_constraint_error,"Error on creating PseudoFieldRequireTable")){	    
+		sqlite_error_callback_hide_constraint_error,"Error on creating PseudoFieldRequireTable")){
 	return 5;
     }
     return 0;
@@ -268,7 +268,7 @@ static int create_fieldCacheDb(sqlite3 *field_cache_db, StringList *dbFile_list)
 	return ret;
     }
 
-    
+
     for(i=0;i<dbFile_list->len;i++){
 	verboseMsg_print(VERBOSE_MSG_INFO1,"Opening %s \t",stringList_index(dbFile_list,i));
 	ret=sqlite_open(stringList_index(dbFile_list,i),&db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
@@ -310,7 +310,7 @@ static int create_fieldCacheDb(sqlite3 *field_cache_db, StringList *dbFile_list)
 		}
 
 		if (j==0){
-		    /* 
+		    /*
 		     * Only insert to DbFileTable if there are at least one
 		     * fields
 		     */
@@ -326,7 +326,7 @@ static int create_fieldCacheDb(sqlite3 *field_cache_db, StringList *dbFile_list)
 
 		}
 		if (k==0){
-		    /* 
+		    /*
 		     * Only insert to TableIdTable if there are at least one
 		     * fields
 		     */
@@ -470,7 +470,7 @@ int main(int argc,char** argv){
     if (ret){
 	return ret;
     }
-    
+
      ret=add_internal_pseudo_fields(field_cache_db);
     if (ret){
 	return ret;
