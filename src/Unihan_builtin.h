@@ -62,6 +62,18 @@ typedef enum{
     UNIHAN_FIELD_FROM_DICT,		//!< The dictionary that define the semantic relation.
     UNIHAN_FIELD_ZVARIANT_SOURCE, 	//!< The "Source" of Z variants, such as "kHKGlyph"
 
+    /**
+     * @defgroup Other_Fields Supporting fields for variant tables.
+     * @{
+     * @name Supporting fields for variant tables.
+     *
+     * @{
+     */
+    UNIHAN_FIELD_FREQ_RANK,		//!< The rank of the frequency, 1 stands for most frequent, 2 for less frequent and so on.
+    /**
+     * @}
+     * @}
+     */
     UNIHAN_FIELD_SERIAL,		//!< Hold an artificial sequence number for sorting.
     UNIHAN_FIELD_SERIAL_NO_JOIN,	//!< Similar with \c UNIHAN_FIELD_SERIAL, but this field will not be used in automatic join.
 
@@ -119,6 +131,28 @@ typedef UnihanPseudoFieldImportFormat* unihanPseudoFieldImportFormat_index_callb
 gint sqlite_error_callback_hide_known_constraint_error(sqlite3 *db, const gchar *sqlClause, gint error_code,
 	const gchar *error_msg, gpointer prompt);
 
+
+/**
+ * Return the table that contain a given real field (Builtin).
+ *
+ * For a real field, this function returns the table that contain it.
+ * Return \c UNIHAN_INVALID_TABLE if the field is a pseudo field.
+ *
+ * The field can be either \b real or \b pseudo.
+ *
+ * \note Some pseudo fields like UNIHAN_FIELD_kIRG_GSOURCE require more than one tables
+ * to obtain full function. Use unihanField_get_required_table_builtin() instead if this is the case.
+ *
+ * Use unihanField_get_allTables() to obtain all the table that the field belongs to.
+ *
+ * @param field  the UnihanField.
+ * @return The preferred table if a valid field is given;
+ *    \c UNIHAN_INVALID_TABLE if invalid field is given.
+ * @see unihanField_get_required_table_builtin()
+ * @see unihanField_get_all_tables_builtin(UnihanField field)
+ */
+UnihanTable unihanField_get_table_builtin();
+
 /**
  * Return the preferred table of field (Builtin).
  *
@@ -138,7 +172,7 @@ gint sqlite_error_callback_hide_known_constraint_error(sqlite3 *db, const gchar 
  * @see unihanField_get_required_table_builtin()
  * @see unihanField_get_all_tables_builtin(UnihanField field)
  */
-UnihanTable unihanField_get_preferred_table_builtin(UnihanField field);
+//UnihanTable unihanField_get_preferred_table_builtin(UnihanField field);
 
 /**
  * Return an array of tables which are required by the given field (Builtin).
@@ -159,7 +193,7 @@ UnihanTable unihanField_get_preferred_table_builtin(UnihanField field);
  * @see unihanField_get_required_table_builtin()
  * @see unihanField_get_all_tables_builtin(UnihanField field)
  */
-UnihanTable *unihanField_get_required_tables_builtin(UnihanField field);
+//UnihanTable *unihanField_get_required_tables_builtin(UnihanField field);
 
 /**
  * Whether field has given flags.
@@ -279,6 +313,19 @@ UnihanField* unihanTable_get_fields_builtin(UnihanTable table);
 const char *unihanTable_to_string_builtin(UnihanTable table);
 
 /**
+ * Initialize an unihanRealField  enumerate handle.
+ *
+ * An unihanRealField enumerate list all the real fields and its corresponding table.
+ *
+ * @param e An enumerate handle.
+ */
+void unihanRealField_enumerate_init_builtin(Enumerate *e);
+
+gboolean unihanRealField_enumerate_has_next_builtin(Enumerate *e);
+
+const UnihanFieldTablePair *unihanRealField_enumerate_next_builtin(Enumerate *e);
+
+/**
  * Initialize an unihanPseudoFieldImportFormat enumerate handle.
  *
  * An unihanPseudoFieldImportFormat enumerate list all the import format
@@ -294,46 +341,46 @@ const UnihanPseudoFieldImportFormat *unihanPseudoFieldImportFormat_enumerate_nex
 const UnihanPseudoFieldImportFormatPost *unihanPseudoFieldImportFormatPost_find_builtin(UnihanField field,UnihanTable table);
 
 /**
- * Initialize an unihanPseudoFieldExportFormat enumerate handle.
+ * Initialize an unihanPublicFieldExportFormat enumerate handle.
  *
- * An unihanPseudoFieldExportFormat enumerate list all the
+ * An unihanPublicFieldExportFormat enumerate list all the
  * pseudo field exporting formats for libUnihan.
  *
  * Example code:
  * <pre>
  * Enumerate e;
- * unihanPseudoFieldExportFormat_enumerate_init_builtin(&e);
- * while(unihanPseudoFieldExportFormat_has_next_builtin(&e)){
- *      UnihanPseudoFieldExportFormat *format=unihanPseudoFieldExportFormat_next_builtin(&e);
+ * unihanPublicFieldExportFormat_enumerate_init_builtin(&e);
+ * while(unihanPublicFieldExportFormat_has_next_builtin(&e)){
+ *      UnihanPublicFieldExportFormat *format=unihanPublicFieldExportFormat_next_builtin(&e);
  *      ...do something with format...
  * }
  * </pre>
  *
  * @param e enumerate handle to be initialized.
- * @see unihanPseudoFieldExportFormat_has_next_builtin()
- * @see unihanPseudoFieldExportFormat_next_builtin()
+ * @see unihanPublicFieldExportFormat_has_next_builtin()
+ * @see unihanPublicFieldExportFormat_next_builtin()
  */
-void unihanPseudoFieldExportFormat_enumerate_init_builtin(Enumerate *e);
+void unihanPublicFieldExportFormat_enumerate_init_builtin(Enumerate *e);
 
 /**
  * Returns TRUE if the enumeration has more elements.
  *
  * @param e enumerate handle.
  * @return TRUE if there is more elements; FALSE otherwise.
- * @see unihanPseudoFieldExportFormat_enumerate_init_builtin()
- * @see unihanPseudoFieldExportFormat_next_builtin()
+ * @see unihanPublicFieldExportFormat_enumerate_init_builtin()
+ * @see unihanPublicFieldExportFormat_next_builtin()
  */
-gboolean unihanPseudoFieldExportFormat_has_next_builtin(Enumerate *e);
+gboolean unihanPublicFieldExportFormat_has_next_builtin(Enumerate *e);
 
 /**
  * Returns the next element in the enumeration.
  *
  * @param e enumerate handle.
  * @return The next element; NULL if no such element.
- * @see unihanPseudoFieldExportFormat_enumerate_init_builtin()
- * @see unihanPseudoFieldExportFormat_next_builtin()
+ * @see unihanPublicFieldExportFormat_enumerate_init_builtin()
+ * @see unihanPublicFieldExportFormat_next_builtin()
  */
-UnihanPseudoFieldExportFormat *unihanPseudoFieldExportFormat_next_builtin(Enumerate *e);
+UnihanPublicFieldExportFormat *unihanPublicFieldExportFormat_next_builtin(Enumerate *e);
 
 /**
  * Returns the exporting format regarding the pseudo field.
@@ -341,6 +388,6 @@ UnihanPseudoFieldExportFormat *unihanPseudoFieldExportFormat_next_builtin(Enumer
  * @param field The pseudo field.
  * @return The e exporting format regarding the \a field; NULL if no such format.
  */
-UnihanPseudoFieldExportFormat *unihanPseudoFieldExportFormat_get_by_pseudoField_builtin(UnihanField field);
+UnihanPublicFieldExportFormat *unihanPublicFieldExportFormat_get_by_pseudoField_builtin(UnihanField field);
 
 #endif /* UNIHAN_BUILTIN_H_ */

@@ -18,7 +18,7 @@ Core		Unihan_core@DB_POSTFIX@
 Recommended	Unihan_recommended@DB_POSTFIX@
 
 # Tables of variants
-Variant	Unihan_variant.sqlite
+Variant		Unihan_variant.sqlite
 
 # Major Dictionary references, such as KangXi and other dictionaries used in four dictionary sort algorithm
 DictRef_Major	Unihan_dictRef_major@DB_POSTFIX@
@@ -27,7 +27,7 @@ DictRef_Major	Unihan_dictRef_major@DB_POSTFIX@
 Mapping_Popular	Unihan_mapping_popular@DB_POSTFIX@
 
 # Infrequent used data should store here.
-Misc	Unihan_misc@DB_POSTFIX@
+Misc		Unihan_misc@DB_POSTFIX@
 
 =================================
 ############################
@@ -39,7 +39,7 @@ Misc	Unihan_misc@DB_POSTFIX@
 
 ############################
 # Following tables should be in core db.
-Core	 	codeTable
+Core		codeTable
 Core		kFrequencyTable
 Core		kGradeLevelTable
 Core		kIICoreTable

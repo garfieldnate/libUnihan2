@@ -67,30 +67,15 @@ gint sqlite_error_callback_hide_known_constraint_error(sqlite3 *db, const gchar 
 /*==============================================================
  * Basic built field and table functions.
  */
-UnihanTable unihanField_get_preferred_table_builtin(UnihanField field){
-    int i;
-    for(i=0;FIELD_PREFERRED_TABLES[i].field!=UNIHAN_INVALID_FIELD;i++){
-	if (FIELD_PREFERRED_TABLES[i].field==field){
-	    return FIELD_PREFERRED_TABLES[i].table;
-	}
-    }
-    return UNIHAN_INVALID_TABLE;
-}
 
-UnihanTable *unihanField_get_required_tables_builtin(UnihanField field){
-    int i,counter=0;
-    UnihanTable *tables=NEW_ARRAY_INSTANCE(UNIHAN_TABLE_ARRAY_MAX_LEN, UnihanTable);
-    for(i=0;PSEUDOFIELD_IMPORT_FORMAT[i].pseudoField!=UNIHAN_INVALID_FIELD;i++){
-	if (PSEUDOFIELD_IMPORT_FORMAT[i].pseudoField==field){
-	    tables[counter++]=PSEUDOFIELD_IMPORT_FORMAT[i].table;
+UnihanTable unihanField_get_table_builtin(UnihanField field){
+    int i;
+    for(i=0;REALFIELD_TABLES[i].table!=UNIHAN_INVALID_TABLE;i++){
+	if (field==REALFIELD_TABLES[i].field){
+	    return REALFIELD_TABLES[i].table;
 	}
     }
-    if (counter==0){
-	/* Maybe a real field */
-	tables[counter++]=unihanField_get_preferred_table_builtin(field);
-    }
-    tables[counter]=UNIHAN_INVALID_TABLE;
-    return tables;
+    return REALFIELD_TABLES[i].table;
 }
 
 gboolean unihanField_has_flags_builtin(UnihanField field, guint flags){
@@ -172,6 +157,27 @@ const char *unihanTable_to_string_builtin(UnihanTable table){
     return UNIHAN_TABLE_NAMES[table];
 }
 
+void unihanRealField_enumerate_init_builtin(Enumerate *e){
+    e->index=0;
+    e->userData=NULL;
+}
+
+gboolean unihanRealField_enumerate_has_next_builtin(Enumerate *e){
+    if (REALFIELD_TABLES[e->index].field==UNIHAN_INVALID_FIELD){
+	return FALSE;
+    }
+    return TRUE;
+}
+
+const UnihanFieldTablePair *unihanRealField_enumerate_next_builtin(Enumerate *e){
+    if (unihanRealField_enumerate_has_next_builtin(e)){
+	e->index++;
+	return &REALFIELD_TABLES[e->index-1];
+    }
+    return NULL;
+}
+
+
 /*==============================================================
  * Importing Format
  */
@@ -186,10 +192,10 @@ void unihanPseudoFieldImportFormat_enumerate_init_builtin(Enumerate *e, UnihanFi
 	for(i=0;i<UNIHAN_FIELD_PRIVATE_END;i++){
 	    field_ImportFormat_index_table[i]=-1;
 	}
-	for(i=0;PSEUDOFIELD_IMPORT_FORMAT[i].pseudoField!=UNIHAN_INVALID_FIELD;i++){
-	    if (PSEUDOFIELD_IMPORT_FORMAT[i].pseudoField!=lastField){
-		field_ImportFormat_index_table[PSEUDOFIELD_IMPORT_FORMAT[i].pseudoField]=i;
-		lastField=PSEUDOFIELD_IMPORT_FORMAT[i].pseudoField;
+	for(i=0;PSEUDO_FIELD_IMPORT_FORMAT[i].pseudoField!=UNIHAN_INVALID_FIELD;i++){
+	    if (PSEUDO_FIELD_IMPORT_FORMAT[i].pseudoField!=lastField){
+		field_ImportFormat_index_table[PSEUDO_FIELD_IMPORT_FORMAT[i].pseudoField]=i;
+		lastField=PSEUDO_FIELD_IMPORT_FORMAT[i].pseudoField;
 	    }
 	}
 	initialized=TRUE;
@@ -207,22 +213,22 @@ gboolean unihanPseudoFieldImportFormat_enumerate_has_next_builtin(Enumerate *e){
 const UnihanPseudoFieldImportFormat *unihanPseudoFieldImportFormat_enumerate_next_builtin(Enumerate *e){
     glong i,prevIndex=e->index;
     e->index=-1;
-    for(i=prevIndex+1;PSEUDOFIELD_IMPORT_FORMAT[i].pseudoField!=UNIHAN_INVALID_FIELD;i++){
-	if (PSEUDOFIELD_IMPORT_FORMAT[i].pseudoField==*(UnihanField *)e->userData){
+    for(i=prevIndex+1;PSEUDO_FIELD_IMPORT_FORMAT[i].pseudoField!=UNIHAN_INVALID_FIELD;i++){
+	if (PSEUDO_FIELD_IMPORT_FORMAT[i].pseudoField==*(UnihanField *)e->userData){
 	    e->index=i;
 	    break;
 	}
     }
     if (prevIndex>=0)
-	return &PSEUDOFIELD_IMPORT_FORMAT[prevIndex];
+	return &PSEUDO_FIELD_IMPORT_FORMAT[prevIndex];
     return NULL;
 }
 
 const UnihanPseudoFieldImportFormatPost *unihanPseudoFieldImportFormatPost_find_builtin(UnihanField field,UnihanTable table){
     int i;
-    for(i=0; PSEUDOFIELD_IMPORT_FORMAT_POST[i].field!=UNIHAN_INVALID_FIELD; i++){
-	if (field==PSEUDOFIELD_IMPORT_FORMAT_POST[i].field && table==PSEUDOFIELD_IMPORT_FORMAT_POST[i].table){
-	    return &(PSEUDOFIELD_IMPORT_FORMAT_POST[i]);
+    for(i=0; PSEUDO_FIELD_IMPORT_FORMAT_POST[i].field!=UNIHAN_INVALID_FIELD; i++){
+	if (field==PSEUDO_FIELD_IMPORT_FORMAT_POST[i].field && table==PSEUDO_FIELD_IMPORT_FORMAT_POST[i].table){
+	    return &(PSEUDO_FIELD_IMPORT_FORMAT_POST[i]);
 	}
     }
     return NULL;
@@ -231,30 +237,30 @@ const UnihanPseudoFieldImportFormatPost *unihanPseudoFieldImportFormatPost_find_
 /*==============================================================
  * Exporting Format
  */
-void unihanPseudoFieldExportFormat_enumerate_init_builtin(Enumerate *e){
+void unihanPublicFieldExportFormat_enumerate_init_builtin(Enumerate *e){
     e->index=0;
     e->userData=NULL;
 }
 
-gboolean unihanPseudoFieldExportFormat_has_next_builtin(Enumerate *e){
-    if (UNIHAN_PSEUDOFIELD_EXPORT_FORMAT[e->index].pseudoField!= UNIHAN_INVALID_FIELD)
+gboolean unihanPublicFieldExportFormat_has_next_builtin(Enumerate *e){
+    if (UNIHAN_PUBLIC_FIELD_EXPORT_FORMAT[e->index].publicField!= UNIHAN_INVALID_FIELD)
 	return TRUE;
     return FALSE;
 }
 
-UnihanPseudoFieldExportFormat *unihanPseudoFieldExportFormat_next_builtin(Enumerate *e){
-    if (unihanPseudoFieldExportFormat_has_next_builtin(e)){
+UnihanPublicFieldExportFormat *unihanPublicFieldExportFormat_next_builtin(Enumerate *e){
+    if (unihanPublicFieldExportFormat_has_next_builtin(e)){
 	e->index++;
-	return &UNIHAN_PSEUDOFIELD_EXPORT_FORMAT[e->index-1];
+	return &UNIHAN_PUBLIC_FIELD_EXPORT_FORMAT[e->index-1];
     }
     return NULL;
 }
 
-UnihanPseudoFieldExportFormat *unihanPseudoFieldExportFormat_get_by_pseudoField_builtin(UnihanField field){
+UnihanPublicFieldExportFormat *unihanPublicFieldExportFormat_get_by_pseudoField_builtin(UnihanField field){
     int i;
-    for (i=0; UNIHAN_PSEUDOFIELD_EXPORT_FORMAT[i].pseudoField!= UNIHAN_INVALID_FIELD;i++){
-	if (UNIHAN_PSEUDOFIELD_EXPORT_FORMAT[i].pseudoField==field){
-	    return &UNIHAN_PSEUDOFIELD_EXPORT_FORMAT[i];
+    for (i=0; UNIHAN_PUBLIC_FIELD_EXPORT_FORMAT[i].publicField!= UNIHAN_INVALID_FIELD;i++){
+	if (UNIHAN_PUBLIC_FIELD_EXPORT_FORMAT[i].publicField==field){
+	    return &UNIHAN_PUBLIC_FIELD_EXPORT_FORMAT[i];
 	}
     }
     return NULL;

@@ -121,46 +121,30 @@ StringList *stringList_sized_new(size_t chunk_size, size_t element_count){
     return sList;
 }
 
-StringList *stringList_new_strsplit_set(const gchar *string, const gchar *delimiters, gint max_tokens){
+static StringList *stringList_new_strsplit_set_internel(const gchar *string, const gchar *delimiters, gint max_tokens, gboolean skip_empty){
     StringList *sList=stringList_new();
-    gchar **string_set=g_strsplit_set(string,delimiters,max_tokens);
-    gint i;
+    gchar **string_set=g_strsplit_set(string,delimiters,-1);
+    gint i,counter=0;
     for(i=0;string_set[i]!=NULL;i++){
+	if (skip_empty && isEmptyString(string_set[i])){
+	    continue;
+	}
 	stringList_insert(sList,string_set[i]);
+	counter++;
+	if (i>=0 && i>=counter){
+	    break;
+	}
     }
     g_strfreev(string_set);
     return sList;
-//    GString *strBuf=g_string_new(NULL);
-//    gint counter=0,i=-1;
-//    gint j,jLen=strlen(delimiters);
-//    gboolean isDelimiter;
-//    while(string[++i]!='\0'){
-//        if (max_tokens>0 && counter>=max_tokens){
-//            g_string_free(strBuf, TRUE);
-//            return sList;
-//        }
-//        isDelimiter=FALSE;
-//        for(j=0;j<jLen;j++){
-//            if (string[i]==delimiters[j]){
-//                isDelimiter=TRUE;
-//                break;
-//            }
-//        }
-//        if (isDelimiter){
-//            if (strBuf->len>0){
-//                stringList_insert(sList,strBuf->str);
-//                g_string_set_size(strBuf,0);
-//                counter++;
-//            }
-//            continue;
-//        }
-//        g_string_append_c(strBuf,string[i]);
-//    }
-//    if (strBuf->len>0){
-//        stringList_insert(sList,strBuf->str);
-//    }
-//    g_string_free(strBuf, TRUE);
-//    return sList;
+}
+
+StringList *stringList_new_strsplit_set(const gchar *string, const gchar *delimiters, gint max_tokens){
+    return stringList_new_strsplit_set_internel(string, delimiters, max_tokens, FALSE);
+}
+
+StringList *stringList_new_strsplit_set_skip_empty(const gchar *string, const gchar *delimiters, gint max_tokens){
+    return stringList_new_strsplit_set_internel(string, delimiters, max_tokens, TRUE);
 }
 
 void stringList_clear(StringList *sList){

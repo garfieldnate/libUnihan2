@@ -100,9 +100,9 @@ static void printUsage(char **argv){
  * 	Stores db file names and their aliases.
  * DB_Alias_Content_Table:
  *      Stores db aliases and containing tables.
- * Exporting_Fields_Table:
+ * Public_Fields_Table:
  * 	Stores real fields that form pseudo fields.
- * Exporting_Pattern_Table:
+ * Public_Fields_SQL_Table:
  * 	Stores the SQL command patterns that form pseudo fields.
  *
  */
@@ -116,12 +116,12 @@ const gchar *meta_SQL_create_table_cmds[]={
     "CREATE TABLE DB_Alias_Content_Table"
 	" (dbAlias text NOT NULL, tableName text NOT NULL, "
 	" PRIMARY KEY (dbAlias, tableName));",
-    "CREATE TABLE Exporting_Fields_Table"
-	" (pseudoFieldName text NOT NULL, fieldName text NOT NULL, tableName text NOT NULL,"
-	" PRIMARY KEY (pseudoFieldName, fieldName, tableName));",
-    "CREATE TABLE Exporting_Pattern_Table"
-	" (pseudoFieldName text NOT NULL, resultSql text NOT NULL, fromSql text NOT NULL,"
-	" PRIMARY KEY (pseudoFieldName));",
+    "CREATE TABLE Public_Fields_Table"
+	" (publicFieldName text NOT NULL, fieldName text NOT NULL, tableName text NOT NULL,"
+	" PRIMARY KEY (publicFieldName, fieldName, tableName));",
+    "CREATE TABLE Public_Fields_SQL_Table"
+	" (publicFieldName text NOT NULL, resultSql text NOT NULL, fromSql text NOT NULL,"
+	" PRIMARY KEY (publicFieldName));",
     NULL
 };
 
@@ -262,7 +262,8 @@ static void resolve_pattern(gchar *buf,const gchar *pattern, UnihanFieldTablePai
     }
 }
 
-static int meta_db_fill_up_exportFormat(sqlite3 *db){
+
+static int meta_db_fill_up_publicFields(sqlite3 *db){
     int i;
     char buf[STRING_BUFFER_SIZE_DEFAULT];
     char buf2[STRING_BUFFER_SIZE_DEFAULT];
@@ -270,22 +271,22 @@ static int meta_db_fill_up_exportFormat(sqlite3 *db){
     Enumerate e;
     int ret=0;
 
-    unihanPseudoFieldExportFormat_enumerate_init_builtin(&e);
-    while(unihanPseudoFieldExportFormat_has_next_builtin(&e)){
-	UnihanPseudoFieldExportFormat *format=unihanPseudoFieldExportFormat_next_builtin(&e);
+    unihanPublicFieldExportFormat_enumerate_init_builtin(&e);
+    while(unihanPublicFieldExportFormat_has_next_builtin(&e)){
+	UnihanPublicFieldExportFormat *format=unihanPublicFieldExportFormat_next_builtin(&e);
 	for(i=0;i<10;i++){
 	    if (format->tableFields[i].field==UNIHAN_INVALID_FIELD){
 		break;
 	    }
 	    sqlite3_snprintf(STRING_BUFFER_SIZE_DEFAULT,sqlBuf,
-		    "INSERT INTO Exporting_Fields_Table VALUES (%Q, %Q, %Q)",
-		    unihanField_to_string_builtin(format->pseudoField),
+		    "INSERT INTO Public_Fields_Table VALUES (%Q, %Q, %Q)",
+		    unihanField_to_string_builtin(format->publicField),
 		    unihanField_to_string_builtin(format->tableFields[i].field),
 		    unihanTable_to_string_builtin(format->tableFields[i].table));
 	    verboseMsg_print(VERBOSE_MSG_INFO2,"[I2] %s\n",sqlBuf);
 	    ret=sqlite_exec_handle_error(db, sqlBuf, NULL, NULL,
 		    sqlite_error_callback_print_message,
-		    "meta_db_fill_up(): Exporting_Fields_Table Error");
+		    "meta_db_fill_up(): Public_Fields_Table Error");
 	    if (ret) {
 		sqlite3_close(db);
 		exit(ret);
@@ -297,12 +298,12 @@ static int meta_db_fill_up_exportFormat(sqlite3 *db){
 	verboseMsg_print(VERBOSE_MSG_INFO2,"[I2] resolved fromSqlPattern:%s\n",buf2);
 
 	sqlite3_snprintf(STRING_BUFFER_SIZE_DEFAULT *2,sqlBuf,
-		"INSERT INTO Exporting_Pattern_Table VALUES (%Q,%Q, %Q)",
-		unihanField_to_string_builtin(format->pseudoField),buf,buf2);
+		"INSERT INTO Public_Fields_SQL_Table VALUES (%Q, %Q, %Q)",
+		unihanField_to_string_builtin(format->publicField),buf,buf2);
 	verboseMsg_print(VERBOSE_MSG_INFO1,"[I1] %s\n",sqlBuf);
 	ret=sqlite_exec_handle_error(db, sqlBuf, NULL, NULL,
 		sqlite_error_callback_print_message,
-		"meta_db_fill_up_exportFormat(): Exporting_Pattern_Table Error");
+		"meta_db_fill_up_exportFormat(): Public_Fields_SQL_Table Error");
 	if (ret) {
 	    sqlite3_close(db);
 	    exit(ret);
@@ -337,7 +338,7 @@ static int meta_db_fill_up_dbAlias(sqlite3 *db){
 	    continue;
 	}
 	verboseMsg_print(VERBOSE_MSG_INFO2,"[I2] readBuf=%s\n",readBuf);
-	StringList *sList=stringList_new_strsplit_set(readBuf," \t",2);
+	StringList *sList=stringList_new_strsplit_set_skip_empty(readBuf," \t",2);
 	dbAlias=stringList_index(sList,0);
 	if (isDbFile){
 	    dbFilename=stringList_index(sList,1);
@@ -373,7 +374,7 @@ static int meta_db_fill_up_dbAlias(sqlite3 *db){
     fclose(dbTableFile);
     UnihanTable t;
 
-    /* By default, un-listed tables go to the main db */
+    /* Un-listed tables go to the default db */
     for(t=0;t<UNIHAN_TABLE_3RD_PARTY;t++){
 	if (!tableAppeared[t]){
 	    sqlite3_snprintf(STRING_BUFFER_SIZE_DEFAULT,sqlBuf,
@@ -414,7 +415,7 @@ static int meta_db_fill_up(sqlite3 *metaDb){
 	}
     }
 
-    ret=meta_db_fill_up_exportFormat(metaDb);
+    ret=meta_db_fill_up_publicFields(metaDb);
     if (ret) {
 	sqlite3_close(metaDb);
 	exit(ret);
@@ -461,10 +462,12 @@ static int db_write(sqlite3 *db, const gchar *sqlClause){
 	    sqlite_error_callback_hide_known_constraint_error, "db_write()" );
 }
 
+/*=== Start Import Field ===*/
 static int unihan_import_realField(gunichar code, UnihanField field,
 	const char *tagValue_normalized, int *counter_ptr){
     char sqlClause[STRING_BUFFER_SIZE_DEFAULT];
-    UnihanTable table=unihanField_get_preferred_table_builtin(field);
+    UnihanTable table=unihanField_get_table_builtin(field);
+    g_assert(table!=UNIHAN_INVALID_TABLE);
 
     sqlite3_snprintf(STRING_BUFFER_SIZE_DEFAULT, sqlClause, "INSERT INTO %s VALUES (%lu",
 	    unihanTable_to_string_builtin(table),code);
@@ -584,7 +587,6 @@ static int unihan_import_pseudoField(gunichar code, UnihanField field,
 /**
  * Import a tag value of a character from Unihan.txt to dbfile.
  *
- * omittable
  * This function imports a tag value of a character from Unihan.txt to dbfile.
  * Note that this function assumes that \a tagValue is singleton, that is.
  * no need to be further split.
@@ -751,6 +753,7 @@ static gint db_create_callback(gpointer user_option,gint col_num,gchar **results
 }
 
 static gint table_create_callback(gpointer user_option,gint col_num,gchar **results,gchar **col_names){
+    printf("*** table_create_callback() results[0]=%s, result[1]=%s\n",results[0],results[1]);
     sqlite3 *db=(sqlite3 *) g_hash_table_lookup(dbAliasHash,results[0]);
     UnihanTable table=unihanTable_parse_builtin(results[1]);
     create_table(table,db,NULL);

@@ -82,7 +82,7 @@ INCLUDE(../common.CMakeLists.txt)
 # RPM configuration
 ####################################################################
 FILE(READ ${CMAKE_SOURCE_DIR}/SPECS/RPM-ChangeLog RPM_CHANGELOG)
-GENERATE_SPEC(SPECS/${PROJECT_NAME}.spec.in)
+GENERATE_SPEC(SPECS/project.spec.in)
 
 ####################################################################
 # Definitions
@@ -97,7 +97,7 @@ ADD_DEFINITIONS(-DSYSTEMDIR='"${PROJECT_DATADIR}"')
 FIND_PACKAGE(PkgConfig)
 PKG_CHECK_MODULES(GLIB2 glib-2.0)
 PKG_CHECK_MODULES(SQLITE3 sqlite3)
-PKG_CHECK_MODULES(LIBUNIHAN libunihan-1)
+#PKG_CHECK_MODULES(LIBUNIHAN libunihan-1)
 
 ####################################################################
 # Sub directories
@@ -117,10 +117,10 @@ SET(LIBRARY_OUTPUT_PATH bin)
 SET(UnihanDb_SRCS unihan_rebuild_cache.c)
 
 # executable built from some source
-ADD_EXECUTABLE(unihan_rebuild_cache  ${UnihanDb_SRCS})
+#ADD_EXECUTABLE(unihan_rebuild_cache  ${UnihanDb_SRCS})
 
 # Link the executable to the library.
-TARGET_LINK_LIBRARIES(unihan_rebuild_cache Unihan)
+#TARGET_LINK_LIBRARIES(unihan_rebuild_cache Unihan)
 # Location of library include files
 INCLUDE_DIRECTORIES(${GLIB2_INCLUDE_DIRS} ${SQLITE3_INCLUDE_DIRS} ${LIBUNIHAN_INCLUDE_DIRS} ../src)
 # Library location for the linker
@@ -137,9 +137,9 @@ SET(MAIN_DOCS README ChangeLog NEWS )
 INSTALL(FILES ${MAIN_DOCS}
     DESTINATION "${docdir}/${PROJECT_NAME}-${PRJ_VER}")
 
-INSTALL(TARGETS unihan_rebuild_cache
-    RUNTIME DESTINATION bin
-    )
+#INSTALL(TARGETS unihan_rebuild_cache
+#    RUNTIME DESTINATION bin
+#    )
 
 #INSTALL(DIRECTORY icons
 #    DESTINATION  ${PROJECT_DATADIR})

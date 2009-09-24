@@ -253,23 +253,9 @@ typedef enum{
      * @}
      */
 
-    /**
-     * @defgroup Other_Fields Supporting fields for variant tables.
-     * @{
-     * @name Supporting fields for variant tables.
-     *
-     * @{
-     */
-    UNIHAN_FIELD_FREQ_RANK,		//!< The rank of the frequency, 1 stands for most frequent, 2 for less frequent and so on.
-
     UNIHAN_FIELD_SCALAR_VALUE,		//!< Scalar representation (U+XXXXX) of the character
 
     UNIHAN_FIELD_UTF8,			//!< UTF8 representation of the character.
-    /**
-     * @}
-     * @}
-     */
-
 
     UNIHAN_FIELD_3RD_PARTY		//!< 3RD party fields.
 } UnihanField_BuiltIn;

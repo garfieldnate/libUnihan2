@@ -1,4 +1,4 @@
-/** 
+/**
  * @file Unihan_types.h
  * @brief Data types used in libUnihan.
  *
@@ -25,7 +25,7 @@
  * License along with this program; if not, write to the
  * Free Software Foundation, Inc., 59 Temple Place, Suite 330,
  * Boston, MA  02111-1307  USA
- */ 
+ */
 #ifndef UNIHAN_TYPES_H_
 #define UNIHAN_TYPES_H_
 #include <glib.h>
@@ -40,35 +40,35 @@
  *
  * An Unihan table usually stores 2 or more fields,
  * one is always UNIHAN_FIELD_CODE ("code"),
- * UCS4 encoding of the character, 
+ * UCS4 encoding of the character,
  * and the other fields stores parts of Unihan tag value.
  *
- * Normally, each Unihan tag has a corresponding table, for example, 
+ * Normally, each Unihan tag has a corresponding table, for example,
  * UNIHAN_TABLE_kDEFINITION ("kDefinitionTable") has UNIHAN_FIELD_CODE and
  * UNIHAN_FIELD_kDEFITION which stores the value of the kDefinition tag.
  *
- * If a tag value is splittable and the parts are often utilized, 
+ * If a tag value is splittable and the parts are often utilized,
  * the value is store in multiple fields.
  * For example, tag kHanyuPinlu has 2 parts, pinyin and its Pinlu (frequency).
  * Thus table UNIHAN_TABLE_kHANYU_PINLU ("kHanyuPinluTable")  has three fields:
  * UNIHAN_FIELD_CODE, UNIHAN_FIELD_PINYIN, and UNIHAN_FIELD_PINYIN_FREQ,
- * where UNIHAN_FIELD_PINYIN and UNIHAN_FIELD_PINYIN_FREQ store pinyin and 
+ * where UNIHAN_FIELD_PINYIN and UNIHAN_FIELD_PINYIN_FREQ store pinyin and
  * its frequency respectively.
- * 
+ *
  * Some Unihan tag values consist optional fields, that is,
  * the fields that do not always have values.
  * Putting all these fields in one table violate the 1st normal form (no null fields).
  * To keep tables normalized, two types of tables are employed:
  * "main" tables  hold compulsory fields;
- * while "extra" tables  hold primary key fields 
+ * while "extra" tables  hold primary key fields
  * and optional field.
  *
- * For example, value of tag kIRG_GSource can splits to 
- * compulsory field UNIHAN_FIELD_IRG_SOURCE_SHORT_NAME and 
+ * For example, value of tag kIRG_GSource can splits to
+ * compulsory field UNIHAN_FIELD_IRG_SOURCE_SHORT_NAME and
  * optional field UNIHAN_FIELD_IRG_SOURCE_MAPPING.
  * Tag values are stored in two tables:
  * the "main" table UNIHAN_TABLE_IRG_SOURCE stores UNIHAN_FIELD_CODE and UNIHAN_FIELD_IRG_SOURCE_SHORT_NAME;
- * while the "extra" table UNIHAN_TABLE_IRG_SOURCE_EXTRA stores 
+ * while the "extra" table UNIHAN_TABLE_IRG_SOURCE_EXTRA stores
  * primary key fields (UNIHAN_FIELD_CODE, UNIHAN_FIELD_IRG_SOURCE_SHORT_NAME), and the optional field
  * UNIHAN_FIELD_IRG_SOURCE_MAPPING.
  * Data structure of Unihan Field.
@@ -103,8 +103,8 @@ typedef gchar UnihanTableName;
  *
  * In terms of the origin, there are <b>original fields</b> and <b>supporting fields</b>.
  * Original fields directly come from Unicode's original data -- Unihan.txt;
- * while supporting fields do not exist in Unihan.txt, 
- * they either hold parts of the value from original Unihan tags, or provide convenient 
+ * while supporting fields do not exist in Unihan.txt,
+ * they either hold parts of the value from original Unihan tags, or provide convenient
  * aliases for complex statements.
  */
 typedef gint UnihanField;
@@ -146,7 +146,7 @@ typedef struct{
 /**
  * Struct of Field Properties.
  *
- * This struct defines the properties of a field, include the field name, and 
+ * This struct defines the properties of a field, include the field name, and
  * field flags which are described in @ref Unihan_Field_Flags.
  */
 typedef struct {
@@ -170,7 +170,7 @@ typedef struct {
 /**
  * IRG source rec.
  *
- * This struct stores an IRG source ID for a character and 
+ * This struct stores an IRG source ID for a character and
  * the mapping/inner code/index
  *
  */
@@ -184,19 +184,19 @@ typedef struct {
  * @name Unihan query options.
  *
  * Unihan query options.
- * 
+ *
  * Unihan query option is composed by various option flags which
  * controls the query processing or output format.
  *
- * Since libUnihan 1.0, pinyin accent format definitions are replaced 
- * by Pinyin_Format_Flag, and zhuyin tone mark format definitions are  
+ * Since libUnihan 1.0, pinyin accent format definitions are replaced
+ * by Pinyin_Format_Flag, and zhuyin tone mark format definitions are
  * replaced by Zhuyin_Format_Flag. Following table shows the conversion:
  *
  * <table border>
  * <tr><th>&lt;=0.5.X</th><th>&gt;=0.9.9</th></tr>
  * <tr><td><code>UNIHAN_QUERY_OPTION_PINYIN_TONE_ACCENT, \c UNIHAN_QUERY_OPTION_PINYIN_FORMAT_MASK</code></td>
  *     <td><code>UNIHAN_QUERY_OPTION_PINYIN_FORMAT_FLAGS_START, UNIHAN_QUERY_OPTION_PINYIN_FORMAT_FLAGS_MASK</code></td>
- * </tr>   
+ * </tr>
  * <tr><td><code>UNIHAN_QUERY_OPTION_ZHUYIN_FORMAT_MASK</code></td>
  *     <td><code>UNIHAN_QUERY_OPTION_ZHUYIN_FORMAT_FLAGS_START, UNIHAN_QUERY_OPTION_ZHUYIN_FORMAT_FLAGS_MASK</code></td>
  * </tr>
@@ -242,11 +242,11 @@ extern const DatabaseFuncStru DATABASE_FUNCS[];
  *
  */
 typedef struct{
-    UnihanField pseudoField;			//!< Pseudo field to be exported.
+    UnihanField publicField;			//!< Public field to be exported.
     UnihanFieldTablePair tableFields[10];	//!< Required tables and fields.
     gchar resultSqlPattern[100];		//!< SQL command pattern for pseudo field export.
     gchar *fromSqlPattern;			//!< SQL command that come after 'FROM' keyword (excluding 'FROM').
-} UnihanPseudoFieldExportFormat;
+} UnihanPublicFieldExportFormat;
 
 
 

@@ -85,7 +85,7 @@ INCLUDE(common.CMakeLists.txt)
 # RPM configuration
 ####################################################################
 FILE(READ ${CMAKE_SOURCE_DIR}/SPECS/RPM-ChangeLog RPM_CHANGELOG)
-GENERATE_SPEC(SPECS/${PROJECT_NAME}.spec.in)
+GENERATE_SPEC(SPECS/project.spec.in)
 
 ####################################################################
 # Definitions
