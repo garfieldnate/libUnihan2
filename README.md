@@ -1,12 +1,12 @@
-Project libUnihan
-
-###Original project location
-https://sourceforge.net/projects/libunihan/.
-
-This project is a libUnihan fork. The original libUnihan was created for the Unicode 5.1 version of Unihan. Several changes have been made to the database
-since then, and and at the time of this project, we are at Unicode 6.1.
+Project libUnihan2
 
 ###Original project information
+
+This project is a fork of [libUnihan](https://sourceforge.net/projects/libunihan/). The original libUnihan was created for the Unicode 5.1 version of Unihan. Several changes have been made to the database since then, and and at the time of this project, we are at Unicode 6.1.
+
+###Original project information
+
+Project libUnihan
 
 This project provide a normalized SQLite Unihan database and corresponding C
 library. All tables in this database are in fifth normal form.
